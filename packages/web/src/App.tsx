@@ -1,8 +1,9 @@
-import { createBrowserRouter, Outlet, type LoaderFunctionArgs } from 'react-router';
+import { createBrowserRouter, Outlet, redirect, type LoaderFunctionArgs } from 'react-router';
 import Nav from './components/Nav';
 import ErrorPage from './pages/ErrorPage';
 import HomePage from './pages/HomePage';
-import { loadSeason } from './data/load';
+import StandingsPage from './pages/StandingsPage';
+import { currentSeason, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
   const year = Number(params.season);
@@ -31,6 +32,8 @@ export const router = createBrowserRouter(
       errorElement: <ErrorPage />,
       children: [
         { index: true, element: <HomePage /> },
+        { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
+        { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
       ],
     },
   ],

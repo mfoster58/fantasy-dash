@@ -3,7 +3,9 @@ import { leagueConfig } from '../../../../league.config';
 import ThemeToggle from './ThemeToggle';
 
 /** Tasks 14 and 15 append Standings and Scores here. */
-export const links: { to: string; label: string }[] = [];
+export const links: { to: string; label: string }[] = [
+  { to: '/standings', label: 'Standings' },
+];
 
 export default function Nav() {
   return (
