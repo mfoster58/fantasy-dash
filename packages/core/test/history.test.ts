@@ -92,3 +92,54 @@ describe('summarizeSeries', () => {
     expect(h.h2h['ub|ud'].closest).toEqual({ gameId: '2024-2-2', margin: 0 });
   });
 });
+
+import { buildAllTime } from '../src/history';
+import type { Season } from '../src/types';
+
+describe('buildAllTime', () => {
+  // Two mini seasons; 2025 gets a bracket so honors and playoff counts are exercised.
+  const s2024 = buildSeason(miniInput());
+  const later = miniInput();
+  later.league.season = '2025';
+  later.league.league_id = 'L2025';
+  later.league.settings.playoff_week_start = 3;
+  later.league.settings.playoff_teams = 2;
+  // week 3 becomes the Final: ua vs ub (ua wins 120-70? pairings are (ua,ud),(ub,uc); use ua vs ud as Final)
+  later.winnersBracket = [{ r: 1, m: 1, t1: 1, t2: 4, p: 1 }];
+  later.losersBracket = [{ r: 1, m: 1, t1: 2, t2: 3, p: 1 }];
+  const s2025 = buildSeason(later);
+  const rows = buildAllTime([s2025, s2024]);
+  const by = Object.fromEntries(rows.map((r) => [r.userId, r]));
+
+  it('sums regular-season columns across seasons', () => {
+    expect(by.uc).toMatchObject({ seasons: 2, w: 5, l: 0, t: 0, winPct: 1, pf: 510, weeklyHighs: 3 });
+    expect(by.ua).toMatchObject({ w: 3, l: 2, t: 0, pf: 440, pa: 450 });
+    expect(by.ua.ppg).toBe(88);
+    expect(by.ua.maxPoints).toBe(484);
+    expect(by.ua.efficiency).toBe(0.9091);
+  });
+
+  it('carries the streak across seasons', () => {
+    expect(by.ua.streak).toBe('L1');
+    expect(by.uc.streak).toBe('W5');
+  });
+
+  it('counts honors, playoff appearances and wins, toilet bowls', () => {
+    expect(s2025.honors).toMatchObject({ champion: 'ua', runnerUp: 'ud', third: null, lastPlace: 'ub' });
+    expect(by.ua).toMatchObject({ titles: 1, runnerUps: 0, playoffApps: 1, playoffWins: 1, toiletBowls: 0 });
+    expect(by.ud).toMatchObject({ titles: 0, runnerUps: 1, playoffApps: 1, playoffWins: 0 });
+    expect(by.ub).toMatchObject({ playoffApps: 0, toiletBowls: 1 });
+    expect(by.uc).toMatchObject({ playoffApps: 0, toiletBowls: 0 });
+  });
+
+  it('ranks by wins then points for', () => {
+    expect(rows.map((r) => r.userId)).toEqual(['uc', 'ua', 'ub', 'ud']);
+    expect(rows.map((r) => r.rank)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('is included in buildHistory output', () => {
+    const h = buildHistory([s2024]);
+    expect(h.allTime).toHaveLength(4);
+    expect(h.allTime[0].userId).toBe('uc');
+  });
+});

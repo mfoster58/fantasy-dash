@@ -115,6 +115,19 @@ export const PlayerDirectorySchema = z.record(z.object({
   yearsExp: z.number().nullable(),
 }));
 
+const AllTimeRow = z.object({
+  userId: z.string(),
+  rank: z.number(),
+  seasons: z.number(),
+  w: z.number(), l: z.number(), t: z.number(), winPct: z.number(),
+  pf: z.number(), pa: z.number(), ppg: z.number(), maxPoints: z.number(), efficiency: z.number(),
+  streak: z.string(),
+  allPlay: WLT.extend({ pct: z.number() }),
+  weeklyHighs: z.number(),
+  titles: z.number(), runnerUps: z.number(), thirds: z.number(),
+  playoffApps: z.number(), playoffWins: z.number(), toiletBowls: z.number(),
+});
+
 export const HistorySchema = z.object({
   seasons: z.array(z.object({
     year: z.number(),
@@ -148,6 +161,7 @@ export const HistorySchema = z.object({
       bPoints: z.number(),
     })),
   })),
+  allTime: z.array(AllTimeRow),
 });
 
 // Compile-time drift guards: a field added to a type without a schema update fails typecheck.

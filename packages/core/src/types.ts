@@ -183,11 +183,25 @@ export interface HistorySeason {
   playoffWeekStart: number;
 }
 
+export interface AllTimeRow {
+  userId: UserId;
+  rank: number;
+  seasons: number;
+  w: number; l: number; t: number; winPct: number;
+  pf: number; pa: number; ppg: number; maxPoints: number; efficiency: number;
+  streak: string;
+  allPlay: AllPlay;
+  weeklyHighs: number;
+  titles: number; runnerUps: number; thirds: number;
+  playoffApps: number; playoffWins: number; toiletBowls: number;
+}
+
 export interface History {
   /** oldest first */
   seasons: HistorySeason[];
   managers: Record<UserId, { displayName: string; avatar: string | null; seasons: number[] }>;
   h2h: Record<string, H2HSeries>;
+  allTime: AllTimeRow[];
 }
 
 /** Stable key for a pair of managers: lexicographically smaller id first. */
