@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Week } from '@fantasy-dash/core';
 
-interface Props { weeks: Week[]; selected: number | 'season'; onSelect: (week: number | 'season') => void }
+interface Props { weeks: Week[]; selected: number; onSelect: (week: number) => void }
 
 export default function WeekStrip({ weeks, selected, onSelect }: Props) {
   const cls = (active: boolean, extra = '') =>
@@ -27,10 +27,6 @@ export default function WeekStrip({ weeks, selected, onSelect }: Props) {
           {w.week}
         </button>
       ))}
-      <span className="mx-1 w-px self-stretch bg-line" aria-hidden="true" />
-      <button type="button" role="tab" aria-selected={selected === 'season'} onClick={() => onSelect('season')} className={cls(selected === 'season')}>
-        Season
-      </button>
     </div>
   );
 }

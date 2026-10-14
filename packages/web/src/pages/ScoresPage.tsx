@@ -9,8 +9,8 @@ export default function ScoresPage() {
   const season = useLoaderData() as Season;
   const { week: weekParam } = useParams();
   const navigate = useNavigate();
-  const selected: number | 'season' = weekParam === 'season' ? 'season' : Number(weekParam);
-  const weeks = selected === 'season' ? season.weeks : season.weeks.filter((w) => w.week === selected);
+  const selected = Number(weekParam);
+  const weeks = Number.isInteger(selected) ? season.weeks.filter((w) => w.week === selected) : [];
   const years = history.seasons.map((s) => s.year);
 
   return (
@@ -25,11 +25,6 @@ export default function ScoresPage() {
       {weeks.length === 0 && <p className="text-sm text-muted">No week {weekParam} in {season.year}.</p>}
       {weeks.map((wk) => (
         <div key={wk.week} className="space-y-3">
-          {selected === 'season' && (
-            <h2 className="section-label">
-              Week {wk.week}{wk.isPlayoff ? ' · Playoffs' : ''}{wk.played ? '' : ' · Upcoming'}
-            </h2>
-          )}
           {wk.games.length === 0 ? (
             <p className="text-sm text-muted">
               {wk.isPlayoff && !wk.played
