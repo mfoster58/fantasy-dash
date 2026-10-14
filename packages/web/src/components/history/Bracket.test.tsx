@@ -27,4 +27,15 @@ describe('Bracket', () => {
     expect(screen.getByRole('link', { name: /Team A.*120\.50.*Team B.*99\.25/s })).toHaveAttribute('href', '/scores/2025/15/1');
     expect(screen.getByRole('link', { name: /Team C.*150\.75/s })).toHaveAttribute('href', '/scores/2025/16/3');
   });
+
+  it('consolation: the higher scorer is the winner even though the lower scorer advances', () => {
+    render(<MemoryRouter><Bracket kind="consolation" year={2025} managers={managers} games={[
+      g({ bracket: 'consolation', tag: 'Toilet Bowl', placement: 1, round: 2, week: 16, home: 'a', away: 'b', homePoints: 115.94, awayPoints: 161.8, advanced: 'a', gameId: '2025-16-9' }),
+    ]} /></MemoryRouter>);
+    const rowB = screen.getByText('Team B').closest('div')!;
+    const rowA = screen.getByText('Team A').closest('div')!;
+    expect(rowB).toHaveTextContent('161.80');
+    expect(rowB).toHaveTextContent('winner');
+    expect(rowA).not.toHaveTextContent('winner');
+  });
 });

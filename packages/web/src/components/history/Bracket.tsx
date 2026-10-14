@@ -17,6 +17,7 @@ function Side({ id, points, won, managers }: { id: UserId | null; points: number
   return (
     <div className={`flex items-center justify-between gap-3 ${won ? 'text-ink font-semibold' : 'text-muted'}`}>
       <span className="truncate">{id ? m?.teamName ?? m?.displayName ?? id : 'TBD'}</span>
+      {won && <span className="sr-only">winner</span>}
       <span className="num">{points === null ? '' : fmtPts(points)}</span>
     </div>
   );
