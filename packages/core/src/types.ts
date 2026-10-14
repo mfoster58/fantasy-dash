@@ -135,12 +135,28 @@ export interface DraftPick {
   userId: UserId;
   playerId: PlayerId;
   isKeeper: boolean;
+  /** order taken within the position; null for DEF and unknown positions */
   posDraftRank: number | null;
   seasonPoints: number;
-  posFinishRank: number | null;
-  value: number | null;
+  gamesPlayed: number;
+  /** seasonPoints / gamesPlayed; null when no games */
+  ppg: number | null;
+  /** played every game their NFL team has played */
+  healthy: boolean;
+  /** season points minus the last startable player at the position; null for DEF, unknown, or before week 1 */
   pointsOverBaseline: number | null;
+  /** where the player would go if the league redrafted on production today */
+  redraftPos: number | null;
+  /** draft capital at redraftPos minus capital at pickNo */
+  slotValue: number | null;
+  /** (max(PoB, 0) − expected contribution at pickNo) · pace */
+  productionValue: number | null;
+  /** slotValue + productionValue */
+  value: number | null;
+  tradedTo: { userId: UserId; week: number } | null;
 }
+
+export interface ExpectedCurve { a: number; k: number }
 
 export interface Draft {
   draftId: string;
@@ -148,6 +164,8 @@ export interface Draft {
   rounds: number;
   slotOrder: UserId[];
   picks: DraftPick[];
+  /** fitted a·exp(−(pick−1)/k) of contribution vs pick; null before week 1 */
+  expectedCurve: ExpectedCurve | null;
 }
 
 export type SeasonStatus = 'complete' | 'in_season';

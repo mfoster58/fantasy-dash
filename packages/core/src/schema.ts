@@ -98,9 +98,15 @@ const DraftPick = z.object({
   isKeeper: z.boolean(),
   posDraftRank: z.number().nullable(),
   seasonPoints: z.number(),
-  posFinishRank: z.number().nullable(),
-  value: z.number().nullable(),
+  gamesPlayed: z.number(),
+  ppg: z.number().nullable(),
+  healthy: z.boolean(),
   pointsOverBaseline: z.number().nullable(),
+  redraftPos: z.number().nullable(),
+  slotValue: z.number().nullable(),
+  productionValue: z.number().nullable(),
+  value: z.number().nullable(),
+  tradedTo: z.object({ userId: z.string(), week: z.number() }).nullable(),
 });
 
 const Draft = z.object({
@@ -109,6 +115,7 @@ const Draft = z.object({
   rounds: z.number(),
   slotOrder: z.array(z.string()),
   picks: z.array(DraftPick),
+  expectedCurve: z.object({ a: z.number(), k: z.number() }).nullable(),
 });
 
 export const SeasonSchema = z.object({

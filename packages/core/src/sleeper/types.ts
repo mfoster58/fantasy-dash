@@ -85,3 +85,18 @@ export interface SleeperDraftPick {
   player_id: string;
   is_keeper: boolean | null;
 }
+
+/** GET /league/{id}/transactions/{week}. Only trades are read. */
+export interface SleeperTransaction {
+  transaction_id: string;
+  type: string;   // 'trade' | 'waiver' | 'free_agent' | ...
+  status: string; // 'complete' | 'failed' | ...
+  /** week the transaction applied to */
+  leg: number;
+  /** epoch ms */
+  created: number;
+  /** player_id -> receiving roster_id */
+  adds: Record<string, number> | null;
+  drops: Record<string, number> | null;
+  roster_ids: number[];
+}

@@ -4,6 +4,7 @@ import type { Season, UserId } from '@fantasy-dash/core';
 import SeasonPicker from '../components/SeasonPicker';
 import DraftBoard, { type BoardMode } from '../components/draft/DraftBoard';
 import DraftAnalysis from '../components/draft/DraftAnalysis';
+import TopPpg from '../components/draft/TopPpg';
 import { history, players } from '../data/load';
 
 export default function DraftPage() {
@@ -32,6 +33,7 @@ export default function DraftPage() {
       </p>
       <DraftBoard draft={season.draft} managers={season.managers} players={players} mode={mode} highlight={highlight} onHighlight={setHighlight} inSeason={inSeason} />
       <DraftAnalysis draft={season.draft} managers={season.managers} players={players} inSeason={inSeason} />
+      <TopPpg draft={season.draft} managers={season.managers} players={players} inSeason={inSeason} />
     </section>
   );
 }

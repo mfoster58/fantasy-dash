@@ -2,6 +2,7 @@ import type { Draft, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core
 import { Link } from 'react-router';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
+import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam } from '../../lib/players';
 
 interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; year: number }
@@ -26,9 +27,9 @@ export default function DraftRoundOne({ draft, managers, players, year }: Props)
                 <span className="ml-1.5 text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</span>
               </span>
               <span className="flex items-center gap-2">
-                {p.isKeeper && <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted">Keeper</span>}
                 <PosPill pos={pos} />
                 <span className="w-8 text-xs text-muted">{playerTeam(players, p.playerId)}</span>
+                <span className={`num w-10 text-right text-xs ${p.value === null ? 'text-muted' : p.value > 0 ? 'text-win' : p.value < 0 ? 'text-loss' : 'text-muted'}`}>{p.value === null ? '—' : fmtSigned(p.value, 0)}</span>
               </span>
             </li>
           );
