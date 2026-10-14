@@ -7,6 +7,7 @@ import StandingsPage from './pages/StandingsPage';
 import AllTimePage from './pages/AllTimePage';
 import H2HPage from './pages/H2HPage';
 import HistoryPage from './pages/HistoryPage';
+import SeasonReviewPage from './pages/SeasonReviewPage';
 import { currentSeason, loadAllSeasons, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
@@ -51,6 +52,7 @@ export const router = createBrowserRouter(
         { path: 'all-time', element: <AllTimePage /> },
         { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
         { path: 'history', element: <HistoryPage /> },
+        { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
       ],
     },
   ],
