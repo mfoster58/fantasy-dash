@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSeason } from '../src/season';
-import { buildHistory, summarizeSeries } from '../src/history';
+import { buildHistory, buildAllTime, summarizeSeries } from '../src/history';
 import type { H2HSeries } from '../src/types';
 import { miniInput } from './fixtures/mini';
 
@@ -93,9 +93,6 @@ describe('summarizeSeries', () => {
   });
 });
 
-import { buildAllTime } from '../src/history';
-import type { Season } from '../src/types';
-
 describe('buildAllTime', () => {
   // Two mini seasons; 2025 gets a bracket so honors and playoff counts are exercised.
   const s2024 = buildSeason(miniInput());
@@ -141,5 +138,31 @@ describe('buildAllTime', () => {
     const h = buildHistory([s2024]);
     expect(h.allTime).toHaveLength(4);
     expect(h.allTime[0].userId).toBe('uc');
+  });
+
+  it('counts third place and placement-game wins', () => {
+    const input = miniInput();
+    input.league.season = '2026';
+    input.league.league_id = 'L2026';
+    input.league.settings.playoff_week_start = 2;
+    input.league.settings.playoff_teams = 4;
+    // Round 1 (week 2): uc beats ua (110-60); ub vs ud ties 95-95, Sleeper's w says ub.
+    // Round 2 (week 3): Final ub 70 vs uc 130 -> uc champion, ub runner-up;
+    // 3rd-place game ua 120 vs ud 50 -> ua third. Every team appears once in the bracket.
+    input.winnersBracket = [
+      { r: 1, m: 1, t1: 1, t2: 3 },
+      { r: 1, m: 2, t1: 2, t2: 4, w: 2, l: 4 },
+      { r: 2, m: 3, t1: 2, t2: 3, p: 1 },
+      { r: 2, m: 4, t1: 1, t2: 4, p: 3 },
+    ];
+    input.losersBracket = [];
+    const s = buildSeason(input);
+    expect(s.honors).toMatchObject({ champion: 'uc', runnerUp: 'ub', third: 'ua', lastPlace: null });
+    const rows = buildAllTime([s]);
+    const by = Object.fromEntries(rows.map((r) => [r.userId, r]));
+    expect(by.uc).toMatchObject({ titles: 1, thirds: 0, playoffApps: 1, playoffWins: 2 });
+    expect(by.ub).toMatchObject({ runnerUps: 1, playoffApps: 1, playoffWins: 1 });
+    expect(by.ua).toMatchObject({ thirds: 1, playoffApps: 1, playoffWins: 1 });
+    expect(by.ud).toMatchObject({ thirds: 0, playoffApps: 1, playoffWins: 0 });
   });
 });
