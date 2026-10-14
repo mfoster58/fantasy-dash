@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Manager, StandingRow, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
 import { fmtPct, fmtPpg, fmtPts, fmtWinPct } from '../lib/format';
@@ -50,13 +51,13 @@ export default function StandingsTable({ rows, managers, playoffTeams }: Props) 
               >
                 <td className="num py-2.5 pl-4 pr-1 text-muted">{r.rank}</td>
                 <td className="px-3 py-2.5">
-                  <div className="flex items-center gap-2">
+                  <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-2 hover:text-accent">
                     <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={28} />
                     <div className="min-w-0 leading-tight">
                       <div className="truncate font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</div>
                       {m?.teamName && <div className="text-xs text-muted">{m.displayName}</div>}
                     </div>
-                  </div>
+                  </Link>
                 </td>
                 <td className={cell}>{r.w}</td>
                 <td className={cell}>{r.l}</td>

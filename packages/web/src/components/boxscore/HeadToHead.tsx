@@ -43,7 +43,10 @@ export default function HeadToHead({ series, year, week, left, right }: Props) {
 
   return (
     <section className="card p-5" aria-labelledby="h2h-title">
-      <h2 id="h2h-title" className="section-label mb-4">Head to head</h2>
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 id="h2h-title" className="section-label">Head to head</h2>
+        <Link to={`/h2h?a=${left.userId}&b=${right.userId}`} className="text-xs text-accent hover:underline">Full series →</Link>
+      </div>
       <div className="mx-auto max-w-2xl">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
         <Side manager={left} align="left" />
