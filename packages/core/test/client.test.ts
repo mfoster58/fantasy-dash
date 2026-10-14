@@ -46,6 +46,15 @@ describe('SleeperClient', () => {
     expect(Date.now() - start).toBeGreaterThanOrEqual(75);
   });
 
+  it('throttles concurrent requests too', async () => {
+    const fetchFn = vi.fn(async (_url: string | URL | Request) => response(200, {}));
+    const client = new SleeperClient({ fetchFn, minIntervalMs: 40 });
+    const start = Date.now();
+    await Promise.all([client.getLeague('a'), client.getLeague('b'), client.getLeague('c')]);
+    expect(Date.now() - start).toBeGreaterThanOrEqual(75);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+  });
+
   it('uses the stats and projections paths', async () => {
     const fetchFn = vi.fn(async (_url: string | URL | Request) => response(200, {}));
     const client = new SleeperClient({ fetchFn, minIntervalMs: 0 });

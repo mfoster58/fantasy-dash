@@ -33,9 +33,10 @@ export class SleeperClient {
   private async get<T>(path: string): Promise<T | null> {
     const url = `${BASE}${path}`;
     for (let attempt = 0; ; attempt++) {
-      const wait = this.lastRequestAt + this.minIntervalMs - Date.now();
+      const at = Math.max(Date.now(), this.lastRequestAt + this.minIntervalMs);
+      this.lastRequestAt = at;
+      const wait = at - Date.now();
       if (wait > 0) await sleep(wait);
-      this.lastRequestAt = Date.now();
       try {
         const res = await this.fetchFn(url);
         if (res.status === 404) return null;
