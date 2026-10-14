@@ -5,6 +5,13 @@ import { round2, round4 } from './scoring';
 /** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB, 1 K. Defenses are excluded from value math. */
 export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12, K: 10 };
 
+/**
+ * Scarcity weight applied to points over baseline before ranking and valuing. A one-QB lineup with deep
+ * replacement makes a QB point worth less than an RB/WR point; 0.5 matches where the league's next-year
+ * ADP actually places top quarterbacks. Positions not listed weigh 1.
+ */
+export const POSITION_WEIGHTS: Record<string, number> = { QB: 0.5 };
+
 /** e-folding length of the draft capital curve, in picks. */
 export const CAPITAL_DECAY = 45;
 
@@ -51,8 +58,6 @@ export interface DraftValueInput {
   /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
   teamGames: Record<string, number>;
   lastScoredWeek: number;
-  /** regular season + playoff weeks */
-  totalWeeks: number;
   trades: PlayerTrade[];
 }
 
@@ -76,9 +81,10 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
  * Points over baseline: per valued position (BASELINE_RANKS keys), the pool is every directory
  * player at that position with points > 0, sorted desc; the baseline is the pool entry at
  * BASELINE_RANKS[pos] (0 if the pool is shorter). Redraft position ranks all valued-position
- * players with points > 0 by PoB desc (ties: points desc, id asc); zero scorers tie at N + 1.
- * Slot value is draft capital gained; production value is contribution over the fitted expected
- * curve, on a full-season pace. DEF and unknown positions get null for every value field.
+ * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
+ * scorers tie at N + 1. Slot value is draft capital gained; production value is weighted contribution
+ * (max(weighted PoB, 0)) over the expected curve fitted to this draft, in points to date. DEF and
+ * unknown positions get null for every value field.
  * Before the first scored week every value field is null.
  */
 export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): { picks: DraftPick[]; expectedCurve: ExpectedCurve | null } {
@@ -103,11 +109,13 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     baselinePoints.set(pos, baseId ? pts(baseId) : 0);
   }
   const pobOf = (id: PlayerId): number => round2(pts(id) - (baselinePoints.get(posOf(id) ?? '') ?? 0));
+  const weightOf = (pos: string | null): number => (pos ? POSITION_WEIGHTS[pos] ?? 1 : 1);
+  const weightedPob = (id: PlayerId): number => pobOf(id) * weightOf(posOf(id));
 
   // Redraft order across positions.
   const redraft = new Map<PlayerId, number>();
   const scorers = [...byPos.values()].flat().filter((id) => pts(id) > 0)
-    .sort((a, b) => pobOf(b) - pobOf(a) || pts(b) - pts(a) || (a < b ? -1 : a > b ? 1 : 0));
+    .sort((a, b) => weightedPob(b) - weightedPob(a) || pts(b) - pts(a) || (a < b ? -1 : a > b ? 1 : 0));
   scorers.forEach((id, i) => redraft.set(id, i + 1));
   const lastPos = scorers.length + 1;
 
@@ -156,13 +164,12 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
 
   if (!scored) return { picks: base, expectedCurve: null };
 
-  const contribution = (p: DraftPick) => Math.max(p.pointsOverBaseline ?? 0, 0);
+  const contribution = (p: DraftPick) => Math.max((p.pointsOverBaseline ?? 0) * weightOf(posOf(p.playerId)), 0);
   const curve = fitExpectedCurve(base.filter((p) => p.pointsOverBaseline !== null).map((p) => ({ pick: p.pickNo, contribution: contribution(p) })));
-  const pace = input.totalWeeks / input.lastScoredWeek;
   const finished = base.map((p) => {
     if (p.pointsOverBaseline === null) return p;
     const expected = curve ? expectedAt(curve, p.pickNo) : 0;
-    const productionValue = round1((contribution(p) - expected) * pace);
+    const productionValue = round1(contribution(p) - expected);
     return { ...p, productionValue, value: round1((p.slotValue ?? 0) + productionValue) };
   });
   return { picks: finished, expectedCurve: curve };

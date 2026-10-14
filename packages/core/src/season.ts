@@ -157,7 +157,6 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
         gamesPlayed: input.playerGames,
         teamGames: input.teamGames,
         lastScoredWeek,
-        totalWeeks: maxWeek,
         trades: tradesFromTransactions(input.trades, rosterToUser),
       })
     : null;
