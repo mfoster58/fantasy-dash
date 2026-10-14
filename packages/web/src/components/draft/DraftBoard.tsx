@@ -98,12 +98,12 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                     <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
                     <span className={colored ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
                     {p.tradedTo && (
-                      <span className="flex min-w-0 items-center gap-1 truncate">
+                      <span className="flex min-w-0 items-center gap-1 overflow-hidden">
                         <SwapIcon />
                         <span className="truncate">{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
                       </span>
                     )}
-                    {mode === 'value' && p.value !== null && <span className="num ml-auto font-semibold">{fmtSigned(p.value, 0)}</span>}
+                    {mode === 'value' && p.value !== null && <span className="num ml-auto shrink-0 font-semibold">{fmtSigned(p.value, 0)}</span>}
                   </div>
                 </div>
               );
