@@ -163,6 +163,14 @@ export interface H2HSeries {
   aWins: number;
   bWins: number;
   ties: number;
+  /** consecutive wins by the same manager at the end of the series */
+  streak: { holder: UserId | null; length: number };
+  totalPoints: { a: number; b: number };
+  /** null when no game has been decided */
+  biggestWin: { gameId: string; winner: UserId; margin: number } | null;
+  /** null when the series is empty; a tie is margin 0 */
+  closest: { gameId: string; margin: number } | null;
+  avgMargin: number;
   /** newest first */
   games: H2HGame[];
 }

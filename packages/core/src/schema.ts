@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { History, PlayerDirectory, Season } from './types';
 
 const WLT = z.object({ w: z.number(), l: z.number(), t: z.number() });
 const PlayoffTag = z.enum(['QF', 'SF', 'Final', '3rd', '5th', 'Cons-R1', 'Toilet Bowl', 'Cons-7th']);
@@ -133,6 +134,11 @@ export const HistorySchema = z.object({
     aWins: z.number(),
     bWins: z.number(),
     ties: z.number(),
+    streak: z.object({ holder: z.string().nullable(), length: z.number() }),
+    totalPoints: z.object({ a: z.number(), b: z.number() }),
+    biggestWin: z.object({ gameId: z.string(), winner: z.string(), margin: z.number() }).nullable(),
+    closest: z.object({ gameId: z.string(), margin: z.number() }).nullable(),
+    avgMargin: z.number(),
     games: z.array(z.object({
       gameId: z.string(),
       year: z.number(),
@@ -143,3 +149,8 @@ export const HistorySchema = z.object({
     })),
   })),
 });
+
+// Compile-time drift guards: a field added to a type without a schema update fails typecheck.
+export const _seasonSchemaCheck = SeasonSchema satisfies z.ZodType<Season>;
+export const _historySchemaCheck = HistorySchema satisfies z.ZodType<History>;
+export const _playersSchemaCheck = PlayerDirectorySchema satisfies z.ZodType<PlayerDirectory>;
