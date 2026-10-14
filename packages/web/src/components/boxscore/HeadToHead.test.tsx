@@ -17,6 +17,11 @@ const series: H2HSeries = {
     { gameId: '2024-2-4', year: 2024, week: 2, tag: null, aPoints: 120, bPoints: 101 },
     { gameId: '2024-1-6', year: 2024, week: 1, tag: null, aPoints: 130, bPoints: 99 },
   ],
+  streak: { holder: null, length: 0 },
+  totalPoints: { a: 0, b: 0 },
+  biggestWin: null,
+  closest: null,
+  avgMargin: 0,
 };
 
 const wrap = (s: H2HSeries | undefined) =>
