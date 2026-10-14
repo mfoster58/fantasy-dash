@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet, redirect, type LoaderFunctionArgs } from 'react-router';
 import Nav from './components/Nav';
 import ErrorPage from './pages/ErrorPage';
+import BoxScorePage from './pages/BoxScorePage';
 import ScoresPage from './pages/ScoresPage';
 import StandingsPage from './pages/StandingsPage';
 import { currentSeason, loadSeason } from './data/load';
@@ -41,6 +42,7 @@ export const router = createBrowserRouter(
           },
         },
         { path: 'scores/:season/:week', loader: seasonLoader, element: <ScoresPage /> },
+        { path: 'scores/:season/:week/:matchupId', loader: seasonLoader, element: <BoxScorePage /> },
         { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
         { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
       ],
