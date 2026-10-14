@@ -8,6 +8,7 @@ export const links: { to: string; label: string }[] = [
   { to: '/standings', label: 'Standings' },
   { to: '/h2h', label: 'Head to Head' },
   { to: '/all-time', label: 'All-Time' },
+  { to: '/history', label: 'History' },
 ];
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
