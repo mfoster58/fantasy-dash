@@ -1,5 +1,5 @@
 import type { Draft, DraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
-import { fmtPts, fmtSigned } from '../../lib/format';
+import { fmtPpg, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam, posColor } from '../../lib/players';
 import { posLabel, valueColor } from '../../lib/draft';
 
@@ -10,17 +10,36 @@ interface Props {
   mode: BoardMode; highlight: UserId | null; onHighlight: (userId: UserId | null) => void; inSeason: boolean;
 }
 
-function cellTitle(p: DraftPick, players: PlayerDirectory, inSeason: boolean): string {
+function cellTitle(p: DraftPick, players: PlayerDirectory, managers: Record<UserId, Manager>, inSeason: boolean): string {
   const pos = playerPos(players, p.playerId);
   const suffix = inSeason ? ' to date' : '';
-  const lines = [`${playerName(players, p.playerId)} · ${pos} · ${playerTeam(players, p.playerId)}`, `Pick ${p.pickNo} (round ${p.round})`,
-    `Season points${suffix}: ${fmtPts(p.seasonPoints)}`];
-  if (p.posFinishRank !== null) lines.push(`Finished ${pos}${p.posFinishRank}${suffix} · drafted ${posLabel(pos, p.posDraftRank)}`);
-  if (p.value !== null) lines.push(`Value: ${fmtSigned(p.value, 0)} ranks`);
+  const lines = [
+    `${playerName(players, p.playerId)} · ${pos} · ${playerTeam(players, p.playerId)}`,
+    `Pick ${p.pickNo} (round ${p.round})`,
+    `Season points${suffix}: ${fmtPts(p.seasonPoints)}`,
+  ];
+  if (p.redraftPos !== null) lines.push(`Redraft position${inSeason ? ' today' : ''}: ${p.redraftPos} (drafted ${posLabel(pos, p.posDraftRank)})`);
+  if (p.slotValue !== null && p.productionValue !== null) lines.push(`Slot value: ${fmtSigned(p.slotValue, 1)} · Production value: ${fmtSigned(p.productionValue, 1)}`);
   if (p.pointsOverBaseline !== null) lines.push(`Points over baseline: ${fmtSigned(p.pointsOverBaseline, 2)}`);
+  if (p.ppg !== null) lines.push(`PPG: ${fmtPpg(p.ppg)} over ${p.gamesPlayed} game${p.gamesPlayed === 1 ? '' : 's'}`);
   if (p.isKeeper) lines.push('Keeper');
+  if (p.tradedTo) lines.push(`Traded to ${managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId} in week ${p.tradedTo.week}`);
   return lines.join('\n');
 }
+
+const LockIcon = () => (
+  <svg aria-label="Keeper" role="img" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-1 top-1 text-accent">
+    <rect x="4" y="11" width="16" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </svg>
+);
+
+const SwapIcon = () => (
+  <svg aria-label="Traded" role="img" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M4 7h13l-3-3" />
+    <path d="M20 17H7l3 3" />
+  </svg>
+);
 
 export default function DraftBoard({ draft, managers, players, mode, highlight, onHighlight, inSeason }: Props) {
   const slots = draft.slotOrder.length;
@@ -61,26 +80,30 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
               const pos = playerPos(players, p.playerId);
               const isHl = highlight !== null && p.userId === highlight;
               const dim = highlight !== null && !isHl;
+              const colored = mode === 'value' && p.value !== null;
               const background = mode === 'position' ? `color-mix(in srgb, ${posColor(pos)} 16%, transparent)` : valueColor(p.value);
+              const ring = isHl ? 'ring-1 ring-inset ring-accent' : p.isKeeper ? 'ring-1 ring-inset ring-accent/60' : '';
               return (
                 <div
                   key={slot}
                   data-testid="draft-cell"
                   data-highlight={isHl ? 'true' : 'false'}
-                  title={cellTitle(p, players, inSeason)}
-                  style={{ background }}
-                  className={`flex h-14 flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${isHl ? 'ring-1 ring-inset ring-accent' : ''}`}
+                  title={cellTitle(p, players, managers, inSeason)}
+                  style={{ background, color: colored ? '#1a1a1a' : undefined }}
+                  className={`relative flex h-14 flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${ring}`}
                 >
-                  <div className="truncate font-medium">{playerName(players, p.playerId)}</div>
-                  <div className={`flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] ${mode === 'value' ? 'text-ink' : 'text-muted'}`}>
+                  {p.isKeeper && <LockIcon />}
+                  <div className="truncate pr-3 font-medium">{playerName(players, p.playerId)}</div>
+                  <div className={`flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] ${colored ? '' : 'text-muted'}`}>
                     <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
-                    <span className={mode === 'value' ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
-                    {mode === 'value'
-                      ? <>
-                          {p.isKeeper && <span className="rounded bg-surface-2 px-1 text-[10px] font-semibold">K</span>}
-                          {p.value !== null && <span className="num ml-auto">{fmtSigned(p.value, 0)}</span>}
-                        </>
-                      : p.isKeeper && <span className="ml-auto rounded bg-surface-2 px-1 text-[10px] uppercase tracking-wide">Keeper</span>}
+                    <span className={colored ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
+                    {p.tradedTo && (
+                      <span className="flex min-w-0 items-center gap-1 truncate">
+                        <SwapIcon />
+                        <span className="truncate">{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
+                      </span>
+                    )}
+                    {mode === 'value' && p.value !== null && <span className="num ml-auto font-semibold">{fmtSigned(p.value, 0)}</span>}
                   </div>
                 </div>
               );

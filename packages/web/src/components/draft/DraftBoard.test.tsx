@@ -10,26 +10,61 @@ const players: PlayerDirectory = {
   p1: { id: 'p1', name: 'Player One', firstName: 'Player', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 1 },
   p2: { id: 'p2', name: 'Player Two', firstName: 'Player', lastName: 'Two', position: 'WR', team: 'DAL', yearsExp: 1 },
   p3: { id: 'p3', name: 'Player Three', firstName: 'Player', lastName: 'Three', position: 'QB', team: 'KC', yearsExp: 1 },
-  p4: { id: 'p4', name: 'Player Four', firstName: 'Player', lastName: 'Four', position: 'RB', team: 'DET', yearsExp: 1 },
+  p4: { id: 'p4', name: 'Player Four', firstName: 'Player', lastName: 'Four', position: 'DEF', team: 'DET', yearsExp: 1 },
 };
 const pick = (round: number, pickNo: number, slot: number, userId: string, playerId: string, value: number | null, extra: Partial<DraftPick> = {}): DraftPick => ({
-  round, pickNo, slot, userId, playerId, isKeeper: false, posDraftRank: 1, seasonPoints: 120.5, posFinishRank: 2, value, pointsOverBaseline: 15.25, ...extra,
+  round, pickNo, slot, userId, playerId, isKeeper: false, posDraftRank: 1, seasonPoints: 120.5, gamesPlayed: 5, ppg: 24.1, healthy: true,
+  pointsOverBaseline: 15.25, redraftPos: 2, slotValue: value === null ? null : 4, productionValue: value === null ? null : value - 4, value, tradedTo: null, ...extra,
 });
 const draft: Draft = {
-  draftId: 'D', type: 'snake', rounds: 2, slotOrder: ['a', 'b'],
-  picks: [pick(1, 1, 1, 'a', 'p1', 4), pick(1, 2, 2, 'b', 'p2', -6, { isKeeper: true }), pick(2, 3, 2, 'b', 'p3', 0), pick(2, 4, 1, 'a', 'p4', null)],
+  draftId: 'D', type: 'snake', rounds: 2, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36 },
+  picks: [
+    pick(1, 1, 1, 'a', 'p1', 6.5, { tradedTo: { userId: 'b', week: 3 } }),
+    pick(1, 2, 2, 'b', 'p2', -30, { isKeeper: true }),
+    pick(2, 3, 2, 'b', 'p3', 0),
+    pick(2, 4, 1, 'a', 'p4', null, { posDraftRank: null, pointsOverBaseline: null, redraftPos: null }),
+  ],
 };
 
 describe('DraftBoard', () => {
-  it('lays picks out by round and slot with position labels and keeper tags', () => {
+  it('lays picks out by round and slot with position labels and a detailed tooltip', () => {
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells).toHaveLength(4);
     expect(cells[0]).toHaveTextContent('Player One');
     expect(cells[0]).toHaveTextContent('RB1');
-    expect(cells[1]).toHaveTextContent('Keeper');
-    expect(cells[0]).toHaveAttribute('title', expect.stringContaining('120.50'));
-    expect(cells[0]).toHaveAttribute('title', expect.stringContaining('+15.25'));
+    expect(cells[2]).toHaveTextContent('DEF');
+    const title = cells[0].getAttribute('title') ?? '';
+    expect(title).toContain('Season points: 120.50');
+    expect(title).toContain('Redraft position: 2 (drafted RB1)');
+    expect(title).toContain('Slot value: +4.0 · Production value: +2.5');
+    expect(title).toContain('Points over baseline: +15.25');
+    expect(title).toContain('PPG: 24.1 over 5 games');
+    expect(title).toContain('Traded to bob in week 3');
+    expect(cells[1].getAttribute('title')).toContain('Keeper');
+  });
+
+  it('marks keepers with a lock and traded players with a swap icon and the new owner', () => {
+    render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    const cells = screen.getAllByTestId('draft-cell');
+    expect(cells[1].querySelector('[aria-label="Keeper"]')).not.toBeNull();
+    expect(cells[1]).not.toHaveTextContent(/keeper/i);
+    expect(cells[0].querySelector('[aria-label="Traded"]')).not.toBeNull();
+    expect(cells[0]).toHaveTextContent('bob');
+    expect(cells[2].querySelector('[aria-label]')).toBeNull();
+  });
+
+  it('colors value mode on a red-yellow-green scale and shows the total value', () => {
+    render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
+    const cells = screen.getAllByTestId('draft-cell');
+    expect(cells[0].style.background).toContain('rgb(47, 158, 95) 11%');
+    expect(cells[1].style.background).toContain('rgb(214, 69, 69)');
+    expect(cells[3].style.background).toBe('rgb(230, 194, 41)');
+    expect(cells[2].style.background).toBe('transparent');
+    expect(cells[0]).toHaveTextContent('+7');
+    expect(cells[1]).toHaveTextContent('-30');
+    expect(cells[0].getAttribute('title')).toContain('Season points to date');
+    expect(cells[0].getAttribute('title')).toContain('Redraft position today');
   });
 
   it('highlights one manager\'s picks when the column header is clicked', () => {
