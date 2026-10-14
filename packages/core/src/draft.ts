@@ -13,7 +13,8 @@ export interface DraftValueInput { seasonPoints: Record<PlayerId, number>; playe
  * Finish rank: per position, the ranking pool is the players with season points > 0, sorted by
  * points desc then id asc, ranked 1..N. Any player at the position with zero or no points is tied
  * at N + 1 (just behind every scorer). Baseline points come from the pool at BASELINE_RANKS[pos]
- * (0 if the pool is shorter).
+ * (0 if the pool is shorter). Positions without a BASELINE_RANKS entry (DB, LB, ...) are treated
+ * like unknown positions: all value fields are null, only seasonPoints is kept.
  */
 export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): DraftPick[] {
   const posOf = (id: PlayerId) => input.players[id]?.position ?? null;
@@ -48,7 +49,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     .map((p) => {
       const pos = posOf(p.playerId);
       const seasonPoints = round2(pts(p.playerId));
-      if (!pos) return { ...p, posDraftRank: null, seasonPoints, posFinishRank: null, value: null, pointsOverBaseline: null };
+      if (!pos || BASELINE_RANKS[pos] === undefined) return { ...p, posDraftRank: null, seasonPoints, posFinishRank: null, value: null, pointsOverBaseline: null };
       const posDraftRank = (seen.get(pos) ?? 0) + 1;
       seen.set(pos, posDraftRank);
       const posFinishRank = finishRank.get(p.playerId) ?? null;

@@ -52,6 +52,12 @@ describe('computeDraftValues', () => {
   const picks = computeDraftValues([pick(1, 'rbA'), pick(2, 'qbA'), pick(3, 'rbB'), pick(4, 'mys'), pick(5, 'qbB'), pick(6, 'rbC')], { seasonPoints, players });
   const by = Object.fromEntries(picks.map((p) => [p.playerId, p]));
 
+  it('leaves value fields null for positions without a baseline', () => {
+    const dbPlayers: PlayerDirectory = { ...players, db1: info('db1', 'DB') };
+    const [p] = computeDraftValues([pick(1, 'db1')], { seasonPoints: { db1: 63.8 }, players: dbPlayers });
+    expect(p).toMatchObject({ seasonPoints: 63.8, posDraftRank: null, posFinishRank: null, value: null, pointsOverBaseline: null });
+  });
+
   it('ranks picks within their position by pick order', () => {
     expect([by.rbA.posDraftRank, by.rbB.posDraftRank, by.rbC.posDraftRank]).toEqual([1, 2, 3]);
     expect([by.qbA.posDraftRank, by.qbB.posDraftRank]).toEqual([1, 2]);
