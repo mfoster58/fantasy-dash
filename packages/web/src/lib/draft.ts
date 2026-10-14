@@ -47,12 +47,15 @@ const RED = '#d64545';
 const YELLOW = '#e6c229';
 const GREEN = '#2f9e5f';
 
-/** Red → yellow → green fill for a value cell. Yellow at 0, fully red/green at ±VALUE_SATURATION. */
+/** Translucency of the value tint, like the position board's 16% position tint but a little stronger. */
+const VALUE_TINT = 30;
+
+/** Muted red → yellow → green tint for a value cell. Yellow at 0, fully red/green at ±VALUE_SATURATION, always mixed over transparent so normal text stays readable. */
 export function valueColor(value: number | null): string {
   if (value === null) return 'transparent';
   const pct = Math.round(Math.min(Math.abs(value), VALUE_SATURATION) / VALUE_SATURATION * 100);
-  if (pct === 0) return YELLOW;
-  return `color-mix(in oklch, ${value > 0 ? GREEN : RED} ${pct}%, ${YELLOW})`;
+  const hue = pct === 0 ? YELLOW : `color-mix(in oklch, ${value > 0 ? GREEN : RED} ${pct}%, ${YELLOW})`;
+  return `color-mix(in srgb, ${hue} ${VALUE_TINT}%, transparent)`;
 }
 
 export function posLabel(pos: string, rank: number | null): string {
