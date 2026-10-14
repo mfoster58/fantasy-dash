@@ -1,9 +1,44 @@
-import type { Draft, DraftPick, PlayerDirectory, PlayerId, UserId } from './types';
+import type { Draft, DraftPick, ExpectedCurve, PlayerDirectory, PlayerId, UserId } from './types';
 import type { SleeperDraft, SleeperDraftPick } from './sleeper/types';
-import { round2 } from './scoring';
+import { round2, round4 } from './scoring';
 
-/** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB, 1 K, 1 DEF. */
-export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12, K: 10, DEF: 10 };
+/** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB, 1 K. Defenses are excluded from value math. */
+export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12, K: 10 };
+
+/** e-folding length of the draft capital curve, in picks. */
+export const CAPITAL_DECAY = 45;
+
+/** Draft capital of a pick slot: 100 at pick 1, ~27 at pick 60, ~3 at pick 160. */
+export function capital(pick: number): number {
+  return 100 * Math.exp(-(pick - 1) / CAPITAL_DECAY);
+}
+
+export function expectedAt(curve: ExpectedCurve, pick: number): number {
+  return curve.a * Math.exp(-(pick - 1) / curve.k);
+}
+
+/**
+ * Least-squares fit of a·exp(−(pick−1)/k) to (pick, contribution). k is searched over the integers
+ * 10..120; a is closed-form at each k. Null when there are fewer than 2 points or every contribution is 0.
+ */
+export function fitExpectedCurve(points: { pick: number; contribution: number }[]): ExpectedCurve | null {
+  if (points.length < 2 || points.every((p) => p.contribution === 0)) return null;
+  let best: { a: number; k: number; err: number } | null = null;
+  for (let k = 10; k <= 120; k++) {
+    let num = 0;
+    let den = 0;
+    for (const p of points) {
+      const x = Math.exp(-(p.pick - 1) / k);
+      num += x * p.contribution;
+      den += x * x;
+    }
+    const a = num / den;
+    let err = 0;
+    for (const p of points) err += (p.contribution - a * Math.exp(-(p.pick - 1) / k)) ** 2;
+    if (!best || err < best.err) best = { a, k, err };
+  }
+  return best ? { a: round4(best.a), k: best.k } : null;
+}
 
 export interface DraftValueInput { seasonPoints: Record<PlayerId, number>; players: PlayerDirectory }
 
@@ -49,7 +84,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     .map((p) => {
       const pos = posOf(p.playerId);
       const seasonPoints = round2(pts(p.playerId));
-      if (!pos || BASELINE_RANKS[pos] === undefined) return { ...p, posDraftRank: null, seasonPoints, posFinishRank: null, value: null, pointsOverBaseline: null };
+      if (!pos || BASELINE_RANKS[pos] === undefined) return { ...p, posDraftRank: null, seasonPoints, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null };
       const posDraftRank = (seen.get(pos) ?? 0) + 1;
       seen.set(pos, posDraftRank);
       const posFinishRank = finishRank.get(p.playerId) ?? null;
@@ -57,7 +92,9 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
         ...p,
         posDraftRank,
         seasonPoints,
-        posFinishRank,
+        redraftPos: posFinishRank,
+        slotValue: null,
+        productionValue: null,
         value: posFinishRank === null ? null : posDraftRank - posFinishRank,
         pointsOverBaseline: round2(seasonPoints - (baselinePoints.get(pos) ?? 0)),
       };
@@ -71,7 +108,7 @@ export function buildDraft(draft: SleeperDraft, rawPicks: SleeperDraftPick[], ro
 
   const basePicks: DraftPick[] = [...rawPicks]
     .sort((a, b) => a.pick_no - b.pick_no)
-    .map((p) => ({ round: p.round, pickNo: p.pick_no, slot: p.draft_slot, userId: pickerOf(p), playerId: p.player_id, isKeeper: p.is_keeper === true, posDraftRank: null, seasonPoints: 0, posFinishRank: null, value: null, pointsOverBaseline: null }));
+    .map((p) => ({ round: p.round, pickNo: p.pick_no, slot: p.draft_slot, userId: pickerOf(p), playerId: p.player_id, isKeeper: p.is_keeper === true, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null }));
   const picks = computeDraftValues(basePicks, value);
 
   let slotOrder: UserId[];
@@ -81,5 +118,5 @@ export function buildDraft(draft: SleeperDraft, rawPicks: SleeperDraftPick[], ro
     slotOrder = picks.filter((p) => p.round === 1).sort((a, b) => a.slot - b.slot).map((p) => p.userId);
   }
 
-  return { draftId: draft.draft_id, type: draft.type, rounds: draft.settings.rounds, slotOrder, picks };
+  return { draftId: draft.draft_id, type: draft.type, rounds: draft.settings.rounds, slotOrder, picks, expectedCurve: null };
 }

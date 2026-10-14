@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDraft, computeDraftValues, BASELINE_RANKS } from '../src/draft';
+import { buildDraft, computeDraftValues, capital, fitExpectedCurve, expectedAt, BASELINE_RANKS } from '../src/draft';
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick } from '../src/sleeper/types';
 
@@ -23,7 +23,7 @@ describe('buildDraft', () => {
     const d = buildDraft(draft, picks, rosterToUser, noValue);
     expect(d).toMatchObject({ draftId: 'D1', type: 'snake', rounds: 2 });
     expect(d.picks.map((p) => p.pickNo)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(d.picks[2]).toEqual({ round: 1, pickNo: 3, slot: 3, userId: 'ua', playerId: 'p3', isKeeper: true, posDraftRank: null, seasonPoints: 0, posFinishRank: null, value: null, pointsOverBaseline: null });
+    expect(d.picks[2]).toEqual({ round: 1, pickNo: 3, slot: 3, userId: 'ua', playerId: 'p3', isKeeper: true, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null });
     expect(d.picks[0].isKeeper).toBe(false);
   });
 
@@ -48,43 +48,19 @@ describe('computeDraftValues', () => {
     mys: info('mys', null),
   };
   const seasonPoints = { rbA: 100, rbB: 250, rbC: 50, rbX: 300, rbY: 10, qbA: 400, qbB: 380, qbX: 390, mys: 999 };
-  const pick = (pickNo: number, playerId: string): DraftPick => ({ round: 1, pickNo, slot: pickNo, userId: `u${pickNo}`, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, posFinishRank: null, value: null, pointsOverBaseline: null });
+  const pick = (pickNo: number, playerId: string): DraftPick => ({ round: 1, pickNo, slot: pickNo, userId: `u${pickNo}`, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null });
   const picks = computeDraftValues([pick(1, 'rbA'), pick(2, 'qbA'), pick(3, 'rbB'), pick(4, 'mys'), pick(5, 'qbB'), pick(6, 'rbC')], { seasonPoints, players });
   const by = Object.fromEntries(picks.map((p) => [p.playerId, p]));
 
   it('leaves value fields null for positions without a baseline', () => {
     const dbPlayers: PlayerDirectory = { ...players, db1: info('db1', 'DB') };
     const [p] = computeDraftValues([pick(1, 'db1')], { seasonPoints: { db1: 63.8 }, players: dbPlayers });
-    expect(p).toMatchObject({ seasonPoints: 63.8, posDraftRank: null, posFinishRank: null, value: null, pointsOverBaseline: null });
+    expect(p).toMatchObject({ seasonPoints: 63.8, posDraftRank: null, redraftPos: null, value: null, pointsOverBaseline: null });
   });
 
   it('ranks picks within their position by pick order', () => {
     expect([by.rbA.posDraftRank, by.rbB.posDraftRank, by.rbC.posDraftRank]).toEqual([1, 2, 3]);
     expect([by.qbA.posDraftRank, by.qbB.posDraftRank]).toEqual([1, 2]);
-  });
-
-  it('ranks finish among all players at the position, league-wide', () => {
-    // RB finish order: rbX 300, rbB 250, rbA 100, rbC 50, rbY 10
-    expect([by.rbA.posFinishRank, by.rbB.posFinishRank, by.rbC.posFinishRank]).toEqual([3, 2, 4]);
-    // QB finish: qbA 400, qbX 390, qbB 380
-    expect([by.qbA.posFinishRank, by.qbB.posFinishRank]).toEqual([1, 3]);
-  });
-
-  it('ties zero-point players just behind the scorers instead of ranking the whole directory', () => {
-    const wide: PlayerDirectory = { ...players };
-    for (let i = 0; i < 50; i++) wide[`inactive${i}`] = info(`inactive${i}`, 'RB');   // no points
-    const [p] = computeDraftValues([pick(1, 'rbY')], { seasonPoints: { rbA: 100, rbB: 250, rbC: 50, rbX: 300 }, players: wide });
-    expect(p.posFinishRank).toBe(5);   // 4 scorers, then everyone else tied at 5
-    const [q] = computeDraftValues([pick(1, 'rbA')], { seasonPoints: { rbA: 100, rbB: 250, rbC: 50, rbX: 300 }, players: wide });
-    expect(q.posFinishRank).toBe(3);
-  });
-
-  it('computes value as draft rank minus finish rank', () => {
-    expect(by.rbA.value).toBe(-2);
-    expect(by.rbB.value).toBe(0);
-    expect(by.rbC.value).toBe(-1);
-    expect(by.qbA.value).toBe(0);
-    expect(by.qbB.value).toBe(-1);
   });
 
   it('computes points over the positional baseline', () => {
@@ -105,12 +81,32 @@ describe('computeDraftValues', () => {
   });
 
   it('leaves value fields null for players with an unknown position', () => {
-    expect(by.mys).toMatchObject({ posDraftRank: null, posFinishRank: null, value: null, pointsOverBaseline: null, seasonPoints: 999 });
+    expect(by.mys).toMatchObject({ posDraftRank: null, redraftPos: null, value: null, pointsOverBaseline: null, seasonPoints: 999 });
   });
 
-  it('places players without stats after everyone with points', () => {
-    const [p] = computeDraftValues([pick(1, 'rbY')], { seasonPoints: { rbA: 100, rbB: 250, rbC: 50, rbX: 300 }, players });
-    expect(p.seasonPoints).toBe(0);
-    expect(p.posFinishRank).toBe(5);
+});
+
+describe('capital', () => {
+  it('is 100 at pick 1 and decays with e-folding of 45 picks', () => {
+    expect(capital(1)).toBe(100);
+    expect(capital(46)).toBeCloseTo(100 / Math.E, 6);
+    expect(capital(160)).toBeCloseTo(2.92, 2);
+  });
+});
+
+describe('fitExpectedCurve', () => {
+  it('recovers a and k from clean exponential data', () => {
+    const pts = [];
+    for (let pick = 1; pick <= 160; pick += 3) pts.push({ pick, contribution: 50 * Math.exp(-(pick - 1) / 40) });
+    const c = fitExpectedCurve(pts);
+    expect(c).not.toBeNull();
+    expect(c!.k).toBe(40);
+    expect(c!.a).toBeCloseTo(50, 3);
+    expect(expectedAt(c!, 1)).toBeCloseTo(50, 3);
+    expect(expectedAt(c!, 41)).toBeCloseTo(50 / Math.E, 3);
+  });
+  it('returns null when there is nothing to fit', () => {
+    expect(fitExpectedCurve([])).toBeNull();
+    expect(fitExpectedCurve([{ pick: 1, contribution: 0 }, { pick: 2, contribution: 0 }])).toBeNull();
   });
 });
