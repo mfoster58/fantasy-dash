@@ -5,3 +5,4 @@ export * from './standings';
 export * from './bracket';
 export * from './sleeper/types';
 export * from './players';
+export * from './season';
