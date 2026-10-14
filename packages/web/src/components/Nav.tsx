@@ -2,8 +2,8 @@ import { NavLink } from 'react-router';
 import { leagueConfig } from '../../../../league.config';
 import ThemeToggle from './ThemeToggle';
 
-/** Tasks 14 and 15 append Standings and Scores here. */
 export const links: { to: string; label: string }[] = [
+  { to: '/scores', label: 'Scores' },
   { to: '/standings', label: 'Standings' },
 ];
 
