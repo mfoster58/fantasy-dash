@@ -9,7 +9,8 @@ interface Props { players: PlayerDirectory; id: PlayerId; size?: number }
  * img is dropped and a position-tinted disc with the position letters remains.
  */
 export default function Headshot({ players, id, size = 28 }: Props) {
-  const [failed, setFailed] = useState(false);
+  const [failedId, setFailedId] = useState<string | null>(null);
+  const failed = failedId === id;
   const pos = playerPos(players, id);
   const color = posColor(pos);
   return (
@@ -32,7 +33,7 @@ export default function Headshot({ players, id, size = 28 }: Props) {
           loading="lazy"
           width={size}
           height={size}
-          onError={() => setFailed(true)}
+          onError={() => setFailedId(id)}
           className={`absolute inset-0 h-full w-full ${pos === 'DEF' ? 'object-contain p-[12%]' : 'object-cover object-top'}`}
         />
       )}
