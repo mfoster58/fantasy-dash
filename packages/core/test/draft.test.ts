@@ -3,7 +3,7 @@ import { buildDraft, computeDraftValues, tradesFromTransactions, capital, fitExp
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
-const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, lastScoredWeek: 0, trades: [] };
+const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, lastScoredWeek: 0, byeAdjust: false, trades: [] };
 const rosterToUser = { 1: 'ua', 2: 'ub', 3: 'uc' };
 const draft: SleeperDraft = {
   draft_id: 'D1', type: 'snake', status: 'complete',
@@ -55,7 +55,7 @@ describe('computeDraftValues', () => {
     seasonPoints, players,
     gamesPlayed: { rbA: 5, qbA: 4, rbB: 5, def1: 5 },
     teamGames: { DET: 5, KC: 5, SF: 4 },
-    lastScoredWeek: 5,
+    lastScoredWeek: 5, byeAdjust: true,
     trades: [
       { playerId: 'rbB', toUserId: 'u9', week: 2, created: 200 },
       { playerId: 'rbB', toUserId: 'u8', week: 4, created: 400 },
@@ -142,6 +142,8 @@ describe('computeDraftValues', () => {
     expect(byY.rbY.pointsOverBaseline).toBe(55);              // 44 * 5/4, baseline 0
     expect(byY.rbY.redraftPos).toBeLessThan(byY.rbC.redraftPos!);
     expect(byY.rbA.pointsOverBaseline).toBe(100);             // DET has played all 5
+    const done = computeDraftValues(drafted, { ...input, seasonPoints: { ...seasonPoints, rbY: 44 }, byeAdjust: false });
+    expect(done.picks.find((p) => p.playerId === 'rbY')!.pointsOverBaseline).toBe(44);   // completed season: no scaling
   });
 
   it('floors contribution at the bench gap instead of zero', () => {
