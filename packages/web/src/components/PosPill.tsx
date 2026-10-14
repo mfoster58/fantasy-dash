@@ -1,11 +1,10 @@
+import type { CSSProperties } from 'react';
 import { posColor } from '../lib/players';
 
+/** Translucent position chip. Unknown positions (FLEX, etc.) fall back to muted. */
 export default function PosPill({ pos, className = '' }: { pos: string; className?: string }) {
   return (
-    <span
-      className={`inline-block w-8 shrink-0 rounded px-1 py-px text-center text-[10px] font-semibold leading-4 text-white ${className}`}
-      style={{ background: posColor(pos) }}
-    >
+    <span className={`pos-pill ${className}`} style={{ '--pos-color': posColor(pos) } as CSSProperties}>
       {pos}
     </span>
   );

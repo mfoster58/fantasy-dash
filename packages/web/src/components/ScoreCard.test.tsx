@@ -36,8 +36,8 @@ describe('ScoreCard', () => {
     expect(screen.getByText('Ricky One')).toBeInTheDocument();
     expect(screen.getByText('Rob Two')).toBeInTheDocument();
     expect(screen.getByText('Final')).toBeInTheDocument();
-    expect(screen.getByText('Won by 21.25')).toBeInTheDocument();
-    expect(screen.getByText('Week 3')).toBeInTheDocument();
+    expect(screen.queryByText(/Won by/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Week 3')).not.toBeInTheDocument();
   });
 
   it('splits performers into two columns without team headers', () => {
@@ -70,7 +70,6 @@ describe('ScoreCard', () => {
     const g = base(side('a', 0, []), side('b', 0, []), null);
     wrap(<ScoreCard game={g} played={false} managers={managers} players={players} to="/x" />);
     expect(screen.getByText('Upcoming')).toBeInTheDocument();
-    expect(screen.getByText('Projected')).toBeInTheDocument();
     expect(screen.getAllByText('100.00')).toHaveLength(2);
     expect(screen.getAllByText('proj')).toHaveLength(2);
     expect(screen.queryByText('Top performers')).not.toBeInTheDocument();

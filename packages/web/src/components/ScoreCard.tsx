@@ -21,7 +21,11 @@ type Align = 'left' | 'right';
 const teamName = (side: GameSide, m?: Manager) => m?.teamName ?? m?.displayName ?? side.userId;
 
 /** 90%+ is a well-set lineup, 75-90% left points on the bench, below 75% a lot. */
-const effColor = (e: number) => (Math.round(e * 100) >= 90 ? 'var(--win)' : Math.round(e * 100) >= 75 ? 'var(--warn)' : 'var(--loss)');
+const effColor = (e: number) => {
+  const pct = Math.round(e * 100);
+  const tone = pct >= 90 ? 'var(--win)' : pct >= 75 ? 'var(--warn)' : 'var(--loss)';
+  return `color-mix(in srgb, ${tone} 65%, transparent)`;
+};
 
 export default function ScoreCard({ game, played, managers, players, to }: Props) {
   const outcome = (side: GameSide): Outcome =>
@@ -60,17 +64,11 @@ export default function ScoreCard({ game, played, managers, players, to }: Props
 }
 
 function Header({ game, played }: { game: Game; played: boolean }) {
-  const status = played ? 'Final' : 'Upcoming';
-  const detail = !played ? 'Projected' : game.winner === null ? 'Tie' : `Won by ${fmtPts(game.margin)}`;
+  const status = !played ? 'Upcoming' : game.winner === null ? 'Tie' : 'Final';
   return (
     <div className="flex items-baseline justify-between gap-3 text-xs">
-      <span className={game.tag ? 'font-semibold text-accent' : 'text-muted'}>
-        {game.tag ? fmtTag(game.tag) : `Week ${game.week}`}
-      </span>
-      <span className="flex items-baseline gap-2">
-        <span className="section-label text-ink">{status}</span>
-        <span className="num text-muted">{detail}</span>
-      </span>
+      <span className="font-semibold text-accent">{game.tag ? fmtTag(game.tag) : null}</span>
+      <span className="section-label text-ink">{status}</span>
     </div>
   );
 }
@@ -88,7 +86,7 @@ function Team({ side, manager, played, outcome, align }: {
     >
       <Avatar avatar={manager?.avatar ?? null} name={manager?.displayName ?? '?'} size={40} />
       <div className="w-full min-w-0 sm:w-auto sm:flex-1">
-        <div className="truncate font-semibold leading-tight">{teamName(side, manager)}</div>
+        <div className="line-clamp-2 font-semibold leading-tight" title={teamName(side, manager)}>{teamName(side, manager)}</div>
         <div className="mt-0.5 truncate text-xs text-muted">
           {manager?.displayName} · <span className="num">{fmtRecord(side.recordBefore)}</span>
         </div>
@@ -126,12 +124,12 @@ function Performers({ side, players }: { side: GameSide; players: PlayerDirector
   return (
     <ul className="min-w-0 space-y-2">
       {top.map((t) => (
-        <li key={t.playerId} className="flex items-center gap-2.5">
+        <li key={t.playerId} className="grid grid-cols-[28px_minmax(0,1fr)_44px_32px_auto] items-center gap-x-2.5">
           <Headshot players={players} id={t.playerId} size={28} />
-          <span className="min-w-0 truncate text-[13px] font-medium">{playerName(players, t.playerId)}</span>
-          <PosPill pos={playerPos(players, t.playerId)} />
-          <span className="shrink-0 text-xs text-muted">{playerTeam(players, t.playerId) || 'FA'}</span>
-          <span className="num ml-auto shrink-0 pl-2 text-sm">{fmtPts(t.points)}</span>
+          <span className="truncate text-[13px] font-medium">{playerName(players, t.playerId)}</span>
+          <span className="flex justify-center"><PosPill pos={playerPos(players, t.playerId)} /></span>
+          <span className="text-xs text-muted">{playerTeam(players, t.playerId) || 'FA'}</span>
+          <span className="num pl-1 text-right text-sm">{fmtPts(t.points)}</span>
         </li>
       ))}
     </ul>

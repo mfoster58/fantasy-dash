@@ -113,4 +113,22 @@ html, body {
     letter-spacing: 0.08em;
     color: var(--muted);
   }
+  /* Position tag: tinted, translucent chip. Set --pos-color inline. */
+  .pos-pill {
+    --pos-color: var(--muted);
+    display: inline-block;
+    flex-shrink: 0;
+    min-width: 2.25rem;
+    padding: 0 0.3rem;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0.03em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--pos-color);
+    background: color-mix(in srgb, var(--pos-color) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pos-color) 35%, transparent);
+  }
 }
