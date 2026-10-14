@@ -3,12 +3,12 @@ import type {
   SlotEntry, UserId, Week, WLT,
 } from './types';
 import type {
-  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperRoster, SleeperUser, StatMap,
+  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperRoster, SleeperTransaction, SleeperUser, StatMap,
 } from './sleeper/types';
 import { round2, round4, scoreStats } from './scoring';
 import { optimalLineup, optimalSwaps, type LineupPlayer } from './lineup';
 import { computeHonors, resolveBracket, tagForGame } from './bracket';
-import { buildDraft } from './draft';
+import { buildDraft, tradesFromTransactions } from './draft';
 import { computeStandings, isRegularSeason } from './standings';
 
 export interface RawSeasonInput {
@@ -26,6 +26,12 @@ export interface RawSeasonInput {
   players: PlayerDirectory;
   /** season points under league scoring for every NFL player with stats, weeks 1..lastScoredWeek */
   playerSeasonPoints: Record<PlayerId, number>;
+  /** scored weeks in which the player had gp >= 1 */
+  playerGames: Record<PlayerId, number>;
+  /** scored weeks in which any player on the NFL team had gp >= 1 */
+  teamGames: Record<string, number>;
+  /** every transaction for weeks 1..maxWeek; only completed trades are used */
+  trades: SleeperTransaction[];
   draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
 }
 
@@ -144,7 +150,17 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
 
   const standings = computeStandings(weeks, Object.keys(managers), playoffWeekStart);
   const honors = computeHonors(winners, consolation, standings, status);
-  const draft = input.draft ? buildDraft(input.draft.draft, input.draft.picks, rosterToUser, { seasonPoints: input.playerSeasonPoints, players }) : null;
+  const draft = input.draft
+    ? buildDraft(input.draft.draft, input.draft.picks, rosterToUser, {
+        seasonPoints: input.playerSeasonPoints,
+        players,
+        gamesPlayed: input.playerGames,
+        teamGames: input.teamGames,
+        lastScoredWeek,
+        totalWeeks: maxWeek,
+        trades: tradesFromTransactions(input.trades, rosterToUser),
+      })
+    : null;
 
   return {
     year,
