@@ -12,7 +12,7 @@ const ORACLE = {
 function load(year: number): RawSeasonInput {
   const file = path.join(__dirname, 'fixtures', `playoffs-${year}.json`);
   const raw = JSON.parse(readFileSync(file, 'utf8'));
-  return { ...raw, projections: {}, stats: {}, players: {}, draft: null };
+  return { ...raw, projections: {}, stats: {}, players: {}, playerSeasonPoints: {}, draft: null };
 }
 
 describe('bracket oracle (real seasons)', () => {

@@ -1,5 +1,5 @@
 import type {
-  BracketGame, Game, GameSide, Manager, PlayerDirectory, PlayerLine, Season, SeasonStatus,
+  BracketGame, Game, GameSide, Manager, PlayerDirectory, PlayerId, PlayerLine, Season, SeasonStatus,
   SlotEntry, UserId, Week, WLT,
 } from './types';
 import type {
@@ -24,6 +24,8 @@ export interface RawSeasonInput {
   /** week -> player_id -> actual stat line */
   stats: Record<number, StatMap>;
   players: PlayerDirectory;
+  /** season points under league scoring for every NFL player with stats, weeks 1..lastScoredWeek */
+  playerSeasonPoints: Record<PlayerId, number>;
   draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
 }
 
@@ -142,7 +144,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
 
   const standings = computeStandings(weeks, Object.keys(managers), playoffWeekStart);
   const honors = computeHonors(winners, consolation, standings, status);
-  const draft = input.draft ? buildDraft(input.draft.draft, input.draft.picks, rosterToUser) : null;
+  const draft = input.draft ? buildDraft(input.draft.draft, input.draft.picks, rosterToUser, { seasonPoints: input.playerSeasonPoints, players }) : null;
 
   return {
     year,

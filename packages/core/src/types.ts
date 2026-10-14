@@ -135,6 +135,11 @@ export interface DraftPick {
   userId: UserId;
   playerId: PlayerId;
   isKeeper: boolean;
+  posDraftRank: number | null;
+  seasonPoints: number;
+  posFinishRank: number | null;
+  value: number | null;
+  pointsOverBaseline: number | null;
 }
 
 export interface Draft {
