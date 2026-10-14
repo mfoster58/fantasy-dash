@@ -5,6 +5,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { SleeperClient } from '../../src/sleeper/client';
 
 const SEASONS: Record<number, string> = {
@@ -14,7 +15,7 @@ const SEASONS: Record<number, string> = {
 };
 
 const client = new SleeperClient();
-const dir = path.dirname(new URL(import.meta.url).pathname);
+const dir = path.dirname(fileURLToPath(import.meta.url));
 
 for (const [year, id] of Object.entries(SEASONS)) {
   const league = await client.getLeague(id);

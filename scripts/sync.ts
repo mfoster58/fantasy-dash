@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rename, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds,
   SeasonSchema, HistorySchema, PlayerDirectorySchema,
@@ -9,7 +10,7 @@ import {
 } from '@fantasy-dash/core';
 import { leagueConfig } from '../league.config';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_DIR = path.join(ROOT, 'data');
 const dryRun = process.argv.includes('--dry-run');
 const log = (msg: string) => console.log(`[sync] ${msg}`);
@@ -39,8 +40,19 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   const [users, rosters, winnersBracket, losersBracket] = await Promise.all([
     client.getUsers(id), client.getRosters(id), client.getWinnersBracket(id), client.getLosersBracket(id),
   ]);
+  const season = league.season;
+  const missing = (endpoint: string) =>
+    new Error(`Season ${season} (${id}): ${endpoint} response was missing`);
+  if (!users) throw missing('users');
+  if (!rosters) throw missing('rosters');
+  if (!winnersBracket) throw missing('winners_bracket');
+  if (!losersBracket) throw missing('losers_bracket');
+  if (users.length === 0) throw new Error(`Season ${season} (${id}): users response was empty`);
+  if (rosters.length === 0) throw new Error(`Season ${season} (${id}): rosters response was empty`);
+
   const playoffWeekStart = league.settings.playoff_week_start;
-  const rounds = (winnersBracket ?? []).reduce((m, g) => Math.max(m, g.r), 0);
+  const lastScoredLeg = league.status === 'complete' ? Infinity : league.settings.last_scored_leg ?? 0;
+  const rounds = winnersBracket.reduce((m, g) => Math.max(m, g.r), 0);
   const maxWeek = rounds > 0 ? playoffWeekStart + rounds - 1 : playoffWeekStart - 1;
 
   const matchups: Record<number, SleeperMatchup[]> = {};
@@ -54,6 +66,10 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
       client.getProjections(league.season, week),
       client.getStats(league.season, week),
     ]);
+    if (week <= lastScoredLeg) {
+      if (!proj) log(`WARNING: ${season} week ${week}: projections response was missing`);
+      if (!st) log(`WARNING: ${season} week ${week}: stats response was missing`);
+    }
     projections[week] = pickIds(proj ?? {}, rostered);
     stats[week] = pickIds(st ?? {}, rostered);
     log(`  ${league.season} week ${week}: ${weekMatchups.length} roster entries, ${rostered.size} players`);
@@ -61,16 +77,39 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
 
   const input: RawSeasonInput = {
     league,
-    users: users ?? [],
-    rosters: rosters ?? [],
+    users,
+    rosters,
     matchups,
-    winnersBracket: winnersBracket ?? [],
-    losersBracket: losersBracket ?? [],
+    winnersBracket,
+    losersBracket,
     projections,
     stats,
     players,
   };
-  return buildSeason(input, leagueConfig.managerNames);
+  const built = buildSeason(input, leagueConfig.managerNames);
+  assertSeasonComplete(built, league);
+  return built;
+}
+
+/** Throw if a built season is missing games or honors it must have. */
+function assertSeasonComplete(season: Season, league: SleeperLeague): void {
+  const expectedGames = Math.floor(league.total_rosters / 2);
+  for (const wk of season.weeks) {
+    if (!wk.played || wk.isPlayoff) continue;
+    if (wk.games.length < expectedGames) {
+      throw new Error(
+        `Season ${season.year} (${league.league_id}): matchups for week ${wk.week} produced ` +
+        `${wk.games.length} games, expected ${expectedGames}`,
+      );
+    }
+  }
+  if (season.status === 'complete') {
+    for (const key of ['champion', 'runnerUp', 'lastPlace'] as const) {
+      if (season.honors[key] === null) {
+        throw new Error(`Season ${season.year} (${league.league_id}): complete season has no ${key} (check brackets)`);
+      }
+    }
+  }
 }
 
 async function writeAll(dir: string, seasons: Season[], players: PlayerDirectory, history: ReturnType<typeof buildHistory>) {
