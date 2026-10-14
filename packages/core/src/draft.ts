@@ -7,12 +7,19 @@ export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, 
 
 export interface DraftValueInput { seasonPoints: Record<PlayerId, number>; players: PlayerDirectory }
 
-/** Fill posDraftRank, seasonPoints, posFinishRank, value and pointsOverBaseline. Pure. */
+/**
+ * Fill posDraftRank, seasonPoints, posFinishRank, value and pointsOverBaseline. Pure.
+ *
+ * Finish rank: per position, the ranking pool is the players with season points > 0, sorted by
+ * points desc then id asc, ranked 1..N. Any player at the position with zero or no points is tied
+ * at N + 1 (just behind every scorer). Baseline points come from the pool at BASELINE_RANKS[pos]
+ * (0 if the pool is shorter).
+ */
 export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): DraftPick[] {
   const posOf = (id: PlayerId) => input.players[id]?.position ?? null;
   const pts = (id: PlayerId) => input.seasonPoints[id] ?? 0;
 
-  // Finish rank: every player in the directory at the position, sorted by points desc, id asc.
+  // Finish rank: scorers (points > 0) ranked 1..N; everyone else at the position ties at N + 1.
   const finishRank = new Map<PlayerId, number>();
   const baselinePoints = new Map<string, number>();
   const byPos = new Map<string, PlayerId[]>();
@@ -23,9 +30,12 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     list.push(id);
     byPos.set(pos, list);
   }
-  for (const [pos, ids] of byPos) {
+  for (const [pos, all] of byPos) {
+    const ids = all.filter((id) => pts(id) > 0);
     ids.sort((a, b) => pts(b) - pts(a) || (a < b ? -1 : a > b ? 1 : 0));
+    const scored = new Set(ids);
     ids.forEach((id, i) => finishRank.set(id, i + 1));
+    for (const id of all) if (!scored.has(id)) finishRank.set(id, ids.length + 1);
     const baseRank = BASELINE_RANKS[pos];
     const baseId = baseRank ? ids[baseRank - 1] : undefined;
     baselinePoints.set(pos, baseId ? pts(baseId) : 0);

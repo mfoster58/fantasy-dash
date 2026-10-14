@@ -64,6 +64,15 @@ describe('computeDraftValues', () => {
     expect([by.qbA.posFinishRank, by.qbB.posFinishRank]).toEqual([1, 3]);
   });
 
+  it('ties zero-point players just behind the scorers instead of ranking the whole directory', () => {
+    const wide: PlayerDirectory = { ...players };
+    for (let i = 0; i < 50; i++) wide[`inactive${i}`] = info(`inactive${i}`, 'RB');   // no points
+    const [p] = computeDraftValues([pick(1, 'rbY')], { seasonPoints: { rbA: 100, rbB: 250, rbC: 50, rbX: 300 }, players: wide });
+    expect(p.posFinishRank).toBe(5);   // 4 scorers, then everyone else tied at 5
+    const [q] = computeDraftValues([pick(1, 'rbA')], { seasonPoints: { rbA: 100, rbB: 250, rbC: 50, rbX: 300 }, players: wide });
+    expect(q.posFinishRank).toBe(3);
+  });
+
   it('computes value as draft rank minus finish rank', () => {
     expect(by.rbA.value).toBe(-2);
     expect(by.rbB.value).toBe(0);
