@@ -40,6 +40,18 @@ describe('ScoreCard', () => {
     expect(screen.getByText('Week 3')).toBeInTheDocument();
   });
 
+  it('heads the two performer columns with the team names', () => {
+    const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
+    wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
+    const heading = screen.getByText('Top performers');
+    const columns = heading.nextElementSibling!.children;
+    expect(columns).toHaveLength(2);
+    expect(columns[0].firstElementChild).toHaveTextContent('Team A');
+    expect(columns[0]).toHaveTextContent('Quincy One');
+    expect(columns[1].firstElementChild).toHaveTextContent('Team B');
+    expect(columns[1]).toHaveTextContent('Rob Two');
+  });
+
   it('labels a tie', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 100, [['q2', 30]]), null);
     wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
@@ -51,7 +63,9 @@ describe('ScoreCard', () => {
     wrap(<ScoreCard game={g} played={false} managers={managers} players={players} to="/x" />);
     expect(screen.getByText('Upcoming')).toBeInTheDocument();
     expect(screen.getByText('Projected')).toBeInTheDocument();
-    expect(screen.getAllByText(/100\.00 proj/)).toHaveLength(2);
+    expect(screen.getAllByText('100.00')).toHaveLength(2);
+    expect(screen.getAllByText('proj')).toHaveLength(2);
+    expect(screen.queryByText('Top performers')).not.toBeInTheDocument();
     expect(screen.queryByText('Tie')).not.toBeInTheDocument();
   });
 

@@ -37,7 +37,7 @@ export default function ScoresPage() {
                 : 'No games scheduled.'}
             </p>
           ) : (
-            <div className="grid gap-3">
+            <div className="grid gap-4 lg:grid-cols-2">
               {wk.games.map((g) => (
                 <ScoreCard
                   key={g.id}
