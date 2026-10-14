@@ -47,7 +47,7 @@ describe('SleeperClient', () => {
   });
 
   it('uses the stats and projections paths', async () => {
-    const fetchFn = vi.fn(async () => response(200, {}));
+    const fetchFn = vi.fn(async (_url: string | URL | Request) => response(200, {}));
     const client = new SleeperClient({ fetchFn, minIntervalMs: 0 });
     await client.getProjections('2025', 3);
     await client.getStats('2025', 3);
