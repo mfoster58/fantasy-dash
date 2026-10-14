@@ -89,6 +89,7 @@ function TeamPanel({ side, manager, players, played, outcome, align }: {
       </div>
       {top.length > 0 && (
         <div className="mt-4 border-t border-line pt-3">
+          <div className={`max-w-[420px] ${r ? 'md:ml-auto' : ''}`}>
           <h3 className={`section-label mb-2 ${r ? 'md:text-right' : ''}`}>Top performers</h3>
           <ul className="space-y-2">
             {top.map((t) => {
@@ -108,6 +109,7 @@ function TeamPanel({ side, manager, players, played, outcome, align }: {
               );
             })}
           </ul>
+          </div>
         </div>
       )}
     </div>
