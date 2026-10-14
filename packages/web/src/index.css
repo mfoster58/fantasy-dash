@@ -1,0 +1,94 @@
+/*
+ * Design direction: "night game under stadium lights". A cool blue-slate field
+ * rather than tinted black, one glacier-blue accent (the league is the Huskies,
+ * and the accent must not collide with the green/red win-loss pair or any
+ * position color). Instrument Sans for names, IBM Plex Mono for every number.
+ * Token names are a contract with later tasks: change values, never names.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #11161e;
+  --surface: #171e28;
+  --surface-2: #202937;
+  --line: #2a3443;
+  --ink: #e3e8ef;
+  --muted: #8b97a8;
+  --accent: #7cc7e8;
+  --win: #5cc48a;
+  --loss: #e46a6f;
+  --pos-QB: #e45d5d;
+  --pos-RB: #43b97c;
+  --pos-WR: #5a8ff0;
+  --pos-TE: #e6953f;
+  --pos-K: #a174ec;
+  --pos-DEF: #7f8a98;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #e9edf2;
+  --line: #d6dce5;
+  --ink: #131a24;
+  --muted: #5d6a7c;
+  --accent: #1a6f93;
+  --win: #1d8a52;
+  --loss: #c13d47;
+  --pos-QB: #cc3f3f;
+  --pos-RB: #23935a;
+  --pos-WR: #3069d1;
+  --pos-TE: #c5741d;
+  --pos-K: #7f4fd1;
+  --pos-DEF: #66717f;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-win: var(--win);
+  --color-loss: var(--loss);
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 0;
+  letter-spacing: -0.01em;
+}

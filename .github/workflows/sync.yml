@@ -1,0 +1,78 @@
+name: Sync and deploy
+
+on:
+  schedule:
+    # Tuesdays 11:00 UTC = 06:00 EST / 07:00 EDT, after Monday night stat corrections.
+    - cron: '0 11 * * 2'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: sync-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Sync Sleeper data
+        if: github.event_name != 'push'
+        run: pnpm sync
+
+      - name: Test
+        run: pnpm test
+
+      - name: Commit refreshed data
+        if: github.event_name != 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "No data changes"
+          else
+            git commit -m "chore(data): sync $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Build site
+        env:
+          VITE_BASE: /fantasy-dash/
+        run: |
+          pnpm build
+          cp packages/web/dist/index.html packages/web/dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
