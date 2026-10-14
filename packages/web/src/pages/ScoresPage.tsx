@@ -31,7 +31,11 @@ export default function ScoresPage() {
             </h2>
           )}
           {wk.games.length === 0 ? (
-            <p className="text-sm text-muted">No games scheduled.</p>
+            <p className="text-sm text-muted">
+              {wk.isPlayoff && !wk.played
+                ? 'Playoff matchups are set after the regular season.'
+                : 'No games scheduled.'}
+            </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {wk.games.map((g) => (

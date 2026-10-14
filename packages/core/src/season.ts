@@ -1,5 +1,5 @@
 import type {
-  Game, GameSide, Manager, PlayerDirectory, PlayerLine, Season, SeasonStatus,
+  BracketGame, Game, GameSide, Manager, PlayerDirectory, PlayerLine, Season, SeasonStatus,
   SlotEntry, UserId, Week, WLT,
 } from './types';
 import type {
@@ -104,12 +104,17 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
   for (let week = 1; week <= maxWeek; week++) {
     const played = week <= lastScoredWeek;
     const isPlayoff = !isRegularSeason(week, playoffWeekStart);
-    const games = buildGames(week, input.matchups[week] ?? [], {
+    let games = buildGames(week, input.matchups[week] ?? [], {
       year, played, rosterSlots, scoring, players, rosterToUser,
       projections: input.projections[week] ?? {},
       stats: input.stats[week] ?? {},
       tag: (a, b) => tagForGame(allBracketGames, week, a, b),
     });
+    if (isPlayoff && !played) {
+      // Sleeper fills unplayed playoff weeks with default pairings that are not
+      // bracket games. Keep only games whose sides match a known bracket pairing.
+      games = games.filter((g) => isKnownBracketGame(allBracketGames, week, g));
+    }
     let highScore: UserId | null = null;
     if (played && !isPlayoff) {
       const top = games.flatMap((g) => g.sides)
@@ -148,6 +153,13 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     standings,
     honors,
   };
+}
+
+function isKnownBracketGame(bracketGames: BracketGame[], week: number, game: Game): boolean {
+  const [a, b] = game.sides.map((s) => s.userId);
+  return bracketGames.some((bg) =>
+    bg.week === week && bg.home !== null && bg.away !== null &&
+    ((bg.home === a && bg.away === b) || (bg.home === b && bg.away === a)));
 }
 
 interface GameContext {

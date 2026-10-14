@@ -81,4 +81,32 @@ describe('buildSeason (mini league)', () => {
     expect(s.weeks[2].games[0].sides[0].optimalSwaps).toEqual([]);
     expect(s.standings.find((r) => r.userId === 'uc')!.w).toBe(2);
   });
+
+  describe('unplayed playoff weeks', () => {
+    const playoffInput = (bracket: { r: number; m: number; t1?: number | null; t2?: number | null }[]) => {
+      const input = miniInput();
+      input.league.status = 'in_season';
+      input.league.settings.last_scored_leg = 2;
+      input.league.settings.playoff_week_start = 3;
+      input.winnersBracket = bracket;
+      // Week 3 pairs (ua, ub) and (uc, ud); only the first is a bracket game.
+      const matchupIds: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 2 };
+      input.matchups[3] = input.matchups[3].map((m) => ({ ...m, matchup_id: matchupIds[m.roster_id] }));
+      return input;
+    };
+
+    it('keeps only games that match a known bracket pairing', () => {
+      const s = buildSeason(playoffInput([{ r: 1, m: 1, t1: 1, t2: 2 }]));
+      const week3 = s.weeks[2];
+      expect(week3).toMatchObject({ week: 3, isPlayoff: true, played: false });
+      expect(week3.games).toHaveLength(1);
+      expect(week3.games[0].sides.map((x) => x.userId)).toEqual(['ua', 'ub']);
+      expect(week3.games[0].tag).toBe('QF');
+    });
+
+    it('drops every game before the bracket pairing is known', () => {
+      const s = buildSeason(playoffInput([{ r: 1, m: 1 }]));
+      expect(s.weeks[2].games).toEqual([]);
+    });
+  });
 });
