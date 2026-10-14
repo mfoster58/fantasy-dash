@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { History, PlayerDirectory, Season } from './types';
 
 const WLT = z.object({ w: z.number(), l: z.number(), t: z.number() });
 const PlayoffTag = z.enum(['QF', 'SF', 'Final', '3rd', '5th', 'Cons-R1', 'Toilet Bowl', 'Cons-7th']);
@@ -114,6 +115,19 @@ export const PlayerDirectorySchema = z.record(z.object({
   yearsExp: z.number().nullable(),
 }));
 
+const AllTimeRow = z.object({
+  userId: z.string(),
+  rank: z.number(),
+  seasons: z.number(),
+  w: z.number(), l: z.number(), t: z.number(), winPct: z.number(),
+  pf: z.number(), pa: z.number(), ppg: z.number(), maxPoints: z.number(), efficiency: z.number(),
+  streak: z.string(),
+  allPlay: WLT.extend({ pct: z.number() }),
+  weeklyHighs: z.number(),
+  titles: z.number(), runnerUps: z.number(), thirds: z.number(),
+  playoffApps: z.number(), playoffWins: z.number(), toiletBowls: z.number(),
+});
+
 export const HistorySchema = z.object({
   seasons: z.array(z.object({
     year: z.number(),
@@ -133,6 +147,11 @@ export const HistorySchema = z.object({
     aWins: z.number(),
     bWins: z.number(),
     ties: z.number(),
+    streak: z.object({ holder: z.string().nullable(), length: z.number() }),
+    totalPoints: z.object({ a: z.number(), b: z.number() }),
+    biggestWin: z.object({ gameId: z.string(), winner: z.string(), margin: z.number() }).nullable(),
+    closest: z.object({ gameId: z.string(), margin: z.number() }).nullable(),
+    avgMargin: z.number(),
     games: z.array(z.object({
       gameId: z.string(),
       year: z.number(),
@@ -142,4 +161,10 @@ export const HistorySchema = z.object({
       bPoints: z.number(),
     })),
   })),
+  allTime: z.array(AllTimeRow),
 });
+
+// Compile-time drift guards: a field added to a type without a schema update fails typecheck.
+export const _seasonSchemaCheck = SeasonSchema satisfies z.ZodType<Season>;
+export const _historySchemaCheck = HistorySchema satisfies z.ZodType<History>;
+export const _playersSchemaCheck = PlayerDirectorySchema satisfies z.ZodType<PlayerDirectory>;

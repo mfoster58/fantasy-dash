@@ -84,10 +84,10 @@ interface Season {
   managers: Record<userId, { userId, displayName, teamName, avatar, rosterId }>;
   weeks: Week[];                 // index = week number - 1
   brackets: { winners: BracketGame[]; consolation: BracketGame[] };
-  draft: Draft;
+  draft: Draft;                  // arrives in Phase 4
   standings: StandingRow[];      // regular season, sorted
   honors: { champion, runnerUp, third, pointsTitle, lastPlace }; // userIds, null while in season
-  records: SeasonRecords;        // most points, best PPG, best record, best all-play, most weekly highs
+  records: SeasonRecords;        // arrives in Phase 3: most points, best PPG, best record, best all-play, most weekly highs
 }
 
 interface Week {
@@ -114,8 +114,7 @@ interface GameSide {
   efficiency: number;            // points / ceiling
   starters: SlotEntry[];         // in rosterSlots order
   bench: PlayerLine[];
-  optimalSwaps: { out: playerId, in: playerId, gain: number }[];
-  top3: playerId[];              // per side; the game's top 3 is derived across both sides
+  optimalSwaps: { out: playerId, in: playerId, gain: number }[];   // the game top 3 is derived in the web app
   recordBefore: { w, l, t };     // regular season record entering this week
   seasonPpg: number;             // regular season PPG for the season (through lastScoredWeek)
 }
@@ -162,19 +161,38 @@ interface Pick {
 
 ```ts
 interface History {
-  seasons: { year; champion; runnerUp; third; pointsTitle; lastPlace }[];
-  allTime: AllTimeRow[];         // standings columns + titles, second, third, playoffApps, playoffWins, toiletBowls
-  managers: Record<userId, { displayName; avatar; seasons: number[] }>;
-  h2h: Record<`${userIdA}|${userIdB}`, H2HSummary>;   // A < B lexicographically
+  seasons: HistorySeason[];      // oldest first
+  managers: Record<userId, { displayName: string; avatar: string | null; seasons: number[] }>;
+  h2h: Record<string, H2HSeries>;   // key `${userIdA}|${userIdB}`, A < B lexicographically
+  allTime: AllTimeRow[];
 }
-interface H2HSummary {
-  record: { aWins; bWins; ties };
-  streak: { holder: userId | null; length: number };
-  totalPoints: { a; b };
-  biggestWin: { gameId; winner; margin };
-  closest: { gameId; margin };
+interface HistorySeason {
+  year: number;
+  leagueId: string;
+  status: 'complete' | 'in_season';
+  lastScoredWeek: number;
+  playoffWeekStart: number;
+}
+interface H2HSeries {
+  a: userId; b: userId;
+  aWins: number; bWins: number; ties: number;
+  streak: { holder: userId | null; length: number };   // consecutive wins by the same manager at the end
+  totalPoints: { a: number; b: number };
+  biggestWin: { gameId: string; winner: userId; margin: number } | null;   // null when no game decided
+  closest: { gameId: string; margin: number } | null;  // null when series empty; a tie is margin 0
   avgMargin: number;
-  games: { gameId; year; week; tag; aPoints; bPoints }[];   // newest first
+  games: H2HGame[];              // newest first
+}
+interface H2HGame { gameId: string; year: number; week: number; tag: PlayoffTag | null; aPoints: number; bPoints: number }
+interface AllTimeRow {
+  userId: userId; rank: number; seasons: number;
+  w: number; l: number; t: number; winPct: number;
+  pf: number; pa: number; ppg: number; maxPoints: number; efficiency: number;
+  streak: string;
+  allPlay: AllPlay;
+  weeklyHighs: number;
+  titles: number; runnerUps: number; thirds: number;
+  playoffApps: number; playoffWins: number; toiletBowls: number;
 }
 ```
 

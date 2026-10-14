@@ -17,6 +17,11 @@ const series: H2HSeries = {
     { gameId: '2024-2-4', year: 2024, week: 2, tag: null, aPoints: 120, bPoints: 101 },
     { gameId: '2024-1-6', year: 2024, week: 1, tag: null, aPoints: 130, bPoints: 99 },
   ],
+  streak: { holder: null, length: 0 },
+  totalPoints: { a: 0, b: 0 },
+  biggestWin: null,
+  closest: null,
+  avgMargin: 0,
 };
 
 const wrap = (s: H2HSeries | undefined) =>
@@ -33,7 +38,8 @@ describe('HeadToHead', () => {
 
   it('lists at most three prior meetings, newest first, as links', () => {
     wrap(series);
-    const links = screen.getAllByRole('link');
+    expect(screen.getByRole('link', { name: 'Full series →' })).toHaveAttribute('href', `/h2h?a=${bob.userId}&b=${alice.userId}`);
+    const links = screen.getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/scores/'));
     expect(links).toHaveLength(3);
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/scores/2025/4/5', '/scores/2024/15/1', '/scores/2024/2/4']);
     expect(links[1]).toHaveTextContent('Semifinal');
@@ -44,6 +50,7 @@ describe('HeadToHead', () => {
     wrap(undefined);
     expect(screen.getByTestId('h2h-record')).toHaveTextContent(/^0\s*–\s*0$/);
     expect(screen.getByText('First meeting')).toBeInTheDocument();
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
+    expect(screen.queryAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/scores/'))).toHaveLength(0);
+    expect(screen.getByRole('link', { name: 'Full series →' })).toBeInTheDocument();
   });
 });

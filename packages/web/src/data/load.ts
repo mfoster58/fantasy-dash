@@ -21,3 +21,10 @@ export function loadSeason(year: number): Promise<Season> {
   }
   return pending;
 }
+
+let allSeasons: Promise<Season[]> | null = null;
+/** Every season, oldest first. Used by pages that span seasons (head-to-head). */
+export function loadAllSeasons(): Promise<Season[]> {
+  if (!allSeasons) allSeasons = Promise.all(history.seasons.map((s) => loadSeason(s.year)));
+  return allSeasons;
+}

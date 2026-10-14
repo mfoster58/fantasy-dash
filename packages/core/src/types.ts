@@ -163,6 +163,14 @@ export interface H2HSeries {
   aWins: number;
   bWins: number;
   ties: number;
+  /** consecutive wins by the same manager at the end of the series */
+  streak: { holder: UserId | null; length: number };
+  totalPoints: { a: number; b: number };
+  /** null when no game has been decided */
+  biggestWin: { gameId: string; winner: UserId; margin: number } | null;
+  /** null when the series is empty; a tie is margin 0 */
+  closest: { gameId: string; margin: number } | null;
+  avgMargin: number;
   /** newest first */
   games: H2HGame[];
 }
@@ -175,11 +183,25 @@ export interface HistorySeason {
   playoffWeekStart: number;
 }
 
+export interface AllTimeRow {
+  userId: UserId;
+  rank: number;
+  seasons: number;
+  w: number; l: number; t: number; winPct: number;
+  pf: number; pa: number; ppg: number; maxPoints: number; efficiency: number;
+  streak: string;
+  allPlay: AllPlay;
+  weeklyHighs: number;
+  titles: number; runnerUps: number; thirds: number;
+  playoffApps: number; playoffWins: number; toiletBowls: number;
+}
+
 export interface History {
   /** oldest first */
   seasons: HistorySeason[];
   managers: Record<UserId, { displayName: string; avatar: string | null; seasons: number[] }>;
   h2h: Record<string, H2HSeries>;
+  allTime: AllTimeRow[];
 }
 
 /** Stable key for a pair of managers: lexicographically smaller id first. */

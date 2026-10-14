@@ -1,6 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { render as rtlRender, screen } from '@testing-library/react';
 import type { Manager, StandingRow } from '@fantasy-dash/core';
 import StandingsTable from './StandingsTable';
+
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 const row = (userId: string, rank: number, w: number, l: number, extra: Partial<StandingRow> = {}): StandingRow => ({
   userId, rank, w, l, t: 0, winPct: w / (w + l), pf: 1000 + rank, pa: 900, ppg: 100.5, maxPoints: 1200,

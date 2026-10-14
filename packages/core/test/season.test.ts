@@ -3,6 +3,22 @@ import { buildSeason } from '../src/season';
 import { miniInput } from './fixtures/mini';
 
 describe('buildSeason (mini league)', () => {
+  it('blanks provisional bracket seeds until the regular season is fully scored', () => {
+    const input = miniInput();
+    input.league.status = 'in_season';
+    input.league.settings.last_scored_leg = 1;
+    input.league.settings.playoff_week_start = 3;
+    input.winnersBracket = [{ r: 1, m: 1, t1: 1, t2: 2, p: 1 }];
+    input.losersBracket = [{ r: 1, m: 1, t1: 3, t2: 4, p: 1 }];
+    const s = buildSeason(input);
+    expect(s.brackets.winners).toHaveLength(1);
+    expect(s.brackets.winners[0]).toMatchObject({ round: 1, tag: 'Final', home: null, away: null, advanced: null, gameId: null });
+    expect(s.brackets.consolation[0]).toMatchObject({ tag: 'Toilet Bowl', home: null, away: null });
+
+    input.league.settings.last_scored_leg = 2;
+    const set = buildSeason(input);
+    expect(set.brackets.winners[0]).toMatchObject({ home: 'ua', away: 'ub' });
+  });
   const season = buildSeason(miniInput());
   const wk = (n: number) => season.weeks[n - 1];
   const sideOf = (week: number, userId: string) =>

@@ -152,10 +152,19 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     scoring,
     managers,
     weeks,
-    brackets: { winners, consolation },
+    brackets: bracketSet
+      ? { winners, consolation }
+      : { winners: blankBracket(winners), consolation: blankBracket(consolation) },
     standings,
     honors,
   };
+}
+
+/** Strip provisional seeds/results (Sleeper pre-fills round 1 from standings). */
+function blankBracket(games: BracketGame[]): BracketGame[] {
+  return games.map((g) => ({
+    ...g, home: null, away: null, homePoints: null, awayPoints: null, advanced: null, gameId: null,
+  }));
 }
 
 function isKnownBracketGame(bracketGames: BracketGame[], week: number, game: Game): boolean {

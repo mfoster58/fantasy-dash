@@ -144,6 +144,24 @@
    "aWins": 6,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 4
+   },
+   "totalPoints": {
+    "a": 1103.4,
+    "b": 927.04
+   },
+   "biggestWin": {
+    "gameId": "2025-6-5",
+    "winner": "1001986687221882880",
+    "margin": 73.54
+   },
+   "closest": {
+    "gameId": "2023-1-1",
+    "margin": 0.1
+   },
+   "avgMargin": 33.16,
    "games": [
     {
      "gameId": "2026-1-2",
@@ -209,6 +227,24 @@
    "aWins": 4,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 1033.96,
+    "b": 1065.64
+   },
+   "biggestWin": {
+    "gameId": "2026-5-2",
+    "winner": "1000275735010959360",
+    "margin": 77.98
+   },
+   "closest": {
+    "gameId": "2024-11-2",
+    "margin": 6.04
+   },
+   "avgMargin": 31.3,
    "games": [
     {
      "gameId": "2026-5-2",
@@ -282,6 +318,24 @@
    "aWins": 1,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000272352581705728",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 374.22,
+    "b": 418.38
+   },
+   "biggestWin": {
+    "gameId": "2023-1-3",
+    "winner": "1002465834700304384",
+    "margin": 46.62
+   },
+   "closest": {
+    "gameId": "2023-10-3",
+    "margin": 22.36
+   },
+   "avgMargin": 31.27,
    "games": [
     {
      "gameId": "2024-7-1",
@@ -315,6 +369,24 @@
    "aWins": 5,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 938.3,
+    "b": 865.42
+   },
+   "biggestWin": {
+    "gameId": "2023-1-4",
+    "winner": "1000275745870032896",
+    "margin": 52.42
+   },
+   "closest": {
+    "gameId": "2025-12-2",
+    "margin": 1.2
+   },
+   "avgMargin": 18.09,
    "games": [
     {
      "gameId": "2026-3-3",
@@ -380,6 +452,24 @@
    "aWins": 4,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 776.16,
+    "b": 754.44
+   },
+   "biggestWin": {
+    "gameId": "2023-10-5",
+    "winner": "1000601364948459520",
+    "margin": 25.84
+   },
+   "closest": {
+    "gameId": "2024-2-4",
+    "margin": 10.12
+   },
+   "avgMargin": 16.15,
    "games": [
     {
      "gameId": "2026-5-3",
@@ -437,6 +527,24 @@
    "aWins": 4,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 1148.34,
+    "b": 1271
+   },
+   "biggestWin": {
+    "gameId": "2024-16-1",
+    "winner": "1001986687221882880",
+    "margin": 65.54
+   },
+   "closest": {
+    "gameId": "2024-4-4",
+    "margin": 1.76
+   },
+   "avgMargin": 32.02,
    "games": [
     {
      "gameId": "2026-3-2",
@@ -510,6 +618,24 @@
    "aWins": 4,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 4
+   },
+   "totalPoints": {
+    "a": 862.5,
+    "b": 687.48
+   },
+   "biggestWin": {
+    "gameId": "2024-9-2",
+    "winner": "863563957724663808",
+    "margin": 75.78
+   },
+   "closest": {
+    "gameId": "2023-11-2",
+    "margin": 3.72
+   },
+   "avgMargin": 32.87,
    "games": [
     {
      "gameId": "2026-3-4",
@@ -567,6 +693,24 @@
    "aWins": 4,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 957.64,
+    "b": 908.58
+   },
+   "biggestWin": {
+    "gameId": "2024-2-1",
+    "winner": "1000272352581705728",
+    "margin": 47.64
+   },
+   "closest": {
+    "gameId": "2023-2-3",
+    "margin": 0.24
+   },
+   "avgMargin": 15.96,
    "games": [
     {
      "gameId": "2025-11-1",
@@ -632,6 +776,24 @@
    "aWins": 2,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1002465834700304384",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 518.28,
+    "b": 564.5
+   },
+   "biggestWin": {
+    "gameId": "2023-11-4",
+    "winner": "1002465834700304384",
+    "margin": 53.18
+   },
+   "closest": {
+    "gameId": "2024-4-5",
+    "margin": 3.18
+   },
+   "avgMargin": 17.86,
    "games": [
     {
      "gameId": "2024-13-5",
@@ -673,6 +835,24 @@
    "aWins": 3,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 867.32,
+    "b": 840.62
+   },
+   "biggestWin": {
+    "gameId": "2023-11-5",
+    "winner": "1000275745870032896",
+    "margin": 40.18
+   },
+   "closest": {
+    "gameId": "2024-1-3",
+    "margin": 1.72
+   },
+   "avgMargin": 20.09,
    "games": [
     {
      "gameId": "2026-4-2",
@@ -738,6 +918,24 @@
    "aWins": 3,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 946.82,
+    "b": 865.56
+   },
+   "biggestWin": {
+    "gameId": "2025-10-5",
+    "winner": "1001986687221882880",
+    "margin": 75.2
+   },
+   "closest": {
+    "gameId": "2024-8-2",
+    "margin": 15.96
+   },
+   "avgMargin": 43.56,
    "games": [
     {
      "gameId": "2026-4-3",
@@ -795,6 +993,24 @@
    "aWins": 3,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 806.66,
+    "b": 807.8
+   },
+   "biggestWin": {
+    "gameId": "2023-12-2",
+    "winner": "863940534799044608",
+    "margin": 37.48
+   },
+   "closest": {
+    "gameId": "2024-8-4",
+    "margin": 16.08
+   },
+   "avgMargin": 23.06,
    "games": [
     {
      "gameId": "2026-2-3",
@@ -852,6 +1068,24 @@
    "aWins": 4,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000275745870032896",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 1029.62,
+    "b": 1111.82
+   },
+   "biggestWin": {
+    "gameId": "2025-10-1",
+    "winner": "1000275745870032896",
+    "margin": 64.28
+   },
+   "closest": {
+    "gameId": "2023-12-3",
+    "margin": 0.48
+   },
+   "avgMargin": 20.95,
    "games": [
     {
      "gameId": "2026-2-4",
@@ -925,6 +1159,24 @@
    "aWins": 4,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 4
+   },
+   "totalPoints": {
+    "a": 643.96,
+    "b": 473.6
+   },
+   "biggestWin": {
+    "gameId": "2023-3-4",
+    "winner": "1000601364948459520",
+    "margin": 69.56
+   },
+   "closest": {
+    "gameId": "2024-15-5",
+    "margin": 9.62
+   },
+   "avgMargin": 42.59,
    "games": [
     {
      "gameId": "2024-15-5",
@@ -966,6 +1218,24 @@
    "aWins": 4,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1000568939073609728",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 795.8,
+    "b": 633.96
+   },
+   "biggestWin": {
+    "gameId": "2023-3-5",
+    "winner": "1000568939073609728",
+    "margin": 80.7
+   },
+   "closest": {
+    "gameId": "2024-6-3",
+    "margin": 7.4
+   },
+   "avgMargin": 47.18,
    "games": [
     {
      "gameId": "2026-4-4",
@@ -1015,6 +1285,24 @@
    "aWins": 3,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 636.42,
+    "b": 719.06
+   },
+   "biggestWin": {
+    "gameId": "2026-5-4",
+    "winner": "1001986687221882880",
+    "margin": 106.7
+   },
+   "closest": {
+    "gameId": "2024-9-1",
+    "margin": 25.92
+   },
+   "avgMargin": 56.34,
    "games": [
     {
      "gameId": "2026-5-4",
@@ -1064,6 +1352,24 @@
    "aWins": 3,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1002465834700304384",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 657.9,
+    "b": 682.42
+   },
+   "biggestWin": {
+    "gameId": "2024-10-4",
+    "winner": "863940534799044608",
+    "margin": 51.22
+   },
+   "closest": {
+    "gameId": "2024-16-4",
+    "margin": 2.66
+   },
+   "avgMargin": 27.3,
    "games": [
     {
      "gameId": "2024-16-4",
@@ -1113,6 +1419,24 @@
    "aWins": 3,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 896.02,
+    "b": 949.84
+   },
+   "biggestWin": {
+    "gameId": "2024-1-2",
+    "winner": "1000666077673689088",
+    "margin": 79.54
+   },
+   "closest": {
+    "gameId": "2024-10-2",
+    "margin": 8.8
+   },
+   "avgMargin": 34.23,
    "games": [
     {
      "gameId": "2025-13-3",
@@ -1178,6 +1502,24 @@
    "aWins": 4,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 1036.7,
+    "b": 894.88
+   },
+   "biggestWin": {
+    "gameId": "2024-16-5",
+    "winner": "1000601364948459520",
+    "margin": 79.86
+   },
+   "closest": {
+    "gameId": "2023-4-4",
+    "margin": 14.16
+   },
+   "avgMargin": 36.32,
    "games": [
     {
      "gameId": "2025-14-4",
@@ -1243,6 +1585,24 @@
    "aWins": 4,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1000568939073609728",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 944.98,
+    "b": 891.04
+   },
+   "biggestWin": {
+    "gameId": "2023-13-5",
+    "winner": "1000275745870032896",
+    "margin": 32
+   },
+   "closest": {
+    "gameId": "2024-16-3",
+    "margin": 3.9
+   },
+   "avgMargin": 18,
    "games": [
     {
      "gameId": "2025-13-2",
@@ -1308,6 +1668,24 @@
    "aWins": 4,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 4
+   },
+   "totalPoints": {
+    "a": 585.18,
+    "b": 470.24
+   },
+   "biggestWin": {
+    "gameId": "2024-2-5",
+    "winner": "1001986687221882880",
+    "margin": 38.08
+   },
+   "closest": {
+    "gameId": "2023-14-1",
+    "margin": 18.2
+   },
+   "avgMargin": 28.74,
    "games": [
     {
      "gameId": "2024-11-5",
@@ -1349,6 +1727,24 @@
    "aWins": 4,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "863940534799044608",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 741.42,
+    "b": 764.9
+   },
+   "biggestWin": {
+    "gameId": "2025-4-1",
+    "winner": "863940534799044608",
+    "margin": 32.4
+   },
+   "closest": {
+    "gameId": "2023-5-2",
+    "margin": 3.36
+   },
+   "avgMargin": 12.25,
    "games": [
     {
      "gameId": "2026-4-5",
@@ -1406,6 +1802,24 @@
    "aWins": 3,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 528.1,
+    "b": 525.24
+   },
+   "biggestWin": {
+    "gameId": "2023-5-3",
+    "winner": "1000275745870032896",
+    "margin": 41.76
+   },
+   "closest": {
+    "gameId": "2023-14-3",
+    "margin": 6.22
+   },
+   "avgMargin": 21.6,
    "games": [
     {
      "gameId": "2025-9-2",
@@ -1447,6 +1861,24 @@
    "aWins": 1,
    "bWins": 6,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 920.3,
+    "b": 947.6
+   },
+   "biggestWin": {
+    "gameId": "2025-16-1",
+    "winner": "1000568939073609728",
+    "margin": 28.92
+   },
+   "closest": {
+    "gameId": "2023-5-4",
+    "margin": 4.16
+   },
+   "avgMargin": 12.16,
    "games": [
     {
      "gameId": "2026-2-5",
@@ -1512,6 +1944,24 @@
    "aWins": 2,
    "bWins": 5,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 950.1,
+    "b": 968.26
+   },
+   "biggestWin": {
+    "gameId": "2023-5-5",
+    "winner": "1000601364948459520",
+    "margin": 83.4
+   },
+   "closest": {
+    "gameId": "2025-10-2",
+    "margin": 0.76
+   },
+   "avgMargin": 26.64,
    "games": [
     {
      "gameId": "2026-2-2",
@@ -1577,6 +2027,24 @@
    "aWins": 2,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 539.86,
+    "b": 502.32
+   },
+   "biggestWin": {
+    "gameId": "2024-7-3",
+    "winner": "1000666077673689088",
+    "margin": 32.56
+   },
+   "closest": {
+    "gameId": "2025-7-3",
+    "margin": 0.7
+   },
+   "avgMargin": 16.84,
    "games": [
     {
      "gameId": "2025-7-3",
@@ -1618,6 +2086,24 @@
    "aWins": 6,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1000275745870032896",
+    "length": 6
+   },
+   "totalPoints": {
+    "a": 883.9,
+    "b": 754.58
+   },
+   "biggestWin": {
+    "gameId": "2023-17-1",
+    "winner": "1000275745870032896",
+    "margin": 42.06
+   },
+   "closest": {
+    "gameId": "2025-14-2",
+    "margin": 11.9
+   },
+   "avgMargin": 21.55,
    "games": [
     {
      "gameId": "2025-14-2",
@@ -1675,6 +2161,24 @@
    "aWins": 1,
    "bWins": 5,
    "ties": 0,
+   "streak": {
+    "holder": "1000568939073609728",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 881.78,
+    "b": 952.02
+   },
+   "biggestWin": {
+    "gameId": "2023-6-3",
+    "winner": "1000568939073609728",
+    "margin": 24.28
+   },
+   "closest": {
+    "gameId": "2025-7-5",
+    "margin": 7.06
+   },
+   "avgMargin": 18.28,
    "games": [
     {
      "gameId": "2026-1-4",
@@ -1732,6 +2236,24 @@
    "aWins": 1,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1002465834700304384",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 341.9,
+    "b": 406.68
+   },
+   "biggestWin": {
+    "gameId": "2023-6-4",
+    "winner": "863563957724663808",
+    "margin": 49.38
+   },
+   "closest": {
+    "gameId": "2024-6-2",
+    "margin": 20.14
+   },
+   "avgMargin": 35.02,
    "games": [
     {
      "gameId": "2024-6-2",
@@ -1765,6 +2287,24 @@
    "aWins": 5,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 941.52,
+    "b": 930.92
+   },
+   "biggestWin": {
+    "gameId": "2023-6-5",
+    "winner": "1000601364948459520",
+    "margin": 43.44
+   },
+   "closest": {
+    "gameId": "2025-3-1",
+    "margin": 3
+   },
+   "avgMargin": 21.34,
    "games": [
     {
      "gameId": "2026-1-3",
@@ -1830,6 +2370,24 @@
    "aWins": 1,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 533.14,
+    "b": 560.86
+   },
+   "biggestWin": {
+    "gameId": "2025-16-2",
+    "winner": "1001986687221882880",
+    "margin": 26.9
+   },
+   "closest": {
+    "gameId": "2023-7-1",
+    "margin": 5
+   },
+   "avgMargin": 12.93,
    "games": [
     {
      "gameId": "2025-16-2",
@@ -1871,6 +2429,24 @@
    "aWins": 3,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "863940534799044608",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 612.38,
+    "b": 592.38
+   },
+   "biggestWin": {
+    "gameId": "2025-1-3",
+    "winner": "1000568939073609728",
+    "margin": 29.62
+   },
+   "closest": {
+    "gameId": "2025-10-3",
+    "margin": 3.32
+   },
+   "avgMargin": 12.86,
    "games": [
     {
      "gameId": "2025-10-3",
@@ -1920,6 +2496,24 @@
    "aWins": 3,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 445.36,
+    "b": 374.06
+   },
+   "biggestWin": {
+    "gameId": "2023-7-3",
+    "winner": "1000275735010959360",
+    "margin": 50.58
+   },
+   "closest": {
+    "gameId": "2024-6-4",
+    "margin": 1.94
+   },
+   "avgMargin": 23.77,
    "games": [
     {
      "gameId": "2025-8-4",
@@ -1953,6 +2547,24 @@
    "aWins": 2,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000272352581705728",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 516.86,
+    "b": 523.76
+   },
+   "biggestWin": {
+    "gameId": "2024-10-1",
+    "winner": "863563957724663808",
+    "margin": 47.48
+   },
+   "closest": {
+    "gameId": "2023-7-4",
+    "margin": 2.84
+   },
+   "avgMargin": 23.44,
    "games": [
     {
      "gameId": "2025-8-1",
@@ -1994,6 +2606,24 @@
    "aWins": 2,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 495.14,
+    "b": 460.3
+   },
+   "biggestWin": {
+    "gameId": "2023-7-5",
+    "winner": "1000666077673689088",
+    "margin": 46.54
+   },
+   "closest": {
+    "gameId": "2024-5-3",
+    "margin": 2.3
+   },
+   "avgMargin": 31.73,
    "games": [
     {
      "gameId": "2024-14-3",
@@ -2035,6 +2665,24 @@
    "aWins": 4,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 993.24,
+    "b": 1056.9
+   },
+   "biggestWin": {
+    "gameId": "2024-1-5",
+    "winner": "1001986687221882880",
+    "margin": 42.72
+   },
+   "closest": {
+    "gameId": "2023-8-1",
+    "margin": 0.28
+   },
+   "avgMargin": 17.72,
    "games": [
     {
      "gameId": "2025-17-1",
@@ -2108,6 +2756,24 @@
    "aWins": 2,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1000601364948459520",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 628.74,
+    "b": 652.06
+   },
+   "biggestWin": {
+    "gameId": "2024-7-5",
+    "winner": "863940534799044608",
+    "margin": 93.94
+   },
+   "closest": {
+    "gameId": "2023-8-2",
+    "margin": 2.5
+   },
+   "avgMargin": 44.26,
    "games": [
     {
      "gameId": "2025-16-4",
@@ -2157,6 +2823,24 @@
    "aWins": 2,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000272352581705728",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 697.98,
+    "b": 862.18
+   },
+   "biggestWin": {
+    "gameId": "2024-12-1",
+    "winner": "1000275735010959360",
+    "margin": 102.72
+   },
+   "closest": {
+    "gameId": "2025-16-3",
+    "margin": 2.48
+   },
+   "avgMargin": 29.97,
    "games": [
     {
      "gameId": "2025-16-3",
@@ -2214,6 +2898,24 @@
    "aWins": 3,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 609.4,
+    "b": 514.94
+   },
+   "biggestWin": {
+    "gameId": "2024-3-2",
+    "winner": "1000666077673689088",
+    "margin": 67.08
+   },
+   "closest": {
+    "gameId": "2024-12-2",
+    "margin": 18.56
+   },
+   "avgMargin": 35.06,
    "games": [
     {
      "gameId": "2025-6-3",
@@ -2255,6 +2957,24 @@
    "aWins": 0,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "1002465834700304384",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 386.06,
+    "b": 434.16
+   },
+   "biggestWin": {
+    "gameId": "2024-12-3",
+    "winner": "1002465834700304384",
+    "margin": 22.1
+   },
+   "closest": {
+    "gameId": "2024-3-3",
+    "margin": 5.7
+   },
+   "avgMargin": 16.03,
    "games": [
     {
      "gameId": "2024-12-3",
@@ -2288,6 +3008,24 @@
    "aWins": 1,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 728.58,
+    "b": 754.34
+   },
+   "biggestWin": {
+    "gameId": "2024-3-4",
+    "winner": "1000601364948459520",
+    "margin": 68.32
+   },
+   "closest": {
+    "gameId": "2023-9-1",
+    "margin": 0.44
+   },
+   "avgMargin": 32.48,
    "games": [
     {
      "gameId": "2025-13-4",
@@ -2337,6 +3075,24 @@
    "aWins": 3,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 731.78,
+    "b": 640.52
+   },
+   "biggestWin": {
+    "gameId": "2026-5-5",
+    "winner": "1000666077673689088",
+    "margin": 79.96
+   },
+   "closest": {
+    "gameId": "2023-9-2",
+    "margin": 2.24
+   },
+   "avgMargin": 26.56,
    "games": [
     {
      "gameId": "2026-5-5",
@@ -2386,6 +3142,24 @@
    "aWins": 1,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1000275735010959360",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 271.68,
+    "b": 246.54
+   },
+   "biggestWin": {
+    "gameId": "2024-9-4",
+    "winner": "1000275735010959360",
+    "margin": 43.7
+   },
+   "closest": {
+    "gameId": "2023-9-3",
+    "margin": 18.56
+   },
+   "avgMargin": 31.13,
    "games": [
     {
      "gameId": "2024-9-4",
@@ -2411,6 +3185,24 @@
    "aWins": 3,
    "bWins": 3,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 885,
+    "b": 859.18
+   },
+   "biggestWin": {
+    "gameId": "2025-7-2",
+    "winner": "863563957724663808",
+    "margin": 76.38
+   },
+   "closest": {
+    "gameId": "2026-1-5",
+    "margin": 3.34
+   },
+   "avgMargin": 32.52,
    "games": [
     {
      "gameId": "2026-1-5",
@@ -2468,6 +3260,24 @@
    "aWins": 2,
    "bWins": 4,
    "ties": 0,
+   "streak": {
+    "holder": "1000568939073609728",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 763.62,
+    "b": 809.8
+   },
+   "biggestWin": {
+    "gameId": "2026-3-5",
+    "winner": "1000568939073609728",
+    "margin": 69.76
+   },
+   "closest": {
+    "gameId": "2023-15-2",
+    "margin": 0.14
+   },
+   "avgMargin": 21.94,
    "games": [
     {
      "gameId": "2026-3-5",
@@ -2525,6 +3335,24 @@
    "aWins": 1,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1208320447578386432",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 347.56,
+    "b": 425.4
+   },
+   "biggestWin": {
+    "gameId": "2026-4-1",
+    "winner": "1208320447578386432",
+    "margin": 51.8
+   },
+   "closest": {
+    "gameId": "2025-1-4",
+    "margin": 17.26
+   },
+   "avgMargin": 37.45,
    "games": [
     {
      "gameId": "2026-4-1",
@@ -2558,6 +3386,24 @@
    "aWins": 3,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1001986687221882880",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 478.54,
+    "b": 377.7
+   },
+   "biggestWin": {
+    "gameId": "2026-2-1",
+    "winner": "1001986687221882880",
+    "margin": 84.52
+   },
+   "closest": {
+    "gameId": "2025-11-5",
+    "margin": 7.02
+   },
+   "avgMargin": 33.61,
    "games": [
     {
      "gameId": "2026-2-1",
@@ -2591,6 +3437,24 @@
    "aWins": 3,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1208320447578386432",
+    "length": 3
+   },
+   "totalPoints": {
+    "a": 477.02,
+    "b": 337.74
+   },
+   "biggestWin": {
+    "gameId": "2025-15-4",
+    "winner": "1208320447578386432",
+    "margin": 71.32
+   },
+   "closest": {
+    "gameId": "2025-3-3",
+    "margin": 13.44
+   },
+   "avgMargin": 46.43,
    "games": [
     {
      "gameId": "2025-15-4",
@@ -2624,6 +3488,24 @@
    "aWins": 0,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "863563957724663808",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 283.56,
+    "b": 328.44
+   },
+   "biggestWin": {
+    "gameId": "2025-13-5",
+    "winner": "863563957724663808",
+    "margin": 44.6
+   },
+   "closest": {
+    "gameId": "2025-4-5",
+    "margin": 0.28
+   },
+   "avgMargin": 22.44,
    "games": [
     {
      "gameId": "2025-13-5",
@@ -2649,6 +3531,24 @@
    "aWins": 2,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1000666077673689088",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 500.18,
+    "b": 493.92
+   },
+   "biggestWin": {
+    "gameId": "2026-1-1",
+    "winner": "1000666077673689088",
+    "margin": 29.56
+   },
+   "closest": {
+    "gameId": "2025-5-3",
+    "margin": 7.52
+   },
+   "avgMargin": 16.97,
    "games": [
     {
      "gameId": "2026-1-1",
@@ -2690,6 +3590,24 @@
    "aWins": 0,
    "bWins": 2,
    "ties": 0,
+   "streak": {
+    "holder": "1208320447578386432",
+    "length": 2
+   },
+   "totalPoints": {
+    "a": 279.32,
+    "b": 300.84
+   },
+   "biggestWin": {
+    "gameId": "2026-5-1",
+    "winner": "1208320447578386432",
+    "margin": 11.64
+   },
+   "closest": {
+    "gameId": "2025-6-2",
+    "margin": 9.88
+   },
+   "avgMargin": 10.76,
    "games": [
     {
      "gameId": "2026-5-1",
@@ -2715,6 +3633,24 @@
    "aWins": 1,
    "bWins": 0,
    "ties": 0,
+   "streak": {
+    "holder": "1000272352581705728",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 136.94,
+    "b": 82.04
+   },
+   "biggestWin": {
+    "gameId": "2025-7-1",
+    "winner": "1000272352581705728",
+    "margin": 54.9
+   },
+   "closest": {
+    "gameId": "2025-7-1",
+    "margin": 54.9
+   },
+   "avgMargin": 54.9,
    "games": [
     {
      "gameId": "2025-7-1",
@@ -2732,6 +3668,24 @@
    "aWins": 0,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1208320447578386432",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 130.96,
+    "b": 145.88
+   },
+   "biggestWin": {
+    "gameId": "2025-8-5",
+    "winner": "1208320447578386432",
+    "margin": 14.92
+   },
+   "closest": {
+    "gameId": "2025-8-5",
+    "margin": 14.92
+   },
+   "avgMargin": 14.92,
    "games": [
     {
      "gameId": "2025-8-5",
@@ -2749,6 +3703,24 @@
    "aWins": 1,
    "bWins": 1,
    "ties": 0,
+   "streak": {
+    "holder": "1208320447578386432",
+    "length": 1
+   },
+   "totalPoints": {
+    "a": 299.26,
+    "b": 242.62
+   },
+   "biggestWin": {
+    "gameId": "2025-9-4",
+    "winner": "1000601364948459520",
+    "margin": 59.52
+   },
+   "closest": {
+    "gameId": "2026-3-1",
+    "margin": 2.88
+   },
+   "avgMargin": 31.2,
    "games": [
     {
      "gameId": "2026-3-1",
@@ -2768,5 +3740,315 @@
     }
    ]
   }
- }
+ },
+ "allTime": [
+  {
+   "userId": "1001986687221882880",
+   "rank": 1,
+   "seasons": 4,
+   "w": 31,
+   "l": 16,
+   "t": 0,
+   "winPct": 0.6596,
+   "pf": 7023.94,
+   "pa": 6316.08,
+   "ppg": 149.45,
+   "maxPoints": 7637.36,
+   "efficiency": 0.9197,
+   "streak": "W1",
+   "allPlay": {
+    "w": 283,
+    "l": 140,
+    "t": 0,
+    "pct": 0.669
+   },
+   "weeklyHighs": 13,
+   "titles": 1,
+   "runnerUps": 1,
+   "thirds": 0,
+   "playoffApps": 3,
+   "playoffWins": 4,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "863563957724663808",
+   "rank": 2,
+   "seasons": 4,
+   "w": 26,
+   "l": 21,
+   "t": 0,
+   "winPct": 0.5532,
+   "pf": 6452.76,
+   "pa": 6451.3,
+   "ppg": 137.29,
+   "maxPoints": 7136.38,
+   "efficiency": 0.9042,
+   "streak": "L1",
+   "allPlay": {
+    "w": 222,
+    "l": 201,
+    "t": 0,
+    "pct": 0.5248
+   },
+   "weeklyHighs": 4,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 1,
+   "playoffApps": 1,
+   "playoffWins": 1,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1000272352581705728",
+   "rank": 3,
+   "seasons": 4,
+   "w": 26,
+   "l": 21,
+   "t": 0,
+   "winPct": 0.5532,
+   "pf": 5958.6,
+   "pa": 6250.74,
+   "ppg": 126.78,
+   "maxPoints": 6731.1,
+   "efficiency": 0.8852,
+   "streak": "L6",
+   "allPlay": {
+    "w": 188,
+    "l": 235,
+    "t": 0,
+    "pct": 0.4444
+   },
+   "weeklyHighs": 2,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 3,
+   "playoffWins": 2,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1000275735010959360",
+   "rank": 4,
+   "seasons": 4,
+   "w": 25,
+   "l": 22,
+   "t": 0,
+   "winPct": 0.5319,
+   "pf": 6379.38,
+   "pa": 6460.88,
+   "ppg": 135.73,
+   "maxPoints": 7189.2,
+   "efficiency": 0.8874,
+   "streak": "W1",
+   "allPlay": {
+    "w": 222,
+    "l": 201,
+    "t": 0,
+    "pct": 0.5248
+   },
+   "weeklyHighs": 3,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 1,
+   "playoffApps": 2,
+   "playoffWins": 1,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1000568939073609728",
+   "rank": 5,
+   "seasons": 4,
+   "w": 25,
+   "l": 22,
+   "t": 0,
+   "winPct": 0.5319,
+   "pf": 6370.5,
+   "pa": 6286.84,
+   "ppg": 135.54,
+   "maxPoints": 7082.4,
+   "efficiency": 0.8995,
+   "streak": "L1",
+   "allPlay": {
+    "w": 212,
+    "l": 211,
+    "t": 0,
+    "pct": 0.5012
+   },
+   "weeklyHighs": 3,
+   "titles": 0,
+   "runnerUps": 1,
+   "thirds": 1,
+   "playoffApps": 3,
+   "playoffWins": 5,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1000275745870032896",
+   "rank": 6,
+   "seasons": 4,
+   "w": 24,
+   "l": 23,
+   "t": 0,
+   "winPct": 0.5106,
+   "pf": 6350.88,
+   "pa": 6095.54,
+   "ppg": 135.13,
+   "maxPoints": 7175.2,
+   "efficiency": 0.8851,
+   "streak": "L3",
+   "allPlay": {
+    "w": 223,
+    "l": 200,
+    "t": 0,
+    "pct": 0.5272
+   },
+   "weeklyHighs": 2,
+   "titles": 1,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 3,
+   "playoffWins": 3,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1000666077673689088",
+   "rank": 7,
+   "seasons": 4,
+   "w": 23,
+   "l": 24,
+   "t": 0,
+   "winPct": 0.4894,
+   "pf": 6241.84,
+   "pa": 6109.1,
+   "ppg": 132.81,
+   "maxPoints": 6995.66,
+   "efficiency": 0.8922,
+   "streak": "W1",
+   "allPlay": {
+    "w": 206,
+    "l": 217,
+    "t": 0,
+    "pct": 0.487
+   },
+   "weeklyHighs": 6,
+   "titles": 1,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 1,
+   "playoffWins": 3,
+   "toiletBowls": 1
+  },
+  {
+   "userId": "1000601364948459520",
+   "rank": 8,
+   "seasons": 4,
+   "w": 19,
+   "l": 28,
+   "t": 0,
+   "winPct": 0.4043,
+   "pf": 6287.96,
+   "pa": 6214.16,
+   "ppg": 133.79,
+   "maxPoints": 7045.68,
+   "efficiency": 0.8925,
+   "streak": "W2",
+   "allPlay": {
+    "w": 202,
+    "l": 221,
+    "t": 0,
+    "pct": 0.4775
+   },
+   "weeklyHighs": 10,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 1,
+   "playoffWins": 0,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "863940534799044608",
+   "rank": 9,
+   "seasons": 4,
+   "w": 15,
+   "l": 32,
+   "t": 0,
+   "winPct": 0.3191,
+   "pf": 5928.76,
+   "pa": 6411.9,
+   "ppg": 126.14,
+   "maxPoints": 6785.12,
+   "efficiency": 0.8738,
+   "streak": "L1",
+   "allPlay": {
+    "w": 169,
+    "l": 254,
+    "t": 0,
+    "pct": 0.3995
+   },
+   "weeklyHighs": 2,
+   "titles": 0,
+   "runnerUps": 1,
+   "thirds": 0,
+   "playoffApps": 1,
+   "playoffWins": 2,
+   "toiletBowls": 2
+  },
+  {
+   "userId": "1002465834700304384",
+   "rank": 10,
+   "seasons": 2,
+   "w": 12,
+   "l": 16,
+   "t": 0,
+   "winPct": 0.4286,
+   "pf": 3534.18,
+   "pa": 3831.52,
+   "ppg": 126.22,
+   "maxPoints": 4066.6,
+   "efficiency": 0.8691,
+   "streak": "L1",
+   "allPlay": {
+    "w": 105,
+    "l": 147,
+    "t": 0,
+    "pct": 0.4167
+   },
+   "weeklyHighs": 1,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 0,
+   "playoffWins": 0,
+   "toiletBowls": 0
+  },
+  {
+   "userId": "1208320447578386432",
+   "rank": 11,
+   "seasons": 2,
+   "w": 9,
+   "l": 10,
+   "t": 0,
+   "winPct": 0.4737,
+   "pf": 2497.4,
+   "pa": 2598.14,
+   "ppg": 131.44,
+   "maxPoints": 2817.3,
+   "efficiency": 0.8865,
+   "streak": "W3",
+   "allPlay": {
+    "w": 83,
+    "l": 88,
+    "t": 0,
+    "pct": 0.4854
+   },
+   "weeklyHighs": 1,
+   "titles": 0,
+   "runnerUps": 0,
+   "thirds": 0,
+   "playoffApps": 0,
+   "playoffWins": 0,
+   "toiletBowls": 0
+  }
+ ]
 }
