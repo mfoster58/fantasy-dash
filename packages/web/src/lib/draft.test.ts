@@ -7,7 +7,7 @@ const pick = (pickNo: number, userId: string, value: number | null, pob: number,
   posDraftRank: 1, seasonPoints: 100, gamesPlayed: 5, ppg: 20, healthy: true,
   pointsOverBaseline: pob, redraftPos: 1, slotValue: value === null ? null : value / 2, productionValue: value === null ? null : value / 2, value, tradedTo: null, ...extra,
 });
-const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36 },
+const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36, c: 0 },
   picks: [pick(1, 'a', 5, 40), pick(2, 'b', -8, -20), pick(3, 'a', -2, 10), pick(4, 'b', 12, 60), pick(5, 'a', null, 5)] };
 
 describe('managerDraftSummaries', () => {

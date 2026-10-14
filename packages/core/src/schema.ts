@@ -115,7 +115,7 @@ const Draft = z.object({
   rounds: z.number(),
   slotOrder: z.array(z.string()),
   picks: z.array(DraftPick),
-  expectedCurve: z.object({ a: z.number(), k: z.number() }).nullable(),
+  expectedCurve: z.object({ a: z.number(), k: z.number(), c: z.number() }).nullable(),
 });
 
 export const SeasonSchema = z.object({

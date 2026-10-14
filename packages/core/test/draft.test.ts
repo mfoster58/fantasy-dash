@@ -134,6 +134,30 @@ describe('computeDraftValues', () => {
     expect(by.rbB.healthy).toBe(false);                                            // no team
   });
 
+  it('scales points for teams that have had their bye before ranking', () => {
+    // rbY is on SF (4 games of 5): 40 raw points -> 50 adjusted, ahead of rbC (50 raw, no team, unadjusted) on points tiebreak... use 44 -> 55 to be clear
+    const res = computeDraftValues(drafted, { ...input, seasonPoints: { ...seasonPoints, rbY: 44 } });
+    const byY = Object.fromEntries(res.picks.map((p) => [p.playerId, p]));
+    expect(byY.rbY.seasonPoints).toBe(44);                    // displayed points stay raw
+    expect(byY.rbY.pointsOverBaseline).toBe(55);              // 44 * 5/4, baseline 0
+    expect(byY.rbY.redraftPos).toBeLessThan(byY.rbC.redraftPos!);
+    expect(byY.rbA.pointsOverBaseline).toBe(100);             // DET has played all 5
+  });
+
+  it('floors contribution at the bench gap instead of zero', () => {
+    const deep: PlayerDirectory = {};
+    const pts: Record<string, number> = {};
+    for (let i = 1; i <= 45; i++) { deep[`wr${i}`] = info(`wr${i}`, 'WR'); pts[`wr${i}`] = 300 - i * 5; }   // wr24 180 is the baseline
+    deep.bust = info('bust', 'WR'); pts.bust = 5;                                                      // PoB -175, floored at the gap
+    deep.bench = info('bench', 'WR'); pts.bench = 150;                                                 // PoB -30, above the floor; shifts rank 40 to wr39 (105) -> gap 75
+    const res = computeDraftValues([pick(1, 'wr1'), pick(2, 'bench'), pick(3, 'bust')], { ...input, seasonPoints: pts, players: deep });
+    const b = Object.fromEntries(res.picks.map((p) => [p.playerId, p]));
+    expect(b.bust.pointsOverBaseline).toBe(-175);
+    const curve = res.expectedCurve!;
+    expect(b.bust.productionValue).toBeCloseTo(Math.round((-75 - expectedAt(curve, 3)) * 10) / 10, 1);
+    expect(b.bench.productionValue).toBeCloseTo(Math.round((-30 - expectedAt(curve, 2)) * 10) / 10, 1);
+  });
+
   it('marks the latest completed trade per player', () => {
     expect(by.rbB.tradedTo).toEqual({ userId: 'u8', week: 4 });
     expect(by.rbA.tradedTo).toBeNull();
@@ -180,8 +204,18 @@ describe('fitExpectedCurve', () => {
     expect(c).not.toBeNull();
     expect(c!.k).toBe(40);
     expect(c!.a).toBeCloseTo(50, 3);
+    expect(c!.c).toBeCloseTo(0, 3);
     expect(expectedAt(c!, 1)).toBeCloseTo(50, 3);
     expect(expectedAt(c!, 41)).toBeCloseTo(50 / Math.E, 3);
+  });
+  it('recovers a negative offset so late picks can be expected below replacement', () => {
+    const pts = [];
+    for (let pick = 1; pick <= 160; pick += 3) pts.push({ pick, contribution: 60 * Math.exp(-(pick - 1) / 30) - 12 });
+    const c = fitExpectedCurve(pts)!;
+    expect(c.k).toBe(30);
+    expect(c.a).toBeCloseTo(60, 3);
+    expect(c.c).toBeCloseTo(-12, 3);
+    expect(expectedAt(c, 160)).toBeLessThan(0);
   });
   it('returns null when there is nothing to fit', () => {
     expect(fitExpectedCurve([])).toBeNull();

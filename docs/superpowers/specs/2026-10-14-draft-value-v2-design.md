@@ -17,9 +17,13 @@ All value math excludes kickers and defenses (added K on 2026-10-14 at the user'
 
 **Positional scarcity weight (added 2026-10-14 after review of the 2024 board):** `POSITION_WEIGHTS = { QB: 0.5 }`. A quarterback's points over baseline are halved before the redraft ranking and before the contribution used for production value. The displayed `pointsOverBaseline` stays unweighted. 0.5 was calibrated against Sleeper's real next-year ADP for 2023→2024, 2024→2025 and 2025→2026: with weight 1, Lamar Jackson's 2024 season ranked him redraft 6 against a real 2025 ADP of 21.9; with 0.5 he ranks 21.
 
+### Bye adjustment (added 2026-10-14)
+
+Before any ranking, a player's points are scaled by `maxTeamGames / teamGames[team]`, where `maxTeamGames` is the most games any NFL team has played so far. A team that has had its bye is therefore not behind; games missed while the team played still count as zero. Displayed `seasonPoints` stay raw; `pointsOverBaseline` is bye-adjusted. For a completed season every team has the same count and the factor is 1.
+
 ### Contribution
 
-`pointsOverBaseline` (PoB) stays as is: season points minus the points of the last startable player at the position, where the pool is every player in the directory at that position with points > 0. `contribution = max(PoB · weight, 0)`: a player below replacement level is worth nothing because a free agent could replace them.
+`pointsOverBaseline` (PoB) stays as is: season points minus the points of the last startable player at the position, where the pool is every player in the directory at that position with points > 0. `contribution = max(PoB · weight, −benchGap · weight)` where `benchGap` is the baseline minus the pool entry at `BENCH_RANKS = { QB: 14, RB: 40, WR: 40, TE: 16 }` (0 if the pool is shorter). A player below bench level is worth bench level; a bench-level player (DK Metcalf, WR35) is worth more than a useless one (Jonathon Brooks). (Until 2026-10-14 the floor was 0, which made those two look identical.)
 
 ### Redraft position
 
@@ -33,7 +37,7 @@ Rank every directory player at a valued position by weighted PoB descending (tie
 
 ### Production value
 
-Fit an expected-contribution curve to the season's own draft: `expected(pick) = a · exp(−(pick − 1) / k)`. Choose `k` from the integers 10..120 and `a` by closed-form least squares at each `k` (`a = Σ x·c / Σ x²` with `x = exp(−(pick−1)/k)`), keeping the pair with the smallest squared error over all valued picks. Fit uses `contribution`, not raw PoB.
+Fit an expected-contribution curve to the season's own draft: `expected(pick) = a · exp(−(pick − 1) / k) + c`. Choose `k` from the integers 10..120 and `a`, `c` by simple linear regression on `x = exp(−(pick−1)/k)` at each `k`, keeping the triple with the smallest squared error over all valued picks. The offset `c` lets late-pick expectation sit below replacement, so a late dart that scores nothing is near expectation. Fit uses `contribution`, not raw PoB.
 
 `productionValue = contribution − expected(pickNo)`, rounded to 1 decimal, in points to date. (An earlier revision multiplied by a full-season pace `weeks.length / lastScoredWeek`; it was removed on 2026-10-14 because five weeks × 3.4 let production swamp slot value early in the season. Without it, production grows naturally as the season fills in and the two parts are on comparable scales by season's end.)
 
@@ -86,7 +90,7 @@ interface DraftPick {
 }
 ```
 
-`posFinishRank` is removed. `Draft` gains `expectedCurve: { a: number; k: number } | null` so the UI can explain the fit. Zod schema, `satisfies` guards, and the sync's `RawSeasonInput` (`playerGames`, `teamGames`, `trades`) change accordingly. `SleeperClient` gains `getTransactions(leagueId, week)` and a `SleeperTransaction` type (`type`, `status`, `leg`, `created`, `adds`, `drops`, `roster_ids`).
+`posFinishRank` is removed. `Draft` gains `expectedCurve: { a: number; k: number; c: number } | null` so the UI can explain the fit. Zod schema, `satisfies` guards, and the sync's `RawSeasonInput` (`playerGames`, `teamGames`, `trades`) change accordingly. `SleeperClient` gains `getTransactions(leagueId, week)` and a `SleeperTransaction` type (`type`, `status`, `leg`, `created`, `adds`, `drops`, `roster_ids`).
 
 ## UI
 

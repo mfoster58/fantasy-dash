@@ -156,7 +156,7 @@ export interface DraftPick {
   tradedTo: { userId: UserId; week: number } | null;
 }
 
-export interface ExpectedCurve { a: number; k: number }
+export interface ExpectedCurve { a: number; k: number; c: number }
 
 export interface Draft {
   draftId: string;
@@ -164,7 +164,7 @@ export interface Draft {
   rounds: number;
   slotOrder: UserId[];
   picks: DraftPick[];
-  /** fitted a·exp(−(pick−1)/k) of contribution vs pick; null before week 1 */
+  /** fitted a·exp(−(pick−1)/k) + c of contribution vs pick; null before week 1 */
   expectedCurve: ExpectedCurve | null;
 }
 
