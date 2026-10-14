@@ -55,6 +55,25 @@ describe('optimalSwaps', () => {
     expect(optimalSwaps(['qb2', 'rb3', 'rb1', 'wr1'], optimal, info)).toEqual([]);
   });
 
+  it('pairs same-position swaps first so a flex mismatch never steals a needed starter', () => {
+    const roster: LineupPlayer[] = [
+      P('qb', 'QB', 18),
+      P('rbA', 'RB', 10), P('rbB', 'RB', 14),
+      P('wrA', 'WR', 15), P('wrB', 'WR', 9),
+      P('defA', 'DEF', 2), P('defB', 'DEF', 6),
+    ];
+    const lookup = new Map(roster.map((p) => [p.playerId, p]));
+    const optimal = optimalLineup(['QB', 'RB', 'WR', 'FLEX', 'DEF'], roster);
+    const swaps = optimalSwaps(['qb', 'rbA', 'wrA', 'wrB', 'defA'], optimal, (id) => lookup.get(id)!);
+    expect(swaps).toEqual([
+      { out: 'wrB', in: 'rbB', gain: 5 },
+      { out: 'defA', in: 'defB', gain: 4 },
+    ]);
+    expect(swaps.every((s) => s.gain >= 0)).toBe(true);
+    const actualTotal = 18 + 10 + 15 + 9 + 2;
+    expect(swaps.reduce((s, x) => s + x.gain, 0)).toBe(optimal.total - actualTotal);
+  });
+
   it('uses out: null for an empty starting slot', () => {
     const optimal = optimalLineup(['QB'], [P('qb1', 'QB', 20)]);
     expect(optimalSwaps([null], optimal, (id) => P(id, 'QB', 20))).toEqual([{ out: null, in: 'qb1', gain: 20 }]);

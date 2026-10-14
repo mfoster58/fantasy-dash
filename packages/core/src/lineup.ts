@@ -61,9 +61,11 @@ export function optimalLineup(slots: string[], players: LineupPlayer[]): Lineup 
 
 /**
  * The bench-for-starter replacements that turn the actual lineup into the
- * optimal one. Each optimal addition is paired with a removed starter of the
- * same position when one exists, otherwise with the lowest-scoring removed
- * starter, otherwise with null (an empty slot).
+ * optimal one. Pass 1 pairs each optimal addition with a removed starter of the
+ * same position (highest addition with lowest removal). Pass 2 pairs the
+ * leftovers, which are flex-eligible mismatches, by points: additions
+ * descending against removals ascending. An addition with no removal left is
+ * paired with null (an empty slot).
  */
 export function optimalSwaps(
   actualStarters: (PlayerId | null)[],
@@ -76,11 +78,17 @@ export function optimalSwaps(
   const outs = [...actual].filter((id) => !chosen.has(id)).sort((a, b) => info(a).points - info(b).points);
   const ins = [...chosen].filter((id) => !actual.has(id)).sort((a, b) => info(b).points - info(a).points);
 
+  const pairs = new Map<PlayerId, PlayerId | null>();
+  for (const inId of ins) {
+    const idx = outs.findIndex((id) => info(id).position === info(inId).position);
+    if (idx >= 0) pairs.set(inId, outs.splice(idx, 1)[0]);
+  }
+  for (const inId of ins) {
+    if (!pairs.has(inId)) pairs.set(inId, outs.shift() ?? null);
+  }
+
   return ins.map((inId) => {
-    const inPos = info(inId).position;
-    let idx = outs.findIndex((id) => info(id).position === inPos);
-    if (idx < 0) idx = outs.length ? 0 : -1;
-    const outId = idx >= 0 ? outs.splice(idx, 1)[0] : null;
+    const outId = pairs.get(inId) ?? null;
     const gain = round2(info(inId).points - (outId ? info(outId).points : 0));
     return { out: outId, in: inId, gain };
   });
