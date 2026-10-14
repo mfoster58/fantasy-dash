@@ -19,7 +19,7 @@ All value math excludes kickers and defenses (added K on 2026-10-14 at the user'
 
 ### Bye adjustment (added 2026-10-14)
 
-Before any ranking, a player's points are scaled by `maxTeamGames / teamGames[team]`, where `maxTeamGames` is the most games any NFL team has played so far. A team that has had its bye is therefore not behind; games missed while the team played still count as zero. Displayed `seasonPoints` stay raw; `pointsOverBaseline` is bye-adjusted. For a completed season every team has the same count and the factor is 1.
+Before any ranking, a player's points are scaled by `maxTeamGames / teamGames[team]`, where `maxTeamGames` is the most games any NFL team has played so far. A team that has had its bye is therefore not behind; games missed while the team played still count as zero. Displayed `seasonPoints` stay raw; `pointsOverBaseline` is bye-adjusted. The factor is applied only while the season is in progress (`byeAdjust = status === 'in_season'`); for a completed season it is skipped entirely, because team games are attributed by players' current teams and a stale team can otherwise inflate a finished year (Achane 2025 briefly showed +320).
 
 ### Contribution
 

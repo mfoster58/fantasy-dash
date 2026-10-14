@@ -71,6 +71,8 @@ export interface DraftValueInput {
   /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
   teamGames: Record<string, number>;
   lastScoredWeek: number;
+  /** scale points for teams that have had their bye; only meaningful while the season is in progress */
+  byeAdjust: boolean;
   trades: PlayerTrade[];
 }
 
@@ -91,7 +93,7 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
 /**
  * Fill every derived field on the picks. Pure.
  *
- * Points are bye-adjusted first: a player's points are scaled by (most games any team has played) /
+ * In season (byeAdjust) points are bye-adjusted first: a player's points are scaled by (most games any team has played) /
  * (games the player's team has played), so a team that has already had its bye is not behind. Missed
  * games while the team played still count as zero.
  *
@@ -113,7 +115,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   const byeFactor = (id: PlayerId): number => {
     const team = input.players[id]?.team ?? null;
     const games = team ? input.teamGames[team] ?? 0 : 0;
-    return games > 0 && maxTeamGames > games ? maxTeamGames / games : 1;
+    return input.byeAdjust && games > 0 && maxTeamGames > games ? maxTeamGames / games : 1;
   };
   const pts = (id: PlayerId) => rawPts(id) * byeFactor(id);
   const scored = input.lastScoredWeek > 0;

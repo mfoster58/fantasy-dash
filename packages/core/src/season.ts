@@ -157,6 +157,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
         gamesPlayed: input.playerGames,
         teamGames: input.teamGames,
         lastScoredWeek,
+        byeAdjust: status === 'in_season',
         trades: tradesFromTransactions(input.trades, rosterToUser),
       })
     : null;
