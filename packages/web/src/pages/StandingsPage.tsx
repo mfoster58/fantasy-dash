@@ -12,8 +12,9 @@ export default function StandingsPage() {
   return (
     <section className="space-y-4">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">
-          Standings <span className="num font-normal text-muted">{season.year} · {note}</span>
+        <h1 className="text-[22px] font-semibold tracking-tight">
+          Standings <span className="num font-normal text-muted">{season.year}</span>{' '}
+          <span className="ml-1 text-sm font-normal text-muted">{note}</span>
         </h1>
         <SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/standings/${y}`)} />
       </header>

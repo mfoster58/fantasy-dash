@@ -15,8 +15,8 @@ function Row({ label, value, detail }: { label: string; value: number; detail: s
 
 export default function FormBlock({ sides, managers }: Props) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4">
-      <h2 className="mb-3 text-xs uppercase tracking-wide text-muted" title="Points scored relative to projection and to season average">Form</h2>
+    <section className="card p-5">
+      <h2 className="section-label mb-3" title="Points scored relative to projection and to season average">Form</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {sides.map((s) => {
           const missing = s.starters.filter((e) => e.player && e.player.projected === null).length;

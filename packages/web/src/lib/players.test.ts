@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { statLine, posColor } from './players';
+import type { PlayerDirectory } from '@fantasy-dash/core';
+import { statLine, posColor, headshotUrl } from './players';
 
 describe('statLine', () => {
   it('formats a quarterback line including rushing', () => {
@@ -24,5 +25,18 @@ describe('statLine', () => {
 describe('posColor', () => {
   it('maps to the position CSS variable with a fallback', () => {
     expect(posColor('RB')).toBe('var(--pos-RB, var(--muted))');
+  });
+});
+
+describe('headshotUrl', () => {
+  const dir: PlayerDirectory = {
+    '4046': { id: '4046', name: 'Patrick Mahomes', firstName: 'Patrick', lastName: 'Mahomes', position: 'QB', team: 'KC', yearsExp: 8 },
+    DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0 },
+  };
+  it('uses the player thumbnail for skill players', () => {
+    expect(headshotUrl(dir, '4046')).toBe('https://sleepercdn.com/content/nfl/players/thumb/4046.jpg');
+  });
+  it('uses the lowercase team logo for defenses', () => {
+    expect(headshotUrl(dir, 'DET')).toBe('https://sleepercdn.com/images/team_logos/nfl/det.png');
   });
 });

@@ -5,7 +5,7 @@ import EfficiencyBlock from '../components/boxscore/EfficiencyBlock';
 import FormBlock from '../components/boxscore/FormBlock';
 import LineupTable from '../components/boxscore/LineupTable';
 import { history, players } from '../data/load';
-import { fmtPpg, fmtPts, fmtRecord } from '../lib/format';
+import { fmtPpg, fmtPts, fmtRecord, fmtTag } from '../lib/format';
 
 function TeamHeader({ side, manager, won, played, align }: { side: GameSide; manager?: Manager; won: boolean; played: boolean; align: 'left' | 'right' }) {
   const reverse = align === 'right';
@@ -32,15 +32,15 @@ export default function BoxScorePage() {
   const series = history.h2h[h2hKey(a.userId, b.userId)];
   const winsFor = (userId: string) => (series ? (series.a === userId ? series.aWins : series.bWins) : 0);
   const ties = series?.ties ?? 0;
-  const label = [game.tag ?? `Week ${game.week}`, !week.played ? 'Upcoming' : game.winner === null ? 'Tie' : null].filter(Boolean).join(' · ');
+  const label = [game.tag ? fmtTag(game.tag) : `Week ${game.week}`, !week.played ? 'Upcoming' : game.winner === null ? 'Tie' : null].filter(Boolean).join(' · ');
 
   return (
     <article className="space-y-4">
       <nav className="text-xs text-muted">
         <Link to={`/scores/${season.year}/${game.week}`} className="hover:text-ink">&larr; {season.year} week {game.week}</Link>
       </nav>
-      <header className="rounded-lg border border-line bg-surface p-4">
-        <div className="mb-3 text-xs uppercase tracking-wide text-muted">{label}</div>
+      <header className="card p-5">
+        <div className="section-label mb-3">{label}</div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
           <TeamHeader side={a} manager={season.managers[a.userId]} won={game.winner === a.userId} played={week.played} align="left" />
           <div className="hidden text-center text-xs text-muted sm:block">{week.played ? 'Final' : 'Proj'}</div>
@@ -57,7 +57,7 @@ export default function BoxScorePage() {
         </div>
       )}
 
-      <footer className="rounded-lg border border-line bg-surface px-4 py-3 text-sm">
+      <footer className="card px-5 py-3 text-sm">
         <span className="text-muted">All-time series: </span>
         <span className="font-medium">{season.managers[a.userId]?.displayName}</span>{' '}
         <span className="num">{winsFor(a.userId)}</span>

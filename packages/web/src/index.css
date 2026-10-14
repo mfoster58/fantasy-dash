@@ -64,7 +64,7 @@ html, body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -91,4 +91,23 @@ html, body {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "zero" 0;
   letter-spacing: -0.01em;
+}
+
+/* One treatment for every section label and table header. */
+@layer components {
+  /* Card surface: flat, 1px line, 12px radius, a faint lit top edge. */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
 }

@@ -16,7 +16,7 @@ export default function ScoresPage() {
   return (
     <section className="space-y-4">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">
+        <h1 className="text-[22px] font-semibold tracking-tight">
           Scoreboard <span className="num font-normal text-muted">{season.year}</span>
         </h1>
         <SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/scores/${y}`)} />
@@ -26,7 +26,7 @@ export default function ScoresPage() {
       {weeks.map((wk) => (
         <div key={wk.week} className="space-y-3">
           {selected === 'season' && (
-            <h2 className="num text-xs uppercase tracking-wide text-muted">
+            <h2 className="section-label">
               Week {wk.week}{wk.isPlayoff ? ' · Playoffs' : ''}{wk.played ? '' : ' · Upcoming'}
             </h2>
           )}
@@ -37,7 +37,7 @@ export default function ScoresPage() {
                 : 'No games scheduled.'}
             </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               {wk.games.map((g) => (
                 <ScoreCard
                   key={g.id}
