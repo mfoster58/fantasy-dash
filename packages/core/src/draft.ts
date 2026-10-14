@@ -5,6 +5,9 @@ import { round2, round4 } from './scoring';
 /** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB. Kickers and defenses are excluded from value math (streamed, not drafted for value). */
 export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12 };
 
+/** Roster-able depth per position. Production below this line is floored: a player nobody would keep on a bench is simply worthless, not infinitely bad. */
+export const BENCH_RANKS: Record<string, number> = { QB: 14, RB: 40, WR: 40, TE: 16 };
+
 /**
  * Scarcity weight applied to points over baseline before ranking and valuing. A one-QB lineup with deep
  * replacement makes a QB point worth less than an RB/WR point; 0.5 matches where the league's next-year
@@ -21,30 +24,40 @@ export function capital(pick: number): number {
 }
 
 export function expectedAt(curve: ExpectedCurve, pick: number): number {
-  return curve.a * Math.exp(-(pick - 1) / curve.k);
+  return curve.a * Math.exp(-(pick - 1) / curve.k) + curve.c;
 }
 
 /**
- * Least-squares fit of a·exp(−(pick−1)/k) to (pick, contribution). k is searched over the integers
- * 10..120; a is closed-form at each k. Null when there are fewer than 2 points or every contribution is 0.
+ * Least-squares fit of a·exp(−(pick−1)/k) + c to (pick, contribution). k is searched over the integers
+ * 10..120; a and c are closed-form (simple linear regression on x = exp(−(pick−1)/k)) at each k. The
+ * offset lets late-pick expectation go below replacement. Null when there are fewer than 2 points or
+ * every contribution is 0.
  */
 export function fitExpectedCurve(points: { pick: number; contribution: number }[]): ExpectedCurve | null {
   if (points.length < 2 || points.every((p) => p.contribution === 0)) return null;
-  let best: { a: number; k: number; err: number } | null = null;
+  const n = points.length;
+  let best: { a: number; k: number; c: number; err: number } | null = null;
   for (let k = 10; k <= 120; k++) {
-    let num = 0;
-    let den = 0;
+    let sx = 0;
+    let sy = 0;
+    let sxx = 0;
+    let sxy = 0;
     for (const p of points) {
       const x = Math.exp(-(p.pick - 1) / k);
-      num += x * p.contribution;
-      den += x * x;
+      sx += x;
+      sy += p.contribution;
+      sxx += x * x;
+      sxy += x * p.contribution;
     }
-    const a = num / den;
+    const den = n * sxx - sx * sx;
+    if (den === 0) continue;
+    const a = (n * sxy - sx * sy) / den;
+    const c = (sy - a * sx) / n;
     let err = 0;
-    for (const p of points) err += (p.contribution - a * Math.exp(-(p.pick - 1) / k)) ** 2;
-    if (!best || err < best.err) best = { a, k, err };
+    for (const p of points) err += (p.contribution - (a * Math.exp(-(p.pick - 1) / k) + c)) ** 2;
+    if (!best || err < best.err) best = { a, k, c, err };
   }
-  return best ? { a: round4(best.a), k: best.k } : null;
+  return best ? { a: round4(best.a), k: best.k, c: round4(best.c) } : null;
 }
 
 export interface PlayerTrade { playerId: PlayerId; toUserId: UserId; week: number; created: number }
@@ -78,9 +91,14 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
 /**
  * Fill every derived field on the picks. Pure.
  *
+ * Points are bye-adjusted first: a player's points are scaled by (most games any team has played) /
+ * (games the player's team has played), so a team that has already had its bye is not behind. Missed
+ * games while the team played still count as zero.
+ *
  * Points over baseline: per valued position (BASELINE_RANKS keys), the pool is every directory
- * player at that position with points > 0, sorted desc; the baseline is the pool entry at
- * BASELINE_RANKS[pos] (0 if the pool is shorter). Redraft position ranks all valued-position
+ * player at that position with adjusted points > 0, sorted desc; the baseline is the pool entry at
+ * BASELINE_RANKS[pos] (0 if the pool is shorter). The bench gap is baseline minus the pool entry at
+ * BENCH_RANKS[pos] (0 if shorter); weighted contribution is floored at minus the weighted gap. Redraft position ranks all valued-position
  * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
  * scorers tie at N + 1. Slot value is draft capital gained; production value is weighted contribution
  * (max(weighted PoB, 0)) over the expected curve fitted to this draft, in points to date. K, DEF and
@@ -90,7 +108,14 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
 export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): { picks: DraftPick[]; expectedCurve: ExpectedCurve | null } {
   const posOf = (id: PlayerId) => input.players[id]?.position ?? null;
   const valued = (pos: string | null): pos is string => pos !== null && BASELINE_RANKS[pos] !== undefined;
-  const pts = (id: PlayerId) => input.seasonPoints[id] ?? 0;
+  const rawPts = (id: PlayerId) => input.seasonPoints[id] ?? 0;
+  const maxTeamGames = Math.max(0, ...Object.values(input.teamGames));
+  const byeFactor = (id: PlayerId): number => {
+    const team = input.players[id]?.team ?? null;
+    const games = team ? input.teamGames[team] ?? 0 : 0;
+    return games > 0 && maxTeamGames > games ? maxTeamGames / games : 1;
+  };
+  const pts = (id: PlayerId) => rawPts(id) * byeFactor(id);
   const scored = input.lastScoredWeek > 0;
 
   // Baseline points per valued position.
@@ -103,10 +128,14 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     byPos.set(pos, list);
   }
   const baselinePoints = new Map<string, number>();
+  const benchGap = new Map<string, number>();
   for (const [pos, all] of byPos) {
     const scorers = all.filter((id) => pts(id) > 0).sort((a, b) => pts(b) - pts(a) || (a < b ? -1 : a > b ? 1 : 0));
     const baseId = scorers[BASELINE_RANKS[pos] - 1];
-    baselinePoints.set(pos, baseId ? pts(baseId) : 0);
+    const benchId = scorers[(BENCH_RANKS[pos] ?? BASELINE_RANKS[pos]) - 1];
+    const base = baseId ? pts(baseId) : 0;
+    baselinePoints.set(pos, base);
+    benchGap.set(pos, benchId ? Math.max(base - pts(benchId), 0) : 0);
   }
   const pobOf = (id: PlayerId): number => round2(pts(id) - (baselinePoints.get(posOf(id) ?? '') ?? 0));
   const weightOf = (pos: string | null): number => (pos ? POSITION_WEIGHTS[pos] ?? 1 : 1);
@@ -130,7 +159,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   const seen = new Map<string, number>();
   const base = ordered.map((p) => {
     const pos = posOf(p.playerId);
-    const seasonPoints = round2(pts(p.playerId));
+    const seasonPoints = round2(rawPts(p.playerId));
     const gamesPlayed = input.gamesPlayed[p.playerId] ?? 0;
     const team = input.players[p.playerId]?.team ?? null;
     const teamGames = team ? input.teamGames[team] ?? 0 : 0;
@@ -164,7 +193,11 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
 
   if (!scored) return { picks: base, expectedCurve: null };
 
-  const contribution = (p: DraftPick) => Math.max((p.pointsOverBaseline ?? 0) * weightOf(posOf(p.playerId)), 0);
+  const contribution = (p: DraftPick) => {
+    const pos = posOf(p.playerId);
+    const w = weightOf(pos);
+    return Math.max((p.pointsOverBaseline ?? 0) * w, -(benchGap.get(pos ?? '') ?? 0) * w);
+  };
   const curve = fitExpectedCurve(base.filter((p) => p.pointsOverBaseline !== null).map((p) => ({ pick: p.pickNo, contribution: contribution(p) })));
   const finished = base.map((p) => {
     if (p.pointsOverBaseline === null) return p;
