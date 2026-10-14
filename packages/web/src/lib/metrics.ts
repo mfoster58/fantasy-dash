@@ -10,6 +10,13 @@ export const METRIC_DEFS = {
   strk: 'Current run of consecutive wins or losses. Regular season only.',
   allPlay: 'All-play record. Your record if you had played every other team each week.',
   highs: "Weeks with the league's top score.",
+  titles: 'Championships won.',
+  runnerUps: 'Championship game losses.',
+  thirds: 'Third-place game wins.',
+  playoffApps: 'Seasons seeded into the playoff bracket.',
+  playoffWins: 'Playoff bracket games won, including placement games.',
+  toiletBowls: 'Seasons finished in last place.',
+  seasons: 'Seasons played in the league.',
 } as const;
 
 export interface Performer { userId: UserId; playerId: PlayerId; points: number }

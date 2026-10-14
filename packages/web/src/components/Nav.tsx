@@ -5,6 +5,7 @@ import ThemeToggle from './ThemeToggle';
 export const links: { to: string; label: string }[] = [
   { to: '/scores', label: 'Scores' },
   { to: '/standings', label: 'Standings' },
+  { to: '/all-time', label: 'All-Time' },
 ];
 
 export default function Nav() {

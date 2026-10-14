@@ -4,6 +4,7 @@ import ErrorPage from './pages/ErrorPage';
 import BoxScorePage from './pages/BoxScorePage';
 import ScoresPage from './pages/ScoresPage';
 import StandingsPage from './pages/StandingsPage';
+import AllTimePage from './pages/AllTimePage';
 import { currentSeason, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
@@ -45,6 +46,7 @@ export const router = createBrowserRouter(
         { path: 'scores/:season/:week/:matchupId', loader: seasonLoader, element: <BoxScorePage /> },
         { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
         { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
+        { path: 'all-time', element: <AllTimePage /> },
       ],
     },
   ],
