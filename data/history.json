@@ -1,0 +1,2772 @@
+{
+ "seasons": [
+  {
+   "year": 2023,
+   "leagueId": "1000241943814770688",
+   "status": "complete",
+   "lastScoredWeek": 17,
+   "playoffWeekStart": 15
+  },
+  {
+   "year": 2024,
+   "leagueId": "1124847899579023360",
+   "status": "complete",
+   "lastScoredWeek": 17,
+   "playoffWeekStart": 15
+  },
+  {
+   "year": 2025,
+   "leagueId": "1253602506592763904",
+   "status": "complete",
+   "lastScoredWeek": 17,
+   "playoffWeekStart": 15
+  },
+  {
+   "year": 2026,
+   "leagueId": "1388299227519537152",
+   "status": "in_season",
+   "lastScoredWeek": 5,
+   "playoffWeekStart": 15
+  }
+ ],
+ "managers": {
+  "863940534799044608": {
+   "displayName": "vishwakn",
+   "avatar": "ac39a02febc58b0d0aab32d002121c4e",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000272352581705728": {
+   "displayName": "adildo",
+   "avatar": "b3338675f635c2c1f42b469621d38ec6",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000275735010959360": {
+   "displayName": "azhangatang",
+   "avatar": "52f8d857349e502feaf7456567032b1d",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000275745870032896": {
+   "displayName": "BigBufoon",
+   "avatar": "82aec8e811b839b8ec25d7b458afd57b",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000568939073609728": {
+   "displayName": "ErikOdd",
+   "avatar": null,
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1002465834700304384": {
+   "displayName": "tarunsauce",
+   "avatar": "c01e6b6c495cfe1d58fe34258a76246c",
+   "seasons": [
+    2023,
+    2024
+   ]
+  },
+  "863563957724663808": {
+   "displayName": "faraz525",
+   "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000601364948459520": {
+   "displayName": "Shivi1",
+   "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1000666077673689088": {
+   "displayName": "CurryLover53",
+   "avatar": "92c11a86cf51577c8d0d1f685e25a695",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1001986687221882880": {
+   "displayName": "mattygggg",
+   "avatar": "f0edbf4278f53f9425db175073df6584",
+   "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+   ]
+  },
+  "1208320447578386432": {
+   "displayName": "kellyk777",
+   "avatar": "51385ba57cd089261f6de9ce483b8716",
+   "seasons": [
+    2025,
+    2026
+   ]
+  }
+ },
+ "h2h": {
+  "1001986687221882880|863940534799044608": {
+   "a": "1001986687221882880",
+   "b": "863940534799044608",
+   "aWins": 6,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-1-2",
+     "year": 2026,
+     "week": 1,
+     "tag": null,
+     "aPoints": 153.36,
+     "bPoints": 139.76
+    },
+    {
+     "gameId": "2025-6-5",
+     "year": 2025,
+     "week": 6,
+     "tag": null,
+     "aPoints": 157.94,
+     "bPoints": 84.4
+    },
+    {
+     "gameId": "2024-14-5",
+     "year": 2024,
+     "week": 14,
+     "tag": null,
+     "aPoints": 185.48,
+     "bPoints": 134.72
+    },
+    {
+     "gameId": "2024-5-5",
+     "year": 2024,
+     "week": 5,
+     "tag": null,
+     "aPoints": 148.02,
+     "bPoints": 106.36
+    },
+    {
+     "gameId": "2023-16-1",
+     "year": 2023,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 138.92,
+     "bPoints": 166.8
+    },
+    {
+     "gameId": "2023-10-1",
+     "year": 2023,
+     "week": 10,
+     "tag": null,
+     "aPoints": 168.44,
+     "bPoints": 143.86
+    },
+    {
+     "gameId": "2023-1-1",
+     "year": 2023,
+     "week": 1,
+     "tag": null,
+     "aPoints": 151.24,
+     "bPoints": 151.14
+    }
+   ]
+  },
+  "1000275735010959360|863563957724663808": {
+   "a": "1000275735010959360",
+   "b": "863563957724663808",
+   "aWins": 4,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-5-2",
+     "year": 2026,
+     "week": 5,
+     "tag": null,
+     "aPoints": 192.42,
+     "bPoints": 114.44
+    },
+    {
+     "gameId": "2025-12-5",
+     "year": 2025,
+     "week": 12,
+     "tag": null,
+     "aPoints": 121.56,
+     "bPoints": 164.78
+    },
+    {
+     "gameId": "2025-3-5",
+     "year": 2025,
+     "week": 3,
+     "tag": null,
+     "aPoints": 93.22,
+     "bPoints": 158.46
+    },
+    {
+     "gameId": "2024-11-2",
+     "year": 2024,
+     "week": 11,
+     "tag": null,
+     "aPoints": 155.18,
+     "bPoints": 149.14
+    },
+    {
+     "gameId": "2024-2-2",
+     "year": 2024,
+     "week": 2,
+     "tag": null,
+     "aPoints": 116.48,
+     "bPoints": 142.52
+    },
+    {
+     "gameId": "2023-16-5",
+     "year": 2023,
+     "week": 16,
+     "tag": "Cons-7th",
+     "aPoints": 128.84,
+     "bPoints": 135.38
+    },
+    {
+     "gameId": "2023-10-2",
+     "year": 2023,
+     "week": 10,
+     "tag": null,
+     "aPoints": 121.66,
+     "bPoints": 105.68
+    },
+    {
+     "gameId": "2023-1-2",
+     "year": 2023,
+     "week": 1,
+     "tag": null,
+     "aPoints": 104.6,
+     "bPoints": 95.24
+    }
+   ]
+  },
+  "1000272352581705728|1002465834700304384": {
+   "a": "1000272352581705728",
+   "b": "1002465834700304384",
+   "aWins": 1,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-7-1",
+     "year": 2024,
+     "week": 7,
+     "tag": null,
+     "aPoints": 157.62,
+     "bPoints": 132.8
+    },
+    {
+     "gameId": "2023-10-3",
+     "year": 2023,
+     "week": 10,
+     "tag": null,
+     "aPoints": 123.06,
+     "bPoints": 145.42
+    },
+    {
+     "gameId": "2023-1-3",
+     "year": 2023,
+     "week": 1,
+     "tag": null,
+     "aPoints": 93.54,
+     "bPoints": 140.16
+    }
+   ]
+  },
+  "1000275745870032896|1000666077673689088": {
+   "a": "1000275745870032896",
+   "b": "1000666077673689088",
+   "aWins": 5,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-3-3",
+     "year": 2026,
+     "week": 3,
+     "tag": null,
+     "aPoints": 129.88,
+     "bPoints": 139.1
+    },
+    {
+     "gameId": "2025-12-2",
+     "year": 2025,
+     "week": 12,
+     "tag": null,
+     "aPoints": 144.12,
+     "bPoints": 142.92
+    },
+    {
+     "gameId": "2025-3-2",
+     "year": 2025,
+     "week": 3,
+     "tag": null,
+     "aPoints": 141.84,
+     "bPoints": 127.92
+    },
+    {
+     "gameId": "2024-15-2",
+     "year": 2024,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 124.16,
+     "bPoints": 141.8
+    },
+    {
+     "gameId": "2024-8-3",
+     "year": 2024,
+     "week": 8,
+     "tag": null,
+     "aPoints": 131.44,
+     "bPoints": 106.14
+    },
+    {
+     "gameId": "2023-10-4",
+     "year": 2023,
+     "week": 10,
+     "tag": null,
+     "aPoints": 124.58,
+     "bPoints": 117.68
+    },
+    {
+     "gameId": "2023-1-4",
+     "year": 2023,
+     "week": 1,
+     "tag": null,
+     "aPoints": 142.28,
+     "bPoints": 89.86
+    }
+   ]
+  },
+  "1000568939073609728|1000601364948459520": {
+   "a": "1000568939073609728",
+   "b": "1000601364948459520",
+   "aWins": 4,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-5-3",
+     "year": 2026,
+     "week": 5,
+     "tag": null,
+     "aPoints": 161.8,
+     "bPoints": 173.54
+    },
+    {
+     "gameId": "2025-6-4",
+     "year": 2025,
+     "week": 6,
+     "tag": null,
+     "aPoints": 115.02,
+     "bPoints": 101.54
+    },
+    {
+     "gameId": "2024-11-4",
+     "year": 2024,
+     "week": 11,
+     "tag": null,
+     "aPoints": 114.14,
+     "bPoints": 96.48
+    },
+    {
+     "gameId": "2024-2-4",
+     "year": 2024,
+     "week": 2,
+     "tag": null,
+     "aPoints": 131.82,
+     "bPoints": 121.7
+    },
+    {
+     "gameId": "2023-10-5",
+     "year": 2023,
+     "week": 10,
+     "tag": null,
+     "aPoints": 146.02,
+     "bPoints": 171.86
+    },
+    {
+     "gameId": "2023-1-5",
+     "year": 2023,
+     "week": 1,
+     "tag": null,
+     "aPoints": 107.36,
+     "bPoints": 89.32
+    }
+   ]
+  },
+  "1000275735010959360|1001986687221882880": {
+   "a": "1000275735010959360",
+   "b": "1001986687221882880",
+   "aWins": 4,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-3-2",
+     "year": 2026,
+     "week": 3,
+     "tag": null,
+     "aPoints": 141.64,
+     "bPoints": 189.66
+    },
+    {
+     "gameId": "2025-14-5",
+     "year": 2025,
+     "week": 14,
+     "tag": null,
+     "aPoints": 150.06,
+     "bPoints": 136.24
+    },
+    {
+     "gameId": "2025-5-5",
+     "year": 2025,
+     "week": 5,
+     "tag": null,
+     "aPoints": 169.32,
+     "bPoints": 141.58
+    },
+    {
+     "gameId": "2024-16-1",
+     "year": 2024,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 135.38,
+     "bPoints": 200.92
+    },
+    {
+     "gameId": "2024-13-4",
+     "year": 2024,
+     "week": 13,
+     "tag": null,
+     "aPoints": 156.18,
+     "bPoints": 132.74
+    },
+    {
+     "gameId": "2024-4-4",
+     "year": 2024,
+     "week": 4,
+     "tag": null,
+     "aPoints": 135.34,
+     "bPoints": 133.58
+    },
+    {
+     "gameId": "2023-11-1",
+     "year": 2023,
+     "week": 11,
+     "tag": null,
+     "aPoints": 120.2,
+     "bPoints": 148.74
+    },
+    {
+     "gameId": "2023-2-1",
+     "year": 2023,
+     "week": 2,
+     "tag": null,
+     "aPoints": 140.22,
+     "bPoints": 187.54
+    }
+   ]
+  },
+  "863563957724663808|863940534799044608": {
+   "a": "863563957724663808",
+   "b": "863940534799044608",
+   "aWins": 4,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-3-4",
+     "year": 2026,
+     "week": 3,
+     "tag": null,
+     "aPoints": 147.74,
+     "bPoints": 111.74
+    },
+    {
+     "gameId": "2025-9-5",
+     "year": 2025,
+     "week": 9,
+     "tag": null,
+     "aPoints": 124,
+     "bPoints": 117.16
+    },
+    {
+     "gameId": "2024-15-4",
+     "year": 2024,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 180.6,
+     "bPoints": 113.1
+    },
+    {
+     "gameId": "2024-9-2",
+     "year": 2024,
+     "week": 9,
+     "tag": null,
+     "aPoints": 184.1,
+     "bPoints": 108.32
+    },
+    {
+     "gameId": "2023-11-2",
+     "year": 2023,
+     "week": 11,
+     "tag": null,
+     "aPoints": 124.1,
+     "bPoints": 127.82
+    },
+    {
+     "gameId": "2023-2-2",
+     "year": 2023,
+     "week": 2,
+     "tag": null,
+     "aPoints": 101.96,
+     "bPoints": 109.34
+    }
+   ]
+  },
+  "1000272352581705728|1000666077673689088": {
+   "a": "1000272352581705728",
+   "b": "1000666077673689088",
+   "aWins": 4,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-11-1",
+     "year": 2025,
+     "week": 11,
+     "tag": null,
+     "aPoints": 132.86,
+     "bPoints": 146.08
+    },
+    {
+     "gameId": "2025-2-1",
+     "year": 2025,
+     "week": 2,
+     "tag": null,
+     "aPoints": 138.1,
+     "bPoints": 115.32
+    },
+    {
+     "gameId": "2024-16-2",
+     "year": 2024,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 152.56,
+     "bPoints": 165.48
+    },
+    {
+     "gameId": "2024-11-1",
+     "year": 2024,
+     "week": 11,
+     "tag": null,
+     "aPoints": 111.18,
+     "bPoints": 116.38
+    },
+    {
+     "gameId": "2024-2-1",
+     "year": 2024,
+     "week": 2,
+     "tag": null,
+     "aPoints": 149.96,
+     "bPoints": 102.32
+    },
+    {
+     "gameId": "2023-11-3",
+     "year": 2023,
+     "week": 11,
+     "tag": null,
+     "aPoints": 136.28,
+     "bPoints": 126.54
+    },
+    {
+     "gameId": "2023-2-3",
+     "year": 2023,
+     "week": 2,
+     "tag": null,
+     "aPoints": 136.7,
+     "bPoints": 136.46
+    }
+   ]
+  },
+  "1000568939073609728|1002465834700304384": {
+   "a": "1000568939073609728",
+   "b": "1002465834700304384",
+   "aWins": 2,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-13-5",
+     "year": 2024,
+     "week": 13,
+     "tag": null,
+     "aPoints": 129.76,
+     "bPoints": 135.4
+    },
+    {
+     "gameId": "2024-4-5",
+     "year": 2024,
+     "week": 4,
+     "tag": null,
+     "aPoints": 106.48,
+     "bPoints": 103.3
+    },
+    {
+     "gameId": "2023-11-4",
+     "year": 2023,
+     "week": 11,
+     "tag": null,
+     "aPoints": 114.46,
+     "bPoints": 167.64
+    },
+    {
+     "gameId": "2023-2-4",
+     "year": 2023,
+     "week": 2,
+     "tag": null,
+     "aPoints": 167.58,
+     "bPoints": 158.16
+    }
+   ]
+  },
+  "1000275745870032896|1000601364948459520": {
+   "a": "1000275745870032896",
+   "b": "1000601364948459520",
+   "aWins": 3,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-4-2",
+     "year": 2026,
+     "week": 4,
+     "tag": null,
+     "aPoints": 140.52,
+     "bPoints": 163.08
+    },
+    {
+     "gameId": "2025-11-2",
+     "year": 2025,
+     "week": 11,
+     "tag": null,
+     "aPoints": 118.8,
+     "bPoints": 93.02
+    },
+    {
+     "gameId": "2025-2-2",
+     "year": 2025,
+     "week": 2,
+     "tag": null,
+     "aPoints": 122.34,
+     "bPoints": 152.18
+    },
+    {
+     "gameId": "2024-10-3",
+     "year": 2024,
+     "week": 10,
+     "tag": null,
+     "aPoints": 150.3,
+     "bPoints": 132.58
+    },
+    {
+     "gameId": "2024-1-3",
+     "year": 2024,
+     "week": 1,
+     "tag": null,
+     "aPoints": 101.24,
+     "bPoints": 102.96
+    },
+    {
+     "gameId": "2023-11-5",
+     "year": 2023,
+     "week": 11,
+     "tag": null,
+     "aPoints": 132.04,
+     "bPoints": 91.86
+    },
+    {
+     "gameId": "2023-2-5",
+     "year": 2023,
+     "week": 2,
+     "tag": null,
+     "aPoints": 102.08,
+     "bPoints": 104.94
+    }
+   ]
+  },
+  "1001986687221882880|863563957724663808": {
+   "a": "1001986687221882880",
+   "b": "863563957724663808",
+   "aWins": 3,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-4-3",
+     "year": 2026,
+     "week": 4,
+     "tag": null,
+     "aPoints": 111.92,
+     "bPoints": 142.3
+    },
+    {
+     "gameId": "2025-10-5",
+     "year": 2025,
+     "week": 10,
+     "tag": null,
+     "aPoints": 219.42,
+     "bPoints": 144.22
+    },
+    {
+     "gameId": "2025-1-5",
+     "year": 2025,
+     "week": 1,
+     "tag": null,
+     "aPoints": 105.72,
+     "bPoints": 149.42
+    },
+    {
+     "gameId": "2024-8-2",
+     "year": 2024,
+     "week": 8,
+     "tag": null,
+     "aPoints": 140.08,
+     "bPoints": 156.04
+    },
+    {
+     "gameId": "2023-12-1",
+     "year": 2023,
+     "week": 12,
+     "tag": null,
+     "aPoints": 203.36,
+     "bPoints": 157.56
+    },
+    {
+     "gameId": "2023-3-1",
+     "year": 2023,
+     "week": 3,
+     "tag": null,
+     "aPoints": 166.32,
+     "bPoints": 116.02
+    }
+   ]
+  },
+  "1000275735010959360|863940534799044608": {
+   "a": "1000275735010959360",
+   "b": "863940534799044608",
+   "aWins": 3,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-2-3",
+     "year": 2026,
+     "week": 2,
+     "tag": null,
+     "aPoints": 151.98,
+     "bPoints": 129.18
+    },
+    {
+     "gameId": "2025-11-3",
+     "year": 2025,
+     "week": 11,
+     "tag": null,
+     "aPoints": 119.44,
+     "bPoints": 89.72
+    },
+    {
+     "gameId": "2025-2-3",
+     "year": 2025,
+     "week": 2,
+     "tag": null,
+     "aPoints": 121.2,
+     "bPoints": 137.3
+    },
+    {
+     "gameId": "2024-8-4",
+     "year": 2024,
+     "week": 8,
+     "tag": null,
+     "aPoints": 151.96,
+     "bPoints": 135.88
+    },
+    {
+     "gameId": "2023-12-2",
+     "year": 2023,
+     "week": 12,
+     "tag": null,
+     "aPoints": 124.9,
+     "bPoints": 162.38
+    },
+    {
+     "gameId": "2023-3-2",
+     "year": 2023,
+     "week": 3,
+     "tag": null,
+     "aPoints": 137.18,
+     "bPoints": 153.34
+    }
+   ]
+  },
+  "1000272352581705728|1000275745870032896": {
+   "a": "1000272352581705728",
+   "b": "1000275745870032896",
+   "aWins": 4,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-2-4",
+     "year": 2026,
+     "week": 2,
+     "tag": null,
+     "aPoints": 98.66,
+     "bPoints": 121.04
+    },
+    {
+     "gameId": "2025-15-2",
+     "year": 2025,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 144.42,
+     "bPoints": 170.84
+    },
+    {
+     "gameId": "2025-10-1",
+     "year": 2025,
+     "week": 10,
+     "tag": null,
+     "aPoints": 99.3,
+     "bPoints": 163.58
+    },
+    {
+     "gameId": "2025-1-1",
+     "year": 2025,
+     "week": 1,
+     "tag": null,
+     "aPoints": 111.42,
+     "bPoints": 100.72
+    },
+    {
+     "gameId": "2024-13-1",
+     "year": 2024,
+     "week": 13,
+     "tag": null,
+     "aPoints": 150.72,
+     "bPoints": 162.54
+    },
+    {
+     "gameId": "2024-4-1",
+     "year": 2024,
+     "week": 4,
+     "tag": null,
+     "aPoints": 153.7,
+     "bPoints": 128.7
+    },
+    {
+     "gameId": "2023-12-3",
+     "year": 2023,
+     "week": 12,
+     "tag": null,
+     "aPoints": 139.82,
+     "bPoints": 139.34
+    },
+    {
+     "gameId": "2023-3-3",
+     "year": 2023,
+     "week": 3,
+     "tag": null,
+     "aPoints": 131.58,
+     "bPoints": 125.06
+    }
+   ]
+  },
+  "1000601364948459520|1002465834700304384": {
+   "a": "1000601364948459520",
+   "b": "1002465834700304384",
+   "aWins": 4,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-15-5",
+     "year": 2024,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 143.04,
+     "bPoints": 133.42
+    },
+    {
+     "gameId": "2024-8-5",
+     "year": 2024,
+     "week": 8,
+     "tag": null,
+     "aPoints": 177.32,
+     "bPoints": 125.7
+    },
+    {
+     "gameId": "2023-12-4",
+     "year": 2023,
+     "week": 12,
+     "tag": null,
+     "aPoints": 127.54,
+     "bPoints": 87.98
+    },
+    {
+     "gameId": "2023-3-4",
+     "year": 2023,
+     "week": 3,
+     "tag": null,
+     "aPoints": 196.06,
+     "bPoints": 126.5
+    }
+   ]
+  },
+  "1000568939073609728|1000666077673689088": {
+   "a": "1000568939073609728",
+   "b": "1000666077673689088",
+   "aWins": 4,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-4-4",
+     "year": 2026,
+     "week": 4,
+     "tag": null,
+     "aPoints": 197.42,
+     "bPoints": 117.04
+    },
+    {
+     "gameId": "2025-9-3",
+     "year": 2025,
+     "week": 9,
+     "tag": null,
+     "aPoints": 147.8,
+     "bPoints": 117.42
+    },
+    {
+     "gameId": "2024-6-3",
+     "year": 2024,
+     "week": 6,
+     "tag": null,
+     "aPoints": 136.92,
+     "bPoints": 129.52
+    },
+    {
+     "gameId": "2023-12-5",
+     "year": 2023,
+     "week": 12,
+     "tag": null,
+     "aPoints": 122.58,
+     "bPoints": 159.6
+    },
+    {
+     "gameId": "2023-3-5",
+     "year": 2023,
+     "week": 3,
+     "tag": null,
+     "aPoints": 191.08,
+     "bPoints": 110.38
+    }
+   ]
+  },
+  "1000272352581705728|1001986687221882880": {
+   "a": "1000272352581705728",
+   "b": "1001986687221882880",
+   "aWins": 3,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-5-4",
+     "year": 2026,
+     "week": 5,
+     "tag": null,
+     "aPoints": 97.8,
+     "bPoints": 204.5
+    },
+    {
+     "gameId": "2025-9-1",
+     "year": 2025,
+     "week": 9,
+     "tag": null,
+     "aPoints": 139.32,
+     "bPoints": 100.2
+    },
+    {
+     "gameId": "2024-9-1",
+     "year": 2024,
+     "week": 9,
+     "tag": null,
+     "aPoints": 152.18,
+     "bPoints": 126.26
+    },
+    {
+     "gameId": "2023-13-1",
+     "year": 2023,
+     "week": 13,
+     "tag": null,
+     "aPoints": 97.9,
+     "bPoints": 173.36
+    },
+    {
+     "gameId": "2023-4-1",
+     "year": 2023,
+     "week": 4,
+     "tag": null,
+     "aPoints": 149.22,
+     "bPoints": 114.74
+    }
+   ]
+  },
+  "1002465834700304384|863940534799044608": {
+   "a": "1002465834700304384",
+   "b": "863940534799044608",
+   "aWins": 3,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-16-4",
+     "year": 2024,
+     "week": 16,
+     "tag": "Toilet Bowl",
+     "aPoints": 142.52,
+     "bPoints": 139.86
+    },
+    {
+     "gameId": "2024-10-4",
+     "year": 2024,
+     "week": 10,
+     "tag": null,
+     "aPoints": 109.14,
+     "bPoints": 160.36
+    },
+    {
+     "gameId": "2024-1-4",
+     "year": 2024,
+     "week": 1,
+     "tag": null,
+     "aPoints": 147.38,
+     "bPoints": 104.54
+    },
+    {
+     "gameId": "2023-13-2",
+     "year": 2023,
+     "week": 13,
+     "tag": null,
+     "aPoints": 132.88,
+     "bPoints": 162.16
+    },
+    {
+     "gameId": "2023-4-2",
+     "year": 2023,
+     "week": 4,
+     "tag": null,
+     "aPoints": 125.98,
+     "bPoints": 115.5
+    }
+   ]
+  },
+  "1000275735010959360|1000666077673689088": {
+   "a": "1000275735010959360",
+   "b": "1000666077673689088",
+   "aWins": 3,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-13-3",
+     "year": 2025,
+     "week": 13,
+     "tag": null,
+     "aPoints": 118.58,
+     "bPoints": 103.82
+    },
+    {
+     "gameId": "2025-4-3",
+     "year": 2025,
+     "week": 4,
+     "tag": null,
+     "aPoints": 129.82,
+     "bPoints": 154.86
+    },
+    {
+     "gameId": "2024-10-2",
+     "year": 2024,
+     "week": 10,
+     "tag": null,
+     "aPoints": 131.2,
+     "bPoints": 122.4
+    },
+    {
+     "gameId": "2024-1-2",
+     "year": 2024,
+     "week": 1,
+     "tag": null,
+     "aPoints": 104.82,
+     "bPoints": 184.36
+    },
+    {
+     "gameId": "2023-15-4",
+     "year": 2023,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 154.82,
+     "bPoints": 85.48
+    },
+    {
+     "gameId": "2023-13-3",
+     "year": 2023,
+     "week": 13,
+     "tag": null,
+     "aPoints": 143.52,
+     "bPoints": 158.98
+    },
+    {
+     "gameId": "2023-4-3",
+     "year": 2023,
+     "week": 4,
+     "tag": null,
+     "aPoints": 113.26,
+     "bPoints": 139.94
+    }
+   ]
+  },
+  "1000601364948459520|863563957724663808": {
+   "a": "1000601364948459520",
+   "b": "863563957724663808",
+   "aWins": 4,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-14-4",
+     "year": 2025,
+     "week": 14,
+     "tag": null,
+     "aPoints": 138.74,
+     "bPoints": 99
+    },
+    {
+     "gameId": "2025-5-4",
+     "year": 2025,
+     "week": 5,
+     "tag": null,
+     "aPoints": 181.66,
+     "bPoints": 153.24
+    },
+    {
+     "gameId": "2024-16-5",
+     "year": 2024,
+     "week": 16,
+     "tag": "Cons-7th",
+     "aPoints": 181,
+     "bPoints": 101.14
+    },
+    {
+     "gameId": "2024-13-2",
+     "year": 2024,
+     "week": 13,
+     "tag": null,
+     "aPoints": 101.38,
+     "bPoints": 129.12
+    },
+    {
+     "gameId": "2024-4-2",
+     "year": 2024,
+     "week": 4,
+     "tag": null,
+     "aPoints": 179.1,
+     "bPoints": 129.1
+    },
+    {
+     "gameId": "2023-13-4",
+     "year": 2023,
+     "week": 13,
+     "tag": null,
+     "aPoints": 138.78,
+     "bPoints": 153.08
+    },
+    {
+     "gameId": "2023-4-4",
+     "year": 2023,
+     "week": 4,
+     "tag": null,
+     "aPoints": 116.04,
+     "bPoints": 130.2
+    }
+   ]
+  },
+  "1000275745870032896|1000568939073609728": {
+   "a": "1000275745870032896",
+   "b": "1000568939073609728",
+   "aWins": 4,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-13-2",
+     "year": 2025,
+     "week": 13,
+     "tag": null,
+     "aPoints": 106.96,
+     "bPoints": 123
+    },
+    {
+     "gameId": "2025-4-2",
+     "year": 2025,
+     "week": 4,
+     "tag": null,
+     "aPoints": 163.18,
+     "bPoints": 150.3
+    },
+    {
+     "gameId": "2024-16-3",
+     "year": 2024,
+     "week": 16,
+     "tag": "5th",
+     "aPoints": 142.98,
+     "bPoints": 146.88
+    },
+    {
+     "gameId": "2024-9-5",
+     "year": 2024,
+     "week": 9,
+     "tag": null,
+     "aPoints": 131.04,
+     "bPoints": 147.14
+    },
+    {
+     "gameId": "2023-16-2",
+     "year": 2023,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 137.1,
+     "bPoints": 116.88
+    },
+    {
+     "gameId": "2023-13-5",
+     "year": 2023,
+     "week": 13,
+     "tag": null,
+     "aPoints": 130.4,
+     "bPoints": 98.4
+    },
+    {
+     "gameId": "2023-4-5",
+     "year": 2023,
+     "week": 4,
+     "tag": null,
+     "aPoints": 133.32,
+     "bPoints": 108.44
+    }
+   ]
+  },
+  "1001986687221882880|1002465834700304384": {
+   "a": "1001986687221882880",
+   "b": "1002465834700304384",
+   "aWins": 4,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-11-5",
+     "year": 2024,
+     "week": 11,
+     "tag": null,
+     "aPoints": 168.84,
+     "bPoints": 137.2
+    },
+    {
+     "gameId": "2024-2-5",
+     "year": 2024,
+     "week": 2,
+     "tag": null,
+     "aPoints": 146.04,
+     "bPoints": 107.96
+    },
+    {
+     "gameId": "2023-14-1",
+     "year": 2023,
+     "week": 14,
+     "tag": null,
+     "aPoints": 137.44,
+     "bPoints": 119.24
+    },
+    {
+     "gameId": "2023-5-1",
+     "year": 2023,
+     "week": 5,
+     "tag": null,
+     "aPoints": 132.86,
+     "bPoints": 105.84
+    }
+   ]
+  },
+  "1000272352581705728|863940534799044608": {
+   "a": "1000272352581705728",
+   "b": "863940534799044608",
+   "aWins": 4,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-4-5",
+     "year": 2026,
+     "week": 4,
+     "tag": null,
+     "aPoints": 108.32,
+     "bPoints": 124.4
+    },
+    {
+     "gameId": "2025-13-1",
+     "year": 2025,
+     "week": 13,
+     "tag": null,
+     "aPoints": 109.34,
+     "bPoints": 96.64
+    },
+    {
+     "gameId": "2025-4-1",
+     "year": 2025,
+     "week": 4,
+     "tag": null,
+     "aPoints": 109.98,
+     "bPoints": 142.38
+    },
+    {
+     "gameId": "2024-6-1",
+     "year": 2024,
+     "week": 6,
+     "tag": null,
+     "aPoints": 97.8,
+     "bPoints": 93.48
+    },
+    {
+     "gameId": "2023-14-2",
+     "year": 2023,
+     "week": 14,
+     "tag": null,
+     "aPoints": 137.24,
+     "bPoints": 132.62
+    },
+    {
+     "gameId": "2023-5-2",
+     "year": 2023,
+     "week": 5,
+     "tag": null,
+     "aPoints": 178.74,
+     "bPoints": 175.38
+    }
+   ]
+  },
+  "1000275735010959360|1000275745870032896": {
+   "a": "1000275735010959360",
+   "b": "1000275745870032896",
+   "aWins": 3,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-9-2",
+     "year": 2025,
+     "week": 9,
+     "tag": null,
+     "aPoints": 164.66,
+     "bPoints": 136.24
+    },
+    {
+     "gameId": "2024-7-4",
+     "year": 2024,
+     "week": 7,
+     "tag": null,
+     "aPoints": 125.34,
+     "bPoints": 115.36
+    },
+    {
+     "gameId": "2023-14-3",
+     "year": 2023,
+     "week": 14,
+     "tag": null,
+     "aPoints": 139.58,
+     "bPoints": 133.36
+    },
+    {
+     "gameId": "2023-5-3",
+     "year": 2023,
+     "week": 5,
+     "tag": null,
+     "aPoints": 98.52,
+     "bPoints": 140.28
+    }
+   ]
+  },
+  "1000568939073609728|863563957724663808": {
+   "a": "1000568939073609728",
+   "b": "863563957724663808",
+   "aWins": 1,
+   "bWins": 6,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-2-5",
+     "year": 2026,
+     "week": 2,
+     "tag": null,
+     "aPoints": 126.48,
+     "bPoints": 142.36
+    },
+    {
+     "gameId": "2025-16-1",
+     "year": 2025,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 144.9,
+     "bPoints": 115.98
+    },
+    {
+     "gameId": "2025-11-4",
+     "year": 2025,
+     "week": 11,
+     "tag": null,
+     "aPoints": 120.2,
+     "bPoints": 124.44
+    },
+    {
+     "gameId": "2025-2-4",
+     "year": 2025,
+     "week": 2,
+     "tag": null,
+     "aPoints": 121.84,
+     "bPoints": 127.58
+    },
+    {
+     "gameId": "2024-7-2",
+     "year": 2024,
+     "week": 7,
+     "tag": null,
+     "aPoints": 109.44,
+     "bPoints": 129.36
+    },
+    {
+     "gameId": "2023-14-4",
+     "year": 2023,
+     "week": 14,
+     "tag": null,
+     "aPoints": 130.34,
+     "bPoints": 136.62
+    },
+    {
+     "gameId": "2023-5-4",
+     "year": 2023,
+     "week": 5,
+     "tag": null,
+     "aPoints": 167.1,
+     "bPoints": 171.26
+    }
+   ]
+  },
+  "1000601364948459520|1000666077673689088": {
+   "a": "1000601364948459520",
+   "b": "1000666077673689088",
+   "aWins": 2,
+   "bWins": 5,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-2-2",
+     "year": 2026,
+     "week": 2,
+     "tag": null,
+     "aPoints": 102.12,
+     "bPoints": 143.92
+    },
+    {
+     "gameId": "2025-15-5",
+     "year": 2025,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 173.6,
+     "bPoints": 175.52
+    },
+    {
+     "gameId": "2025-10-2",
+     "year": 2025,
+     "week": 10,
+     "tag": null,
+     "aPoints": 124.5,
+     "bPoints": 123.74
+    },
+    {
+     "gameId": "2025-1-2",
+     "year": 2025,
+     "week": 1,
+     "tag": null,
+     "aPoints": 111.32,
+     "bPoints": 154.46
+    },
+    {
+     "gameId": "2024-9-3",
+     "year": 2024,
+     "week": 9,
+     "tag": null,
+     "aPoints": 126.14,
+     "bPoints": 127.12
+    },
+    {
+     "gameId": "2023-14-5",
+     "year": 2023,
+     "week": 14,
+     "tag": null,
+     "aPoints": 129.24,
+     "bPoints": 143.72
+    },
+    {
+     "gameId": "2023-5-5",
+     "year": 2023,
+     "week": 5,
+     "tag": null,
+     "aPoints": 183.18,
+     "bPoints": 99.78
+    }
+   ]
+  },
+  "1000666077673689088|1001986687221882880": {
+   "a": "1000666077673689088",
+   "b": "1001986687221882880",
+   "aWins": 2,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-7-3",
+     "year": 2025,
+     "week": 7,
+     "tag": null,
+     "aPoints": 132.16,
+     "bPoints": 132.86
+    },
+    {
+     "gameId": "2024-17-1",
+     "year": 2024,
+     "week": 17,
+     "tag": "Final",
+     "aPoints": 150.56,
+     "bPoints": 130.68
+    },
+    {
+     "gameId": "2024-7-3",
+     "year": 2024,
+     "week": 7,
+     "tag": null,
+     "aPoints": 135.3,
+     "bPoints": 102.74
+    },
+    {
+     "gameId": "2023-6-1",
+     "year": 2023,
+     "week": 6,
+     "tag": null,
+     "aPoints": 121.84,
+     "bPoints": 136.04
+    }
+   ]
+  },
+  "1000275745870032896|863940534799044608": {
+   "a": "1000275745870032896",
+   "b": "863940534799044608",
+   "aWins": 6,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-14-2",
+     "year": 2025,
+     "week": 14,
+     "tag": null,
+     "aPoints": 131.16,
+     "bPoints": 119.26
+    },
+    {
+     "gameId": "2025-5-2",
+     "year": 2025,
+     "week": 5,
+     "tag": null,
+     "aPoints": 144.68,
+     "bPoints": 127.32
+    },
+    {
+     "gameId": "2024-11-3",
+     "year": 2024,
+     "week": 11,
+     "tag": null,
+     "aPoints": 148.34,
+     "bPoints": 134.78
+    },
+    {
+     "gameId": "2024-2-3",
+     "year": 2024,
+     "week": 2,
+     "tag": null,
+     "aPoints": 145.74,
+     "bPoints": 129.58
+    },
+    {
+     "gameId": "2023-17-1",
+     "year": 2023,
+     "week": 17,
+     "tag": "Final",
+     "aPoints": 174.78,
+     "bPoints": 132.72
+    },
+    {
+     "gameId": "2023-6-2",
+     "year": 2023,
+     "week": 6,
+     "tag": null,
+     "aPoints": 139.2,
+     "bPoints": 110.92
+    }
+   ]
+  },
+  "1000275735010959360|1000568939073609728": {
+   "a": "1000275735010959360",
+   "b": "1000568939073609728",
+   "aWins": 1,
+   "bWins": 5,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-1-4",
+     "year": 2026,
+     "week": 1,
+     "tag": null,
+     "aPoints": 160,
+     "bPoints": 183.36
+    },
+    {
+     "gameId": "2025-15-1",
+     "year": 2025,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 132.7,
+     "bPoints": 156
+    },
+    {
+     "gameId": "2025-7-5",
+     "year": 2025,
+     "week": 7,
+     "tag": null,
+     "aPoints": 149.48,
+     "bPoints": 156.54
+    },
+    {
+     "gameId": "2024-14-4",
+     "year": 2024,
+     "week": 14,
+     "tag": null,
+     "aPoints": 157.38,
+     "bPoints": 137.66
+    },
+    {
+     "gameId": "2024-5-4",
+     "year": 2024,
+     "week": 5,
+     "tag": null,
+     "aPoints": 171.12,
+     "bPoints": 183.08
+    },
+    {
+     "gameId": "2023-6-3",
+     "year": 2023,
+     "week": 6,
+     "tag": null,
+     "aPoints": 111.1,
+     "bPoints": 135.38
+    }
+   ]
+  },
+  "1002465834700304384|863563957724663808": {
+   "a": "1002465834700304384",
+   "b": "863563957724663808",
+   "aWins": 1,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-6-2",
+     "year": 2024,
+     "week": 6,
+     "tag": null,
+     "aPoints": 153.6,
+     "bPoints": 133.46
+    },
+    {
+     "gameId": "2023-15-5",
+     "year": 2023,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 100.62,
+     "bPoints": 136.16
+    },
+    {
+     "gameId": "2023-6-4",
+     "year": 2023,
+     "week": 6,
+     "tag": null,
+     "aPoints": 87.68,
+     "bPoints": 137.06
+    }
+   ]
+  },
+  "1000272352581705728|1000601364948459520": {
+   "a": "1000272352581705728",
+   "b": "1000601364948459520",
+   "aWins": 5,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-1-3",
+     "year": 2026,
+     "week": 1,
+     "tag": null,
+     "aPoints": 132.12,
+     "bPoints": 158.06
+    },
+    {
+     "gameId": "2025-12-1",
+     "year": 2025,
+     "week": 12,
+     "tag": null,
+     "aPoints": 138.52,
+     "bPoints": 109.56
+    },
+    {
+     "gameId": "2025-3-1",
+     "year": 2025,
+     "week": 3,
+     "tag": null,
+     "aPoints": 122.92,
+     "bPoints": 119.92
+    },
+    {
+     "gameId": "2024-14-1",
+     "year": 2024,
+     "week": 14,
+     "tag": null,
+     "aPoints": 153.08,
+     "bPoints": 145.74
+    },
+    {
+     "gameId": "2024-5-1",
+     "year": 2024,
+     "week": 5,
+     "tag": null,
+     "aPoints": 134.64,
+     "bPoints": 104.04
+    },
+    {
+     "gameId": "2023-16-3",
+     "year": 2023,
+     "week": 16,
+     "tag": "5th",
+     "aPoints": 138.3,
+     "bPoints": 128.22
+    },
+    {
+     "gameId": "2023-6-5",
+     "year": 2023,
+     "week": 6,
+     "tag": null,
+     "aPoints": 121.94,
+     "bPoints": 165.38
+    }
+   ]
+  },
+  "1000275745870032896|1001986687221882880": {
+   "a": "1000275745870032896",
+   "b": "1001986687221882880",
+   "aWins": 1,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-16-2",
+     "year": 2025,
+     "week": 16,
+     "tag": "SF",
+     "aPoints": 112.12,
+     "bPoints": 139.02
+    },
+    {
+     "gameId": "2025-8-2",
+     "year": 2025,
+     "week": 8,
+     "tag": null,
+     "aPoints": 128.02,
+     "bPoints": 116.02
+    },
+    {
+     "gameId": "2024-6-5",
+     "year": 2024,
+     "week": 6,
+     "tag": null,
+     "aPoints": 145.64,
+     "bPoints": 153.46
+    },
+    {
+     "gameId": "2023-7-1",
+     "year": 2023,
+     "week": 7,
+     "tag": null,
+     "aPoints": 147.36,
+     "bPoints": 152.36
+    }
+   ]
+  },
+  "1000568939073609728|863940534799044608": {
+   "a": "1000568939073609728",
+   "b": "863940534799044608",
+   "aWins": 3,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-10-3",
+     "year": 2025,
+     "week": 10,
+     "tag": null,
+     "aPoints": 119.12,
+     "bPoints": 122.44
+    },
+    {
+     "gameId": "2025-1-3",
+     "year": 2025,
+     "week": 1,
+     "tag": null,
+     "aPoints": 145.68,
+     "bPoints": 116.06
+    },
+    {
+     "gameId": "2024-12-5",
+     "year": 2024,
+     "week": 12,
+     "tag": null,
+     "aPoints": 96.62,
+     "bPoints": 115.46
+    },
+    {
+     "gameId": "2024-3-5",
+     "year": 2024,
+     "week": 3,
+     "tag": null,
+     "aPoints": 130.28,
+     "bPoints": 122.26
+    },
+    {
+     "gameId": "2023-7-2",
+     "year": 2023,
+     "week": 7,
+     "tag": null,
+     "aPoints": 120.68,
+     "bPoints": 116.16
+    }
+   ]
+  },
+  "1000275735010959360|1000601364948459520": {
+   "a": "1000275735010959360",
+   "b": "1000601364948459520",
+   "aWins": 3,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-8-4",
+     "year": 2025,
+     "week": 8,
+     "tag": null,
+     "aPoints": 119.38,
+     "bPoints": 100.6
+    },
+    {
+     "gameId": "2024-6-4",
+     "year": 2024,
+     "week": 6,
+     "tag": null,
+     "aPoints": 159.32,
+     "bPoints": 157.38
+    },
+    {
+     "gameId": "2023-7-3",
+     "year": 2023,
+     "week": 7,
+     "tag": null,
+     "aPoints": 166.66,
+     "bPoints": 116.08
+    }
+   ]
+  },
+  "1000272352581705728|863563957724663808": {
+   "a": "1000272352581705728",
+   "b": "863563957724663808",
+   "aWins": 2,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-8-1",
+     "year": 2025,
+     "week": 8,
+     "tag": null,
+     "aPoints": 141.02,
+     "bPoints": 126.46
+    },
+    {
+     "gameId": "2024-10-1",
+     "year": 2024,
+     "week": 10,
+     "tag": null,
+     "aPoints": 90.8,
+     "bPoints": 138.28
+    },
+    {
+     "gameId": "2024-1-1",
+     "year": 2024,
+     "week": 1,
+     "tag": null,
+     "aPoints": 139.88,
+     "bPoints": 111.02
+    },
+    {
+     "gameId": "2023-7-4",
+     "year": 2023,
+     "week": 7,
+     "tag": null,
+     "aPoints": 145.16,
+     "bPoints": 148
+    }
+   ]
+  },
+  "1000666077673689088|1002465834700304384": {
+   "a": "1000666077673689088",
+   "b": "1002465834700304384",
+   "aWins": 2,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-14-3",
+     "year": 2024,
+     "week": 14,
+     "tag": null,
+     "aPoints": 118.44,
+     "bPoints": 84.1
+    },
+    {
+     "gameId": "2024-5-3",
+     "year": 2024,
+     "week": 5,
+     "tag": null,
+     "aPoints": 123.16,
+     "bPoints": 125.46
+    },
+    {
+     "gameId": "2023-16-4",
+     "year": 2023,
+     "week": 16,
+     "tag": "Toilet Bowl",
+     "aPoints": 113.04,
+     "bPoints": 156.78
+    },
+    {
+     "gameId": "2023-7-5",
+     "year": 2023,
+     "week": 7,
+     "tag": null,
+     "aPoints": 140.5,
+     "bPoints": 93.96
+    }
+   ]
+  },
+  "1000568939073609728|1001986687221882880": {
+   "a": "1000568939073609728",
+   "b": "1001986687221882880",
+   "aWins": 4,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-17-1",
+     "year": 2025,
+     "week": 17,
+     "tag": "Final",
+     "aPoints": 112.1,
+     "bPoints": 115.48
+    },
+    {
+     "gameId": "2025-12-4",
+     "year": 2025,
+     "week": 12,
+     "tag": null,
+     "aPoints": 133.66,
+     "bPoints": 175.16
+    },
+    {
+     "gameId": "2025-3-4",
+     "year": 2025,
+     "week": 3,
+     "tag": null,
+     "aPoints": 148.64,
+     "bPoints": 137.74
+    },
+    {
+     "gameId": "2024-15-1",
+     "year": 2024,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 105.84,
+     "bPoints": 120.94
+    },
+    {
+     "gameId": "2024-10-5",
+     "year": 2024,
+     "week": 10,
+     "tag": null,
+     "aPoints": 131.72,
+     "bPoints": 116.58
+    },
+    {
+     "gameId": "2024-1-5",
+     "year": 2024,
+     "week": 1,
+     "tag": null,
+     "aPoints": 101.96,
+     "bPoints": 144.68
+    },
+    {
+     "gameId": "2023-17-2",
+     "year": 2023,
+     "week": 17,
+     "tag": "3rd",
+     "aPoints": 121.24,
+     "bPoints": 108.52
+    },
+    {
+     "gameId": "2023-8-1",
+     "year": 2023,
+     "week": 8,
+     "tag": null,
+     "aPoints": 138.08,
+     "bPoints": 137.8
+    }
+   ]
+  },
+  "1000601364948459520|863940534799044608": {
+   "a": "1000601364948459520",
+   "b": "863940534799044608",
+   "aWins": 2,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-16-4",
+     "year": 2025,
+     "week": 16,
+     "tag": "Toilet Bowl",
+     "aPoints": 161.8,
+     "bPoints": 115.94
+    },
+    {
+     "gameId": "2025-7-4",
+     "year": 2025,
+     "week": 7,
+     "tag": null,
+     "aPoints": 111.98,
+     "bPoints": 58.84
+    },
+    {
+     "gameId": "2024-7-5",
+     "year": 2024,
+     "week": 7,
+     "tag": null,
+     "aPoints": 86.64,
+     "bPoints": 180.58
+    },
+    {
+     "gameId": "2023-15-1",
+     "year": 2023,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 111.76,
+     "bPoints": 137.64
+    },
+    {
+     "gameId": "2023-8-2",
+     "year": 2023,
+     "week": 8,
+     "tag": null,
+     "aPoints": 156.56,
+     "bPoints": 159.06
+    }
+   ]
+  },
+  "1000272352581705728|1000275735010959360": {
+   "a": "1000272352581705728",
+   "b": "1000275735010959360",
+   "aWins": 2,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-16-3",
+     "year": 2025,
+     "week": 16,
+     "tag": "5th",
+     "aPoints": 140.68,
+     "bPoints": 138.2
+    },
+    {
+     "gameId": "2025-6-1",
+     "year": 2025,
+     "week": 6,
+     "tag": null,
+     "aPoints": 112.34,
+     "bPoints": 146.74
+    },
+    {
+     "gameId": "2024-17-2",
+     "year": 2024,
+     "week": 17,
+     "tag": "3rd",
+     "aPoints": 136.18,
+     "bPoints": 152.32
+    },
+    {
+     "gameId": "2024-12-1",
+     "year": 2024,
+     "week": 12,
+     "tag": null,
+     "aPoints": 72.96,
+     "bPoints": 175.68
+    },
+    {
+     "gameId": "2024-3-1",
+     "year": 2024,
+     "week": 3,
+     "tag": null,
+     "aPoints": 120.32,
+     "bPoints": 114.98
+    },
+    {
+     "gameId": "2023-8-3",
+     "year": 2023,
+     "week": 8,
+     "tag": null,
+     "aPoints": 115.5,
+     "bPoints": 134.26
+    }
+   ]
+  },
+  "1000666077673689088|863563957724663808": {
+   "a": "1000666077673689088",
+   "b": "863563957724663808",
+   "aWins": 3,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-6-3",
+     "year": 2025,
+     "week": 6,
+     "tag": null,
+     "aPoints": 117.5,
+     "bPoints": 140.38
+    },
+    {
+     "gameId": "2024-12-2",
+     "year": 2024,
+     "week": 12,
+     "tag": null,
+     "aPoints": 149.82,
+     "bPoints": 131.26
+    },
+    {
+     "gameId": "2024-3-2",
+     "year": 2024,
+     "week": 3,
+     "tag": null,
+     "aPoints": 177.62,
+     "bPoints": 110.54
+    },
+    {
+     "gameId": "2023-8-4",
+     "year": 2023,
+     "week": 8,
+     "tag": null,
+     "aPoints": 164.46,
+     "bPoints": 132.76
+    }
+   ]
+  },
+  "1000275745870032896|1002465834700304384": {
+   "a": "1000275745870032896",
+   "b": "1002465834700304384",
+   "aWins": 0,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-12-3",
+     "year": 2024,
+     "week": 12,
+     "tag": null,
+     "aPoints": 116.36,
+     "bPoints": 138.46
+    },
+    {
+     "gameId": "2024-3-3",
+     "year": 2024,
+     "week": 3,
+     "tag": null,
+     "aPoints": 128.18,
+     "bPoints": 133.88
+    },
+    {
+     "gameId": "2023-8-5",
+     "year": 2023,
+     "week": 8,
+     "tag": null,
+     "aPoints": 141.52,
+     "bPoints": 161.82
+    }
+   ]
+  },
+  "1000601364948459520|1001986687221882880": {
+   "a": "1000601364948459520",
+   "b": "1001986687221882880",
+   "aWins": 1,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-13-4",
+     "year": 2025,
+     "week": 13,
+     "tag": null,
+     "aPoints": 108.26,
+     "bPoints": 135.2
+    },
+    {
+     "gameId": "2025-4-4",
+     "year": 2025,
+     "week": 4,
+     "tag": null,
+     "aPoints": 119.68,
+     "bPoints": 151.46
+    },
+    {
+     "gameId": "2024-12-4",
+     "year": 2024,
+     "week": 12,
+     "tag": null,
+     "aPoints": 148.98,
+     "bPoints": 183.9
+    },
+    {
+     "gameId": "2024-3-4",
+     "year": 2024,
+     "week": 3,
+     "tag": null,
+     "aPoints": 181.9,
+     "bPoints": 113.58
+    },
+    {
+     "gameId": "2023-9-1",
+     "year": 2023,
+     "week": 9,
+     "tag": null,
+     "aPoints": 169.76,
+     "bPoints": 170.2
+    }
+   ]
+  },
+  "1000666077673689088|863940534799044608": {
+   "a": "1000666077673689088",
+   "b": "863940534799044608",
+   "aWins": 3,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-5-5",
+     "year": 2026,
+     "week": 5,
+     "tag": null,
+     "aPoints": 174.26,
+     "bPoints": 94.3
+    },
+    {
+     "gameId": "2025-8-3",
+     "year": 2025,
+     "week": 8,
+     "tag": null,
+     "aPoints": 173.78,
+     "bPoints": 165.56
+    },
+    {
+     "gameId": "2024-13-3",
+     "year": 2024,
+     "week": 13,
+     "tag": null,
+     "aPoints": 123.36,
+     "bPoints": 141.88
+    },
+    {
+     "gameId": "2024-4-3",
+     "year": 2024,
+     "week": 4,
+     "tag": null,
+     "aPoints": 142.84,
+     "bPoints": 119
+    },
+    {
+     "gameId": "2023-9-2",
+     "year": 2023,
+     "week": 9,
+     "tag": null,
+     "aPoints": 117.54,
+     "bPoints": 119.78
+    }
+   ]
+  },
+  "1000275735010959360|1002465834700304384": {
+   "a": "1000275735010959360",
+   "b": "1002465834700304384",
+   "aWins": 1,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2024-9-4",
+     "year": 2024,
+     "week": 9,
+     "tag": null,
+     "aPoints": 162,
+     "bPoints": 118.3
+    },
+    {
+     "gameId": "2023-9-3",
+     "year": 2023,
+     "week": 9,
+     "tag": null,
+     "aPoints": 109.68,
+     "bPoints": 128.24
+    }
+   ]
+  },
+  "1000275745870032896|863563957724663808": {
+   "a": "1000275745870032896",
+   "b": "863563957724663808",
+   "aWins": 3,
+   "bWins": 3,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-1-5",
+     "year": 2026,
+     "week": 1,
+     "tag": null,
+     "aPoints": 134.76,
+     "bPoints": 138.1
+    },
+    {
+     "gameId": "2025-17-2",
+     "year": 2025,
+     "week": 17,
+     "tag": "3rd",
+     "aPoints": 142.22,
+     "bPoints": 147.16
+    },
+    {
+     "gameId": "2025-7-2",
+     "year": 2025,
+     "week": 7,
+     "tag": null,
+     "aPoints": 144.96,
+     "bPoints": 221.34
+    },
+    {
+     "gameId": "2024-14-2",
+     "year": 2024,
+     "week": 14,
+     "tag": null,
+     "aPoints": 169.7,
+     "bPoints": 136.22
+    },
+    {
+     "gameId": "2024-5-2",
+     "year": 2024,
+     "week": 5,
+     "tag": null,
+     "aPoints": 152.14,
+     "bPoints": 106.24
+    },
+    {
+     "gameId": "2023-9-4",
+     "year": 2023,
+     "week": 9,
+     "tag": null,
+     "aPoints": 141.22,
+     "bPoints": 110.12
+    }
+   ]
+  },
+  "1000272352581705728|1000568939073609728": {
+   "a": "1000272352581705728",
+   "b": "1000568939073609728",
+   "aWins": 2,
+   "bWins": 4,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-3-5",
+     "year": 2026,
+     "week": 3,
+     "tag": null,
+     "aPoints": 77.12,
+     "bPoints": 146.88
+    },
+    {
+     "gameId": "2025-14-1",
+     "year": 2025,
+     "week": 14,
+     "tag": null,
+     "aPoints": 132.64,
+     "bPoints": 132.9
+    },
+    {
+     "gameId": "2025-5-1",
+     "year": 2025,
+     "week": 5,
+     "tag": null,
+     "aPoints": 128.74,
+     "bPoints": 147.5
+    },
+    {
+     "gameId": "2024-8-1",
+     "year": 2024,
+     "week": 8,
+     "tag": null,
+     "aPoints": 167.12,
+     "bPoints": 160
+    },
+    {
+     "gameId": "2023-15-2",
+     "year": 2023,
+     "week": 15,
+     "tag": "QF",
+     "aPoints": 125.5,
+     "bPoints": 125.64
+    },
+    {
+     "gameId": "2023-9-5",
+     "year": 2023,
+     "week": 9,
+     "tag": null,
+     "aPoints": 132.5,
+     "bPoints": 96.88
+    }
+   ]
+  },
+  "1000275735010959360|1208320447578386432": {
+   "a": "1000275735010959360",
+   "b": "1208320447578386432",
+   "aWins": 1,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-4-1",
+     "year": 2026,
+     "week": 4,
+     "tag": null,
+     "aPoints": 107.38,
+     "bPoints": 159.18
+    },
+    {
+     "gameId": "2025-10-4",
+     "year": 2025,
+     "week": 10,
+     "tag": null,
+     "aPoints": 112.9,
+     "bPoints": 156.2
+    },
+    {
+     "gameId": "2025-1-4",
+     "year": 2025,
+     "week": 1,
+     "tag": null,
+     "aPoints": 127.28,
+     "bPoints": 110.02
+    }
+   ]
+  },
+  "1001986687221882880|1208320447578386432": {
+   "a": "1001986687221882880",
+   "b": "1208320447578386432",
+   "aWins": 3,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-2-1",
+     "year": 2026,
+     "week": 2,
+     "tag": null,
+     "aPoints": 184.12,
+     "bPoints": 99.6
+    },
+    {
+     "gameId": "2025-11-5",
+     "year": 2025,
+     "week": 11,
+     "tag": null,
+     "aPoints": 145.52,
+     "bPoints": 138.5
+    },
+    {
+     "gameId": "2025-2-5",
+     "year": 2025,
+     "week": 2,
+     "tag": null,
+     "aPoints": 148.9,
+     "bPoints": 139.6
+    }
+   ]
+  },
+  "1208320447578386432|863940534799044608": {
+   "a": "1208320447578386432",
+   "b": "863940534799044608",
+   "aWins": 3,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-15-4",
+     "year": 2025,
+     "week": 15,
+     "tag": "Cons-R1",
+     "aPoints": 183.42,
+     "bPoints": 112.1
+    },
+    {
+     "gameId": "2025-12-3",
+     "year": 2025,
+     "week": 12,
+     "tag": null,
+     "aPoints": 141.54,
+     "bPoints": 87.02
+    },
+    {
+     "gameId": "2025-3-3",
+     "year": 2025,
+     "week": 3,
+     "tag": null,
+     "aPoints": 152.06,
+     "bPoints": 138.62
+    }
+   ]
+  },
+  "1208320447578386432|863563957724663808": {
+   "a": "1208320447578386432",
+   "b": "863563957724663808",
+   "aWins": 0,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-13-5",
+     "year": 2025,
+     "week": 13,
+     "tag": null,
+     "aPoints": 135.74,
+     "bPoints": 180.34
+    },
+    {
+     "gameId": "2025-4-5",
+     "year": 2025,
+     "week": 4,
+     "tag": null,
+     "aPoints": 147.82,
+     "bPoints": 148.1
+    }
+   ]
+  },
+  "1000666077673689088|1208320447578386432": {
+   "a": "1000666077673689088",
+   "b": "1208320447578386432",
+   "aWins": 2,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-1-1",
+     "year": 2026,
+     "week": 1,
+     "tag": null,
+     "aPoints": 140.12,
+     "bPoints": 110.56
+    },
+    {
+     "gameId": "2025-16-5",
+     "year": 2025,
+     "week": 16,
+     "tag": "Cons-7th",
+     "aPoints": 128.7,
+     "bPoints": 148.16
+    },
+    {
+     "gameId": "2025-14-3",
+     "year": 2025,
+     "week": 14,
+     "tag": null,
+     "aPoints": 99.84,
+     "bPoints": 111.2
+    },
+    {
+     "gameId": "2025-5-3",
+     "year": 2025,
+     "week": 5,
+     "tag": null,
+     "aPoints": 131.52,
+     "bPoints": 124
+    }
+   ]
+  },
+  "1000275745870032896|1208320447578386432": {
+   "a": "1000275745870032896",
+   "b": "1208320447578386432",
+   "aWins": 0,
+   "bWins": 2,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-5-1",
+     "year": 2026,
+     "week": 5,
+     "tag": null,
+     "aPoints": 123.26,
+     "bPoints": 134.9
+    },
+    {
+     "gameId": "2025-6-2",
+     "year": 2025,
+     "week": 6,
+     "tag": null,
+     "aPoints": 156.06,
+     "bPoints": 165.94
+    }
+   ]
+  },
+  "1000272352581705728|1208320447578386432": {
+   "a": "1000272352581705728",
+   "b": "1208320447578386432",
+   "aWins": 1,
+   "bWins": 0,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-7-1",
+     "year": 2025,
+     "week": 7,
+     "tag": null,
+     "aPoints": 136.94,
+     "bPoints": 82.04
+    }
+   ]
+  },
+  "1000568939073609728|1208320447578386432": {
+   "a": "1000568939073609728",
+   "b": "1208320447578386432",
+   "aWins": 0,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2025-8-5",
+     "year": 2025,
+     "week": 8,
+     "tag": null,
+     "aPoints": 130.96,
+     "bPoints": 145.88
+    }
+   ]
+  },
+  "1000601364948459520|1208320447578386432": {
+   "a": "1000601364948459520",
+   "b": "1208320447578386432",
+   "aWins": 1,
+   "bWins": 1,
+   "ties": 0,
+   "games": [
+    {
+     "gameId": "2026-3-1",
+     "year": 2026,
+     "week": 3,
+     "tag": null,
+     "aPoints": 126.36,
+     "bPoints": 129.24
+    },
+    {
+     "gameId": "2025-9-4",
+     "year": 2025,
+     "week": 9,
+     "tag": null,
+     "aPoints": 172.9,
+     "bPoints": 113.38
+    }
+   ]
+  }
+ }
+}
