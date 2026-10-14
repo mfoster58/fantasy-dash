@@ -37,7 +37,7 @@ export default function SeasonReviewPage() {
       )}
       {season.draft && (
         <Section title="Draft">
-          <DraftRoundOne draft={season.draft} managers={season.managers} players={players} />
+          <DraftRoundOne draft={season.draft} managers={season.managers} players={players} year={season.year} />
         </Section>
       )}
       {season.standings.length > 0 && (
