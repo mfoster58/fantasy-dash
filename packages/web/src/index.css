@@ -19,6 +19,7 @@
   --accent: #7cc7e8;
   --win: #5cc48a;
   --loss: #e46a6f;
+  --warn: #e3a93b;
   --pos-QB: #e45d5d;
   --pos-RB: #43b97c;
   --pos-WR: #5a8ff0;
@@ -38,6 +39,7 @@
   --accent: #1a6f93;
   --win: #1d8a52;
   --loss: #c13d47;
+  --warn: #b7791f;
   --pos-QB: #cc3f3f;
   --pos-RB: #23935a;
   --pos-WR: #3069d1;
@@ -56,6 +58,7 @@
   --color-accent: var(--accent);
   --color-win: var(--win);
   --color-loss: var(--loss);
+  --color-warn: var(--warn);
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }

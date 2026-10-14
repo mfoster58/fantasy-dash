@@ -40,16 +40,24 @@ describe('ScoreCard', () => {
     expect(screen.getByText('Week 3')).toBeInTheDocument();
   });
 
-  it('heads the two performer columns with the team names', () => {
+  it('splits performers into two columns without team headers', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
     wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
     const heading = screen.getByText('Top performers');
     const columns = heading.nextElementSibling!.children;
     expect(columns).toHaveLength(2);
-    expect(columns[0].firstElementChild).toHaveTextContent('Team A');
     expect(columns[0]).toHaveTextContent('Quincy One');
-    expect(columns[1].firstElementChild).toHaveTextContent('Team B');
+    expect(columns[0]).not.toHaveTextContent('Team A');
     expect(columns[1]).toHaveTextContent('Rob Two');
+    expect(columns[1]).not.toHaveTextContent('Team B');
+  });
+
+  it('sets the scores side by side with vs and labeled efficiency bars', () => {
+    const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
+    wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
+    expect(screen.getByText('vs')).toBeInTheDocument();
+    expect(screen.getAllByText('Efficiency')).toHaveLength(2);
+    expect(screen.getAllByText('90%')).toHaveLength(2);
   });
 
   it('labels a tie', () => {
@@ -66,6 +74,8 @@ describe('ScoreCard', () => {
     expect(screen.getAllByText('100.00')).toHaveLength(2);
     expect(screen.getAllByText('proj')).toHaveLength(2);
     expect(screen.queryByText('Top performers')).not.toBeInTheDocument();
+    expect(screen.getByText('vs')).toBeInTheDocument();
+    expect(screen.queryByText('Efficiency')).not.toBeInTheDocument();
     expect(screen.queryByText('Tie')).not.toBeInTheDocument();
   });
 
