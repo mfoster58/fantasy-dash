@@ -4,7 +4,6 @@ import type { Season, UserId } from '@fantasy-dash/core';
 import SeasonPicker from '../components/SeasonPicker';
 import DraftBoard, { type BoardMode } from '../components/draft/DraftBoard';
 import DraftAnalysis from '../components/draft/DraftAnalysis';
-import TopPpg from '../components/draft/TopPpg';
 import { history, players } from '../data/load';
 
 export default function DraftPage() {
@@ -12,6 +11,7 @@ export default function DraftPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<BoardMode>('position');
   const [highlight, setHighlight] = useState<UserId | null>(null);
+  const [selected, setSelected] = useState<UserId | null>(null);
   const years = history.seasons.map((s) => s.year);
   const inSeason = season.status === 'in_season';
   if (!season.draft) return <p className="text-sm text-muted">No draft recorded for {season.year}.</p>;
@@ -29,11 +29,14 @@ export default function DraftPage() {
         </div>
       </header>
       <p className="text-xs text-muted">
-        {season.draft.rounds} rounds · {season.draft.type} · click a manager to highlight their picks · hover a pick for details{inSeason ? ' · values are to date' : ''} · <Link to={`/history/${season.year}`} className="text-accent hover:underline">season review</Link>
+        {season.draft.rounds} rounds · {season.draft.type} · click a manager to highlight their picks and see their team below · hover a pick for details{inSeason ? ' · values are to date' : ''} · <Link to={`/history/${season.year}`} className="text-accent hover:underline">season review</Link>
       </p>
-      <DraftBoard draft={season.draft} managers={season.managers} players={players} mode={mode} highlight={highlight} onHighlight={setHighlight} inSeason={inSeason} />
-      <DraftAnalysis draft={season.draft} managers={season.managers} players={players} inSeason={inSeason} />
-      <TopPpg draft={season.draft} managers={season.managers} players={players} inSeason={inSeason} />
+      <DraftBoard draft={season.draft} managers={season.managers} players={players} mode={mode} highlight={highlight} onHighlight={(u) => { setHighlight(u); if (u) setSelected(u); }} inSeason={inSeason} />
+      <DraftAnalysis
+        draft={season.draft} managers={season.managers} players={players} inSeason={inSeason}
+        selected={selected ?? season.draft.slotOrder[0]}
+        onSelect={(u) => { setSelected(u); setHighlight(u); }}
+      />
     </section>
   );
 }

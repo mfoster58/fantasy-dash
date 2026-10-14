@@ -4,10 +4,15 @@ import Headshot from '../Headshot';
 import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos } from '../../lib/players';
 import { leagueExtremes, managerDraftSummaries, posLabel } from '../../lib/draft';
+import TeamDraft from './TeamDraft';
+import TopPpg from './TopPpg';
 
 const signClass = (n: number, fallback = 'text-muted') => (n > 0 ? 'text-win' : n < 0 ? 'text-loss' : fallback);
 
-interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean }
+interface Props {
+  draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean;
+  selected: UserId; onSelect: (userId: UserId) => void;
+}
 
 function PickLine({ p, players, managers }: { p: DraftPick; players: PlayerDirectory; managers: Record<UserId, Manager> }) {
   const pos = playerPos(players, p.playerId);
@@ -27,12 +32,13 @@ function PickLine({ p, players, managers }: { p: DraftPick; players: PlayerDirec
 const HEADERS = ['Manager', 'Value', 'Slot', 'Production', 'Pts over baseline', 'Best pick', 'Worst pick'];
 const NUMERIC = new Set([1, 2, 3, 4]);
 
-export default function DraftAnalysis({ draft, managers, players, inSeason }: Props) {
+export default function DraftAnalysis({ draft, managers, players, inSeason, selected, onSelect }: Props) {
   const summaries = managerDraftSummaries(draft);
   const { steals, busts } = leagueExtremes(draft, 10);
   const note = inSeason ? ' (to date)' : '';
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <div className="card overflow-x-auto">
         <div className="section-label px-4 pt-3">Draft grades{note}</div>
         <table className="w-full text-sm">
@@ -60,9 +66,12 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
           Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season{inSeason ? ', to date, with points scaled so teams that have had their bye are not behind' : ''}; a player below bench level counts as bench level, not worse. Quarterback points count at half weight, matching how a one-QB league actually prices them. Kickers and defenses are excluded.
         </p>
       </div>
-      <div className="space-y-4">
+      <TeamDraft draft={draft} managers={managers} players={players} userId={selected} onSelect={onSelect} inSeason={inSeason} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="card px-4 py-3"><div className="section-label">Top steals{note}</div><ul className="divide-y divide-line">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} />)}</ul></div>
         <div className="card px-4 py-3"><div className="section-label">Top busts{note}</div><ul className="divide-y divide-line">{busts.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} />)}</ul></div>
+        <TopPpg draft={draft} managers={managers} players={players} inSeason={inSeason} />
       </div>
     </div>
   );
