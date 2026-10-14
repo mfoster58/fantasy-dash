@@ -6,8 +6,8 @@ interface Props { sides: [GameSide, GameSide]; managers: Record<UserId, Manager>
 
 export default function EfficiencyBlock({ sides, managers, players }: Props) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4">
-      <h2 className="mb-3 text-xs uppercase tracking-wide text-muted" title="Points scored divided by the best possible lineup from the full roster">
+    <section className="card p-5">
+      <h2 className="section-label mb-3" title="Points scored divided by the best possible lineup from the full roster">
         Efficiency
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">

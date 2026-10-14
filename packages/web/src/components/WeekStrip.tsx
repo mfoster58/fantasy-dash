@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { Week } from '@fantasy-dash/core';
 
 interface Props { weeks: Week[]; selected: number | 'season'; onSelect: (week: number | 'season') => void }
@@ -5,8 +6,14 @@ interface Props { weeks: Week[]; selected: number | 'season'; onSelect: (week: n
 export default function WeekStrip({ weeks, selected, onSelect }: Props) {
   const cls = (active: boolean, extra = '') =>
     `num shrink-0 rounded px-2.5 py-1 text-sm transition-colors ${active ? 'bg-ink text-bg' : 'text-muted hover:bg-surface-2 hover:text-ink'} ${extra}`;
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Keep the selected week in view when the strip scrolls on narrow screens.
+    const el = ref.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [selected]);
   return (
-    <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Week">
+    <div ref={ref} className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Week">
       {weeks.map((w) => (
         <button
           key={w.week}

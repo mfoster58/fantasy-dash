@@ -21,16 +21,16 @@ const headers: { key: string; label: string; title?: string; left?: boolean }[] 
   { key: 'ap', label: 'All-Play', title: METRIC_DEFS.allPlay },
 ];
 
-const cell = 'num px-3 py-2 text-right';
+const cell = 'num whitespace-nowrap px-3 py-2.5 text-right';
 
 export default function StandingsTable({ rows, managers, playoffTeams }: Props) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+    <div className="card overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-xs uppercase tracking-wide text-muted">
+        <thead className="border-b border-line">
           <tr>
             {headers.map((h) => (
-              <th key={h.key} scope="col" title={h.title} className={`px-3 py-2 font-medium ${h.left ? 'text-left' : 'text-right'}`}>
+              <th key={h.key} scope="col" title={h.title} className={`section-label whitespace-nowrap px-3 py-2.5 ${h.key === 'rank' ? 'w-10 pl-4 pr-1' : ''} ${h.key === 'team' ? 'w-[32%] min-w-56' : ''} ${h.left ? 'text-left' : 'text-right'}`}>
                 {h.label}
               </th>
             ))}
@@ -46,14 +46,14 @@ export default function StandingsTable({ rows, managers, playoffTeams }: Props) 
                 key={r.userId}
                 data-testid="standings-row"
                 data-playoff-cut={cut ? 'true' : undefined}
-                className={`border-t border-line transition-colors hover:bg-surface-2 ${cut ? 'border-b-2 border-b-accent/60' : ''}`}
+                className={`border-t border-line transition-colors first:border-t-0 hover:bg-surface-2/70 ${cut ? 'border-b-2 border-b-accent/60' : ''}`}
               >
-                <td className="num px-3 py-2 text-muted">{r.rank}</td>
-                <td className="px-3 py-2">
+                <td className="num py-2.5 pl-4 pr-1 text-muted">{r.rank}</td>
+                <td className="px-3 py-2.5">
                   <div className="flex items-center gap-2">
-                    <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={24} />
-                    <div className="leading-tight">
-                      <div className="font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</div>
+                    <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={28} />
+                    <div className="min-w-0 leading-tight">
+                      <div className="truncate font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</div>
                       {m?.teamName && <div className="text-xs text-muted">{m.displayName}</div>}
                     </div>
                   </div>
