@@ -96,6 +96,11 @@ const DraftPick = z.object({
   userId: z.string(),
   playerId: z.string(),
   isKeeper: z.boolean(),
+  posDraftRank: z.number().nullable(),
+  seasonPoints: z.number(),
+  posFinishRank: z.number().nullable(),
+  value: z.number().nullable(),
+  pointsOverBaseline: z.number().nullable(),
 });
 
 const Draft = z.object({

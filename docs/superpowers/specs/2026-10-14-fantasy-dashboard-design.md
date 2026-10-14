@@ -84,7 +84,7 @@ interface Season {
   managers: Record<userId, { userId, displayName, teamName, avatar, rosterId }>;
   weeks: Week[];                 // index = week number - 1
   brackets: { winners: BracketGame[]; consolation: BracketGame[] };
-  draft: Draft | null;            // Phase 3: normalized picks; value fields arrive in Phase 4
+  draft: Draft | null;            // normalized picks with value fields (Phase 4)
   standings: StandingRow[];      // regular season, sorted
   honors: { champion, runnerUp, third, pointsTitle, lastPlace }; // userIds, null while in season
   // records are not stored: the web app derives them from standings via seasonRecords (packages/web/src/lib/records.ts)
@@ -144,13 +144,18 @@ interface BracketGame {
 
 interface Draft {
   draftId: string; type: string; rounds: number;
-  slotOrder: userId[];           // draft slot 1..N
+  slotOrder: UserId[];           // draft slot 1..N
   picks: DraftPick[];
 }
 interface DraftPick {
-  round; pickNo; slot; userId; playerId; isKeeper: boolean;
+  round: number; pickNo: number; slot: number; userId: UserId; playerId: PlayerId;
+  isKeeper: boolean;
+  posDraftRank: number | null;       // order among same-position picks in the draft, keepers included
+  seasonPoints: number;              // season points under league scoring, weeks 1 to lastScoredWeek
+  posFinishRank: number | null;      // rank at position by season points; null for unknown position
+  value: number | null;              // posDraftRank - posFinishRank; positive is a steal; null for unknown position
+  pointsOverBaseline: number | null; // seasonPoints minus baseline points at position; null for unknown position
 }
-// Value fields (posDraftRank, seasonPoints, posFinishRank, value, pointsOverBaseline) are added in Phase 4.
 ```
 
 ### `history.json`
@@ -216,7 +221,7 @@ interface AllTimeRow {
 
 **Head-to-head** uses every meeting including playoffs. Streak = consecutive wins by the same manager at the end of the series. Biggest win = largest margin by either side. Closest = smallest non-zero margin (or a tie if one exists).
 
-**Draft value.** `posDraftRank` = order among same-position picks in that draft (keepers included). `posFinishRank` = rank among all NFL players at that position by season points under league scoring over weeks 1 to `lastScoredWeek`. `value = posDraftRank - posFinishRank`; positive is a steal. `pointsOverBaseline` = season points minus the points of the baseline player at the position, where baseline ranks are QB10, RB24, WR24, TE12, K10, DEF10. For an in-progress season all draft figures are labeled "to date".
+**Draft value.** `posDraftRank` = order among same-position picks in that draft (keepers included). `posFinishRank` = rank among all NFL players at that position by season points under league scoring over weeks 1 to `lastScoredWeek`. `value = posDraftRank - posFinishRank`; positive is a steal. `pointsOverBaseline` = season points minus the points of the baseline player at the position, where baseline ranks are QB10, RB24, WR24, TE12, K10, DEF10. For an in-progress season all draft figures are labeled "to date". Finish rank is ranked among players at the position with season points greater than 0; zero-point players tie just behind the last scorer.
 
 ## Views
 
@@ -244,7 +249,7 @@ Six routes behind a slim top navigation: Scores, Standings, Head-to-Head, All-Ti
 
 ### Phase 4
 
-**`/draft/:season`** Board grid: rounds as rows, draft slots as columns, snake order. Cell: player name, position with `posDraftRank` (e.g. RB7), NFL team, keeper tag. Color mode toggle: Position or Value. Value uses a diverging scale centered at 0 and clipped at about plus or minus 12 ranks. Hover or tap reveals season points, finish rank, and points over baseline. Clicking a column header highlights that manager's picks. Analysis panel: each manager's summed value and summed points over baseline with their best and worst pick; league-wide top five steals and busts.
+**`/draft/:season`** Board grid: rounds as rows, draft slots as columns, snake order. Cell: player name, position with `posDraftRank` (e.g. RB7), NFL team, keeper tag. Color mode toggle: Position or Value. Value uses a diverging scale centered at 0, clipped at plus or minus 12 ranks, with translucent win and loss tints. In-season values are labeled "to date". Hover or tap reveals season points, finish rank, and points over baseline. Clicking a column header highlights that manager's picks. Analysis panel: each manager's summed value and summed points over baseline with their best and worst pick; league-wide top five steals and busts. The record book link on the Records block remains a future feature.
 
 ## Visual direction
 
@@ -255,7 +260,7 @@ Calm and legible. Dark theme by default, light theme available, both via CSS tok
 `pnpm sync` (and `pnpm sync --dry-run`):
 
 1. Read `league.config.ts`. Fetch the league, then walk `previous_league_id` until null.
-2. Per season: fetch users, rosters, matchups for weeks 1 to `max(lastScoredWeek, 17)` (stop at the last week with data), winners and consolation brackets, drafts and picks. Fetch weekly projections and stats for each week and keep only players present in that week's rosters. Fetch season projections for ADP-related fields (stored but not yet displayed).
+2. Per season: fetch users, rosters, matchups for weeks 1 to `max(lastScoredWeek, 17)` (stop at the last week with data), winners and consolation brackets, drafts and picks. Fetch weekly projections and stats for each week and keep only players present in that week's rosters. Fetch season projections for ADP-related fields (stored but not yet displayed). Compute season points for every player with stats from the full weekly stat maps before trimming to rostered players; pass them to the builder as `playerSeasonPoints`.
 3. Fetch the player file once; trim to players referenced anywhere.
 4. Run `core` to produce the season files and `history.json`.
 5. Validate every output against its schema (zod). In dry-run, write to a temp directory and report. Otherwise write to `data/`.

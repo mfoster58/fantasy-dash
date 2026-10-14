@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds,
-  SeasonSchema, HistorySchema, PlayerDirectorySchema,
+  SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2,
   type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type StatMap,
 } from '@fantasy-dash/core';
 import { leagueConfig } from '../league.config';
@@ -72,6 +72,7 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   const matchups: Record<number, SleeperMatchup[]> = {};
   const projections: Record<number, StatMap> = {};
   const stats: Record<number, StatMap> = {};
+  const playerSeasonPoints: Record<string, number> = {};
   for (let week = 1; week <= maxWeek; week++) {
     const weekMatchups = (await client.getMatchups(id, week)) ?? [];
     matchups[week] = weekMatchups;
@@ -83,6 +84,12 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     if (week <= lastScoredLeg) {
       if (!proj) log(`WARNING: ${season} week ${week}: projections response was missing`);
       if (!st) log(`WARNING: ${season} week ${week}: stats response was missing`);
+    }
+    if (st && week <= lastScoredLeg) {
+      for (const [pid, line] of Object.entries(st)) {
+        const pts = scoreStats(line, league.scoring_settings);
+        if (pts !== 0) playerSeasonPoints[pid] = round2((playerSeasonPoints[pid] ?? 0) + pts);
+      }
     }
     projections[week] = pickIds(proj ?? {}, rostered);
     stats[week] = pickIds(st ?? {}, rostered);
@@ -100,7 +107,9 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     stats,
     players,
     draft,
+    playerSeasonPoints,
   };
+  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players`);
   const built = buildSeason(input, leagueConfig.managerNames);
   assertSeasonComplete(built, league);
   return built;

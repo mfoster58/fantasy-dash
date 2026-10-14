@@ -1,11 +1,12 @@
 import type { Draft, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import { Link } from 'react-router';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 import { playerName, playerPos, playerTeam } from '../../lib/players';
 
-interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory }
+interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; year: number }
 
-export default function DraftRoundOne({ draft, managers, players }: Props) {
+export default function DraftRoundOne({ draft, managers, players, year }: Props) {
   const picks = draft.picks.filter((p) => p.round === 1).sort((a, b) => a.pickNo - b.pickNo);
   return (
     <div className="card">
@@ -33,7 +34,7 @@ export default function DraftRoundOne({ draft, managers, players }: Props) {
           );
         })}
       </ol>
-      <div className="border-t border-line px-4 py-2 text-xs text-muted">Full draft board and value analysis arrive in a later release.</div>
+      <div className="border-t border-line px-4 py-2 text-xs"><Link to={`/draft/${year}`} className="text-accent hover:underline">Full draft board and analysis →</Link></div>
     </div>
   );
 }
