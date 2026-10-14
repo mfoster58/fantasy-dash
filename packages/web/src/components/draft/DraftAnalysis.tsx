@@ -57,7 +57,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
           </tbody>
         </table>
         <p className="px-4 py-2 text-xs text-muted">
-          Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season{inSeason ? ', to date' : ''}. Quarterback points count at half weight, matching how a one-QB league actually prices them. Defenses are excluded.
+          Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season{inSeason ? ', to date' : ''}. Quarterback points count at half weight, matching how a one-QB league actually prices them. Kickers and defenses are excluded.
         </p>
       </div>
       <div className="space-y-4">

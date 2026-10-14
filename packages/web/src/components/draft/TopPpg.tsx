@@ -36,7 +36,7 @@ export default function TopPpg({ draft, managers, players, inSeason }: Props) {
           ))}
         </tbody>
       </table>
-      <p className="px-4 py-2 text-xs text-muted">Healthy means the player has played every game their team has played. Defenses are excluded.</p>
+      <p className="px-4 py-2 text-xs text-muted">Healthy means the player has played every game their team has played. Kickers and defenses are excluded.</p>
     </div>
   );
 }
