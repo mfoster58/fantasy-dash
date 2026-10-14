@@ -15,13 +15,15 @@ The Phase 4 draft value (positional draft rank minus positional finish rank) has
 
 All value math excludes defenses. DEF picks still appear on the board with season points, but every value field is null and they are left out of grades, steals, busts and the PPG list. Kickers stay in. Baseline ranks are unchanged: QB10, RB24, WR24, TE12, K10.
 
+**Positional scarcity weight (added 2026-10-14 after review of the 2024 board):** `POSITION_WEIGHTS = { QB: 0.5 }`. A quarterback's points over baseline are halved before the redraft ranking and before the contribution used for production value. The displayed `pointsOverBaseline` stays unweighted. 0.5 was calibrated against Sleeper's real next-year ADP for 2023→2024, 2024→2025 and 2025→2026: with weight 1, Lamar Jackson's 2024 season ranked him redraft 6 against a real 2025 ADP of 21.9; with 0.5 he ranks 21.
+
 ### Contribution
 
-`pointsOverBaseline` (PoB) stays as is: season points minus the points of the last startable player at the position, where the pool is every player in the directory at that position with points > 0. `contribution = max(PoB, 0)`: a player below replacement level is worth nothing because a free agent could replace them.
+`pointsOverBaseline` (PoB) stays as is: season points minus the points of the last startable player at the position, where the pool is every player in the directory at that position with points > 0. `contribution = max(PoB · weight, 0)`: a player below replacement level is worth nothing because a free agent could replace them.
 
 ### Redraft position
 
-Rank every directory player at a valued position by PoB descending (ties: season points desc, then id asc) across all positions together. The rank is `redraftPos`, where the player would go if the league redrafted today on production. Players with 0 points tie at N + 1 where N is the number of ranked players with points > 0.
+Rank every directory player at a valued position by weighted PoB descending (ties: season points desc, then id asc) across all positions together. The rank is `redraftPos`, where the player would go if the league redrafted today on production. Players with 0 points tie at N + 1 where N is the number of ranked players with points > 0.
 
 ### Slot value (draft capital)
 
@@ -33,7 +35,7 @@ Rank every directory player at a valued position by PoB descending (ties: season
 
 Fit an expected-contribution curve to the season's own draft: `expected(pick) = a · exp(−(pick − 1) / k)`. Choose `k` from the integers 10..120 and `a` by closed-form least squares at each `k` (`a = Σ x·c / Σ x²` with `x = exp(−(pick−1)/k)`), keeping the pair with the smallest squared error over all valued picks. Fit uses `contribution`, not raw PoB.
 
-`productionValue = (contribution − expected(pickNo)) · pace`, rounded to 1 decimal, where `pace = weeks.length / lastScoredWeek` (1.0 for a completed season). Pace keeps the production component on a full-season scale during the year so it is comparable with slot value.
+`productionValue = contribution − expected(pickNo)`, rounded to 1 decimal, in points to date. (An earlier revision multiplied by a full-season pace `weeks.length / lastScoredWeek`; it was removed on 2026-10-14 because five weeks × 3.4 let production swamp slot value early in the season. Without it, production grows naturally as the season fills in and the two parts are on comparable scales by season's end.)
 
 ### Total
 
@@ -53,7 +55,7 @@ If `lastScoredWeek` is 0 (draft done, no games played) every value field, includ
 | Saquon Barkley | 11 → 129 | −74 | −32 | −106 |
 | De'Von Achane | 8 → 126 | −79 | −35 | −114 |
 
-These were computed with a redraft pool of drafted players only and WITHOUT the pace factor, so real in-season production values are about 3.4× larger (Gibbs ≈ +207, Golden ≈ +90, Achane ≈ −203 through week 5 of 2026). The implementation uses the whole directory as the redraft pool. Signs and ordering must match; magnitudes differ.
+These were computed with a redraft pool of drafted players only, before the QB weight, and without a pace factor (which matches the final method). The implementation uses the whole directory as the redraft pool. Signs and ordering must match; magnitudes differ slightly.
 
 ### Games played, PPG, healthy
 
@@ -99,7 +101,7 @@ interface DraftPick {
 ### Analysis
 
 - **Grades table** columns: Manager, Value, Slot, Production, Pts over baseline, Best pick, Worst pick. Sorted by Value desc, tiebreak Pts over baseline desc. Best/worst are by `value`. Methodology note replaces the current one:
-  > Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season[, on a 17-week pace]. Defenses are excluded.
+  > Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season[, to date]. Quarterback points count at half weight, matching how a one-QB league actually prices them. Defenses are excluded.
 - **Steals and busts**: 10 each, by `value`. The pick line shows `pick N → redraft P · pick N · manager` and the total value, with PoB as the small trailing number.
 - **Top PPG (healthy)**: new card under the analysis grid. Top 10 picks by `ppg` among picks with `healthy === true` and a non-null value. Columns: Player (headshot, name, pos pill, team), Pick, Manager, G, PPG. Label "Top PPG (healthy)" with the in-season "(to date)" suffix. Footnote: "Healthy means the player has played every game their team has played."
 
@@ -113,7 +115,7 @@ Sync adds the games/team/trade collection (one extra request per week per season
 
 ## Testing
 
-- Core: unit tests for `capital`, `fitExpectedCurve` (recovers a known a/k from synthetic data), `computeDraftValues` (DEF null, redraft ties, slot/production/total on a small fixture, pace, zero-weeks null), trade resolution (latest by created, roster → user mapping), healthy/ppg.
+- Core: unit tests for `capital`, `fitExpectedCurve` (recovers a known a/k from synthetic data), `computeDraftValues` (DEF null, redraft ties, slot/production/total on a small fixture, QB weight, zero-weeks null), trade resolution (latest by created, roster → user mapping), healthy/ppg.
 - Web: `valueColor` endpoints and midpoint, `managerDraftSummaries` sort, `leagueExtremes` size 10, `topHealthyPpg` filtering, DraftBoard renders lock/trade markers.
 - Screenshot check of `/draft/2026` and `/draft/2025` in both modes at desktop and phone widths.
 

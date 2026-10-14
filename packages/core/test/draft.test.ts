@@ -3,7 +3,7 @@ import { buildDraft, computeDraftValues, tradesFromTransactions, capital, fitExp
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
-const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, lastScoredWeek: 0, totalWeeks: 17, trades: [] };
+const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, lastScoredWeek: 0, trades: [] };
 const rosterToUser = { 1: 'ua', 2: 'ub', 3: 'uc' };
 const draft: SleeperDraft = {
   draft_id: 'D1', type: 'snake', status: 'complete',
@@ -55,7 +55,7 @@ describe('computeDraftValues', () => {
     seasonPoints, players,
     gamesPlayed: { rbA: 5, qbA: 4, rbB: 5, def1: 5 },
     teamGames: { DET: 5, KC: 5, SF: 4 },
-    lastScoredWeek: 5, totalWeeks: 17,
+    lastScoredWeek: 5,
     trades: [
       { playerId: 'rbB', toUserId: 'u9', week: 2, created: 200 },
       { playerId: 'rbB', toUserId: 'u8', week: 4, created: 400 },
@@ -93,33 +93,36 @@ describe('computeDraftValues', () => {
     expect(p.pointsOverBaseline).toBe(170 - 100); // k3 170 minus k10 100
   });
 
-  it('ranks the redraft order across positions by points over baseline, zero scorers tied last', () => {
-    // qbA 400, qbX 390, qbB 380, rbX 300, rbB 250, rbA 100, rbC 50 -> 7 scorers; rbY ties at 8
-    expect(by.qbA.redraftPos).toBe(1);
-    expect(by.qbB.redraftPos).toBe(3);
-    expect(by.rbB.redraftPos).toBe(5);
+  it('ranks the redraft order across positions by weighted points over baseline, zero scorers tied last', () => {
+    // QB PoB weighs 0.5: rbX 300, rbB 250, qbA 200, qbX 195, qbB 190, rbA 100, rbC 50 -> 7 scorers; rbY ties at 8
+    expect(by.rbB.redraftPos).toBe(2);
+    expect(by.qbA.redraftPos).toBe(3);
+    expect(by.qbB.redraftPos).toBe(5);
     expect(by.rbA.redraftPos).toBe(6);
     expect(by.rbC.redraftPos).toBe(7);
     expect(by.rbY.redraftPos).toBe(8);
+    expect(by.qbA.pointsOverBaseline).toBe(400);   // displayed PoB stays unweighted
   });
 
   it('computes slot value as capital gained between the pick and the redraft position', () => {
     expect(by.rbA.slotValue).toBeCloseTo(capital(6) - capital(1), 1);   // -10.5
-    expect(by.qbA.slotValue).toBeCloseTo(capital(1) - capital(2), 1);   // +2.2
-    expect(by.qbB.slotValue).toBeCloseTo(capital(3) - capital(5), 1);   // +4.2
+    expect(by.qbA.slotValue).toBeCloseTo(capital(3) - capital(2), 1);   // -2.2
+    expect(by.rbB.slotValue).toBeCloseTo(capital(2) - capital(3), 1);   // +2.2
+    expect(by.qbB.slotValue).toBe(0);
     expect(by.rbY.slotValue).toBe(0);
   });
 
-  it('fits the expected curve on valued picks and scales production to a full-season pace', () => {
+  it('fits the expected curve on weighted valued picks and reports production in points to date', () => {
     expect(expectedCurve).not.toBeNull();
-    const pace = 17 / 5;
-    for (const id of ['rbA', 'qbA', 'rbB', 'qbB', 'rbC', 'rbY']) {
-      const p = by[id];
-      const contribution = Math.max(p.pointsOverBaseline!, 0);
-      const expected = Math.round((contribution - expectedAt(expectedCurve!, p.pickNo)) * pace * 10) / 10;
+    const weighted = (p: DraftPick) => (players[p.playerId].position === 'QB' ? 0.5 : 1) * p.pointsOverBaseline!;
+    const valued = picks.filter((p) => p.pointsOverBaseline !== null);
+    expect(expectedCurve).toEqual(fitExpectedCurve(valued.map((p) => ({ pick: p.pickNo, contribution: Math.max(weighted(p), 0) }))));
+    for (const p of valued) {
+      const expected = Math.round((Math.max(weighted(p), 0) - expectedAt(expectedCurve!, p.pickNo)) * 10) / 10;
       expect(p.productionValue).toBeCloseTo(expected, 1);
       expect(p.value).toBeCloseTo(p.slotValue! + p.productionValue!, 1);
     }
+    expect(valued.map((p) => p.playerId).sort()).toEqual(['qbA', 'qbB', 'rbA', 'rbB', 'rbC', 'rbY']);
   });
 
   it('fills games played, ppg and healthy from the inputs', () => {
