@@ -87,7 +87,7 @@ interface Season {
   draft: Draft;                  // arrives in Phase 4
   standings: StandingRow[];      // regular season, sorted
   honors: { champion, runnerUp, third, pointsTitle, lastPlace }; // userIds, null while in season
-  records: SeasonRecords;        // arrives in Phase 3: most points, best PPG, best record, best all-play, most weekly highs
+  // records are not stored: the web app derives them from standings via seasonRecords (packages/web/src/lib/records.ts)
 }
 
 interface Week {
@@ -143,18 +143,14 @@ interface BracketGame {
 }
 
 interface Draft {
-  draftId: string; rounds: number; type: 'snake';
+  draftId: string; type: string; rounds: number;
   slotOrder: userId[];           // draft slot 1..N
-  picks: Pick[];
+  picks: DraftPick[];
 }
-interface Pick {
+interface DraftPick {
   round; pickNo; slot; userId; playerId; isKeeper: boolean;
-  posDraftRank: number;          // nth player at this position taken in this draft
-  seasonPoints: number;          // under league scoring, all weeks 1..lastScoredWeek
-  posFinishRank: number;         // among all NFL players at this position that season
-  value: number;                 // posDraftRank - posFinishRank
-  pointsOverBaseline: number;
 }
+// Value fields (posDraftRank, seasonPoints, posFinishRank, value, pointsOverBaseline) are added in Phase 4.
 ```
 
 ### `history.json`
@@ -172,6 +168,7 @@ interface HistorySeason {
   status: 'complete' | 'in_season';
   lastScoredWeek: number;
   playoffWeekStart: number;
+  honors: Honors;
 }
 interface H2HSeries {
   a: userId; b: userId;
@@ -241,9 +238,9 @@ Six routes behind a slim top navigation: Scores, Standings, Head-to-Head, All-Ti
 
 ### Phase 3
 
-**`/history`** One row per season: champion, runner-up, points title, toilet bowl loser. Links to the season page.
+**`/history`** One row per season: champion, runner-up, points title, toilet bowl loser. Links to the season page. The current season shows "In progress · through week N" in place of its honors.
 
-**`/history/:season`** Season in review: final standings table, winners and consolation brackets with scores, round 1 of the draft board linking to `/draft/:season`, and a Records block (most points, best PPG, best record, best all-play, most weekly highs). The Records block gets a link to a record book page when that feature exists; until then it has no link.
+**`/history/:season`** Season in review: final standings table, winners and consolation brackets with scores, round 1 of the draft board (its link to `/draft/:season` is absent until Phase 4), and a Records block (most points, best PPG, best record, best all-play, most weekly highs). The Records block gets a link to a record book page when that feature exists; until then it has no link.
 
 ### Phase 4
 
