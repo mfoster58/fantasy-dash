@@ -31,7 +31,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
         <div className="section-label px-4 pt-3">Draft grades{note}</div>
         <table className="w-full text-sm">
           <thead><tr className="border-b border-line text-left">
-            {['Manager', 'Value', 'Pts over baseline', 'Best pick', 'Worst pick'].map((h, i) => <th key={h} className={`section-label px-4 py-2 ${i === 1 || i === 2 ? 'text-right' : ''}`}>{h}</th>)}
+            {['Manager', 'Pts over baseline', 'Value', 'Best pick', 'Worst pick'].map((h, i) => <th key={h} className={`section-label px-4 py-2 ${i === 1 || i === 2 ? 'text-right' : ''}`}>{h}</th>)}
           </tr></thead>
           <tbody>
             {summaries.map((s) => {
@@ -39,8 +39,8 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
               return (
                 <tr key={s.userId} className="border-t border-line hover:bg-surface-2">
                   <td className="px-4 py-2"><span className="flex items-center gap-2"><Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={22} />{m?.displayName ?? s.userId}</span></td>
-                  <td className={`num px-4 py-2 text-right ${signClass(s.totalValue, '')}`}>{fmtSigned(s.totalValue, 0)}</td>
                   <td className="num px-4 py-2 text-right">{fmtSigned(s.totalPoB, 1)}</td>
+                  <td className={`num px-4 py-2 text-right ${signClass(s.totalValue, '')}`}>{fmtSigned(s.totalValue, 0)}</td>
                   <td className="px-4 py-2 text-xs">{s.best ? `${playerName(players, s.best.playerId)} (${fmtSigned(s.best.value ?? 0, 0)})` : '—'}</td>
                   <td className="px-4 py-2 text-xs">{s.worst ? `${playerName(players, s.worst.playerId)} (${fmtSigned(s.worst.value ?? 0, 0)})` : '—'}</td>
                 </tr>
@@ -48,7 +48,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
             })}
           </tbody>
         </table>
-        <p className="px-4 py-2 text-xs text-muted">Value = positional draft rank minus positional finish rank (positive is a steal). Points over baseline compares season points to the last startable player at the position.</p>
+        <p className="px-4 py-2 text-xs text-muted">Points over baseline compares season points to the last startable player at the position. Value = positional draft rank minus positional finish rank (positive is a steal); it skews negative because a bust can fall much further than a steal can rise.</p>
       </div>
       <div className="space-y-4">
         <div className="card px-4 py-3"><div className="section-label">Top steals{note}</div><ul className="divide-y divide-line">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} />)}</ul></div>

@@ -12,12 +12,12 @@ const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 
 describe('managerDraftSummaries', () => {
   it('sums value and points over baseline per manager and finds best and worst picks', () => {
     const [first, second] = managerDraftSummaries(draft);
-    expect(first).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalPoB: 40 });
-    expect(first.best?.pickNo).toBe(4);
-    expect(first.worst?.pickNo).toBe(2);
-    expect(second).toMatchObject({ userId: 'a', picks: 3, totalValue: 3, totalPoB: 55 });
-    expect(second.best?.pickNo).toBe(1);
-    expect(second.worst?.pickNo).toBe(3);
+    expect(first).toMatchObject({ userId: 'a', picks: 3, totalValue: 3, totalPoB: 55 });
+    expect(first.best?.pickNo).toBe(1);
+    expect(first.worst?.pickNo).toBe(3);
+    expect(second).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalPoB: 40 });
+    expect(second.best?.pickNo).toBe(4);
+    expect(second.worst?.pickNo).toBe(2);
   });
 });
 

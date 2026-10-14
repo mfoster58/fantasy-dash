@@ -19,7 +19,7 @@ export function managerDraftSummaries(draft: Draft): ManagerDraftSummary[] {
   }
   return [...map.values()]
     .map((s) => ({ ...s, totalPoB: r2(s.totalPoB) }))
-    .sort((a, b) => b.totalValue - a.totalValue || b.totalPoB - a.totalPoB);
+    .sort((a, b) => b.totalPoB - a.totalPoB || b.totalValue - a.totalValue);
 }
 
 export function leagueExtremes(draft: Draft, n = 5): { steals: DraftPick[]; busts: DraftPick[] } {
