@@ -24,7 +24,7 @@ const base = (a: GameSide, b: GameSide, winner: string | null, tag: Game['tag'] 
 const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('ScoreCard', () => {
-  it('shows scores, records, efficiency and the top three starters', () => {
+  it('shows scores, records, efficiency and the top three starters per team', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
     wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
     expect(screen.getByText('120.50')).toBeInTheDocument();
@@ -34,20 +34,23 @@ describe('ScoreCard', () => {
     expect(screen.getByText('Quincy One')).toBeInTheDocument();
     expect(screen.getByText('Quinn Two')).toBeInTheDocument();
     expect(screen.getByText('Ricky One')).toBeInTheDocument();
-    expect(screen.queryByText('Rob Two')).not.toBeInTheDocument();
+    expect(screen.getByText('Rob Two')).toBeInTheDocument();
+    expect(screen.getByText('Final')).toBeInTheDocument();
+    expect(screen.getByText('Won by 21.25')).toBeInTheDocument();
     expect(screen.getByText('Week 3')).toBeInTheDocument();
   });
 
   it('labels a tie', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 100, [['q2', 30]]), null);
     wrap(<ScoreCard game={g} played managers={managers} players={players} to="/x" />);
-    expect(screen.getByText('Tie')).toBeInTheDocument();
+    expect(screen.getAllByText('Tie').length).toBeGreaterThan(0);
   });
 
   it('shows projections for an upcoming game and no performers', () => {
     const g = base(side('a', 0, []), side('b', 0, []), null);
     wrap(<ScoreCard game={g} played={false} managers={managers} players={players} to="/x" />);
     expect(screen.getByText('Upcoming')).toBeInTheDocument();
+    expect(screen.getByText('Projected')).toBeInTheDocument();
     expect(screen.getAllByText(/100\.00 proj/)).toHaveLength(2);
     expect(screen.queryByText('Tie')).not.toBeInTheDocument();
   });
@@ -55,6 +58,7 @@ describe('ScoreCard', () => {
   it('shows the playoff tag and links to the box score', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a', 'Final');
     wrap(<ScoreCard game={g} played managers={managers} players={players} to="/scores/2025/17/1" />);
+    expect(screen.getByText('Championship')).toBeInTheDocument();
     expect(screen.getByText('Final')).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/scores/2025/17/1');
   });
