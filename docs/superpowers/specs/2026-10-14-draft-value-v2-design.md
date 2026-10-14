@@ -13,7 +13,7 @@ The Phase 4 draft value (positional draft rank minus positional finish rank) has
 
 ## Method
 
-All value math excludes defenses. DEF picks still appear on the board with season points, but every value field is null and they are left out of grades, steals, busts and the PPG list. Kickers stay in. Baseline ranks are unchanged: QB10, RB24, WR24, TE12, K10.
+All value math excludes kickers and defenses (added K on 2026-10-14 at the user's request; both are streamed). K and DEF picks still appear on the board with season points, but every value field is null and they are left out of grades, steals, busts and the PPG list. Baseline ranks: QB10, RB24, WR24, TE12.
 
 **Positional scarcity weight (added 2026-10-14 after review of the 2024 board):** `POSITION_WEIGHTS = { QB: 0.5 }`. A quarterback's points over baseline are halved before the redraft ranking and before the contribution used for production value. The displayed `pointsOverBaseline` stays unweighted. 0.5 was calibrated against Sleeper's real next-year ADP for 2023→2024, 2024→2025 and 2025→2026: with weight 1, Lamar Jackson's 2024 season ranked him redraft 6 against a real 2025 ADP of 21.9; with 0.5 he ranks 21.
 
@@ -101,7 +101,7 @@ interface DraftPick {
 ### Analysis
 
 - **Grades table** columns: Manager, Value, Slot, Production, Pts over baseline, Best pick, Worst pick. Sorted by Value desc, tiebreak Pts over baseline desc. Best/worst are by `value`. Methodology note replaces the current one:
-  > Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season[, to date]. Quarterback points count at half weight, matching how a one-QB league actually prices them. Defenses are excluded.
+  > Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season[, to date]. Quarterback points count at half weight, matching how a one-QB league actually prices them. Kickers and defenses are excluded.
 - **Steals and busts**: 10 each, by `value`. The pick line shows `pick N → redraft P · pick N · manager` and the total value, with PoB as the small trailing number.
 - **Top PPG (healthy)**: new card under the analysis grid. Top 10 picks by `ppg` among picks with `healthy === true` and a non-null value. Columns: Player (headshot, name, pos pill, team), Pick, Manager, G, PPG. Label "Top PPG (healthy)" with the in-season "(to date)" suffix. Footnote: "Healthy means the player has played every game their team has played."
 

@@ -135,7 +135,7 @@ export interface DraftPick {
   userId: UserId;
   playerId: PlayerId;
   isKeeper: boolean;
-  /** order taken within the position; null for DEF and unknown positions */
+  /** order taken within the position; null for K, DEF and unknown positions */
   posDraftRank: number | null;
   seasonPoints: number;
   gamesPlayed: number;

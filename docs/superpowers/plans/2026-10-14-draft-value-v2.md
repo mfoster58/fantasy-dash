@@ -13,7 +13,7 @@ Spec: `docs/superpowers/specs/2026-10-14-draft-value-v2-design.md`. Read it once
 ## Global Constraints
 
 - Defenses are excluded from all value math: DEF picks have `posDraftRank`, `pointsOverBaseline`, `redraftPos`, `slotValue`, `productionValue`, `value` all `null`; they still carry `seasonPoints`, `gamesPlayed`, `ppg`, `healthy`, `tradedTo`.
-- `BASELINE_RANKS = { QB: 10, RB: 24, WR: 24, TE: 12, K: 10 }` (DEF removed).
+- `BASELINE_RANKS = { QB: 10, RB: 24, WR: 24, TE: 12 }` (DEF removed; K removed 2026-10-14).
 - `capital(pick) = 100 · exp(−(pick − 1) / 45)`.
 - Expected curve: `a · exp(−(pick − 1) / k)`, `k` integer 10..120, `a` closed-form least squares at each `k`, fit on `contribution = max(PoB, 0)`.
 - `productionValue = contribution − expected(pickNo)` (pace factor removed 2026-10-14; `POSITION_WEIGHTS = { QB: 0.5 }` applied to PoB for ranking and contribution).

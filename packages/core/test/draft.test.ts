@@ -65,7 +65,9 @@ describe('computeDraftValues', () => {
   const { picks, expectedCurve } = computeDraftValues(drafted, input);
   const by = Object.fromEntries(picks.map((p) => [p.playerId, p]));
 
-  it('leaves value fields null for defenses but keeps points, games and ppg', () => {
+  it('leaves value fields null for kickers and defenses but keeps points, games and ppg', () => {
+    const { picks: [k] } = computeDraftValues([pick(1, 'k1')], { ...input, seasonPoints: { k1: 120 }, players: { k1: info('k1', 'K') }, gamesPlayed: { k1: 5 } });
+    expect(k).toMatchObject({ seasonPoints: 120, gamesPlayed: 5, ppg: 24, posDraftRank: null, pointsOverBaseline: null, redraftPos: null, value: null });
     expect(by.def1).toMatchObject({ seasonPoints: 90, gamesPlayed: 5, ppg: 18, healthy: false, posDraftRank: null, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null });
   });
 
@@ -87,10 +89,10 @@ describe('computeDraftValues', () => {
   it('uses the baseline player\'s points when the pool is deep enough', () => {
     const deepPlayers: PlayerDirectory = {};
     const deepPoints: Record<string, number> = {};
-    for (let i = 1; i <= 12; i++) { deepPlayers[`k${i}`] = info(`k${i}`, 'K'); deepPoints[`k${i}`] = 200 - i * 10; } // k1 190 ... k12 80
-    const { picks: [p] } = computeDraftValues([pick(1, 'k3')], { ...input, seasonPoints: deepPoints, players: deepPlayers });
-    expect(BASELINE_RANKS.K).toBe(10);
-    expect(p.pointsOverBaseline).toBe(170 - 100); // k3 170 minus k10 100
+    for (let i = 1; i <= 14; i++) { deepPlayers[`te${i}`] = info(`te${i}`, 'TE'); deepPoints[`te${i}`] = 200 - i * 10; } // te1 190 ... te14 60
+    const { picks: [p] } = computeDraftValues([pick(1, 'te3')], { ...input, seasonPoints: deepPoints, players: deepPlayers });
+    expect(BASELINE_RANKS.TE).toBe(12);
+    expect(p.pointsOverBaseline).toBe(170 - 80); // te3 170 minus te12 80
   });
 
   it('ranks the redraft order across positions by weighted points over baseline, zero scorers tied last', () => {

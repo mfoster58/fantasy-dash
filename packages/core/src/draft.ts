@@ -2,8 +2,8 @@ import type { Draft, DraftPick, ExpectedCurve, PlayerDirectory, PlayerId, UserId
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from './sleeper/types';
 import { round2, round4 } from './scoring';
 
-/** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB, 1 K. Defenses are excluded from value math. */
-export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12, K: 10 };
+/** Last startable rank per position in a 10-team league with 2 RB, 2 WR, 1 TE, 2 FLEX, 1 QB. Kickers and defenses are excluded from value math (streamed, not drafted for value). */
+export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, TE: 12 };
 
 /**
  * Scarcity weight applied to points over baseline before ranking and valuing. A one-QB lineup with deep
@@ -83,7 +83,7 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
  * BASELINE_RANKS[pos] (0 if the pool is shorter). Redraft position ranks all valued-position
  * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
  * scorers tie at N + 1. Slot value is draft capital gained; production value is weighted contribution
- * (max(weighted PoB, 0)) over the expected curve fitted to this draft, in points to date. DEF and
+ * (max(weighted PoB, 0)) over the expected curve fitted to this draft, in points to date. K, DEF and
  * unknown positions get null for every value field.
  * Before the first scored week every value field is null.
  */
