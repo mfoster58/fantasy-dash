@@ -74,6 +74,17 @@ describe('DraftBoard', () => {
     expect(cells[0].getAttribute('title')).toContain('Redraft position today');
   });
 
+  it('shows a letter grade, total and rank under each column', () => {
+    render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    const row = screen.getByTestId('grade-row');
+    const cells = row.querySelectorAll('button');
+    expect(cells).toHaveLength(2);
+    expect(cells[0]).toHaveTextContent('A+');     // alice: 6.5 + null -> +7, rank 1
+    expect(cells[0]).toHaveTextContent('+7');
+    expect(cells[0]).toHaveTextContent('1 of 2');
+    expect(cells[1]).toHaveTextContent('B-');     // bob: rank 2 of 2 -> letter index floor(11/2) = 5
+  });
+
   it('highlights one manager\'s picks when the column header is clicked', () => {
     const onHighlight = vi.fn();
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight="a" onHighlight={onHighlight} inSeason={false} />);

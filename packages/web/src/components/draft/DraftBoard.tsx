@@ -1,7 +1,7 @@
 import type { Draft, DraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam, posColor } from '../../lib/players';
-import { posLabel, valueColor } from '../../lib/draft';
+import { letterGrade, managerDraftSummaries, posLabel, valueColor } from '../../lib/draft';
 
 export type BoardMode = 'position' | 'value';
 
@@ -48,6 +48,9 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
   const bySlot = new Map<string, DraftPick>();
   for (const p of draft.picks) bySlot.set(`${p.round}-${p.slot}`, p);
   const rounds = Array.from({ length: draft.rounds }, (_, i) => i + 1);
+  const summaries = managerDraftSummaries(draft);
+  const gradeOf = new Map(summaries.map((sm, i) => [sm.userId, { rank: i + 1, letter: letterGrade(i + 1, summaries.length), value: sm.totalValue }]));
+  const gradeSign = (n: number) => (n > 0 ? 'text-win' : n < 0 ? 'text-loss' : 'text-muted');
 
   return (
     <div className="card overflow-x-auto">
@@ -111,6 +114,27 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
             })}
           </div>
         ))}
+        <div className="grid border-t-2 border-line" style={{ gridTemplateColumns: cols }} data-testid="grade-row">
+          <div className="section-label flex items-center justify-center">Grade</div>
+          {draft.slotOrder.map((userId) => {
+            const g = gradeOf.get(userId);
+            const isHl = highlight !== null && userId === highlight;
+            const dim = highlight !== null && !isHl;
+            return (
+              <button
+                key={userId}
+                type="button"
+                onClick={() => onHighlight(isHl ? null : userId)}
+                className={`flex flex-col items-center border-l border-line px-2 py-2 transition-opacity hover:bg-surface-2 ${dim ? 'opacity-35' : ''} ${isHl ? 'bg-surface-2' : ''}`}
+                title={g ? `${managers[userId]?.displayName ?? userId}: ${fmtSigned(g.value, 0)} · ${g.rank} of ${summaries.length}` : undefined}
+              >
+                <span className="text-lg font-bold leading-tight">{g?.letter ?? '—'}</span>
+                <span className={`num text-xs ${g ? gradeSign(g.value) : 'text-muted'}`}>{g ? fmtSigned(g.value, 0) : ''}</span>
+                <span className="num text-[10px] text-muted">{g ? `${g.rank} of ${summaries.length}` : ''}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
