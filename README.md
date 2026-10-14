@@ -23,7 +23,7 @@ pnpm build         # production build to packages/web/dist
 
 ## Deploy
 
-`.github/workflows/sync.yml` runs every Tuesday morning and on manual dispatch: sync, test, commit `data/`, build, deploy to GitHub Pages. One-time setup in the GitHub repo: Settings, Pages, Source = GitHub Actions.
+`.github/workflows/sync.yml` runs every Tuesday morning, on manual dispatch, and on every push to `main`. Scheduled and manual runs sync, test, commit `data/`, build, and deploy to GitHub Pages; push runs skip the sync and only test, build, and deploy. One-time setup in the GitHub repo: Settings, Pages, Source = GitHub Actions.
 
 ## Config
 
