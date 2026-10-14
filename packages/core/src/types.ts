@@ -128,6 +128,23 @@ export interface Honors {
   lastPlace: UserId | null;
 }
 
+export interface DraftPick {
+  round: number;
+  pickNo: number;
+  slot: number;
+  userId: UserId;
+  playerId: PlayerId;
+  isKeeper: boolean;
+}
+
+export interface Draft {
+  draftId: string;
+  type: string;
+  rounds: number;
+  slotOrder: UserId[];
+  picks: DraftPick[];
+}
+
 export type SeasonStatus = 'complete' | 'in_season';
 
 export interface Season {
@@ -146,6 +163,7 @@ export interface Season {
   brackets: { winners: BracketGame[]; consolation: BracketGame[] };
   standings: StandingRow[];
   honors: Honors;
+  draft: Draft | null;
 }
 
 export interface H2HGame {
@@ -181,6 +199,7 @@ export interface HistorySeason {
   status: SeasonStatus;
   lastScoredWeek: number;
   playoffWeekStart: number;
+  honors: Honors;
 }
 
 export interface AllTimeRow {

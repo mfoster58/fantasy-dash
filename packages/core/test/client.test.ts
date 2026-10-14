@@ -6,6 +6,17 @@ function response(status: number, body: unknown) {
 }
 
 describe('SleeperClient', () => {
+  it('uses the draft paths', async () => {
+    const fetchFn = vi.fn(async (_url: string | URL | Request) => response(200, []));
+    const client = new SleeperClient({ fetchFn, minIntervalMs: 0 });
+    await client.getDrafts('L1');
+    await client.getDraftPicks('D1');
+    expect(fetchFn.mock.calls.map((c) => c[0])).toEqual([
+      'https://api.sleeper.app/v1/league/L1/drafts',
+      'https://api.sleeper.app/v1/draft/D1/picks',
+    ]);
+  });
+
   it('builds v1 URLs and parses JSON', async () => {
     const fetchFn = vi.fn(async () => response(200, { league_id: 'x' }));
     const client = new SleeperClient({ fetchFn, minIntervalMs: 0 });

@@ -3,6 +3,12 @@ import { buildSeason } from '../src/season';
 import { miniInput } from './fixtures/mini';
 
 describe('buildSeason (mini league)', () => {
+  it('carries the normalized draft', () => {
+    expect(season.draft).toMatchObject({ draftId: 'DM', rounds: 2, slotOrder: ['ua', 'ub', 'uc', 'ud'] });
+    expect(season.draft?.picks).toHaveLength(8);
+    expect(season.draft?.picks[2]).toMatchObject({ userId: 'uc', playerId: 'q3', isKeeper: true });
+  });
+
   it('blanks provisional bracket seeds until the regular season is fully scored', () => {
     const input = miniInput();
     input.league.status = 'in_season';

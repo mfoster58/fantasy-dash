@@ -89,6 +89,23 @@ const Honors = z.object({
   lastPlace: z.string().nullable(),
 });
 
+const DraftPick = z.object({
+  round: z.number(),
+  pickNo: z.number(),
+  slot: z.number(),
+  userId: z.string(),
+  playerId: z.string(),
+  isKeeper: z.boolean(),
+});
+
+const Draft = z.object({
+  draftId: z.string(),
+  type: z.string(),
+  rounds: z.number(),
+  slotOrder: z.array(z.string()),
+  picks: z.array(DraftPick),
+});
+
 export const SeasonSchema = z.object({
   year: z.number(),
   leagueId: z.string(),
@@ -103,6 +120,7 @@ export const SeasonSchema = z.object({
   brackets: z.object({ winners: z.array(BracketGame), consolation: z.array(BracketGame) }),
   standings: z.array(StandingRow),
   honors: Honors,
+  draft: Draft.nullable(),
 });
 
 export const PlayerDirectorySchema = z.record(z.object({
@@ -135,6 +153,7 @@ export const HistorySchema = z.object({
     status: Status,
     lastScoredWeek: z.number(),
     playoffWeekStart: z.number(),
+    honors: Honors,
   })),
   managers: z.record(z.object({
     displayName: z.string(),

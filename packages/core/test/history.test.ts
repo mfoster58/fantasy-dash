@@ -14,7 +14,7 @@ describe('buildHistory', () => {
   const history = buildHistory([s2025, s2024]);
 
   it('lists seasons oldest first', () => {
-    expect(history.seasons).toEqual([
+    expect(history.seasons.map(({ year, leagueId, status, lastScoredWeek, playoffWeekStart }) => ({ year, leagueId, status, lastScoredWeek, playoffWeekStart }))).toEqual([
       { year: 2024, leagueId: 'L2024', status: 'complete', lastScoredWeek: 3, playoffWeekStart: 4 },
       { year: 2025, leagueId: 'L2025', status: 'complete', lastScoredWeek: 3, playoffWeekStart: 4 },
     ]);
@@ -33,6 +33,10 @@ describe('buildHistory', () => {
       { gameId: '2024-1-1', year: 2024, week: 1, tag: null, aPoints: 100, bPoints: 90 },
     ]);
     expect(history.h2h['ub|ud']).toMatchObject({ aWins: 0, bWins: 0, ties: 2 });
+  });
+
+  it('carries each season\'s honors', () => {
+    expect(history.seasons[0].honors).toEqual({ champion: null, runnerUp: null, third: null, pointsTitle: 'uc', lastPlace: null });
   });
 
   it('ignores unplayed games', () => {

@@ -1,5 +1,5 @@
 import type {
-  SleeperBracketGame, SleeperLeague, SleeperMatchup, SleeperPlayer, SleeperRoster, SleeperUser, StatMap,
+  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperPlayer, SleeperRoster, SleeperUser, StatMap,
 } from './types';
 
 const BASE = 'https://api.sleeper.app/v1';
@@ -55,6 +55,8 @@ export class SleeperClient {
   getMatchups(id: string, week: number) { return this.get<SleeperMatchup[]>(`/league/${id}/matchups/${week}`); }
   getWinnersBracket(id: string) { return this.get<SleeperBracketGame[]>(`/league/${id}/winners_bracket`); }
   getLosersBracket(id: string) { return this.get<SleeperBracketGame[]>(`/league/${id}/losers_bracket`); }
+  getDrafts(leagueId: string) { return this.get<SleeperDraft[]>(`/league/${leagueId}/drafts`); }
+  getDraftPicks(draftId: string) { return this.get<SleeperDraftPick[]>(`/draft/${draftId}/picks`); }
   getPlayers() { return this.get<Record<string, SleeperPlayer>>(`/players/nfl`); }
   getProjections(season: string, week: number) { return this.get<StatMap>(`/projections/nfl/regular/${season}/${week}`); }
   getStats(season: string, week: number) { return this.get<StatMap>(`/stats/nfl/regular/${season}/${week}`); }

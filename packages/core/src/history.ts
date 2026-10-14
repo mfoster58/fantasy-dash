@@ -171,7 +171,7 @@ export function buildHistory(seasons: Season[]): History {
   return {
     seasons: sorted.map((s) => ({
       year: s.year, leagueId: s.leagueId, status: s.status,
-      lastScoredWeek: s.lastScoredWeek, playoffWeekStart: s.playoffWeekStart,
+      lastScoredWeek: s.lastScoredWeek, playoffWeekStart: s.playoffWeekStart, honors: s.honors,
     })),
     managers,
     h2h,
