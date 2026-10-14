@@ -5,8 +5,8 @@ import AllTimeRecords from './AllTimeRecords';
 import type { AllTimeRecords as Records } from '../lib/allTimeRecords';
 
 const managers: History['managers'] = {
-  a: { displayName: 'alice', avatar: null, seasons: [2024, 2025] },
-  b: { displayName: 'bob', avatar: null, seasons: [2024, 2025] },
+  a: { displayName: 'alice', avatar: 'av-a', seasons: [2024, 2025] },
+  b: { displayName: 'bob', avatar: 'av-b', seasons: [2024, 2025] },
 };
 
 const records: Records = {
@@ -44,10 +44,8 @@ describe('AllTimeRecords', () => {
     const blow = screen.getByTestId('records-blowouts');
     expect(within(blow).getByText('Blowouts')).toBeInTheDocument();
     const blowRow = within(blow).getByRole('link');
-    expect(blowRow).toHaveTextContent('alice');
-    expect(blowRow).toHaveTextContent('bob');
-    expect(blowRow).toHaveTextContent('180.40');
-    expect(blowRow).toHaveTextContent('80.00');
+    expect(blowRow).toHaveTextContent('alice180.40vs80.00bob');
+    expect(blowRow).not.toHaveTextContent('–');
     expect(blowRow).toHaveTextContent('+100.40');
   });
 

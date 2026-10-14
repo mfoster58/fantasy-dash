@@ -28,11 +28,12 @@ function Card({ id, title, note, count, children }: { id: string; title: string;
   );
 }
 
-function Name({ userId, managers, size = 24 }: { userId: UserId; managers: History['managers']; size?: number }) {
+/** Avatar then name; `reverse` puts the avatar on the outside of a right-aligned side. */
+function Name({ userId, managers, size = 24, reverse = false }: { userId: UserId; managers: History['managers']; size?: number; reverse?: boolean }) {
   const m = managers[userId];
   const name = m?.displayName ?? userId;
   return (
-    <span className="flex min-w-0 items-center gap-2">
+    <span className={`flex min-w-0 items-center gap-2 ${reverse ? 'flex-row-reverse' : ''}`}>
       <Avatar avatar={m?.avatar ?? null} name={name} size={size} />
       <span className="truncate font-medium">{name}</span>
     </span>
@@ -63,14 +64,18 @@ function MatchupRow({ e, rank, managers }: { e: MatchupEntry; rank: number; mana
       <Link to={linkFor(e.gameId)} className={row}>
         <span className="num w-5 shrink-0 text-right text-xs text-muted">{rank}</span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-sm">
-            <Name userId={e.high.userId} managers={managers} size={20} />
-            <span className="num shrink-0">{fmtPts(e.high.points)}</span>
-            <span className="shrink-0 text-muted">–</span>
-            <span className="num shrink-0 text-muted">{fmtPts(e.low.points)}</span>
-            <span className="min-w-0 truncate text-muted">{managers[e.low.userId]?.displayName ?? e.low.userId}</span>
+          <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-sm">
+            <span className="flex min-w-0 items-center justify-end gap-2 text-right">
+              <Name userId={e.high.userId} managers={managers} size={20} />
+              <span className="num shrink-0">{fmtPts(e.high.points)}</span>
+            </span>
+            <span className="section-label text-[10px]">vs</span>
+            <span className="flex min-w-0 items-center gap-2 text-muted">
+              <span className="num shrink-0">{fmtPts(e.low.points)}</span>
+              <Name userId={e.low.userId} managers={managers} size={20} reverse />
+            </span>
           </span>
-          <span className="mt-0.5 block text-xs text-muted">{when(e)}</span>
+          <span className="mt-0.5 block text-center text-xs text-muted">{when(e)}</span>
         </span>
         <span className={`num shrink-0 text-lg font-semibold ${tie ? 'text-muted' : ''}`}>{tie ? 'Tie' : fmtSigned(e.margin, 2)}</span>
       </Link>
