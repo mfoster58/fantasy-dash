@@ -24,6 +24,7 @@ function cellTitle(p: DraftPick, players: PlayerDirectory, inSeason: boolean): s
 
 export default function DraftBoard({ draft, managers, players, mode, highlight, onHighlight, inSeason }: Props) {
   const slots = draft.slotOrder.length;
+  const cols = `3rem repeat(${slots}, minmax(0, 1fr))`;
   const bySlot = new Map<string, DraftPick>();
   for (const p of draft.picks) bySlot.set(`${p.round}-${p.slot}`, p);
   const rounds = Array.from({ length: draft.rounds }, (_, i) => i + 1);
@@ -31,7 +32,7 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
   return (
     <div className="card overflow-x-auto">
       <div className="min-w-[960px]">
-        <div className="grid border-b border-line" style={{ gridTemplateColumns: `3rem repeat(${slots}, minmax(0, 1fr))` }}>
+        <div className="grid border-b border-line" style={{ gridTemplateColumns: cols }}>
           <div />
           {draft.slotOrder.map((userId, i) => {
             const m = managers[userId];
@@ -51,7 +52,7 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
           })}
         </div>
         {rounds.map((round) => (
-          <div key={round} className="grid border-t border-line" style={{ gridTemplateColumns: `3rem repeat(${slots}, minmax(0, 1fr))` }}>
+          <div key={round} className="grid border-t border-line" style={{ gridTemplateColumns: cols }}>
             <div className="num flex items-center justify-center text-xs text-muted">{round}</div>
             {draft.slotOrder.map((_, i) => {
               const slot = i + 1;

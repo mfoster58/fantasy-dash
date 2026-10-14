@@ -5,6 +5,8 @@ import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos } from '../../lib/players';
 import { leagueExtremes, managerDraftSummaries, posLabel } from '../../lib/draft';
 
+const signClass = (n: number, fallback = 'text-muted') => (n > 0 ? 'text-win' : n < 0 ? 'text-loss' : fallback);
+
 interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean }
 
 function PickLine({ p, players, managers }: { p: DraftPick; players: PlayerDirectory; managers: Record<UserId, Manager> }) {
@@ -13,7 +15,7 @@ function PickLine({ p, players, managers }: { p: DraftPick; players: PlayerDirec
     <li className="flex items-center gap-3 py-1.5 text-sm">
       <Headshot players={players} id={p.playerId} size={24} />
       <span className="min-w-0 flex-1 truncate">{playerName(players, p.playerId)} <span className="text-xs text-muted">{posLabel(pos, p.posDraftRank)} → {pos}{p.posFinishRank ?? '?'} · pick {p.pickNo} · {managers[p.userId]?.displayName}</span></span>
-      <span className={`num ${(p.value ?? 0) > 0 ? 'text-win' : (p.value ?? 0) < 0 ? 'text-loss' : 'text-muted'}`}>{p.value === null ? '—' : fmtSigned(p.value, 0)}</span>
+      <span className={`num ${signClass(p.value ?? 0)}`}>{p.value === null ? '—' : fmtSigned(p.value, 0)}</span>
       <span className="num w-16 text-right text-xs text-muted">{p.pointsOverBaseline === null ? '' : fmtSigned(p.pointsOverBaseline, 1)}</span>
     </li>
   );
@@ -37,7 +39,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason }: Pr
               return (
                 <tr key={s.userId} className="border-t border-line hover:bg-surface-2">
                   <td className="px-4 py-2"><span className="flex items-center gap-2"><Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={22} />{m?.displayName ?? s.userId}</span></td>
-                  <td className={`num px-4 py-2 text-right ${s.totalValue > 0 ? 'text-win' : s.totalValue < 0 ? 'text-loss' : ''}`}>{fmtSigned(s.totalValue, 0)}</td>
+                  <td className={`num px-4 py-2 text-right ${signClass(s.totalValue, '')}`}>{fmtSigned(s.totalValue, 0)}</td>
                   <td className="num px-4 py-2 text-right">{fmtSigned(s.totalPoB, 1)}</td>
                   <td className="px-4 py-2 text-xs">{s.best ? `${playerName(players, s.best.playerId)} (${fmtSigned(s.best.value ?? 0, 0)})` : '—'}</td>
                   <td className="px-4 py-2 text-xs">{s.worst ? `${playerName(players, s.worst.playerId)} (${fmtSigned(s.worst.value ?? 0, 0)})` : '—'}</td>

@@ -33,7 +33,7 @@ export function leagueExtremes(draft: Draft, n = 5): { steals: DraftPick[]; bust
 export function valueColor(value: number | null): string {
   if (value === null || value === 0) return 'transparent';
   const magnitude = Math.min(Math.abs(value), 12) / 12;        // 0..1
-  const pct = Math.round(10 + magnitude * 60);                  // 10%..70%
+  const pct = Math.round(8 + magnitude * 30);                   // 8%..38%
   return `color-mix(in srgb, var(--${value > 0 ? 'win' : 'loss'}) ${pct}%, transparent)`;
 }
 

@@ -33,9 +33,9 @@ describe('valueColor and posLabel', () => {
   it('maps value to translucent win/loss colors clipped at 12', () => {
     expect(valueColor(null)).toBe('transparent');
     expect(valueColor(0)).toBe('transparent');
-    expect(valueColor(6)).toBe('color-mix(in srgb, var(--win) 40%, transparent)');
-    expect(valueColor(30)).toBe('color-mix(in srgb, var(--win) 70%, transparent)');
-    expect(valueColor(-12)).toBe('color-mix(in srgb, var(--loss) 70%, transparent)');
+    expect(valueColor(6)).toBe('color-mix(in srgb, var(--win) 23%, transparent)');
+    expect(valueColor(30)).toBe('color-mix(in srgb, var(--win) 38%, transparent)');
+    expect(valueColor(-12)).toBe('color-mix(in srgb, var(--loss) 38%, transparent)');
   });
   it('formats positional draft rank', () => {
     expect(posLabel('RB', 7)).toBe('RB7');

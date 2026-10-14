@@ -84,7 +84,7 @@ interface Season {
   managers: Record<userId, { userId, displayName, teamName, avatar, rosterId }>;
   weeks: Week[];                 // index = week number - 1
   brackets: { winners: BracketGame[]; consolation: BracketGame[] };
-  draft: Draft | null;            // Phase 3: normalized picks; value fields arrive in Phase 4
+  draft: Draft | null;            // normalized picks with value fields (Phase 4)
   standings: StandingRow[];      // regular season, sorted
   honors: { champion, runnerUp, third, pointsTitle, lastPlace }; // userIds, null while in season
   // records are not stored: the web app derives them from standings via seasonRecords (packages/web/src/lib/records.ts)
