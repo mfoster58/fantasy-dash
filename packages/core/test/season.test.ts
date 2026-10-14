@@ -104,6 +104,13 @@ describe('buildSeason (mini league)', () => {
       expect(week3.games[0].tag).toBe('QF');
     });
 
+    it('ignores a provisional bracket while the regular season is still being played', () => {
+      const input = playoffInput([{ r: 1, m: 1, t1: 1, t2: 2 }]);
+      input.league.settings.last_scored_leg = 1;
+      const s = buildSeason(input);
+      expect(s.weeks[2].games).toEqual([]);
+    });
+
     it('drops every game before the bracket pairing is known', () => {
       const s = buildSeason(playoffInput([{ r: 1, m: 1 }]));
       expect(s.weeks[2].games).toEqual([]);

@@ -100,6 +100,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
   const consolation = resolveBracket(input.losersBracket, 'consolation', playoffWeekStart, rosterToUser, weekPoints);
   const allBracketGames = [...winners, ...consolation];
 
+  const bracketSet = lastScoredWeek >= playoffWeekStart - 1;
   const weeks: Week[] = [];
   for (let week = 1; week <= maxWeek; week++) {
     const played = week <= lastScoredWeek;
@@ -113,7 +114,9 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     if (isPlayoff && !played) {
       // Sleeper fills unplayed playoff weeks with default pairings that are not
       // bracket games. Keep only games whose sides match a known bracket pairing.
-      games = games.filter((g) => isKnownBracketGame(allBracketGames, week, g));
+      // Until the regular season is fully scored the bracket's teams are only
+      // provisional (seeded from current standings), so nothing matches yet.
+      games = bracketSet ? games.filter((g) => isKnownBracketGame(allBracketGames, week, g)) : [];
     }
     let highScore: UserId | null = null;
     if (played && !isPlayoff) {
