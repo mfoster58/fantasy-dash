@@ -2,6 +2,7 @@ import type { Draft, DraftPick, Manager, PlayerDirectory, UserId } from '@fantas
 import { fmtPpg, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam, posColor } from '../../lib/players';
 import { posLabel, valueColor } from '../../lib/draft';
+import Avatar from '../Avatar';
 
 export type BoardMode = 'position' | 'value';
 
@@ -99,7 +100,8 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                     {p.tradedTo ? (
                       <span className="flex min-w-0 items-center gap-1 overflow-hidden">
                         <SwapIcon />
-                        <span className="truncate">{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
+                        <Avatar avatar={managers[p.tradedTo.userId]?.avatar ?? null} name={managers[p.tradedTo.userId]?.displayName ?? '?'} size={14} />
+                        <span className="hidden truncate 2xl:inline">{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
                       </span>
                     ) : (
                       <span className={colored ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
