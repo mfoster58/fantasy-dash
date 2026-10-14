@@ -26,14 +26,17 @@ describe('TeamDraft', () => {
     render(<TeamDraft draft={draft} managers={managers} players={players} userId="a" onSelect={() => {}} inSeason={false} />);
     const panel = screen.getByTestId('team-draft');
     expect(panel).toHaveTextContent('alice');
-    expect(panel).toHaveTextContent('grade 1 of 2');
+    expect(panel).toHaveTextContent('1 of 2');
+    expect(panel).toHaveTextContent('A+');
     const rows = panel.querySelectorAll('li');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent('Player One');
-    expect(rows[0]).toHaveTextContent('pick 1 → redraft 2 · to bob');
+    expect(rows[0]).toHaveTextContent('1.01');
+    expect(rows[0]).toHaveTextContent('redraft 2 · traded to bob');
     expect(rows[0]).toHaveTextContent('+7');
     expect(rows[1]).toHaveTextContent('Player Four');
     expect(panel).toHaveTextContent('+19');   // total value 6.5 + 12 = 18.5 -> +19
+    expect(panel).toHaveTextContent('2 hits');
     expect(panel).not.toHaveTextContent('Player Two');
   });
 

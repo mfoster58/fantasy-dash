@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Draft, DraftPick } from '@fantasy-dash/core';
-import { managerDraftSummaries, leagueExtremes, topHealthyPpg, valueColor, posLabel } from './draft';
+import { managerDraftSummaries, leagueExtremes, topHealthyPpg, valueColor, posLabel, letterGrade, pickLabel } from './draft';
 
 const pick = (pickNo: number, userId: string, value: number | null, pob: number, extra: Partial<DraftPick> = {}): DraftPick => ({
   round: 1, pickNo, slot: pickNo, userId, playerId: `p${pickNo}`, isKeeper: false,
@@ -13,7 +13,7 @@ const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 
 describe('managerDraftSummaries', () => {
   it('sums value parts and points over baseline per manager, finds best and worst, sorts by value', () => {
     const [first, second] = managerDraftSummaries(draft);
-    expect(first).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalSlot: 2, totalProduction: 2, totalPoB: 40 });
+    expect(first).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalSlot: 2, totalProduction: 2, totalPoB: 40, valued: 2, beat: 1, hits: 12, misses: -8 });
     expect(first.best?.pickNo).toBe(4);
     expect(first.worst?.pickNo).toBe(2);
     expect(second).toMatchObject({ userId: 'a', picks: 3, totalValue: 3, totalPoB: 55 });
@@ -43,6 +43,18 @@ describe('topHealthyPpg', () => {
     ] };
     expect(topHealthyPpg(d).map((p) => p.pickNo)).toEqual([5, 3, 1]);
     expect(topHealthyPpg(d, 1).map((p) => p.pickNo)).toEqual([5]);
+  });
+});
+
+describe('letterGrade and pickLabel', () => {
+  it('grades by rank from A+ down to D for a 10-team league', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => letterGrade(r, 10))).toEqual(['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D']);
+    expect(letterGrade(12, 12)).toBe('F');
+    expect(letterGrade(1, 1)).toBe('A+');
+  });
+  it('labels picks as round.pick-in-round', () => {
+    expect(pickLabel(pick(1, 'a', 0, 0), 10)).toBe('1.01');
+    expect(pickLabel({ ...pick(17, 'a', 0, 0), round: 2 }, 10)).toBe('2.07');
   });
 });
 
