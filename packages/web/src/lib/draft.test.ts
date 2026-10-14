@@ -47,13 +47,13 @@ describe('topHealthyPpg', () => {
 });
 
 describe('valueColor and posLabel', () => {
-  it('maps value onto a red-yellow-green scale saturating at 60', () => {
+  it('maps value onto a muted red-yellow-green tint saturating at 120', () => {
     expect(valueColor(null)).toBe('transparent');
-    expect(valueColor(0)).toBe('#e6c229');
-    expect(valueColor(30)).toBe('color-mix(in oklch, #2f9e5f 25%, #e6c229)');
-    expect(valueColor(90)).toBe('color-mix(in oklch, #2f9e5f 75%, #e6c229)');
-    expect(valueColor(-15)).toBe('color-mix(in oklch, #d64545 13%, #e6c229)');
-    expect(valueColor(200)).toBe('color-mix(in oklch, #2f9e5f 100%, #e6c229)');
+    expect(valueColor(0)).toBe('color-mix(in srgb, #e6c229 30%, transparent)');
+    expect(valueColor(30)).toBe('color-mix(in srgb, color-mix(in oklch, #2f9e5f 25%, #e6c229) 30%, transparent)');
+    expect(valueColor(90)).toBe('color-mix(in srgb, color-mix(in oklch, #2f9e5f 75%, #e6c229) 30%, transparent)');
+    expect(valueColor(-15)).toBe('color-mix(in srgb, color-mix(in oklch, #d64545 13%, #e6c229) 30%, transparent)');
+    expect(valueColor(200)).toBe('color-mix(in srgb, color-mix(in oklch, #2f9e5f 100%, #e6c229) 30%, transparent)');
   });
   it('formats positional draft rank', () => {
     expect(posLabel('RB', 7)).toBe('RB7');

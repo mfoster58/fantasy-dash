@@ -44,12 +44,13 @@ describe('DraftBoard', () => {
     expect(cells[1].getAttribute('title')).toContain('Keeper');
   });
 
-  it('marks keepers with a lock and traded players with a swap icon and the new owner', () => {
+  it('marks keepers with a lock and traded players with a yellow ring and the new owner\'s name', () => {
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells[1].querySelector('[aria-label="Keeper"]')).not.toBeNull();
     expect(cells[1]).not.toHaveTextContent(/keeper/i);
-    expect(cells[0].querySelector('[aria-label="Traded"]')).not.toBeNull();
+    expect(cells[0].className).toContain('ring-warn');
+    expect(cells[1].className).not.toContain('ring-warn');
     expect(cells[0]).toHaveTextContent('bob');
     expect(cells[0]).not.toHaveTextContent('SF');
     expect(cells[1]).toHaveTextContent('DAL');
@@ -59,10 +60,12 @@ describe('DraftBoard', () => {
   it('colors value mode on a red-yellow-green scale and shows the total value', () => {
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
     const cells = screen.getAllByTestId('draft-cell');
-    expect(cells[0].style.background).toContain('rgb(47, 158, 95) 5%');
-    expect(cells[1].style.background).toContain('rgb(214, 69, 69) 25%');
-    expect(cells[3].style.background).toBe('rgb(230, 194, 41)');
+    expect(cells[0].style.background).toMatch(/(#2f9e5f|rgb\(47, 158, 95\)) 5%/);
+    expect(cells[0].style.background).toContain('transparent');
+    expect(cells[1].style.background).toMatch(/(#d64545|rgb\(214, 69, 69\)) 25%/);
+    expect(cells[3].style.background).toMatch(/(#e6c229|rgb\(230, 194, 41\)) 30%, transparent/);
     expect(cells[2].style.background).toBe('transparent');
+    expect(cells[0].style.color).toBe('');
     expect(cells[0]).toHaveTextContent('+7');
     expect(cells[1]).toHaveTextContent('-30');
     expect(cells[0].getAttribute('title')).toContain('Season points to date');

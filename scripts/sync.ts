@@ -167,6 +167,10 @@ async function main() {
   const rawPlayers = await client.getPlayers();
   if (!rawPlayers) throw new Error('Player directory unavailable');
   const fullPlayers = toPlayerDirectory(rawPlayers);
+  for (const [id, position] of Object.entries(leagueConfig.positionOverrides)) {
+    if (fullPlayers[id]) fullPlayers[id] = { ...fullPlayers[id], position };
+    else log(`WARNING: position override for unknown player ${id}`);
+  }
 
   const seasons: Season[] = [];
   for (const league of leagues) {
