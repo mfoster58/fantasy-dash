@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds,
   SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2,
-  type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type StatMap,
+  type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type SleeperTransaction, type StatMap,
 } from '@fantasy-dash/core';
 import { leagueConfig } from '../league.config';
 
@@ -73,24 +73,36 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   const projections: Record<number, StatMap> = {};
   const stats: Record<number, StatMap> = {};
   const playerSeasonPoints: Record<string, number> = {};
+  const playerGames: Record<string, number> = {};
+  const teamGames: Record<string, number> = {};
+  const trades: SleeperTransaction[] = [];
   for (let week = 1; week <= maxWeek; week++) {
     const weekMatchups = (await client.getMatchups(id, week)) ?? [];
     matchups[week] = weekMatchups;
     const rostered = new Set(weekMatchups.flatMap((m) => m.players ?? []));
-    const [proj, st] = await Promise.all([
+    const [proj, st, tx] = await Promise.all([
       client.getProjections(league.season, week),
       client.getStats(league.season, week),
+      client.getTransactions(id, week),
     ]);
     if (week <= lastScoredLeg) {
       if (!proj) log(`WARNING: ${season} week ${week}: projections response was missing`);
       if (!st) log(`WARNING: ${season} week ${week}: stats response was missing`);
     }
     if (st && week <= lastScoredLeg) {
+      const teamsThisWeek = new Set<string>();
       for (const [pid, line] of Object.entries(st)) {
         const pts = scoreStats(line, league.scoring_settings);
         if (pts !== 0) playerSeasonPoints[pid] = round2((playerSeasonPoints[pid] ?? 0) + pts);
+        if ((line.gp ?? 0) >= 1) {
+          playerGames[pid] = (playerGames[pid] ?? 0) + 1;
+          const team = players[pid]?.team;
+          if (team) teamsThisWeek.add(team);
+        }
       }
+      for (const team of teamsThisWeek) teamGames[team] = (teamGames[team] ?? 0) + 1;
     }
+    for (const t of tx ?? []) if (t.type === 'trade' && t.status === 'complete') trades.push(t);
     projections[week] = pickIds(proj ?? {}, rostered);
     stats[week] = pickIds(st ?? {}, rostered);
     log(`  ${league.season} week ${week}: ${weekMatchups.length} roster entries, ${rostered.size} players`);
@@ -108,8 +120,9 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     players,
     draft,
     playerSeasonPoints,
+    playerGames, teamGames, trades,
   };
-  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players`);
+  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, ${trades.length} trades`);
   const built = buildSeason(input, leagueConfig.managerNames);
   assertSeasonComplete(built, league);
   return built;
