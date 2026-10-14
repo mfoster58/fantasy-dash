@@ -5,10 +5,10 @@ import { playerName, playerPos, playerTeam, posColor, statLine } from '../../lib
 interface Props { sides: [GameSide, GameSide]; slots: string[]; players: PlayerDirectory }
 
 function PlayerCell({ line, players, align }: { line: PlayerLine | null; players: PlayerDirectory; align: 'left' | 'right' }) {
-  if (!line) return <div className={`text-sm text-muted ${align === 'right' ? 'text-right' : ''}`}>Empty</div>;
+  if (!line) return <div className={`text-sm text-muted ${align === 'right' ? 'sm:text-right' : ''}`}>Empty</div>;
   const pos = playerPos(players, line.playerId);
   return (
-    <div className={`flex min-w-0 items-center gap-3 ${align === 'right' ? 'flex-row-reverse text-right' : ''}`}>
+    <div className={`flex min-w-0 items-center gap-3 ${align === 'right' ? 'sm:flex-row-reverse sm:text-right' : ''}`}>
       <span className="w-8 shrink-0 rounded px-1 py-0.5 text-center text-[10px] font-semibold text-white" style={{ background: posColor(pos) }}>
         {pos}
       </span>
@@ -32,10 +32,14 @@ export default function LineupTable({ sides, slots, players }: Props) {
     <div className="rounded-lg border border-line bg-surface">
       <div className="divide-y divide-line">
         {slots.map((slot, i) => (
-          <div key={`${slot}-${i}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-2">
-            <PlayerCell line={a.starters[i]?.player ?? null} players={players} align="left" />
-            <span className="w-12 text-center text-[11px] uppercase tracking-wide text-muted">{slot}</span>
-            <PlayerCell line={b.starters[i]?.player ?? null} players={players} align="right" />
+          <div key={`${slot}-${i}`} className="grid grid-cols-[3rem_1fr] sm:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-2 px-4 py-2">
+            <div className="min-w-0 col-start-2 sm:col-auto">
+              <PlayerCell line={a.starters[i]?.player ?? null} players={players} align="left" />
+            </div>
+            <span className="order-first sm:order-none row-span-2 sm:row-span-1 self-center w-auto sm:w-12 text-left sm:text-center text-[11px] uppercase tracking-wide text-muted">{slot}</span>
+            <div className="min-w-0 col-start-2 sm:col-auto border-t border-line pt-2 sm:border-0 sm:pt-0">
+              <PlayerCell line={b.starters[i]?.player ?? null} players={players} align="right" />
+            </div>
           </div>
         ))}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-surface-2 px-4 py-2 text-sm font-semibold">

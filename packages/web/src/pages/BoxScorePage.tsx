@@ -10,7 +10,7 @@ import { fmtPpg, fmtPts, fmtRecord } from '../lib/format';
 function TeamHeader({ side, manager, won, played, align }: { side: GameSide; manager?: Manager; won: boolean; played: boolean; align: 'left' | 'right' }) {
   const reverse = align === 'right';
   return (
-    <div className={`flex min-w-0 items-center gap-3 ${reverse ? 'flex-row-reverse text-right' : ''}`}>
+    <div className={`flex min-w-0 items-center gap-3 ${reverse ? 'sm:flex-row-reverse sm:text-right' : ''}`}>
       <Avatar avatar={manager?.avatar ?? null} name={manager?.displayName ?? '?'} size={40} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{manager?.teamName ?? manager?.displayName ?? side.userId}</div>
