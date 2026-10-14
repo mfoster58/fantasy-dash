@@ -57,7 +57,7 @@ These were computed with a redraft pool of drafted players only and a 5-week pac
 
 ### Games played, PPG, healthy
 
-The sync records `gamesPlayed` per player (count of scored weeks whose stat line has `gp ≥ 1`) and `teamGames` per NFL team (count of scored weeks in which any player on that team has `gp ≥ 1`, team taken from the player directory). Each pick carries `gamesPlayed`, `ppg = seasonPoints / gamesPlayed` (null when 0 games) and `healthy = gamesPlayed > 0 && gamesPlayed >= teamGames[team]` (false when the player has no team).
+The sync records `gamesPlayed` per player (count of scored weeks whose stat line has `gp ≥ 1`) and `teamGames` per NFL team (count of scored weeks in which at least 25 players on that team have `gp ≥ 1`, team taken from the player directory; the threshold keeps players who have since changed teams from crediting their current team with a game on its bye week). Each pick carries `gamesPlayed`, `ppg = seasonPoints / gamesPlayed` (null when 0 games) and `healthy = gamesPlayed > 0 && gamesPlayed >= teamGames[team]` (false when the player has no team).
 
 ### Trades
 
