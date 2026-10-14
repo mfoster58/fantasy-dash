@@ -25,6 +25,8 @@ pnpm build         # production build to packages/web/dist
 
 `.github/workflows/sync.yml` runs every Tuesday morning, on manual dispatch, and on every push to `main`. Scheduled and manual runs sync, test, commit `data/`, build, and deploy to GitHub Pages; push runs skip the sync and only test, build, and deploy. One-time setup in the GitHub repo: Settings, Pages, Source = GitHub Actions.
 
+GitHub disables scheduled workflows after 60 days without repository activity. In the off-season, run the workflow manually once in a while or push a commit to keep the Tuesday sync alive.
+
 ## Config
 
 `league.config.ts` holds the league ID, display name, and optional manager display-name overrides.
