@@ -50,6 +50,8 @@ describe('DraftBoard', () => {
     expect(cells[1].querySelector('[aria-label="Keeper"]')).not.toBeNull();
     expect(cells[1]).not.toHaveTextContent(/keeper/i);
     expect(cells[0].className).toContain('ring-warn');
+    expect(cells[0].querySelector('[aria-label="Traded"]')).not.toBeNull();
+    expect(cells[1].querySelector('[aria-label="Traded"]')).toBeNull();
     expect(cells[1].className).not.toContain('ring-warn');
     expect(cells[0]).toHaveTextContent('bob');
     expect(cells[0]).not.toHaveTextContent('SF');
