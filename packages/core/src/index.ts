@@ -7,3 +7,5 @@ export * from './sleeper/types';
 export * from './players';
 export * from './season';
 export * from './history';
+
+export * from './schema';
