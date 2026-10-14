@@ -18,7 +18,10 @@ export default function EfficiencyBlock({ sides, managers, players }: Props) {
               <span className="num text-lg">{fmtPct(s.efficiency)}</span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded bg-surface-2">
-              <div className="h-full bg-accent" style={{ width: `${Math.min(100, s.efficiency * 100)}%` }} />
+              <div
+                className="h-full rounded"
+                style={{ width: `${Math.min(100, s.efficiency * 100)}%`, background: 'color-mix(in srgb, var(--accent) 65%, transparent)' }}
+              />
             </div>
             <div className="num mt-1 text-xs text-muted">{fmtPts(s.points)} of {fmtPts(s.ceiling)} ceiling</div>
             {s.optimalSwaps.length === 0 ? (
@@ -27,8 +30,7 @@ export default function EfficiencyBlock({ sides, managers, players }: Props) {
               <ul className="mt-2 space-y-1 text-sm">
                 {s.optimalSwaps.map((sw) => (
                   <li key={sw.in} data-testid="swap">
-                    Start <span className="font-medium">{playerName(players, sw.in)}</span>
-                    {sw.out && <> over {playerName(players, sw.out)}</>}{' '}
+                    Start <span className="font-medium">{playerName(players, sw.in)}</span>{' '}
                     <span className="num text-win">{fmtSigned(sw.gain, 2)}</span>
                   </li>
                 ))}

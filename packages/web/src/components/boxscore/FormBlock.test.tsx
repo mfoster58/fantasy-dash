@@ -23,6 +23,11 @@ describe('FormBlock', () => {
     expect(screen.getByText('-10.0')).toBeInTheDocument();
     expect(screen.getByText('-5.3')).toBeInTheDocument();
   });
+  it('shows points as a share of each baseline for the first team', () => {
+    render(<FormBlock sides={[side('a', 120, 110.5, 100, 0), side('b', 90, 100, 95.25, 2)]} managers={managers} />);
+    expect(screen.getByText(`${Math.round((120 / 110.5) * 100)}%`)).toBeInTheDocument(); // 109%
+    expect(screen.getByText(`${Math.round((120 / 100) * 100)}%`)).toBeInTheDocument(); // 120%
+  });
   it('flags starters without a projection', () => {
     render(<FormBlock sides={[side('a', 120, 110.5, 100, 0), side('b', 90, 100, 95.25, 2)]} managers={managers} />);
     expect(screen.getByText('2 starters had no projection.')).toBeInTheDocument();
