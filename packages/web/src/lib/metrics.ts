@@ -1,4 +1,4 @@
-import type { Game, PlayerId, UserId } from '@fantasy-dash/core';
+import type { Game, GameSide, PlayerId, UserId } from '@fantasy-dash/core';
 
 export const METRIC_DEFS = {
   winPct: 'Win percentage. Wins plus half of ties, divided by games played.',
@@ -18,6 +18,14 @@ export interface Performer { userId: UserId; playerId: PlayerId; points: number 
 export function topPerformers(game: Game, n = 3): Performer[] {
   return game.sides
     .flatMap((s) => s.starters.flatMap((e) => (e.player ? [{ userId: s.userId, playerId: e.player.playerId, points: e.player.points }] : [])))
+    .sort((a, b) => b.points - a.points)
+    .slice(0, n);
+}
+
+/** Highest-scoring starters on one side of a game, highest first. Empty slots are skipped. */
+export function topPerformersBySide(side: GameSide, n = 3): Performer[] {
+  return side.starters
+    .flatMap((e) => (e.player ? [{ userId: side.userId, playerId: e.player.playerId, points: e.player.points }] : []))
     .sort((a, b) => b.points - a.points)
     .slice(0, n);
 }

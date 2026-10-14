@@ -9,6 +9,12 @@ export function playerPos(players: PlayerDirectory, id: PlayerId): string {
 export function playerTeam(players: PlayerDirectory, id: PlayerId): string {
   return players[id]?.team ?? '';
 }
+/** Sleeper CDN image for a player: a headshot thumbnail, or the team logo for a defense. */
+export function headshotUrl(players: PlayerDirectory, id: PlayerId): string {
+  const p = players[id];
+  if (p?.position === 'DEF') return `https://sleepercdn.com/images/team_logos/nfl/${(p.team ?? id).toLowerCase()}.png`;
+  return `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`;
+}
 export function posColor(pos: string): string {
   return `var(--pos-${pos}, var(--muted))`;
 }
