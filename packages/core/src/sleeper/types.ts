@@ -66,3 +66,22 @@ export interface SleeperPlayer {
 
 /** player_id -> stat line. Used for both /stats and /projections. */
 export type StatMap = Record<string, Record<string, number>>;
+
+export interface SleeperDraft {
+  draft_id: string;
+  type: string;
+  status: string;
+  settings: { rounds: number; teams: number; [k: string]: unknown };
+  draft_order: Record<string, number> | null;
+  slot_to_roster_id: Record<string, number> | null;
+}
+
+export interface SleeperDraftPick {
+  round: number;
+  pick_no: number;
+  draft_slot: number;
+  roster_id: number | null;
+  picked_by: string | null;
+  player_id: string;
+  is_keeper: boolean | null;
+}

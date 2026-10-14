@@ -94,5 +94,18 @@ export function miniInput(): RawSeasonInput {
     projections: { 1: { q1: { pass_yd: 250 } } },
     stats: { 1: { q1: { pass_yd: 250, pass_td: 1, pos_rank_ppr: 5 } } },
     players,
+    draft: {
+      draft: { draft_id: 'DM', type: 'snake', status: 'complete', settings: { rounds: 2, teams: 4 }, draft_order: { ua: 1, ub: 2, uc: 3, ud: 4 }, slot_to_roster_id: null },
+      picks: [
+        { round: 1, pick_no: 1, draft_slot: 1, roster_id: 1, picked_by: 'ua', player_id: 'q1', is_keeper: null },
+        { round: 1, pick_no: 2, draft_slot: 2, roster_id: 2, picked_by: 'ub', player_id: 'q2', is_keeper: null },
+        { round: 1, pick_no: 3, draft_slot: 3, roster_id: 3, picked_by: 'uc', player_id: 'q3', is_keeper: true },
+        { round: 1, pick_no: 4, draft_slot: 4, roster_id: 4, picked_by: 'ud', player_id: 'q4', is_keeper: null },
+        { round: 2, pick_no: 5, draft_slot: 4, roster_id: 4, picked_by: 'ud', player_id: 'r4', is_keeper: null },
+        { round: 2, pick_no: 6, draft_slot: 3, roster_id: 3, picked_by: 'uc', player_id: 'r3', is_keeper: null },
+        { round: 2, pick_no: 7, draft_slot: 2, roster_id: 2, picked_by: 'ub', player_id: 'r2', is_keeper: null },
+        { round: 2, pick_no: 8, draft_slot: 1, roster_id: 1, picked_by: 'ua', player_id: 'r1', is_keeper: null },
+      ],
+    },
   };
 }

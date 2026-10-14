@@ -5,28 +5,56 @@
    "leagueId": "1000241943814770688",
    "status": "complete",
    "lastScoredWeek": 17,
-   "playoffWeekStart": 15
+   "playoffWeekStart": 15,
+   "honors": {
+    "champion": "1000275745870032896",
+    "runnerUp": "863940534799044608",
+    "third": "1000568939073609728",
+    "pointsTitle": "1001986687221882880",
+    "lastPlace": "1000666077673689088"
+   }
   },
   {
    "year": 2024,
    "leagueId": "1124847899579023360",
    "status": "complete",
    "lastScoredWeek": 17,
-   "playoffWeekStart": 15
+   "playoffWeekStart": 15,
+   "honors": {
+    "champion": "1000666077673689088",
+    "runnerUp": "1001986687221882880",
+    "third": "1000275735010959360",
+    "pointsTitle": "1000275735010959360",
+    "lastPlace": "863940534799044608"
+   }
   },
   {
    "year": 2025,
    "leagueId": "1253602506592763904",
    "status": "complete",
    "lastScoredWeek": 17,
-   "playoffWeekStart": 15
+   "playoffWeekStart": 15,
+   "honors": {
+    "champion": "1001986687221882880",
+    "runnerUp": "1000568939073609728",
+    "third": "863563957724663808",
+    "pointsTitle": "863563957724663808",
+    "lastPlace": "863940534799044608"
+   }
   },
   {
    "year": 2026,
    "leagueId": "1388299227519537152",
    "status": "in_season",
    "lastScoredWeek": 5,
-   "playoffWeekStart": 15
+   "playoffWeekStart": 15,
+   "honors": {
+    "champion": null,
+    "runnerUp": null,
+    "third": null,
+    "pointsTitle": null,
+    "lastPlace": null
+   }
   }
  ],
  "managers": {

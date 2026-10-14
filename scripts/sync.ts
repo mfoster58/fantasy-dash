@@ -50,6 +50,20 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   if (users.length === 0) throw new Error(`Season ${season} (${id}): users response was empty`);
   if (rosters.length === 0) throw new Error(`Season ${season} (${id}): rosters response was empty`);
 
+  const drafts = await client.getDrafts(id);
+  if (!drafts) throw missing('drafts');
+  const completed = drafts.find((d) => d.status === 'complete') ?? null;
+  let draft: RawSeasonInput['draft'] = null;
+  if (completed) {
+    const picks = await client.getDraftPicks(completed.draft_id);
+    if (!picks) throw missing(`draft ${completed.draft_id} picks`);
+    if (picks.length === 0) throw new Error(`Season ${season} (${id}): draft ${completed.draft_id} has no picks`);
+    draft = { draft: completed, picks };
+    log(`  ${season} draft: ${picks.length} picks (${picks.filter((p) => p.is_keeper).length} keepers)`);
+  } else {
+    log(`  ${season} draft: none`);
+  }
+
   const playoffWeekStart = league.settings.playoff_week_start;
   const lastScoredLeg = league.status === 'complete' ? Infinity : league.settings.last_scored_leg ?? 0;
   const rounds = winnersBracket.reduce((m, g) => Math.max(m, g.r), 0);
@@ -85,6 +99,7 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     projections,
     stats,
     players,
+    draft,
   };
   const built = buildSeason(input, leagueConfig.managerNames);
   assertSeasonComplete(built, league);

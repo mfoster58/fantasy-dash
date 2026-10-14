@@ -16,7 +16,7 @@ export function loadSeason(year: number): Promise<Season> {
   if (!pending) {
     const key = Object.keys(seasonMods).find((k) => k.endsWith(`/${year}.json`));
     if (!key) return Promise.reject(new Response(`No data for season ${year}`, { status: 404 }));
-    pending = seasonMods[key]().then((m) => m.default);
+    pending = seasonMods[key]().then((m) => m.default).catch((err) => { cache.delete(year); throw err; });
     cache.set(year, pending);
   }
   return pending;
@@ -25,6 +25,8 @@ export function loadSeason(year: number): Promise<Season> {
 let allSeasons: Promise<Season[]> | null = null;
 /** Every season, oldest first. Used by pages that span seasons (head-to-head). */
 export function loadAllSeasons(): Promise<Season[]> {
-  if (!allSeasons) allSeasons = Promise.all(history.seasons.map((s) => loadSeason(s.year)));
+  if (!allSeasons) {
+    allSeasons = Promise.all(history.seasons.map((s) => loadSeason(s.year))).catch((err) => { allSeasons = null; throw err; });
+  }
   return allSeasons;
 }

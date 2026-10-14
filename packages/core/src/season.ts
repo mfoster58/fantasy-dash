@@ -3,11 +3,12 @@ import type {
   SlotEntry, UserId, Week, WLT,
 } from './types';
 import type {
-  SleeperBracketGame, SleeperLeague, SleeperMatchup, SleeperRoster, SleeperUser, StatMap,
+  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperRoster, SleeperUser, StatMap,
 } from './sleeper/types';
 import { round2, round4, scoreStats } from './scoring';
 import { optimalLineup, optimalSwaps, type LineupPlayer } from './lineup';
 import { computeHonors, resolveBracket, tagForGame } from './bracket';
+import { buildDraft } from './draft';
 import { computeStandings, isRegularSeason } from './standings';
 
 export interface RawSeasonInput {
@@ -23,6 +24,7 @@ export interface RawSeasonInput {
   /** week -> player_id -> actual stat line */
   stats: Record<number, StatMap>;
   players: PlayerDirectory;
+  draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
 }
 
 /** Raw stat keys kept for box-score stat lines. Everything else is dropped. */
@@ -140,6 +142,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
 
   const standings = computeStandings(weeks, Object.keys(managers), playoffWeekStart);
   const honors = computeHonors(winners, consolation, standings, status);
+  const draft = input.draft ? buildDraft(input.draft.draft, input.draft.picks, rosterToUser) : null;
 
   return {
     year,
@@ -157,6 +160,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
       : { winners: blankBracket(winners), consolation: blankBracket(consolation) },
     standings,
     honors,
+    draft,
   };
 }
 

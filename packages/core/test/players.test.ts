@@ -24,6 +24,11 @@ describe('trimPlayers', () => {
 });
 
 describe('collectPlayerIds', () => {
+  it('includes draft picks', () => {
+    const season = { weeks: [], draft: { picks: [{ playerId: 'd1' }, { playerId: 'd2' }] } } as unknown as Season;
+    expect([...collectPlayerIds([season])].sort()).toEqual(['d1', 'd2']);
+  });
+
   it('gathers starters, bench and swap ids across seasons', () => {
     const season = {
       weeks: [{
