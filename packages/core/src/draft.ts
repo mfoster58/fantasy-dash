@@ -48,7 +48,7 @@ export interface DraftValueInput {
   players: PlayerDirectory;
   /** scored weeks in which the player had gp >= 1 */
   gamesPlayed: Record<PlayerId, number>;
-  /** scored weeks in which any player on the NFL team had gp >= 1 */
+  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
   teamGames: Record<string, number>;
   lastScoredWeek: number;
   /** regular season + playoff weeks */

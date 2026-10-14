@@ -142,6 +142,8 @@ interface BracketGame {
   gameId: string | null;
 }
 
+> Superseded by `2026-10-14-draft-value-v2-design.md` (redraft position, slot value, production value). The fields below no longer exist.
+
 interface Draft {
   draftId: string; type: string; rounds: number;
   slotOrder: UserId[];           // draft slot 1..N
@@ -220,6 +222,8 @@ interface AllTimeRow {
 **Honors.** Points title = highest regular season PF. Playoff appearance = seeded into the winners bracket. Playoff wins = games won in the winners bracket, including the 3rd and 5th place games. Toilet bowls = seasons finished last.
 
 **Head-to-head** uses every meeting including playoffs. Streak = consecutive wins by the same manager at the end of the series. Biggest win = largest margin by either side. Closest = smallest non-zero margin (or a tie if one exists).
+
+> Superseded by `2026-10-14-draft-value-v2-design.md` (redraft position, slot value, production value). The fields below no longer exist.
 
 **Draft value.** `posDraftRank` = order among same-position picks in that draft (keepers included). `posFinishRank` = rank among all NFL players at that position by season points under league scoring over weeks 1 to `lastScoredWeek`. `value = posDraftRank - posFinishRank`; positive is a steal. `pointsOverBaseline` = season points minus the points of the baseline player at the position, where baseline ranks are QB10, RB24, WR24, TE12, K10, DEF10. For an in-progress season all draft figures are labeled "to date". Finish rank is ranked among players at the position with season points greater than 0; zero-point players tie just behind the last scorer.
 

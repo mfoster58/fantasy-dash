@@ -22,7 +22,7 @@ Spec: `docs/superpowers/specs/2026-10-14-draft-value-v2-design.md`. Read it once
 - Redraft rank ties: PoB desc, then season points desc, then id asc. Zero-point players tie at N + 1.
 - `healthy = gamesPlayed > 0 && gamesPlayed >= teamGames[team]`; false when the player has no team.
 - `tradedTo` comes from the latest completed trade by `created`; waiver moves are not trades.
-- Value mode colors: yellow `#e6c229` at 0, red `#d64545` at ≤ −60, green `#2f9e5f` at ≥ +60, linear, `color-mix(in oklch, …)`. Value-mode cell text `#1a1a1a`. Null value → `transparent`.
+- Value mode colors: yellow `#e6c229` at 0, red `#d64545` at ≤ −120, green `#2f9e5f` at ≥ +120, linear, `color-mix(in oklch, …)`. Value-mode cell text `#1a1a1a`. Null value → `transparent`.
 - Keeper marker: inset accent ring + lock SVG with `aria-label="Keeper"`, no "Keeper"/"K" text on the board.
 - Trade marker: swap SVG with `aria-label="Traded"` + receiving manager display name.
 - Steals and busts lists: 10 each. Top PPG (healthy): 10.

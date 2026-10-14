@@ -50,9 +50,10 @@ describe('valueColor and posLabel', () => {
   it('maps value onto a red-yellow-green scale saturating at 60', () => {
     expect(valueColor(null)).toBe('transparent');
     expect(valueColor(0)).toBe('#e6c229');
-    expect(valueColor(30)).toBe('color-mix(in oklch, #2f9e5f 50%, #e6c229)');
-    expect(valueColor(90)).toBe('color-mix(in oklch, #2f9e5f 100%, #e6c229)');
-    expect(valueColor(-15)).toBe('color-mix(in oklch, #d64545 25%, #e6c229)');
+    expect(valueColor(30)).toBe('color-mix(in oklch, #2f9e5f 25%, #e6c229)');
+    expect(valueColor(90)).toBe('color-mix(in oklch, #2f9e5f 75%, #e6c229)');
+    expect(valueColor(-15)).toBe('color-mix(in oklch, #d64545 13%, #e6c229)');
+    expect(valueColor(200)).toBe('color-mix(in oklch, #2f9e5f 100%, #e6c229)');
   });
   it('formats positional draft rank', () => {
     expect(posLabel('RB', 7)).toBe('RB7');

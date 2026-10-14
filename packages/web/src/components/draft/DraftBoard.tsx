@@ -27,8 +27,8 @@ function cellTitle(p: DraftPick, players: PlayerDirectory, managers: Record<User
   return lines.join('\n');
 }
 
-const LockIcon = () => (
-  <svg aria-label="Keeper" role="img" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-1 top-1 text-accent">
+const LockIcon = ({ inherit }: { inherit: boolean }) => (
+  <svg aria-label="Keeper" role="img" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`absolute right-1 top-1 ${inherit ? '' : 'text-accent'}`}>
     <rect x="4" y="11" width="16" height="10" rx="2" />
     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
   </svg>
@@ -92,16 +92,17 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                   style={{ background, color: colored ? '#1a1a1a' : undefined }}
                   className={`relative flex h-14 flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${ring}`}
                 >
-                  {p.isKeeper && <LockIcon />}
+                  {p.isKeeper && <LockIcon inherit={colored} />}
                   <div className="truncate pr-3 font-medium">{playerName(players, p.playerId)}</div>
                   <div className={`flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] ${colored ? '' : 'text-muted'}`}>
                     <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
-                    <span className={colored ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
-                    {p.tradedTo && (
+                    {p.tradedTo ? (
                       <span className="flex min-w-0 items-center gap-1 overflow-hidden">
                         <SwapIcon />
                         <span className="truncate">{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
                       </span>
+                    ) : (
+                      <span className={colored ? 'opacity-75' : ''}>{playerTeam(players, p.playerId)}</span>
                     )}
                     {mode === 'value' && p.value !== null && <span className="num ml-auto shrink-0 font-semibold">{fmtSigned(p.value, 0)}</span>}
                   </div>

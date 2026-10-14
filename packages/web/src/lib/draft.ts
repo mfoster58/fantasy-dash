@@ -42,7 +42,7 @@ export function topHealthyPpg(draft: Draft, n = 10): DraftPick[] {
     .slice(0, n);
 }
 
-export const VALUE_SATURATION = 60;
+export const VALUE_SATURATION = 120;
 const RED = '#d64545';
 const YELLOW = '#e6c229';
 const GREEN = '#2f9e5f';

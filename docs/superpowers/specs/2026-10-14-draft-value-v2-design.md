@@ -53,7 +53,7 @@ If `lastScoredWeek` is 0 (draft done, no games played) every value field, includ
 | Saquon Barkley | 11 → 129 | −74 | −32 | −106 |
 | De'Von Achane | 8 → 126 | −79 | −35 | −114 |
 
-These were computed with a redraft pool of drafted players only and a 5-week pace of 3.4, so the implementation's exact numbers will differ slightly (the pool is the whole directory). Signs and ordering must match.
+These were computed with a redraft pool of drafted players only and WITHOUT the pace factor, so real in-season production values are about 3.4× larger (Gibbs ≈ +207, Golden ≈ +90, Achane ≈ −203 through week 5 of 2026). The implementation uses the whole directory as the redraft pool. Signs and ordering must match; magnitudes differ.
 
 ### Games played, PPG, healthy
 
@@ -90,7 +90,7 @@ interface DraftPick {
 
 ### Board
 
-- **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −60, full green at ≥ +60, linear in between, mixed in OKLCH. Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
+- **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −120, full green at ≥ +120, linear in between, mixed in OKLCH. Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
 - **Cell content**: in value mode the trailing number is the total `value` (signed, 0 decimals).
 - **Tooltip** lines: name · pos · team; `Pick N (round R)`; `Season points[ to date]: X`; `Redraft position[ today]: P (drafted WRk)`; `Slot value: ±S · Production value: ±Q`; `Points over baseline: ±B`; `PPG: x.x over G games`; `Keeper` if keeper; `Traded to NAME in week W` if traded.
 - **Keeper marker**: no text. The cell gets an inset accent ring (`ring-1 ring-inset ring-accent`, same treatment the manager highlight uses, which takes precedence when both apply) and a 10px lock icon (inline SVG, `aria-label="Keeper"`) in the top-right corner.

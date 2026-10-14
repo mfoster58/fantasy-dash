@@ -51,14 +51,16 @@ describe('DraftBoard', () => {
     expect(cells[1]).not.toHaveTextContent(/keeper/i);
     expect(cells[0].querySelector('[aria-label="Traded"]')).not.toBeNull();
     expect(cells[0]).toHaveTextContent('bob');
+    expect(cells[0]).not.toHaveTextContent('SF');
+    expect(cells[1]).toHaveTextContent('DAL');
     expect(cells[2].querySelector('[aria-label]')).toBeNull();
   });
 
   it('colors value mode on a red-yellow-green scale and shows the total value', () => {
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
     const cells = screen.getAllByTestId('draft-cell');
-    expect(cells[0].style.background).toContain('rgb(47, 158, 95) 11%');
-    expect(cells[1].style.background).toContain('rgb(214, 69, 69)');
+    expect(cells[0].style.background).toContain('rgb(47, 158, 95) 5%');
+    expect(cells[1].style.background).toContain('rgb(214, 69, 69) 25%');
     expect(cells[3].style.background).toBe('rgb(230, 194, 41)');
     expect(cells[2].style.background).toBe('transparent');
     expect(cells[0]).toHaveTextContent('+7');

@@ -28,9 +28,9 @@ export interface RawSeasonInput {
   playerSeasonPoints: Record<PlayerId, number>;
   /** scored weeks in which the player had gp >= 1 */
   playerGames: Record<PlayerId, number>;
-  /** scored weeks in which any player on the NFL team had gp >= 1 */
+  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
   teamGames: Record<string, number>;
-  /** every transaction for weeks 1..maxWeek; only completed trades are used */
+  /** completed trades for weeks 1..maxWeek (the sync pre-filters; tradesFromTransactions filters again defensively) */
   trades: SleeperTransaction[];
   draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
 }
