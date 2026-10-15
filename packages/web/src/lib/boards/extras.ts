@@ -76,12 +76,15 @@ const claims = (ctx: BoardContext): WaiverClaim[] => waiverClaims(ctx.transactio
 const claimRow = (c: WaiverClaim, value: number, label: string, detail: string): BoardRow =>
   ({ key: `${c.year}-${c.week}-${c.playerId}-${c.userId}`, playerId: c.playerId, value, valueLabel: label, meta: `${c.year} · Wk ${c.week}`, detail, userId: c.userId, to: null });
 
+const bidLabel = (c: WaiverClaim) => (c.bid === null ? 'FA' : `$${c.bid}`);
+
+/** Every pickup, waiver or free agent, by the started points it returned. */
 export const waiverHeroes = (ctx: BoardContext): BoardRow[] =>
-  rank(claims(ctx).filter((c) => c.bid >= 1).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
-    .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `$${c.bid} · ${plural(c.starts, 'start')}`));
+  rank(claims(ctx).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
+    .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `${bidLabel(c)} · ${plural(c.starts, 'start')}`));
 
 export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
-  rank(claims(ctx).filter((c) => c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
+  rank(claims(ctx).filter((c): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
     .map(({ c, value }) => claimRow(c, value, `$${value.toFixed(1)}/pt`, `$${c.bid} · ${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));
 
 const SKILL = new Set(['QB', 'RB', 'WR', 'TE']);

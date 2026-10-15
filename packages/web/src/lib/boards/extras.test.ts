@@ -91,6 +91,15 @@ describe('waiver heroes and villains', () => {
     expect(waiverHeroes(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['q1', 53, '2025 · Wk 1', '$9 · 2 starts', 'b'], ['w1', 0, '2024 · Wk 2', '$30 · 0 starts', 'b']]);
     expect(waiverVillains(txCtx).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['w1', 30, '$30.0/pt', '$30 · 0.00 pts · 0 starts']]);
   });
+  it('heroes count free-agent adds as FA and $0 claims as $0; villains ignore both', () => {
+    // b adds r1 off the street in 2025 wk3 and starts him for 22; a claims w1 for $0 in 2025 wk3 and starts him for 4
+    const fa: BoardContext = { ...ctx, transactions: [{ year: 2025, transactions: [
+      t({ id: 'g', type: 'free_agent', week: 3, created: 1, adds: [{ playerId: 'r1', userId: 'b' }] }),
+      t({ id: 'h', type: 'waiver', week: 3, created: 2, adds: [{ playerId: 'w1', userId: 'a' }], bid: 0 }),
+    ] }] };
+    expect(waiverHeroes(fa).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['r1', 22, '2025 · Wk 3', 'FA · 1 start', 'b'], ['w1', 4, '2025 · Wk 3', '$0 · 1 start', 'a']]);
+    expect(waiverVillains(fa)).toEqual([]);
+  });
 });
 
 const pick = (over: Partial<Draft['picks'][number]>): Draft['picks'][number] => ({
