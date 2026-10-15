@@ -1,19 +1,27 @@
-import { useState } from 'react';
 import { Link } from 'react-router';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
-import type { BoardDef, BoardRow } from '../../lib/playerBoards';
+import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
 import { playerName, playerPos } from '../../lib/players';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 
-interface Props { def: BoardDef; rows: BoardRow[]; players: PlayerDirectory; managers: History['managers'] }
+interface Props {
+  def: BoardDef;
+  rows: BoardRow[];
+  players: PlayerDirectory;
+  managers: History['managers'];
+  /** section-wide: every board in the section expands together */
+  expanded: boolean;
+  onToggle: () => void;
+  direction?: Direction;
+  onDirection?: (d: Direction) => void;
+}
 
 const PREVIEW = 5;
 
-export default function Board({ def, rows, players, managers }: Props) {
-  const [all, setAll] = useState(false);
-  const shown = all ? rows : rows.slice(0, PREVIEW);
+export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection }: Props) {
+  const shown = expanded ? rows : rows.slice(0, PREVIEW);
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
@@ -21,7 +29,24 @@ export default function Board({ def, rows, players, managers }: Props) {
           <h3 id={`board-${def.id}`} className="section-label text-ink">{def.title}</h3>
           <p className="mt-0.5 text-xs text-muted">{def.definition}</p>
         </div>
-        <span className="section-label shrink-0">{def.valueHeader}</span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="section-label">{def.valueHeader}</span>
+          {def.sortable && onDirection && (
+            <span role="group" aria-label="Direction" className="flex gap-0.5">
+              {(['desc', 'asc'] as Direction[]).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={direction === d}
+                  onClick={() => onDirection(d)}
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${direction === d ? 'bg-ink text-bg' : 'bg-surface-2 text-muted hover:text-ink'}`}
+                >
+                  {d === 'desc' ? 'Over' : 'Under'}
+                </button>
+              ))}
+            </span>
+          )}
+        </div>
       </header>
       {rows.length === 0 ? (
         <p className="px-3 py-4 text-sm text-muted">No players at this position.</p>
@@ -29,7 +54,6 @@ export default function Board({ def, rows, players, managers }: Props) {
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {
             const m = r.userId ? managers[r.userId] : undefined;
-            const pos = playerPos(players, r.playerId);
             const metaNode = r.to
               ? <Link to={r.to} className="num hover:text-accent">{r.meta}</Link>
               : <span className="num">{r.meta}</span>;
@@ -39,8 +63,8 @@ export default function Board({ def, rows, players, managers }: Props) {
                 <Headshot players={players} id={r.playerId} size={28} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
+                    <PosPill pos={playerPos(players, r.playerId)} />
                     <span className="truncate text-sm font-medium">{playerName(players, r.playerId)}</span>
-                    <PosPill pos={pos} />
                   </span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                     {metaNode}
@@ -63,8 +87,8 @@ export default function Board({ def, rows, players, managers }: Props) {
         </ol>
       )}
       {rows.length > PREVIEW && (
-        <button type="button" onClick={() => setAll((v) => !v)} className="w-full border-t border-line px-3 py-1.5 text-xs text-muted hover:text-ink">
-          {all ? 'Show less' : `Show all ${rows.length}`}
+        <button type="button" onClick={onToggle} className="w-full border-t border-line px-3 py-1.5 text-xs text-muted hover:text-ink">
+          {expanded ? 'Show less' : `Show all ${rows.length}`}
         </button>
       )}
     </section>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow } from '../../lib/playerBoards';
@@ -13,46 +13,66 @@ const def: BoardDef = { id: 'x', section: 'allTime', title: 'Best week by a star
 const row = (i: number, extra: Partial<BoardRow> = {}): BoardRow => ({
   key: `k${i}`, playerId: i === 0 ? 'q1' : `p${i}`, value: 100 - i, valueLabel: `${100 - i}.00`, meta: '2025 · Wk 1', detail: null, userId: null, to: null, ...extra,
 });
-const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
+
+const wrapB = (props: Partial<React.ComponentProps<typeof Board>> = {}) => {
+  const onToggle = vi.fn();
+  const utils = render(<MemoryRouter><Board def={def} rows={[]} players={players} managers={managers} expanded={false} onToggle={onToggle} {...props} /></MemoryRouter>);
+  return { ...utils, onToggle };
+};
 
 describe('Board', () => {
-  it('shows five rows, then all of them on Show all', () => {
-    const rows = Array.from({ length: 8 }, (_, i) => row(i));
-    wrap(<Board def={def} rows={rows} players={players} managers={managers} />);
-    expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
-    expect(screen.getByText('Most points in a week.')).toBeInTheDocument(); // definition visible, not only on hover
+  const eight = Array.from({ length: 8 }, (_, i) => row(i));
+
+  it('shows five rows when collapsed and asks the section to expand', () => {
+    const { onToggle } = wrapB({ rows: eight });
     expect(screen.getAllByRole('listitem')).toHaveLength(5);
     fireEvent.click(screen.getByRole('button', { name: /show all/i }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(8);
-    fireEvent.click(screen.getByRole('button', { name: /show less/i }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole('listitem')).toHaveLength(5); // controlled: nothing changes until the parent flips expanded
   });
 
-  it('renders name, position, unknown players, manager link and game link', () => {
-    const rows = [row(0, { userId: 'a', to: '/scores/2025/1/3', detail: '3 starts' }), row(1)];
-    wrap(<Board def={def} rows={rows} players={players} managers={managers} />);
+  it('shows every row when expanded and offers Show less', () => {
+    const { onToggle } = wrapB({ rows: eight, expanded: true });
+    expect(screen.getAllByRole('listitem')).toHaveLength(8);
+    fireEvent.click(screen.getByRole('button', { name: /show less/i }));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the position pill before the name and shows the definition', () => {
+    wrapB({ rows: [row(0, { userId: 'a', to: '/scores/2025/1/3', detail: '3 starts' }), row(1)] });
+    expect(screen.getByText('Most points in a week.')).toBeInTheDocument();
     const first = screen.getAllByRole('listitem')[0];
-    expect(within(first).getByText('Quincy One')).toBeInTheDocument();
-    expect(within(first).getByText('QB')).toBeInTheDocument();
+    expect(first.textContent).toMatch(/^1QBQuincy One/);
     expect(within(first).getByText('100.00')).toBeInTheDocument();
     expect(within(first).getByText('3 starts')).toBeInTheDocument();
     expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
     expect(within(first).getByRole('link', { name: /2025 · Wk 1/ })).toHaveAttribute('href', '/scores/2025/1/3');
     const second = screen.getAllByRole('listitem')[1];
-    expect(within(second).getByText('p1')).toBeInTheDocument(); // unknown player falls back to id
-    expect(within(second).getByText('?')).toBeInTheDocument();
+    expect(second.textContent).toMatch(/^2\?p1/); // unknown player: '?' pill then id
     expect(within(second).queryByRole('link')).toBeNull();
   });
 
-  it('shows an empty state and no toggle with no rows', () => {
-    wrap(<Board def={def} rows={[]} players={players} managers={managers} />);
+  it('shows an empty state and no buttons with no rows', () => {
+    wrapB();
     expect(screen.getByText('No players at this position.')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('hides the toggle when five or fewer rows', () => {
-    wrap(<Board def={def} rows={[row(0)]} players={players} managers={managers} />);
+  it('hides the toggle with five or fewer rows, even when expanded', () => {
+    wrapB({ rows: [row(0)], expanded: true });
     expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  });
+
+  it('offers an Over/Under toggle only for sortable boards', () => {
+    const onDirection = vi.fn();
+    wrapB({ def: { ...def, sortable: true }, rows: [row(0)], direction: 'desc', onDirection });
+    expect(screen.getByRole('button', { name: 'Over' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Under' }));
+    expect(onDirection).toHaveBeenCalledWith('asc');
+    cleanup();
+    wrapB({ rows: [row(0)], direction: 'desc', onDirection });
+    expect(screen.queryByRole('button', { name: 'Over' })).toBeNull();
   });
 });
 
