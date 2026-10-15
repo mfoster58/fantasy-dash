@@ -9,7 +9,7 @@ const players: PlayerDirectory = {
 };
 const pick = (year: number, pickNo: number, playerId: string, value: number): HistoryDraftPick => ({
   year, teams: 10, round: Math.ceil(pickNo / 10), pickNo, slot: 1, userId: 'a', playerId, isKeeper: false, posDraftRank: 1, seasonPoints: 200, gamesPlayed: 17, ppg: 11.8, healthy: true,
-  pointsOverBaseline: 80, redraftPos: 5, slotValue: value / 2, productionValue: value / 2, value, tradedTo: null,
+  pointsOverBaseline: 80, redraftPos: 5, contribution: 80, earnedPick: 1, value, tradedTo: null,
 });
 const history = { seasons: [], managers: { a: { displayName: 'alice', avatar: null, seasons: [2024] } }, h2h: {}, allTime: [], topDraftValues: [pick(2024, 93, 'p1', 150), pick(2025, 12, 'p2', 90)] } as unknown as History;
 

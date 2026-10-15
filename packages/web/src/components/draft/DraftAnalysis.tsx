@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import type { Draft, DraftPick, History, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
@@ -16,7 +18,7 @@ interface Props {
 }
 
 /** Card header in the style "small label / bold title". */
-export function CardHeader({ label, title, aside }: { label: string; title: string; aside?: string }) {
+export function CardHeader({ label, title, aside }: { label: string; title: string; aside?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-3 border-b border-line px-4 pb-2 pt-3">
       <div>
@@ -52,7 +54,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="card">
-          <CardHeader label={`${inSeason ? 'To date' : 'Final'}`} title="Draft grades" aside="Each draft against what a pick in that slot usually returns" />
+          <CardHeader label={`${inSeason ? 'To date' : 'Final'}`} title="Draft grades" aside={<Link to="/draft/grading" className="text-accent hover:underline">How grading works</Link>} />
           <ol>
             {summaries.map((s, i) => {
               const m = managers[s.userId];
@@ -76,7 +78,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
                         <span className={`block h-full rounded ${s.totalValue >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${Math.round((Math.abs(s.totalValue) / maxAbs) * 100)}%` }} />
                       </span>
                       <span className="mt-1 block truncate text-xs text-muted">
-                        {s.beat} of {s.valued} picks beat their slot · {fmtSigned(s.hits, 0)} from the hits · {fmtSigned(s.misses, 0)} from the misses · slot {fmtSigned(s.totalSlot, 0)} · production {fmtSigned(s.totalProduction, 0)}
+                        {s.beat} of {s.valued} picks beat their slot · {fmtSigned(s.hits, 0)} from the hits · {fmtSigned(s.misses, 0)} from the misses
                       </span>
                     </span>
                     <span className="text-right text-lg font-bold">{letterGrade(rank, summaries.length)}</span>
@@ -85,9 +87,6 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
               );
             })}
           </ol>
-          <p className="border-t border-line px-4 py-2 text-xs text-muted">
-            Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season{inSeason ? ', to date, with points scaled so teams that have had their bye are not behind' : ''}; a player below bench level counts as bench level, not worse. Quarterback points count at half weight, matching how a one-QB league actually prices them. Kickers and defenses are excluded. Letter grades follow rank.
-          </p>
         </div>
         <TeamDraft draft={draft} managers={managers} players={players} userId={selected} onSelect={onSelect} inSeason={inSeason} />
       </div>

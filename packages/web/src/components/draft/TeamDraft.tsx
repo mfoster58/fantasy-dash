@@ -45,7 +45,7 @@ export default function TeamDraft({ draft, managers, players, userId, onSelect, 
       {summary && (
         <div className="grid grid-cols-3 divide-x divide-line border-b border-line">
           {[
-            ['Draft value', summary.totalValue, `slot ${fmtSigned(summary.totalSlot, 0)} · production ${fmtSigned(summary.totalProduction, 0)}`],
+            ['Draft value', summary.totalValue, `capital earned minus spent over ${summary.valued} pick${summary.valued === 1 ? '' : 's'}`],
             [`${summary.beat} hit${summary.beat === 1 ? '' : 's'}`, summary.hits, 'from picks that beat their slot'],
             [`${summary.valued - summary.beat} miss${summary.valued - summary.beat === 1 ? '' : 'es'}`, summary.misses, 'from picks that fell short'],
           ].map(([label, n, sub]) => (

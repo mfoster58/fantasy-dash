@@ -147,11 +147,11 @@ export interface DraftPick {
   pointsOverBaseline: number | null;
   /** where the player would go if the league redrafted on production today */
   redraftPos: number | null;
-  /** draft capital at redraftPos minus capital at pickNo */
-  slotValue: number | null;
-  /** (max(PoB, 0) − expected contribution at pickNo) · pace */
-  productionValue: number | null;
-  /** slotValue + productionValue */
+  /** weighted points over baseline floored at bench level; what the expected curve is fitted to */
+  contribution: number | null;
+  /** the pick where this much contribution is typically found this season (expected curve inverted); may be below 1; null when below the curve's floor ("off the board") */
+  earnedPick: number | null;
+  /** draft capital at earnedPick (0 when off the board) minus capital at pickNo */
   value: number | null;
   tradedTo: { userId: UserId; week: number } | null;
 }
@@ -166,7 +166,11 @@ export interface Draft {
   picks: DraftPick[];
   /** fitted a·exp(−(pick−1)/k) + c of contribution vs pick; null before week 1 */
   expectedCurve: ExpectedCurve | null;
+  /** per valued position: points of the baseline (last starter) and bench (last roster-able) players; empty before week 1 */
+  baselines: Record<string, PositionBaseline>;
 }
+
+export interface PositionBaseline { baselineRank: number; baselinePoints: number; benchRank: number; benchPoints: number }
 
 export type SeasonStatus = 'complete' | 'in_season';
 

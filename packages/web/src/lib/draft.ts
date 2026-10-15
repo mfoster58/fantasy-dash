@@ -1,7 +1,7 @@
 import type { Draft, DraftPick, UserId } from '@fantasy-dash/core';
 
 export interface ManagerDraftSummary {
-  userId: UserId; picks: number; totalValue: number; totalSlot: number; totalProduction: number; totalPoB: number; best: DraftPick | null; worst: DraftPick | null;
+  userId: UserId; picks: number; totalValue: number; totalPoB: number; best: DraftPick | null; worst: DraftPick | null;
   /** picks with a value */
   valued: number;
   /** picks with value > 0 */
@@ -17,14 +17,12 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 export function managerDraftSummaries(draft: Draft): ManagerDraftSummary[] {
   const map = new Map<UserId, ManagerDraftSummary>();
   for (const p of draft.picks) {
-    const s = map.get(p.userId) ?? { userId: p.userId, picks: 0, totalValue: 0, totalSlot: 0, totalProduction: 0, totalPoB: 0, best: null, worst: null, valued: 0, beat: 0, hits: 0, misses: 0 };
+    const s = map.get(p.userId) ?? { userId: p.userId, picks: 0, totalValue: 0, totalPoB: 0, best: null, worst: null, valued: 0, beat: 0, hits: 0, misses: 0 };
     s.picks += 1;
     if (p.value !== null) {
       s.totalValue += p.value;
       s.valued += 1;
       if (p.value > 0) { s.beat += 1; s.hits += p.value; } else s.misses += p.value;
-      s.totalSlot += p.slotValue ?? 0;
-      s.totalProduction += p.productionValue ?? 0;
       if (!s.best || p.value > (s.best.value ?? -Infinity)) s.best = p;
       if (!s.worst || p.value < (s.worst.value ?? Infinity)) s.worst = p;
     }
@@ -32,7 +30,7 @@ export function managerDraftSummaries(draft: Draft): ManagerDraftSummary[] {
     map.set(p.userId, s);
   }
   return [...map.values()]
-    .map((s) => ({ ...s, totalValue: r1(s.totalValue), totalSlot: r1(s.totalSlot), totalProduction: r1(s.totalProduction), totalPoB: r1(s.totalPoB), hits: r1(s.hits), misses: r1(s.misses) }))
+    .map((s) => ({ ...s, totalValue: r1(s.totalValue), totalPoB: r1(s.totalPoB), hits: r1(s.hits), misses: r1(s.misses) }))
     .sort((a, b) => b.totalValue - a.totalValue || b.totalPoB - a.totalPoB);
 }
 

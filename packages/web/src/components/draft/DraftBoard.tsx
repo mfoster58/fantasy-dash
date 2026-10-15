@@ -19,7 +19,7 @@ function cellTitle(p: DraftPick, players: PlayerDirectory, managers: Record<User
     `Season points${suffix}: ${fmtPts(p.seasonPoints)}`,
   ];
   if (p.redraftPos !== null) lines.push(`Redraft position${inSeason ? ' today' : ''}: ${p.redraftPos} (drafted ${posLabel(pos, p.posDraftRank)})`);
-  if (p.slotValue !== null && p.productionValue !== null) lines.push(`Slot value: ${fmtSigned(p.slotValue, 1)} · Production value: ${fmtSigned(p.productionValue, 1)}`);
+  if (p.value !== null) lines.push(p.earnedPick === null ? 'Earned pick: off the board' : `Earned pick: ${p.earnedPick.toFixed(1)} (drafted ${p.pickNo})`);
   if (p.pointsOverBaseline !== null) lines.push(`Points over baseline: ${fmtSigned(p.pointsOverBaseline, 2)}`);
   if (p.ppg !== null) lines.push(`PPG: ${fmtPpg(p.ppg)} over ${p.gamesPlayed} game${p.gamesPlayed === 1 ? '' : 's'}`);
   if (p.isKeeper) lines.push('Keeper');

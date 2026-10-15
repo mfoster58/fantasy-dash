@@ -9,6 +9,7 @@ import H2HPage from './pages/H2HPage';
 import HistoryPage from './pages/HistoryPage';
 import SeasonReviewPage from './pages/SeasonReviewPage';
 import DraftPage from './pages/DraftPage';
+import GradingPage from './pages/GradingPage';
 import PlayersPage from './pages/PlayersPage';
 import { currentSeason, loadAllSeasons, loadSeason } from './data/load';
 
@@ -57,6 +58,7 @@ export const router = createBrowserRouter(
         { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
         { path: 'players', loader: () => loadAllSeasons(), element: <PlayersPage /> },
         { path: 'draft', loader: () => redirect(`/draft/${currentSeason.year}`) },
+        { path: 'draft/grading', loader: () => loadAllSeasons().then((all) => all.filter((s) => s.status === 'complete' && s.draft).at(-1) ?? null), element: <GradingPage /> },
         { path: 'draft/:season', loader: seasonLoader, element: <DraftPage /> },
       ],
     },

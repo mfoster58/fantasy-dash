@@ -1,4 +1,4 @@
-import type { Draft, DraftPick, ExpectedCurve, PlayerDirectory, PlayerId, UserId } from './types';
+import type { Draft, DraftPick, ExpectedCurve, PlayerDirectory, PlayerId, PositionBaseline, UserId } from './types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from './sleeper/types';
 import { round2, round4 } from './scoring';
 
@@ -25,6 +25,18 @@ export function capital(pick: number): number {
 
 export function expectedAt(curve: ExpectedCurve, pick: number): number {
   return curve.a * Math.exp(-(pick - 1) / curve.k) + curve.c;
+}
+
+/**
+ * The expected curve run backwards: the pick at which `contribution` is typically found. Below 1 for a player who
+ * out-produces what pick 1 usually returns. Null when the contribution is at or below the curve's floor `c`
+ * (off the board) or the fit is degenerate (a <= 0).
+ */
+export function earnedPickFor(curve: ExpectedCurve, contribution: number): number | null {
+  if (curve.a <= 0) return null;
+  const ratio = (contribution - curve.c) / curve.a;
+  if (ratio <= 0) return null;
+  return 1 - curve.k * Math.log(ratio);
 }
 
 /**
@@ -102,12 +114,13 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
  * BASELINE_RANKS[pos] (0 if the pool is shorter). The bench gap is baseline minus the pool entry at
  * BENCH_RANKS[pos] (0 if shorter); weighted contribution is floored at minus the weighted gap. Redraft position ranks all valued-position
  * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
- * scorers tie at N + 1. Slot value is draft capital gained; production value is weighted contribution
- * (max(weighted PoB, 0)) over the expected curve fitted to this draft, in points to date. K, DEF and
- * unknown positions get null for every value field.
- * Before the first scored week every value field is null.
+ * scorers tie at N + 1. Contribution (weighted PoB floored at minus the weighted bench gap) is fitted against pick
+ * number to give the season's expected curve; each pick's earned pick is that curve run backwards at its
+ * contribution, and value is capital(earnedPick) minus capital(pickNo), with an off-the-board earned pick worth 0.
+ * If the curve cannot be fitted the earned pick falls back to the redraft position. K, DEF and unknown positions
+ * get null for every value field. Before the first scored week every value field is null.
  */
-export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): { picks: DraftPick[]; expectedCurve: ExpectedCurve | null } {
+export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): { picks: DraftPick[]; expectedCurve: ExpectedCurve | null; baselines: Record<string, PositionBaseline> } {
   const posOf = (id: PlayerId) => input.players[id]?.position ?? null;
   const valued = (pos: string | null): pos is string => pos !== null && BASELINE_RANKS[pos] !== undefined;
   const rawPts = (id: PlayerId) => input.seasonPoints[id] ?? 0;
@@ -131,13 +144,17 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   }
   const baselinePoints = new Map<string, number>();
   const benchGap = new Map<string, number>();
+  const baselines: Record<string, PositionBaseline> = {};
   for (const [pos, all] of byPos) {
     const scorers = all.filter((id) => pts(id) > 0).sort((a, b) => pts(b) - pts(a) || (a < b ? -1 : a > b ? 1 : 0));
     const baseId = scorers[BASELINE_RANKS[pos] - 1];
-    const benchId = scorers[(BENCH_RANKS[pos] ?? BASELINE_RANKS[pos]) - 1];
+    const benchRank = BENCH_RANKS[pos] ?? BASELINE_RANKS[pos];
+    const benchId = scorers[benchRank - 1];
     const base = baseId ? pts(baseId) : 0;
+    const bench = benchId ? pts(benchId) : 0;
     baselinePoints.set(pos, base);
-    benchGap.set(pos, benchId ? Math.max(base - pts(benchId), 0) : 0);
+    benchGap.set(pos, Math.max(base - bench, 0));
+    if (scored) baselines[pos] = { baselineRank: BASELINE_RANKS[pos], baselinePoints: round2(base), benchRank, benchPoints: round2(bench) };
   }
   const pobOf = (id: PlayerId): number => round2(pts(id) - (baselinePoints.get(posOf(id) ?? '') ?? 0));
   const weightOf = (pos: string | null): number => (pos ? POSITION_WEIGHTS[pos] ?? 1 : 1);
@@ -175,39 +192,36 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
       tradedTo: traded ? { userId: traded.userId, week: traded.week } : null,
       pointsOverBaseline: null as number | null,
       redraftPos: null as number | null,
-      slotValue: null as number | null,
-      productionValue: null as number | null,
+      contribution: null as number | null,
+      earnedPick: null as number | null,
       value: null as number | null,
     };
     if (!valued(pos)) return { ...common, posDraftRank: null };
     const posDraftRank = (seen.get(pos) ?? 0) + 1;
     seen.set(pos, posDraftRank);
     if (!scored) return { ...common, posDraftRank };
-    const redraftPos = redraft.get(p.playerId) ?? lastPos;
+    const pob = pobOf(p.playerId);
+    const w = weightOf(pos);
     return {
       ...common,
       posDraftRank,
-      pointsOverBaseline: pobOf(p.playerId),
-      redraftPos,
-      slotValue: round1(capital(redraftPos) - capital(p.pickNo)),
+      pointsOverBaseline: pob,
+      redraftPos: redraft.get(p.playerId) ?? lastPos,
+      contribution: round2(Math.max(pob * w, -(benchGap.get(pos) ?? 0) * w)),
     };
   });
 
-  if (!scored) return { picks: base, expectedCurve: null };
+  if (!scored) return { picks: base, expectedCurve: null, baselines };
 
-  const contribution = (p: DraftPick) => {
-    const pos = posOf(p.playerId);
-    const w = weightOf(pos);
-    return Math.max((p.pointsOverBaseline ?? 0) * w, -(benchGap.get(pos ?? '') ?? 0) * w);
-  };
-  const curve = fitExpectedCurve(base.filter((p) => p.pointsOverBaseline !== null).map((p) => ({ pick: p.pickNo, contribution: contribution(p) })));
+  const curve = fitExpectedCurve(base.filter((p) => p.contribution !== null).map((p) => ({ pick: p.pickNo, contribution: p.contribution! })));
+  const usable = curve !== null && curve.a > 0;
   const finished = base.map((p) => {
-    if (p.pointsOverBaseline === null) return p;
-    const expected = curve ? expectedAt(curve, p.pickNo) : 0;
-    const productionValue = round1(contribution(p) - expected);
-    return { ...p, productionValue, value: round1((p.slotValue ?? 0) + productionValue) };
+    if (p.contribution === null) return p;
+    const earned = usable ? earnedPickFor(curve, p.contribution) : p.redraftPos;
+    const earnedCapital = earned === null ? 0 : capital(earned);
+    return { ...p, earnedPick: earned === null ? null : round1(earned), value: round1(earnedCapital - capital(p.pickNo)) };
   });
-  return { picks: finished, expectedCurve: curve };
+  return { picks: finished, expectedCurve: curve, baselines };
 }
 
 /** Normalize a Sleeper draft. Pickers come from `picked_by`, else the roster owner. */
@@ -220,9 +234,9 @@ export function buildDraft(draft: SleeperDraft, rawPicks: SleeperDraftPick[], ro
     .map((p) => ({
       round: p.round, pickNo: p.pick_no, slot: p.draft_slot, userId: pickerOf(p), playerId: p.player_id, isKeeper: p.is_keeper === true,
       posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false,
-      pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null,
+      pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: null, tradedTo: null,
     }));
-  const { picks, expectedCurve } = computeDraftValues(basePicks, value);
+  const { picks, expectedCurve, baselines } = computeDraftValues(basePicks, value);
 
   let slotOrder: UserId[];
   if (draft.draft_order && Object.keys(draft.draft_order).length > 0) {
@@ -231,5 +245,5 @@ export function buildDraft(draft: SleeperDraft, rawPicks: SleeperDraftPick[], ro
     slotOrder = picks.filter((p) => p.round === 1).sort((a, b) => a.slot - b.slot).map((p) => p.userId);
   }
 
-  return { draftId: draft.draft_id, type: draft.type, rounds: draft.settings.rounds, slotOrder, picks, expectedCurve };
+  return { draftId: draft.draft_id, type: draft.type, rounds: draft.settings.rounds, slotOrder, picks, expectedCurve, baselines };
 }
