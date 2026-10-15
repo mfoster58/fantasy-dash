@@ -26,12 +26,10 @@ export function longestStartRun(lines: PlayerLine[]): Map<PlayerId, StartRun> {
     let best: StartRun | null = null;
     let run: { from: WeekRef; to: WeekRef; length: number } | null = null;
     for (const w of weeks) {
-      if (set.has(key(w))) {
-        run = run ? { ...run, to: w, length: run.length + 1 } : { from: w, to: w, length: 1 };
-        if (!best || run.length > best.length) best = { ...run, active: false };
-      } else {
-        run = null;
-      }
+      if (!set.has(key(w))) { run = null; continue; }
+      if (run === null) run = { from: w, to: w, length: 1 };
+      else { run.to = w; run.length += 1; }
+      if (!best || run.length > best.length) best = { from: run.from, to: run.to, length: run.length, active: false };
     }
     if (best) out.set(playerId, { ...best, active: last !== undefined && key(best.to) === key(last) });
   }
