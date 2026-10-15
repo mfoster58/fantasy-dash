@@ -2,7 +2,7 @@ import type { UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtSigned } from '../format';
 import type { PlayerLine } from '../playerLines';
 import type { Direction, BoardContext, BoardRow } from './shared';
-import { fmt1, groupBy, intLabel, metaOf, minGames, parts, plural, rank, round1, round2, sum } from './shared';
+import { fmt1, groupBy, intLabel, metaOf, minGames, parts, perGame, plural, rank, round1, round2, sum, toneOf } from './shared';
 
 export interface LeaderItem { value: number; detail: string | null }
 
@@ -34,8 +34,11 @@ export const leadPoints = (ctx: BoardContext, _direction?: Direction, mode?: str
   }
   return leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.points)), fmtPts);
 };
-export const leadYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.yards),
-  (ls) => parts([[sum(ls, (l) => l.passYards), 'pass'], [sum(ls, (l) => l.rushYards), 'rush'], [sum(ls, (l) => l.recYards), 'rec']])), intLabel);
+export const leadYards = (ctx: BoardContext, _d?: Direction, mode?: string): BoardRow[] => {
+  const split = (ls: PlayerLine[]) => parts([[sum(ls, (l) => l.passYards), 'pass'], [sum(ls, (l) => l.rushYards), 'rush'], [sum(ls, (l) => l.recYards), 'rec']]);
+  if (mode === 'pg') return leaderBoard(ctx, (ls) => { const g = perGame(ctx, ls, (l) => l.yards); return g && g.value > 0 ? { value: g.value, detail: split(ls) } : null; }, fmt1);
+  return leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.yards), split), intLabel);
+};
 export const leadTouchdowns = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.touchdowns)), intLabel);
 export const leadRushYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushYards), (ls) => parts([[sum(ls, (l) => l.carries), 'car']])), intLabel);
 export const leadRecYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recYards), (ls) => parts([[sum(ls, (l) => l.receptions), 'rec'], [sum(ls, (l) => l.targets), 'tgt']])), intLabel);
@@ -44,10 +47,11 @@ export const leadRushTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, po
 export const leadRecTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recTd)), intLabel);
 export const leadPassTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passTd)), intLabel);
 
-export const leadTouches = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => {
+export const leadTouches = (ctx: BoardContext, _d?: Direction, mode?: string, mode2?: string): BoardRow[] => {
   const pick = (l: PlayerLine) => (mode === 'rec' ? l.receptions : mode === 'car' ? l.carries : l.receptions + l.carries);
-  return leaderBoard(ctx, positive((ls) => sum(ls, pick),
-    (ls) => parts([[sum(ls, (l) => l.receptions), 'rec'], [sum(ls, (l) => l.carries), 'car'], [sum(ls, (l) => l.targets), 'tgt']])), intLabel);
+  const detail = (ls: PlayerLine[]) => parts([[sum(ls, (l) => l.receptions), 'rec'], [sum(ls, (l) => l.carries), 'car'], [sum(ls, (l) => l.targets), 'tgt']]);
+  if (mode2 === 'pg') return leaderBoard(ctx, (ls) => { const g = perGame(ctx, ls, pick); return g && g.value > 0 ? { value: g.value, detail: detail(ls) } : null; }, fmt1);
+  return leaderBoard(ctx, positive((ls) => sum(ls, pick), detail), intLabel);
 };
 
 /** Played lines with a prediction, paired with it. */
@@ -68,12 +72,13 @@ export const leadFpoe = (ctx: BoardContext, direction: Direction = 'desc'): Boar
   const expected = m.reduce((s, x) => s + x.xfp, 0);
   const actual = m.reduce((s, x) => s + x.line.points, 0);
   return { value: round1(actual - expected), detail: `xFP ${fmt1(expected)}` };
-}, (v) => fmtSigned(v, 1), direction);
+}, (v) => fmtSigned(v, 1), direction).map((r) => ({ ...r, tone: toneOf(r.value) }));
 
-export const leadXfp = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) => {
+export const leadXfp = (ctx: BoardContext, _d?: Direction, mode?: string): BoardRow[] => leaderBoard(ctx, (ls) => {
   const m = modelled(ctx, ls);
   if (m.length < minGames(ctx)) return null;
   const expected = m.reduce((s, x) => s + x.xfp, 0);
   const actual = m.reduce((s, x) => s + x.line.points, 0);
+  if (mode === 'pg') return { value: round1(expected / m.length), detail: `actual ${fmt1(actual / m.length)} per game` };
   return { value: round1(expected), detail: `actual ${fmt1(actual)}` };
 }, fmt1);

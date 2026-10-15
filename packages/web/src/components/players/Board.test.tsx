@@ -84,15 +84,35 @@ describe('Board', () => {
     expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
   });
 
-  it('uses the mode empty message when the mode has one', () => {
-    const modes = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }];
-    wrapB({ def: { ...def, modes }, mode: 'ppg', onMode: vi.fn() });
-    expect(screen.getByText('No players at this position.')).toBeInTheDocument(); // Task 5 makes this mode-aware
+  it('shows the empty copy it is given, else the position copy', () => {
+    wrapB({ empty: 'No players with 3 games yet.' });
+    expect(screen.getByText('No players with 3 games yet.')).toBeInTheDocument();
     cleanup();
-    wrapB({ def: { ...def, modes }, mode: 'total', onMode: vi.fn() });
+    wrapB();
     expect(screen.getByText('No players at this position.')).toBeInTheDocument();
   });
 
+  it('renders a second toggle, joins its header suffix, and colours toned values', () => {
+    const modes = [{ id: 'both', label: 'Both', valueHeader: 'Touches' }, { id: 'rec', label: 'Rec', valueHeader: 'Rec' }];
+    const modes2 = [{ id: 'total', label: 'Total', valueHeader: '' }, { id: 'pg', label: 'Per game', valueHeader: '/G' }];
+    const onMode2 = vi.fn();
+    wrapB({ def: { ...def, modes, modes2 }, rows: [row(0, { tone: 'win' }), row(1, { tone: 'loss' }), row(2)], mode: 'rec', onMode: vi.fn(), mode2: 'pg', onMode2 });
+    expect(screen.getByText('Rec/G')).toBeInTheDocument();
+    const group = screen.getByRole('group', { name: 'Per game' });
+    expect(within(group).getByRole('button', { name: 'Per game' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(group).getByRole('button', { name: 'Total' }));
+    expect(onMode2).toHaveBeenCalledWith('total');
+    const [first, second, third] = screen.getAllByRole('listitem');
+    expect(within(first).getByText('100.00')).toHaveClass('text-win');
+    expect(within(second).getByText('99.00')).toHaveClass('text-loss');
+    expect(within(third).getByText('98.00')).not.toHaveClass('text-win');
+  });
+
+  it('uses the direction labels from the definition', () => {
+    wrapB({ def: { ...def, sortable: true, directionLabels: ['+', '\u2212'] }, rows: [row(0)], direction: 'asc', onDirection: vi.fn() });
+    expect(screen.getByRole('button', { name: '\u2212' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Over' })).toBeNull();
+  });
   it('offers an Over/Under toggle only for sortable boards', () => {
     const onDirection = vi.fn();
     wrapB({ def: { ...def, sortable: true }, rows: [row(0)], direction: 'desc', onDirection });

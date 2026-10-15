@@ -19,6 +19,10 @@ interface Props {
   /** current mode id for a board with `def.modes`; defaults to the first mode */
   mode?: string;
   onMode?: (m: string) => void;
+  mode2?: string;
+  onMode2?: (m: string) => void;
+  /** empty-state copy from the definition; falls back to the position copy */
+  empty?: string;
 }
 
 const PREVIEW = 5;
@@ -41,11 +45,13 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
   );
 }
 
-const DIRECTIONS: { id: Direction; label: string }[] = [{ id: 'desc', label: 'Over' }, { id: 'asc', label: 'Under' }];
-
-export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode }: Props) {
+export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   const activeMode = def.modes?.find((m) => m.id === mode) ?? def.modes?.[0];
+  const activeMode2 = def.modes2?.find((m) => m.id === mode2) ?? def.modes2?.[0];
+  const header = (activeMode?.valueHeader ?? def.valueHeader) + (activeMode2?.valueHeader ?? '');
+  const [over, under] = def.directionLabels ?? ['Over', 'Under'];
+  const directions: { id: Direction; label: string }[] = [{ id: 'desc', label: over }, { id: 'asc', label: under }];
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
@@ -54,13 +60,14 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
           <p className="mt-0.5 text-xs text-muted">{def.definition}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="section-label">{activeMode?.valueHeader ?? def.valueHeader}</span>
-          {def.sortable && onDirection && <Toggle label="Direction" options={DIRECTIONS} value={direction} onChange={onDirection} />}
+          <span className="section-label">{header}</span>
+          {def.sortable && onDirection && <Toggle label="Direction" options={directions} value={direction} onChange={onDirection} />}
           {def.modes && activeMode && onMode && <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />}
+          {def.modes2 && activeMode2 && onMode2 && <Toggle label="Per game" options={def.modes2.map((m) => ({ id: m.id, label: m.label }))} value={activeMode2.id} onChange={onMode2} />}
         </div>
       </header>
       {rows.length === 0 ? (
-        <p className="px-3 py-4 text-sm text-muted">No players at this position.</p>
+        <p className="px-3 py-4 text-sm text-muted">{empty ?? 'No players at this position.'}</p>
       ) : (
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {
@@ -91,7 +98,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     )}
                   </span>
                 </span>
-                <span className="num shrink-0 text-base font-semibold">{r.valueLabel}</span>
+                <span className={`num shrink-0 text-base font-semibold ${r.tone === 'win' ? 'text-win' : r.tone === 'loss' ? 'text-loss' : ''}`}>{r.valueLabel}</span>
               </li>
             );
           })}

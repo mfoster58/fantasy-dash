@@ -1,18 +1,24 @@
-import { fmtPts } from '../format';
+import { fmtPpg, fmtPts } from '../format';
 import type { Direction, BoardContext, BoardRow } from './shared';
-import { careerBoard, groupBy, metaOf, minGames, momentBoard, plural, pointsBoard, rank, started, sum } from './shared';
+import { MIN_SEASON_GAMES, careerBoard, groupBy, metaOf, minGames, momentBoard, plural, pointsBoard, rank, round2, started, sum } from './shared';
 
 export const bestWeek = (ctx: BoardContext): BoardRow[] => momentBoard(started(ctx), (l) => l.points, fmtPts);
 
-export const bestSeason = (ctx: BoardContext): BoardRow[] => {
+/** One row per player, manager and season. PPG averages over played starts with the season minimum, since each row is one season. */
+export const bestSeason = (ctx: BoardContext, _d?: Direction, mode?: string): BoardRow[] => {
   const groups = groupBy(started(ctx), (l) => `${l.playerId}|${l.userId}|${l.year}`);
-  const items = [...groups.entries()].map(([k, g]) => {
+  const ppg = mode === 'ppg';
+  const items: { playerId: string; userId: string; year: number; value: number; starts: number; games: number; latestYear: number; latestWeek: number }[] = [];
+  for (const [k, g] of groups) {
     const [playerId, userId, year] = k.split('|');
-    return { playerId, userId, year: Number(year), value: sum(g.lines, (l) => l.points), starts: g.lines.length, latestYear: g.latestYear, latestWeek: g.latestWeek };
-  });
+    const played = g.lines.filter((l) => l.played);
+    if (ppg && played.length < MIN_SEASON_GAMES) continue;
+    const value = ppg ? round2(sum(played, (l) => l.points) / played.length) : sum(g.lines, (l) => l.points);
+    items.push({ playerId, userId, year: Number(year), value, starts: g.lines.length, games: played.length, latestYear: g.latestYear, latestWeek: g.latestWeek });
+  }
   return rank(items).map((i) => ({
-    key: `${i.playerId}-${i.userId}-${i.year}`, playerId: i.playerId, value: i.value, valueLabel: fmtPts(i.value),
-    meta: String(i.year), detail: plural(i.starts, 'start'), userId: i.userId, to: `/scores/${i.year}`,
+    key: `${i.playerId}-${i.userId}-${i.year}`, playerId: i.playerId, value: i.value, valueLabel: ppg ? fmtPpg(i.value) : fmtPts(i.value),
+    meta: String(i.year), detail: ppg ? plural(i.games, 'game') : plural(i.starts, 'start'), userId: i.userId, to: `/scores/${i.year}`,
   }));
 };
 

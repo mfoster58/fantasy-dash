@@ -16,6 +16,8 @@ export interface BoardRow {
   detail: string | null;
   userId: UserId | null;
   to: string | null;
+  /** colours the value: win = green, loss = red */
+  tone?: 'win' | 'loss';
 }
 
 export interface DraftValue { year: number; playerId: PlayerId; value: number; round: number; pickNo: number }
@@ -53,11 +55,17 @@ export interface BoardDef {
   title: string;
   definition: string;
   valueHeader: string;
-  /** offers an Over/Under direction toggle */
+  /** offers a direction toggle */
   sortable?: boolean;
+  /** direction toggle labels; Over / Under by default */
+  directionLabels?: [string, string];
   /** offers a mode toggle; `compute` receives the chosen mode id */
   modes?: readonly BoardMode[];
-  compute: (ctx: BoardContext, direction?: Direction, mode?: string) => BoardRow[];
+  /** second, independent toggle; its valueHeaders are suffixes appended to the first header */
+  modes2?: readonly BoardMode[];
+  /** empty-state copy when the mode's own threshold, not the position filter, is the usual reason for no rows */
+  empty?: (ctx: BoardContext, mode?: string, mode2?: string) => string | undefined;
+  compute: (ctx: BoardContext, direction?: Direction, mode?: string, mode2?: string) => BoardRow[];
 }
 
 export const MAX_ROWS = 25;
@@ -72,6 +80,16 @@ export const pointsModes = (): readonly BoardMode[] => [
   { id: 'total', label: 'Total', valueHeader: 'Pts' },
   { id: 'ppg', label: 'PPG', valueHeader: 'PPG' },
 ];
+export const perGameModes = (header: string): readonly BoardMode[] => [
+  { id: 'total', label: 'Total', valueHeader: header },
+  { id: 'pg', label: 'Per game', valueHeader: `${header}/G` },
+];
+export const PER_GAME_SUFFIX_MODES: readonly BoardMode[] = [{ id: 'total', label: 'Total', valueHeader: '' }, { id: 'pg', label: 'Per game', valueHeader: '/G' }];
+export const minGamesCopy = (n: number) => `No players with ${n} games yet.`;
+/** empty copy for a board whose `ppg` or `pg` reading needs minGames(ctx) */
+export const perGameEmpty = (ctx: BoardContext, mode?: string, mode2?: string): string | undefined =>
+  (mode === 'ppg' || mode === 'pg' || mode2 === 'pg' ? minGamesCopy(minGames(ctx)) : undefined);
+export const toneOf = (v: number): 'win' | 'loss' | undefined => (v > 0 ? 'win' : v < 0 ? 'loss' : undefined);
 export const TOUCH_MODES: readonly BoardMode[] = [{ id: 'both', label: 'Both', valueHeader: 'Touches' }, { id: 'rec', label: 'Rec', valueHeader: 'Rec' }, { id: 'car', label: 'Car', valueHeader: 'Car' }];
 
 export function championsOf(seasons: Season[]): Record<number, UserId | null> {
@@ -154,6 +172,12 @@ export function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => nu
 
 export const sum = (ls: PlayerLine[], f: (l: PlayerLine) => number) => round2(ls.reduce((s, l) => s + f(l), 0));
 export const started = (ctx: BoardContext) => ctx.lines.filter((l) => l.started);
+/** per played game, or null below the minimum */
+export const perGame = (ctx: BoardContext, ls: PlayerLine[], f: (l: PlayerLine) => number): { value: number; games: number } | null => {
+  const played = ls.filter((l) => l.played);
+  if (played.length < minGames(ctx)) return null;
+  return { value: round1(sum(played, f) / played.length), games: played.length };
+};
 
 /** Total points or, in ppg mode, points per played start over players with at least `minGames` played starts (unplayed starts count as neither). */
 export function pointsBoard(lines: PlayerLine[], mode: string | undefined, minGames: number, meta?: (ls: PlayerLine[]) => string): BoardRow[] {

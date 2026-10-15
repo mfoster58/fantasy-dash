@@ -46,6 +46,7 @@ export default function Section({ id, title, note, boards, ctx, players, manager
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [directions, setDirections] = useState<Record<string, Direction>>({});
   const [modes, setModes] = useState<Record<string, string>>({});
+  const [modes2, setModes2] = useState<Record<string, string>>({});
   const perRow = useGridColumns() ? columns : 1;
   // row indexes mean different boards once the column count changes, so start collapsed again
   useEffect(() => { setExpandedRows({}); }, [perRow]);
@@ -67,11 +68,12 @@ export default function Section({ id, title, note, boards, ctx, players, manager
             const row = Math.floor(i / perRow);
             const direction = directions[b.id] ?? 'desc';
             const mode = modes[b.id] ?? b.modes?.[0]?.id;
+            const mode2 = modes2[b.id] ?? b.modes2?.[0]?.id;
             return (
               <Board
                 key={b.id}
                 def={b}
-                rows={b.compute(ctx, direction, mode)}
+                rows={b.compute(ctx, direction, mode, mode2)}
                 players={players}
                 managers={managers}
                 expanded={expandedRows[row] ?? false}
@@ -80,6 +82,9 @@ export default function Section({ id, title, note, boards, ctx, players, manager
                 onDirection={b.sortable ? (d) => setDirections((m) => ({ ...m, [b.id]: d })) : undefined}
                 mode={mode}
                 onMode={b.modes ? (m) => setModes((s) => ({ ...s, [b.id]: m })) : undefined}
+                mode2={mode2}
+                onMode2={b.modes2 ? (m) => setModes2((s) => ({ ...s, [b.id]: m })) : undefined}
+                empty={b.empty?.(ctx, mode, mode2)}
               />
             );
           })}

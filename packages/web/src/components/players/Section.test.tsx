@@ -76,6 +76,20 @@ describe('Section', () => {
     }
   });
 
+  it('keeps a second mode per board and asks the definition for empty copy', () => {
+    const two: BoardDef = { ...moded, id: 'two', title: 'Two toggles', modes2: [{ id: 'total', label: 'Total', valueHeader: '' }, { id: 'pg', label: 'Per game', valueHeader: '/G' }],
+      empty: (_ctx, _mode, mode2) => (mode2 === 'pg' ? 'Need more games.' : undefined),
+      compute: (_ctx, _direction, mode, mode2) => (mode2 === 'pg' ? [] : mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
+    wrap(<Section id="extras" title="Extras" note="" boards={[two]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    const board = screen.getByRole('region', { name: 'Two toggles' });
+    const perGame = within(board).getByRole('group', { name: 'Per game' });
+    fireEvent.click(within(perGame).getByRole('button', { name: 'Per game' }));
+    expect(within(board).getByText('Need more games.')).toBeInTheDocument();
+    expect(within(board).getByText('Pts/G')).toBeInTheDocument(); // first toggle stays Total: 'Pts' + '/G'
+    fireEvent.click(within(perGame).getByRole('button', { name: 'Total' }));
+    expect(within(board).getAllByRole('listitem')).toHaveLength(5);
+  });
+
   it('passes the chosen mode to a moded board and keeps it per board', () => {
     wrap(<Section id="extras" title="Extras" note="" boards={[moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const board = screen.getByRole('region', { name: 'Moded board' });
