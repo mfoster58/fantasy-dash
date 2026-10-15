@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSeason } from '../src/season';
-import { buildHistory, buildAllTime, summarizeSeries, topDraftValues } from '../src/history';
+import { buildHistory, buildAllTime, summarizeSeries, topDraftValues, worstDraftValues } from '../src/history';
 import type { H2HSeries } from '../src/types';
 import { miniInput } from './fixtures/mini';
 
@@ -31,6 +31,11 @@ describe('buildHistory', () => {
     inSeason.league.settings.last_scored_leg = 2;
     expect(topDraftValues([buildSeason(inSeason)])).toEqual([]);
     expect(topDraftValues([s2024], 2)).toHaveLength(2);
+    const worst = history.worstDraftValues;
+    expect(worst).toHaveLength(top.length);
+    for (let i = 1; i < worst.length; i++) expect(worst[i - 1].value!).toBeLessThanOrEqual(worst[i].value!);
+    expect(worst[0].value).toBe(top[top.length - 1].value);
+    expect(worstDraftValues([s2024], 1)).toHaveLength(1);
   });
 
   it('collects managers with the latest display name and their seasons', () => {

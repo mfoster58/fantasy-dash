@@ -1,14 +1,11 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { Draft, DraftPick, History, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, DraftPick, History, HistoryDraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
-import Headshot from '../Headshot';
-import PosPill from '../PosPill';
 import { fmtSigned } from '../../lib/format';
-import { playerName, playerPos } from '../../lib/players';
-import { leagueExtremes, letterGrade, managerDraftSummaries, pickLabel } from '../../lib/draft';
+import { POSITION_FILTERS, byPosition, leagueExtremes, letterGrade, managerDraftSummaries, type PositionFilter } from '../../lib/draft';
 import TeamDraft from './TeamDraft';
-import TopDraftValues from './TopDraftValues';
+import PickList, { type PickRow } from './PickList';
 
 export const signClass = (n: number | null, fallback = 'text-muted') => (n === null || n === 0 ? fallback : n > 0 ? 'text-win' : 'text-loss');
 
@@ -30,26 +27,16 @@ export function CardHeader({ label, title, aside }: { label: string; title: stri
   );
 }
 
-export function PickLine({ p, players, managers, teams }: { p: DraftPick; players: PlayerDirectory; managers: Record<UserId, Manager>; teams: number }) {
-  return (
-    <li className="flex items-center gap-3 py-2 text-sm">
-      <span className="num w-9 text-xs text-muted">{pickLabel(p, teams)}</span>
-      <Headshot players={players} id={p.playerId} size={26} />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5"><span className="truncate font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /></span>
-        <span className="block truncate text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}{p.redraftPos !== null ? ` · redraft ${p.redraftPos}` : ''}</span>
-      </span>
-      <span className={`num text-base font-semibold ${signClass(p.value)}`}>{p.value === null ? '—' : fmtSigned(p.value, 0)}</span>
-    </li>
-  );
-}
-
 export default function DraftAnalysis({ draft, managers, players, inSeason, selected, onSelect, history }: Props) {
   const summaries = managerDraftSummaries(draft);
   const teams = draft.slotOrder.length;
-  const { steals, busts } = leagueExtremes(draft, 10);
+  const [pos, setPos] = useState<PositionFilter>(null);
+  const { steals, busts } = leagueExtremes(draft, Infinity);
   const maxAbs = Math.max(1, ...summaries.map((s) => Math.abs(s.totalValue)));
   const note = inSeason ? ' (to date)' : '';
+  const seasonRows = (picks: DraftPick[]): PickRow[] => byPosition(picks, players, pos).map((p) => ({ pick: p, teams, manager: managers[p.userId]?.displayName ?? p.userId }));
+  const allTimeRows = (picks: HistoryDraftPick[]): PickRow[] => byPosition(picks, players, pos).map((p) => ({ pick: p, teams: p.teams, manager: history.managers[p.userId]?.displayName ?? p.userId, year: p.year }));
+  const empty = pos === null ? 'No picks yet.' : `No ${pos} picks here.`;
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -90,10 +77,19 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
         </div>
         <TeamDraft draft={draft} managers={managers} players={players} userId={selected} onSelect={onSelect} inSeason={inSeason} />
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="card"><CardHeader label={`Best picks${note}`} title="Top 10 steals" /><ul className="divide-y divide-line px-4">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
-        <div className="card"><CardHeader label={`Worst picks${note}`} title="Top 10 busts" /><ul className="divide-y divide-line px-4">{busts.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
-        <TopDraftValues history={history} players={players} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="section-label">Best and worst picks</div>
+        <div role="group" aria-label="Position" className="flex overflow-hidden rounded border border-line text-xs">
+          {[null, ...POSITION_FILTERS].map((f) => (
+            <button key={f ?? 'all'} type="button" aria-pressed={pos === f} onClick={() => setPos(f)} className={`px-3 py-1.5 ${pos === f ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink'}`}>{f ?? 'All'}</button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        <PickList label={`Best picks${note}`} title="Top steals" rows={seasonRows(steals)} players={players} testId="steals" empty={empty} />
+        <PickList label={`Worst picks${note}`} title="Top busts" rows={seasonRows(busts)} players={players} testId="busts" empty={empty} />
+        <PickList label="All time" title="Best draft values" aside="Completed seasons" rows={allTimeRows(history.topDraftValues)} players={players} testId="all-time-best" empty={history.topDraftValues.length ? empty : 'No completed seasons yet.'} />
+        <PickList label="All time" title="Worst draft values" aside="Completed seasons" rows={allTimeRows(history.worstDraftValues)} players={players} testId="all-time-worst" empty={history.worstDraftValues.length ? empty : 'No completed seasons yet.'} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { Draft, DraftPick, UserId } from '@fantasy-dash/core';
+import type { Draft, DraftPick, PlayerDirectory, UserId } from '@fantasy-dash/core';
 
 export interface ManagerDraftSummary {
   userId: UserId; picks: number; totalValue: number; totalPoB: number; best: DraftPick | null; worst: DraftPick | null;
@@ -49,7 +49,7 @@ export function pickLabel(p: DraftPick, teams: number): string {
   return `${p.round}.${String(inRound).padStart(2, '0')}`;
 }
 
-export function leagueExtremes(draft: Draft, n = 10): { steals: DraftPick[]; busts: DraftPick[] } {
+export function leagueExtremes(draft: Draft, n = 25): { steals: DraftPick[]; busts: DraftPick[] } {
   const valued = draft.picks.filter((p) => p.value !== null);
   const tie = (a: DraftPick, b: DraftPick) => (b.pointsOverBaseline ?? 0) - (a.pointsOverBaseline ?? 0);
   const byValueDesc = [...valued].sort((a, b) => (b.value! - a.value!) || tie(a, b));
@@ -79,6 +79,15 @@ export function valueColor(value: number | null): string {
   const pct = Math.round(Math.min(Math.abs(value), VALUE_SATURATION) / VALUE_SATURATION * 100);
   const hue = pct === 0 ? YELLOW : `color-mix(in oklch, ${value > 0 ? GREEN : RED} ${pct}%, ${YELLOW})`;
   return `color-mix(in srgb, ${hue} ${VALUE_TINT}%, transparent)`;
+}
+
+/** Positions the best/worst lists can be filtered to. */
+export const POSITION_FILTERS = ['QB', 'RB', 'WR', 'TE'] as const;
+export type PositionFilter = (typeof POSITION_FILTERS)[number] | null;
+
+/** Keep the rows whose player is at `pos` (today's position in the directory); null keeps everything. */
+export function byPosition<T extends { playerId: string }>(rows: T[], players: PlayerDirectory, pos: PositionFilter): T[] {
+  return pos === null ? rows : rows.filter((r) => players[r.playerId]?.position === pos);
 }
 
 export function posLabel(pos: string, rank: number | null): string {
