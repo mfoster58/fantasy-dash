@@ -204,7 +204,7 @@ describe('computeDraftValues', () => {
 });
 
 describe('tradesFromTransactions', () => {
-  const tx = (over: Partial<SleeperTransaction>): SleeperTransaction => ({ transaction_id: 't', type: 'trade', status: 'complete', leg: 3, created: 100, adds: null, drops: null, roster_ids: [], ...over });
+  const tx = (over: Partial<SleeperTransaction>): SleeperTransaction => ({ transaction_id: 't', type: 'trade', status: 'complete', leg: 3, created: 100, adds: null, drops: null, roster_ids: [], settings: null, ...over });
   it('keeps completed trades only and maps rosters to users', () => {
     const out = tradesFromTransactions([
       tx({ adds: { p1: 2, p2: 1 }, drops: { p1: 1, p2: 2 }, roster_ids: [1, 2] }),

@@ -8,6 +8,7 @@ export * from './sleeper/client';
 export * from './players';
 export * from './season';
 export * from './draft';
+export * from './transactions';
 export * from './history';
 
 export * from './schema';

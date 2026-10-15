@@ -9,6 +9,7 @@ import { round2, round4, scoreStats } from './scoring';
 import { optimalLineup, optimalSwaps, type LineupPlayer } from './lineup';
 import { computeHonors, resolveBracket, tagForGame } from './bracket';
 import { buildDraft, tradesFromTransactions } from './draft';
+import { transactionsOf } from './transactions';
 import { computeStandings, isRegularSeason } from './standings';
 
 export interface RawSeasonInput {
@@ -30,8 +31,8 @@ export interface RawSeasonInput {
   playerGames: Record<PlayerId, number>;
   /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
   teamGames: Record<string, number>;
-  /** completed trades for weeks 1..maxWeek (the sync pre-filters; tradesFromTransactions filters again defensively) */
-  trades: SleeperTransaction[];
+  /** every transaction for weeks 1..maxWeek, any status; builders filter */
+  transactions: SleeperTransaction[];
   draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
 }
 
@@ -158,7 +159,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
         teamGames: input.teamGames,
         lastScoredWeek,
         byeAdjust: status === 'in_season',
-        trades: tradesFromTransactions(input.trades, rosterToUser),
+        trades: tradesFromTransactions(input.transactions, rosterToUser),
       })
     : null;
 
@@ -179,6 +180,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     standings,
     honors,
     draft,
+    transactions: transactionsOf(input.transactions, rosterToUser),
   };
 }
 

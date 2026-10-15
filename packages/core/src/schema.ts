@@ -119,6 +119,17 @@ const Draft = z.object({
   baselines: z.record(z.string(), z.object({ baselineRank: z.number(), baselinePoints: z.number(), benchRank: z.number(), benchPoints: z.number() })),
 });
 
+const TransactionMove = z.object({ playerId: z.string(), userId: z.string() });
+const Transaction = z.object({
+  id: z.string(),
+  type: z.enum(['trade', 'waiver', 'free_agent', 'commissioner']),
+  week: z.number(),
+  created: z.number(),
+  adds: z.array(TransactionMove),
+  drops: z.array(TransactionMove),
+  bid: z.number().nullable(),
+});
+
 export const SeasonSchema = z.object({
   year: z.number(),
   leagueId: z.string(),
@@ -134,6 +145,7 @@ export const SeasonSchema = z.object({
   standings: z.array(StandingRow),
   honors: Honors,
   draft: Draft.nullable(),
+  transactions: z.array(Transaction),
 });
 
 export const PlayerDirectorySchema = z.record(z.object({

@@ -77,7 +77,7 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   const playerSeasonPoints: Record<string, number> = {};
   const playerGames: Record<string, number> = {};
   const teamGames: Record<string, number> = {};
-  const trades: SleeperTransaction[] = [];
+  const transactions: SleeperTransaction[] = [];
   for (let week = 1; week <= maxWeek; week++) {
     const weekMatchups = (await client.getMatchups(id, week)) ?? [];
     matchups[week] = weekMatchups;
@@ -104,7 +104,7 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
       }
       for (const [team, n] of playersPerTeam) if (n >= TEAM_GAME_MIN_PLAYERS) teamGames[team] = (teamGames[team] ?? 0) + 1;
     }
-    for (const t of tx ?? []) if (t.type === 'trade' && t.status === 'complete') trades.push(t);
+    for (const t of tx ?? []) transactions.push(t);
     projections[week] = pickIds(proj ?? {}, rostered);
     stats[week] = pickIds(st ?? {}, rostered);
     log(`  ${league.season} week ${week}: ${weekMatchups.length} roster entries, ${rostered.size} players`);
@@ -122,9 +122,9 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     players,
     draft,
     playerSeasonPoints,
-    playerGames, teamGames, trades,
+    playerGames, teamGames, transactions,
   };
-  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, ${trades.length} trades`);
+  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, ${transactions.length} transactions`);
   const built = buildSeason(input, leagueConfig.managerNames);
   assertSeasonComplete(built, league);
   return built;

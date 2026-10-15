@@ -191,6 +191,7 @@ export interface Season {
   standings: StandingRow[];
   honors: Honors;
   draft: Draft | null;
+  transactions: Transaction[];
 }
 
 export interface H2HGame {
@@ -262,4 +263,21 @@ export interface History {
 /** Stable key for a pair of managers: lexicographically smaller id first. */
 export function h2hKey(a: UserId, b: UserId): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+export type TransactionType = 'trade' | 'waiver' | 'free_agent' | 'commissioner';
+export interface TransactionMove { playerId: PlayerId; userId: UserId }
+/** One completed league transaction, rosters resolved to managers. */
+export interface Transaction {
+  id: string;
+  /** any Sleeper type outside trade / waiver / free_agent is kept as 'commissioner' */
+  type: TransactionType;
+  /** Sleeper `leg`: the week the move applied to */
+  week: number;
+  /** epoch ms */
+  created: number;
+  adds: TransactionMove[];
+  drops: TransactionMove[];
+  /** FAAB dollars for a waiver claim (0 when the claim carried no bid); null for every other type */
+  bid: number | null;
 }

@@ -95,7 +95,7 @@ export function miniInput(): RawSeasonInput {
     stats: { 1: { q1: { pass_yd: 250, pass_td: 1, pos_rank_ppr: 5 } } },
     players,
     playerSeasonPoints: { q1: 80, q2: 70, q3: 90, q4: 50, r1: 10, r2: 10, r3: 10, r4: 10, w1: 30, w2: 30, w3: 30, w4: 30, b1: 30, b2: 0, b3: 0, b4: 0 },
-    playerGames: {}, teamGames: {}, trades: [],
+    playerGames: {}, teamGames: {}, transactions: [],
     draft: {
       draft: { draft_id: 'DM', type: 'snake', status: 'complete', settings: { rounds: 2, teams: 4 }, draft_order: { ua: 1, ub: 2, uc: 3, ud: 4 }, slot_to_roster_id: null },
       picks: [

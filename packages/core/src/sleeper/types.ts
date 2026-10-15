@@ -99,4 +99,6 @@ export interface SleeperTransaction {
   adds: Record<string, number> | null;
   drops: Record<string, number> | null;
   roster_ids: number[];
+  /** waiver claims carry the FAAB bid here */
+  settings: { waiver_bid?: number; seq?: number } | null;
 }
