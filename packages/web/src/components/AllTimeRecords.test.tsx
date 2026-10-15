@@ -91,8 +91,13 @@ describe('AllTimeRecords', () => {
     expect(lowRow).toHaveTextContent(/Quinn Two\s*25\.00.*Rob Two\s*8\.00/);
     expect(lowRow).not.toHaveTextContent('Quincy One');
 
+    // Players are stacked under the score line, winner's list first, each list in points order.
     const blowRow = within(screen.getByTestId('records-blowouts')).getByRole('link');
-    expect(blowRow).toHaveTextContent(/Quincy One.*Wally One.*180\.40vsbob.*Quinn Two.*Rob Two.*80\.00/);
+    expect(blowRow).toHaveTextContent(/alice180\.40vsbob80\.00.*Quincy One\s*30\.00.*Ricky One.*Wally One.*Quinn Two\s*25\.00.*Rob Two\s*8\.00/);
+    const lists = within(blowRow).getAllByRole('list');
+    expect(lists).toHaveLength(2);
+    expect(within(lists[0]).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Quincy One30.00', 'Ricky One12.00', 'Wally One9.00']);
+    expect(within(lists[1]).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Quinn Two25.00', 'Rob Two8.00']);
 
     // 2024 is not loaded: the row still renders, just without players.
     const closeRow = within(screen.getByTestId('records-closest')).getByRole('link');

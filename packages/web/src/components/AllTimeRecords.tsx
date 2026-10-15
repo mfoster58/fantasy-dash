@@ -9,6 +9,7 @@ import type { AllTimeRecords as Records, MatchupEntry, ScoreEntry } from '../lib
 
 interface Props { records: Records; managers: History['managers']; seasons: Season[]; players: PlayerDirectory }
 type Managers = History['managers'];
+type Align = 'left' | 'right';
 interface GameRef { gameId: string; year: number; week: number; tag: PlayoffTag | null }
 
 const linkFor = (gameId: string) => {
@@ -55,35 +56,33 @@ function RowHeader({ rank, game, right }: { rank: number; game: GameRef; right: 
   );
 }
 
-/** The side's three best starters in one line. Hidden on narrow screens so the row never wraps. */
-function Performers({ list, players }: { list: Performer[]; players: PlayerDirectory }) {
-  if (list.length === 0) return null;
-  return (
-    <span className="hidden min-w-0 flex-1 items-center gap-3 md:flex">
-      {list.map((p) => (
-        <span key={p.playerId} className="flex min-w-0 flex-1 items-center gap-1.5" title={playerName(players, p.playerId)}>
-          <Headshot players={players} id={p.playerId} size={22} />
-          <span className="truncate text-xs">{playerName(players, p.playerId)}</span>
-          <span className="num shrink-0 text-xs">{fmtPts(p.points)}</span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function Team({ userId, points, managers, players, performers, align, lost }: {
-  userId: UserId; points: number; managers: Managers; players: PlayerDirectory; performers: Performer[]; align: 'left' | 'right'; lost: boolean;
-}) {
+function Team({ userId, points, managers, align, lost }: { userId: UserId; points: number; managers: Managers; align: Align; lost: boolean }) {
   const m = managers[userId];
   const name = m?.displayName ?? userId;
   const right = align === 'right';
   return (
-    <span className={`flex min-w-0 flex-1 items-center gap-2 ${right ? 'flex-row-reverse text-right' : ''} ${lost ? 'text-muted' : ''}`}>
+    <span className={`flex min-w-0 items-center gap-2 ${right ? 'flex-row-reverse text-right' : ''} ${lost ? 'text-muted' : ''}`}>
       <Avatar avatar={m?.avatar ?? null} name={name} size={32} />
-      <span className={`min-w-0 max-w-[10rem] flex-1 truncate text-sm leading-tight md:flex-none ${lost ? '' : 'font-semibold'}`} title={name}>{name}</span>
-      <Performers list={performers} players={players} />
+      <span className={`min-w-0 flex-1 truncate text-sm leading-tight ${lost ? '' : 'font-semibold'}`} title={name}>{name}</span>
       <span className={`num shrink-0 text-xl leading-none ${lost ? '' : 'font-semibold text-ink'}`}>{fmtPts(points)}</span>
     </span>
+  );
+}
+
+/** The side's three best starters, one per line, indented under the manager and mirrored on the right. */
+function Performers({ list, players, align, lost, className = '' }: { list: Performer[]; players: PlayerDirectory; align: Align; lost: boolean; className?: string }) {
+  if (list.length === 0) return null;
+  const right = align === 'right';
+  return (
+    <ul className={`mt-1.5 space-y-1 ${right ? 'pr-10' : 'pl-10'} ${lost ? 'text-muted' : ''} ${className}`}>
+      {list.map((p) => (
+        <li key={p.playerId} className={`flex items-center gap-1.5 ${right ? 'flex-row-reverse' : ''}`}>
+          <Headshot players={players} id={p.playerId} size={20} />
+          <span className="min-w-0 flex-1 truncate text-xs" title={playerName(players, p.playerId)}>{playerName(players, p.playerId)}</span>
+          <span className="num shrink-0 text-xs">{fmtPts(p.points)}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -94,8 +93,9 @@ function ScoreRow({ e, rank, managers, players, game }: { e: ScoreEntry; rank: n
       <Link to={linkFor(e.gameId)} className={row}>
         <RowHeader rank={rank} game={e} right={<span className="truncate text-muted">vs {opp} <span className="num">{fmtPts(e.oppPoints)}</span></span>} />
         <div className="mt-1.5 flex">
-          <Team userId={e.userId} points={e.points} managers={managers} players={players} performers={topThree(game, e.userId)} align="left" lost={false} />
+          <Team userId={e.userId} points={e.points} managers={managers} align="left" lost={false} />
         </div>
+        <Performers list={topThree(game, e.userId)} players={players} align="left" lost={false} />
       </Link>
     </li>
   );
@@ -108,9 +108,11 @@ function MatchupRow({ e, rank, managers, players, game }: { e: MatchupEntry; ran
       <Link to={linkFor(e.gameId)} className={row}>
         <RowHeader rank={rank} game={e} right={<span className="section-label shrink-0 text-ink">{tie ? 'Tie' : <>by <span className="num">{fmtPts(e.margin)}</span></>}</span>} />
         <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3">
-          <Team userId={e.high.userId} points={e.high.points} managers={managers} players={players} performers={topThree(game, e.high.userId)} align="left" lost={false} />
+          <Team userId={e.high.userId} points={e.high.points} managers={managers} align="left" lost={false} />
           <span className="section-label px-0.5 text-[12px] lowercase tracking-[0.12em]" style={{ fontVariant: 'small-caps' }}>vs</span>
-          <Team userId={e.low.userId} points={e.low.points} managers={managers} players={players} performers={topThree(game, e.low.userId)} align="right" lost={!tie} />
+          <Team userId={e.low.userId} points={e.low.points} managers={managers} align="right" lost={!tie} />
+          <Performers list={topThree(game, e.high.userId)} players={players} align="left" lost={false} className="col-start-1 self-start" />
+          <Performers list={topThree(game, e.low.userId)} players={players} align="right" lost={!tie} className="col-start-3 self-start" />
         </div>
       </Link>
     </li>
