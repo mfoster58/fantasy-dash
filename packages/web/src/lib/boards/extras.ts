@@ -1,10 +1,10 @@
-import type { Transaction, UserId } from '@fantasy-dash/core';
+import type { PlayerSeasonLine, Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPts, fmtSigned } from '../format';
 import type { PlayerLine } from '../playerLines';
 import { longestStartRun } from '../ironman';
 import { waiverClaims, type WaiverClaim } from '../waivers';
 import type { BoardContext, BoardRow, Direction, DraftValue } from './shared';
-import { careerBoard, groupBy, inYear, intLabel, matchesPos, metaOf, momentBoard, plural, rank, round1, skillOnly, started, sum, toneOf } from './shared';
+import { careerBoard, fmt1, groupBy, inYear, intLabel, matchesPos, metaOf, momentBoard, plural, rank, round1, skillOnly, started, sum, toneOf } from './shared';
 
 const txInScope = (ctx: BoardContext): { year: number; tx: Transaction }[] =>
   ctx.transactions.filter((s) => inYear(ctx, s.year)).flatMap((s) => s.transactions.map((tx) => ({ year: s.year, tx })));
@@ -47,21 +47,6 @@ export const dudStarts = (ctx: BoardContext): BoardRow[] =>
 export const journeyman = (ctx: BoardContext): BoardRow[] =>
   careerBoard(skillOnly(started(ctx)), (ls) => new Set(ls.map((l) => l.userId)).size, intLabel, (ls) => plural(ls.length, 'start'), metaOf(ctx));
 
-export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): BoardRow[] => {
-  const byPlayer = new Map<string, DraftValue[]>();
-  for (const p of ctx.picks) {
-    if (!matchesPos(ctx.players[p.playerId]?.position ?? '?', ctx.pos)) continue;
-    byPlayer.set(p.playerId, [...(byPlayer.get(p.playerId) ?? []), p]);
-  }
-  const items = [...byPlayer.entries()].map(([playerId, picks]) => ({
-    playerId, value: round1(picks.reduce((s, p) => s + p.value, 0) / picks.length), seasons: picks.length,
-    latestYear: Math.max(...picks.map((p) => p.year)), latestWeek: 0,
-  }));
-  return rank(items, direction).map((i) => ({
-    key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: fmtSigned(i.value, 1),
-    meta: plural(i.seasons, 'season'), detail: null, userId: null, to: null, tone: toneOf(i.value),
-  }));
-};
 
 /** Rows from per-player event counts; ties fall to the most recent event. */
 function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number; group: string }[], detail: (groups: Set<string>, n: number) => string): BoardRow[] {
@@ -99,3 +84,63 @@ export const waiverHeroes = (ctx: BoardContext): BoardRow[] =>
 export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
   rank(claims(ctx).filter((c) => c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
     .map(({ c, value }) => claimRow(c, value, `$${value.toFixed(1)}/pt`, `$${c.bid} · ${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));
+
+const SKILL = new Set(['QB', 'RB', 'WR', 'TE']);
+const slot = (p: { round: number; pickNo: number }) => `Rd ${p.round}, pick ${p.pickNo}`;
+
+/** The chosen season's draft values, or under All-time each player's best single season. */
+export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): BoardRow[] => {
+  const scoped = ctx.picks.filter((p) => inYear(ctx, p.year) && posOk(ctx, p.playerId));
+  const best = new Map<string, DraftValue>();
+  for (const p of scoped) {
+    const cur = best.get(p.playerId);
+    if (!cur || p.value > cur.value || (p.value === cur.value && p.year > cur.year)) best.set(p.playerId, p);
+  }
+  const items = [...best.values()].map((p) => ({ p, playerId: p.playerId, value: round1(p.value), latestYear: p.year, latestWeek: 0 }));
+  return rank(items, direction).map(({ p, value }) => ({ key: `${p.year}-${p.playerId}`, playerId: p.playerId, value, valueLabel: fmtSigned(value, 1), meta: String(p.year), detail: slot(p), userId: null, to: null, tone: toneOf(value) }));
+};
+
+/** The last QB/RB/WR/TE pick of each draft and what he scored that season. */
+export const mrIrrelevant = (ctx: BoardContext): BoardRow[] => {
+  const items: { playerId: string; value: number; year: number; detail: string; userId: UserId; latestYear: number; latestWeek: number }[] = [];
+  for (const [y, draft] of Object.entries(ctx.drafts)) {
+    const year = Number(y);
+    if (!draft || !inYear(ctx, year)) continue;
+    const last = [...draft.picks].filter((p) => SKILL.has(ctx.players[p.playerId]?.position ?? '')).sort((a, b) => b.pickNo - a.pickNo)[0];
+    if (!last || !posOk(ctx, last.playerId)) continue;
+    const line = ctx.playerSeasons[year]?.[last.playerId];
+    const pos = ctx.players[last.playerId]?.position ?? '?';
+    const finish = line && line.games > 0 ? `${pos}${line.posRank ?? '?'} · ${fmt1(line.points / line.games)} ppg` : '—';
+    items.push({ playerId: last.playerId, value: line?.points ?? 0, year, detail: `${finish} · ${slot(last)}`, userId: last.userId, latestYear: year, latestWeek: 0 });
+  }
+  return rank(items).map((i) => ({ key: `${i.year}-${i.playerId}`, playerId: i.playerId, value: i.value, valueLabel: fmtPts(i.value), meta: String(i.year), detail: i.detail, userId: i.userId, to: `/draft/${i.year}` }));
+};
+
+const MIN_PAIR_GAMES = 10;
+interface Pair { playerId: string; from: number; to: number; prev: PlayerSeasonLine; next: PlayerSeasonLine; delta: number }
+/** Consecutive-season pairs for skill players with enough games in both; a chosen year is the later season. */
+function seasonPairs(ctx: BoardContext): Pair[] {
+  const years = Object.keys(ctx.playerSeasons).map(Number).sort((a, b) => a - b);
+  const out: Pair[] = [];
+  for (const to of years) {
+    const prevSeason = ctx.playerSeasons[to - 1];
+    if (!inYear(ctx, to) || !prevSeason) continue;
+    for (const [playerId, next] of Object.entries(ctx.playerSeasons[to])) {
+      const prev = prevSeason[playerId];
+      if (!prev || prev.games < MIN_PAIR_GAMES || next.games < MIN_PAIR_GAMES) continue;
+      const pos = ctx.players[playerId]?.position ?? '';
+      if (!SKILL.has(pos) || !posOk(ctx, playerId)) continue;
+      out.push({ playerId, from: to - 1, to, prev, next, delta: round1(next.points / next.games - prev.points / prev.games) });
+    }
+  }
+  return out;
+}
+const pairRow = (ctx: BoardContext) => (p: Pair): BoardRow => {
+  const pos = ctx.players[p.playerId]?.position ?? '?';
+  const fin = (l: PlayerSeasonLine) => `${pos}${l.posRank ?? '?'} · ${fmt1(l.points / l.games)} ppg`;
+  return { key: `${p.to}-${p.playerId}`, playerId: p.playerId, value: p.delta, valueLabel: fmtSigned(p.delta, 1), meta: `${p.from} → ${p.to}`, detail: `${fin(p.prev)} → ${fin(p.next)} · ${fmtPts(p.next.points)} pts`, userId: null, to: null, tone: toneOf(p.delta) };
+};
+export const breakout = (ctx: BoardContext): BoardRow[] =>
+  rank(seasonPairs(ctx).filter((p) => p.delta > 0).map((p) => ({ p, playerId: p.playerId, value: p.delta, latestYear: p.to, latestWeek: 0 }))).map(({ p }) => pairRow(ctx)(p));
+export const fallOff = (ctx: BoardContext): BoardRow[] =>
+  rank(seasonPairs(ctx).filter((p) => p.delta < 0).map((p) => ({ p, playerId: p.playerId, value: p.delta, latestYear: p.to, latestWeek: 0 })), 'asc').map(({ p }) => pairRow(ctx)(p));

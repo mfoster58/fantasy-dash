@@ -4,8 +4,8 @@ import { game, line, players, season, side, week } from '../test/playerFixtures'
 import {
   BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, championshipRosters, championsOf, weeksStarted,
   boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
-  draftValue, draftValuesOf, leadFpoe, leadPassTd, leadPassYards, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
-  lastPlaceRosters, lastPlacesOf, leadTouches, minGames, bestPlayoffStarts, worstToiletStarts,
+  draftValue, leadFpoe, leadPassTd, leadPassYards, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
+  lastPlaceRosters, lastPlacesOf, leadTouches, minGames, bestPlayoffStarts, worstToiletStarts, draftValuesOf,
   type BoardContext,
 } from './playerBoards';
 import type { XfpModel } from './xfp';
@@ -247,34 +247,6 @@ describe('toilet bowl and exclusions', () => {
   });
 });
 
-describe('cumulative draft value', () => {
-  const withDraft = (year: number, picks: { playerId: string; value: number | null }[]) => ({
-    ...season(year, []),
-    draft: { draftId: 'd', type: 'snake', rounds: 1, slotOrder: [], expectedCurve: null, baselines: {}, picks: picks.map((p, i) => ({
-      round: 1, pickNo: i + 1, slot: i + 1, userId: 'a', playerId: p.playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null,
-      healthy: false, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: p.value, tradedTo: null,
-    })) },
-  });
-  const drafts = [withDraft(2024, [{ playerId: 'q1', value: 38.2 }, { playerId: 'r1', value: -5 }, { playerId: 'k1', value: null }]), withDraft(2025, [{ playerId: 'q1', value: -12 }, { playerId: 'r1', value: 20.5 }])];
-  it('collects picks with a value', () => {
-    expect(draftValuesOf(drafts)).toEqual([
-      { year: 2024, playerId: 'q1', value: 38.2, round: 1, pickNo: 1 }, { year: 2024, playerId: 'r1', value: -5, round: 1, pickNo: 2 },
-      { year: 2025, playerId: 'q1', value: -12, round: 1, pickNo: 1 }, { year: 2025, playerId: 'r1', value: 20.5, round: 1, pickNo: 2 },
-    ]);
-  });
-  it('averages per player, counts seasons drafted, respects the position filter, and never yields NaN', () => {
-    const c = { ...ctx, picks: draftValuesOf(drafts) };
-    expect(draftValue(c).map((r) => [r.playerId, r.value, r.valueLabel, r.meta, r.detail])).toEqual([
-      ['q1', 13.1, '+13.1', '2 seasons', null],
-      ['r1', 7.8, '+7.8', '2 seasons', null],
-    ]);
-    expect(draftValue({ ...c, picks: c.picks.filter((p) => p.year === 2024) }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 38.2, '1 season'], ['r1', -5, '1 season']]);
-    expect(draftValue({ ...c, pos: 'RB' }).map((r) => r.playerId)).toEqual(['r1']);
-    expect(draftValue({ ...c, pos: 'K' })).toEqual([]);
-    expect(draftValue(c).every((r) => Number.isFinite(r.value))).toBe(true);
-  });
-});
-
 describe('BOARDS registry v2 order', () => {
   const ids = (s: string) => BOARDS.filter((b) => b.section === s).map((b) => b.id);
   it('lays out leaders in grid order, touches in place of PPG, last place beside the toilet bowl', () => {
@@ -290,7 +262,7 @@ describe('BOARDS registry v2 order', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
     for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
     expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
-    expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Average draft value');
+    expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Draft value');
     expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'bestSeason', 'careerPoints', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
   });
 });
