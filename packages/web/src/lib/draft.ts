@@ -65,13 +65,13 @@ export function topHealthyPpg(draft: Draft, n = 10): DraftPick[] {
     .slice(0, n);
 }
 
-export const VALUE_SATURATION = 120;
+export const VALUE_SATURATION = 60;
 const RED = '#d64545';
 const YELLOW = '#e6c229';
 const GREEN = '#2f9e5f';
 
-/** Translucency of the value tint, like the position board's 16% position tint but a little stronger. */
-const VALUE_TINT = 30;
+/** Translucency of the value tint: stronger than the position board's 16% so hits and misses read at a glance. */
+const VALUE_TINT = 45;
 
 /** Muted red → yellow → green tint for a value cell. Yellow at 0, fully red/green at ±VALUE_SATURATION, always mixed over transparent so normal text stays readable. */
 export function valueColor(value: number | null): string {
