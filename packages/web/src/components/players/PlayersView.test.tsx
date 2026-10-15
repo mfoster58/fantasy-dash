@@ -67,13 +67,29 @@ describe('PlayersView', () => {
     expect(screen.queryByRole('heading', { name: 'PPG' })).toBeNull();
   });
 
-  it('switches the leaders points board to PPG from its toggle', () => {
+  it('switches the leaders points board to PPG from its toggle, and keeps it across a tab switch', () => {
     mount();
     expect(firstRow('Most points')).toHaveTextContent('35.00');
     fireEvent.click(within(region('Most points')).getByRole('button', { name: 'PPG' }));
     expect(within(region('Most points')).getByText('No players with 3 games yet.')).toBeInTheDocument(); // nobody has 3 played games in 2025
+    fireEvent.click(tab('Career'));
+    fireEvent.click(tab('League leaders'));
+    expect(within(region('Most points')).getByRole('button', { name: 'PPG' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(within(region('Most points')).getByRole('button', { name: 'Total' }));
     expect(firstRow('Most points')).toHaveTextContent('35.00');
+  });
+
+  it('marks each section as the tab panel of its tab', () => {
+    mount();
+    expect(screen.getByRole('tabpanel', { name: 'League leaders' })).toBeInTheDocument();
+    // a hidden panel has no accessible name, so find it through its tab's aria-controls
+    const career = document.getElementById(tab('Career').getAttribute('aria-controls')!)!;
+    expect(career).toHaveAttribute('role', 'tabpanel');
+    expect(career).toHaveAttribute('hidden');
+    expect(screen.queryByRole('tabpanel', { name: 'Career' })).toBeNull();
+    fireEvent.click(tab('Career'));
+    expect(career).not.toHaveAttribute('hidden');
+    expect(screen.getByRole('tabpanel', { name: 'Career' })).toBe(career);
   });
 
   it('keeps each section\'s filter in its own URL parameter across tab switches', () => {

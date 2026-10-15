@@ -57,8 +57,17 @@ describe('Board', () => {
     const one = row(1, { userId: 'a', managers: [{ userId: 'a', weeks: 3 }] });
     wrapB({ rows: [many, one], managers: { ...managers, b: { displayName: 'bob', avatar: null, seasons: [2025] } } });
     const first = screen.getAllByRole('listitem')[0];
-    expect(within(first).getByText('2 managers')).toHaveAttribute('title', 'bob 14 wks, alice 9 wks');
+    const toggle = within(first).getByRole('button', { name: '2 managers' });
+    expect(toggle).toHaveAttribute('title', 'bob 14 wks, alice 9 wks');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(within(first).queryByRole('link', { name: /alice|bob/ })).toBeNull();
+    // a tap opens the list inline, each manager a link, for phones and keyboards where the tooltip never shows
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(within(first).getByRole('link', { name: /bob 14 wks/ })).toHaveAttribute('href', '/h2h?a=b');
+    expect(within(first).getByRole('link', { name: /alice 9 wks/ })).toHaveAttribute('href', '/h2h?a=a');
+    fireEvent.click(toggle);
+    expect(within(first).queryByRole('link', { name: /wks/ })).toBeNull();
     const second = screen.getAllByRole('listitem')[1];
     expect(within(second).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
     expect(within(second).queryByText(/managers/)).toBeNull();

@@ -53,7 +53,7 @@ export default function PlayersView({ seasons, players, managers, years, current
               role="tab"
               id={`tab-${s.id}`}
               aria-selected={s.id === tab}
-              aria-controls={s.id}
+              aria-controls={`panel-${s.id}`}
               onClick={() => setTab(s.id)}
               className={`-mb-px border-b-2 px-3 py-2 text-sm ${s.id === tab ? 'border-ink font-medium text-ink' : 'border-transparent text-muted hover:text-ink'}`}
             >
@@ -62,7 +62,8 @@ export default function PlayersView({ seasons, players, managers, years, current
           ))}
         </div>
       </header>
-      {SECTIONS.filter((s) => s.id === tab).map((s) => {
+      {/* every section stays mounted so its toggles and expand state survive a tab switch; the others are hidden */}
+      {SECTIONS.map((s) => {
         const pos = posOf(s.param);
         const fallback: SeasonPick = s.defaultSeason === 'current' ? currentYear : 'all';
         const pick: SeasonPick = s.seasonParam ? pickOf(s.seasonParam, fallback) : 'all';
@@ -86,6 +87,7 @@ export default function PlayersView({ seasons, players, managers, years, current
             columns={s.columns}
             seasonPicker={s.seasonParam ? { years, value: pick, onChange: setPick(s.seasonParam, fallback), allTime: true } : undefined}
             emptyMessage={empty}
+            hidden={s.id !== tab}
           />
         );
       })}

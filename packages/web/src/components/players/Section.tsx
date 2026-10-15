@@ -21,6 +21,8 @@ interface Props {
   seasonPicker?: { years: number[]; value: number | 'all'; onChange: (v: number | 'all') => void; allTime?: boolean };
   /** when set, shown in place of the boards */
   emptyMessage?: string | null;
+  /** another tab is chosen: stay mounted, so toggles and expand state survive, but out of view */
+  hidden?: boolean;
 }
 
 /** Tailwind's md breakpoint, where the board grid gains its columns. */
@@ -42,7 +44,7 @@ function useGridColumns(): boolean {
 }
 
 /** One titled block of boards with its own position filter, optional season picker, and expand state shared per grid row. */
-export default function Section({ id, title, note, boards, ctx, players, managers, pos, onPos, columns, seasonPicker, emptyMessage }: Props) {
+export default function Section({ id, title, note, boards, ctx, players, managers, pos, onPos, columns, seasonPicker, emptyMessage, hidden = false }: Props) {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [directions, setDirections] = useState<Record<string, Direction>>({});
   const [modes, setModes] = useState<Record<string, string>>({});
@@ -51,7 +53,8 @@ export default function Section({ id, title, note, boards, ctx, players, manager
   // row indexes mean different boards once the column count changes, so start collapsed again
   useEffect(() => { setExpandedRows({}); }, [perRow]);
   return (
-    <section id={id} aria-labelledby={`section-${id}`} className="scroll-mt-20 space-y-3">
+    <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`} hidden={hidden}>
+    <section id={id} aria-labelledby={`section-${id}`} className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id={`section-${id}`} className="text-lg font-semibold">{title}</h2>
         <span className="text-xs text-muted">{note}</span>
@@ -91,5 +94,6 @@ export default function Section({ id, title, note, boards, ctx, players, manager
         </div>
       )}
     </section>
+    </div>
   );
 }
