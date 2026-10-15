@@ -74,6 +74,10 @@ describe('trade bait and fodder', () => {
     expect(fodder(txCtx).map((r) => [r.playerId, r.value, r.detail])).toEqual([['w1', 3, 'picked up 1 time'], ['q1', 2, 'picked up 1 time'], ['r1', 1, 'picked up 0 times']]);
     expect(tradeBait({ ...txCtx, year: 2025 }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 1, '2025']]);
   });
+  it('fodder leaves out kickers and defenses, which get streamed every week', () => {
+    const streamed = { ...txCtx, transactions: [{ year: 2024, transactions: [t({ type: 'free_agent', drops: [{ playerId: 'KC', userId: 'a' }, { playerId: 'k1', userId: 'a' }, { playerId: 'w1', userId: 'a' }] })] }] };
+    expect(fodder(streamed).map((r) => r.playerId)).toEqual(['w1']);
+  });
 });
 
 describe('waiver heroes and villains', () => {
@@ -137,5 +141,8 @@ describe('breakout and fall-off', () => {
     const fall = { ...dCtx, playerSeasons: { ...dCtx.playerSeasons, 2025: { ...dCtx.playerSeasons[2025], q1: { points: 100, games: 10, posRank: 9 } } } };
     expect(fallOff(fall).map((r) => [r.playerId, r.value, r.tone])).toEqual([['q1', -7.6, 'loss']]);
     expect(breakout({ ...dCtx, year: 2024 })).toEqual([]); // first season has no pair
+  });
+  it('say why they are empty', () => {
+    for (const id of ['breakout', 'fallOff']) expect(BOARDS.find((b) => b.id === id)!.empty!(dCtx)).toBe('No players with 10 games in both seasons yet.');
   });
 });
