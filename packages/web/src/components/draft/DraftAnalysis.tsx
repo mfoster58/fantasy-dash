@@ -52,7 +52,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="card">
-          <CardHeader label={`${inSeason ? 'Draft to date' : 'Final grades'}`} title="How it graded out" aside="Each draft against what a pick in that slot usually returns" />
+          <CardHeader label={`${inSeason ? 'To date' : 'Final'}`} title="Draft grades" aside="Each draft against what a pick in that slot usually returns" />
           <ol>
             {summaries.map((s, i) => {
               const m = managers[s.userId];
@@ -92,8 +92,8 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
         <TeamDraft draft={draft} managers={managers} players={players} userId={selected} onSelect={onSelect} inSeason={inSeason} />
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="card"><CardHeader label={`Best ten${note}`} title="The steals" /><ul className="divide-y divide-line px-4">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
-        <div className="card"><CardHeader label={`Worst ten${note}`} title="The ones that hurt" /><ul className="divide-y divide-line px-4">{busts.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
+        <div className="card"><CardHeader label={`Best picks${note}`} title="Top 10 steals" /><ul className="divide-y divide-line px-4">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
+        <div className="card"><CardHeader label={`Worst picks${note}`} title="Top 10 busts" /><ul className="divide-y divide-line px-4">{busts.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
         <TopDraftValues history={history} players={players} />
       </div>
     </div>
