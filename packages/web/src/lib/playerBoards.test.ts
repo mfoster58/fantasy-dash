@@ -3,6 +3,7 @@ import { flattenLines } from './playerLines';
 import { game, line, players, season, side, week } from '../test/playerFixtures';
 import {
   BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, careerPpg, championshipRosters, championsOf, weeksStarted,
+  boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
   type BoardContext,
 } from './playerBoards';
 
@@ -93,5 +94,68 @@ describe('BOARDS registry', () => {
     const allTime = BOARDS.filter((b) => b.section === 'allTime').map((b) => b.id);
     expect(allTime).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted', 'championshipRosters', 'benchBlunder', 'careerPpg']);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);
+  });
+});
+
+describe('postseason boards', () => {
+  // Finals: 2024 wk3 a: q1 31 (bench t1 3) vs b: r1 7 ; 2025 wk3 b: r1 22 (bench q1 50) vs a: w1 4. Toilet bowls never appear here.
+  it('count only started lines in championship-bracket games', () => {
+    expect(postPoints(ctx).slice(0, 2)).toEqual([
+      expect.objectContaining({ playerId: 'q1', value: 31, valueLabel: '31.00', meta: '2024', detail: '1 start' }),
+      expect.objectContaining({ playerId: 'r1', value: 29, meta: '2024, 2025', detail: '2 starts' }),
+    ]);
+    expect(postStarts(ctx)[0]).toMatchObject({ playerId: 'r1', value: 2, valueLabel: '2', detail: '29.00 pts' });
+  });
+  it('sum touchdowns, yards and receptions from the stats', () => {
+    const rich = season(2023, [week(3, [game(2023, 3, 1,
+      side('a', 40, [line('w1', 25, { rec: 8, rec_yd: 120, rec_td: 2 }), line('r1', 15, { rush_yd: 60, rush_td: 1, rec: 2, rec_yd: 10 })]),
+      side('b', 5, [line('q1', 5, { pass_yd: 150, pass_td: 1 })]), 'SF')], true)]);
+    const c = { ...ctx, lines: flattenLines([rich], players) };
+    expect(postTouchdowns(c)[0]).toMatchObject({ playerId: 'w1', value: 2, valueLabel: '2', detail: '1 start' });
+    expect(postYards(c)[0]).toMatchObject({ playerId: 'q1', value: 150, valueLabel: '150' });
+    expect(postReceptions(c).map((r) => [r.playerId, r.value])).toEqual([['w1', 8], ['r1', 2]]);
+  });
+});
+
+describe('extras', () => {
+  it('boom starts count started lines of 30 or more', () => {
+    expect(boomStarts(ctx)[0]).toMatchObject({ playerId: 'q1', value: 3, valueLabel: '3', detail: '5 starts' }); // 40, 35, 31
+    expect(boomStarts(ctx)).toHaveLength(1);
+  });
+  it('dud starts count played starts under 5 and ignore unplayed weeks', () => {
+    // w1 4 (2025 wk3) is a played start under 5. t1 0 (2025 wk1) is unplayed and excluded. t1 3 was benched.
+    expect(dudStarts(ctx)).toEqual([expect.objectContaining({ playerId: 'w1', value: 1 })]);
+  });
+  it('journeyman counts distinct managers who started the player', () => {
+    const rows = journeyman(ctx);
+    expect(rows.find((r) => r.playerId === 'q1')).toMatchObject({ value: 2, valueLabel: '2', detail: '5 starts' }); // a in 2024, b in 2025
+    expect(rows.find((r) => r.playerId === 'w1')).toMatchObject({ value: 2 }); // b in 2024, a in 2025
+    expect(rows.find((r) => r.playerId === 't1')).toMatchObject({ value: 1 }); // only b
+    // q1, r1 and w1 all tie at 2; r1 and w1 share the newest start (2025 wk 3) so playerId breaks it, then q1 (newest 2025 wk 2)
+    expect(rows.slice(0, 3).map((r) => r.playerId)).toEqual(['r1', 'w1', 'q1']);
+  });
+});
+
+describe('league leaders', () => {
+  it('use the current season only, started or benched, with the latest manager', () => {
+    // 2025: q1 35 + 18 (b) + 50 benched (b) = 103 ; r1 9 + 11 (a) + 22 (b) = 42 ; w1 4 (a) ; t1 0
+    expect(leadPoints(ctx).slice(0, 2)).toEqual([
+      expect.objectContaining({ playerId: 'q1', value: 103, valueLabel: '103.00', userId: 'b', meta: '2025' }),
+      expect.objectContaining({ playerId: 'r1', value: 42, userId: 'b' }),
+    ]);
+    expect(leadYards(ctx)).toEqual([]); // fixture lines carry no yardage in 2025
+    expect(leadTouchdowns(ctx)).toEqual([]);
+  });
+  it('return nothing when the current season has no lines', () => {
+    expect(leadPoints({ ...ctx, currentYear: 2026 })).toEqual([]);
+  });
+});
+
+describe('BOARDS registry sections', () => {
+  it('lists postseason, extras and leaders in order', () => {
+    const ids = (s: string) => BOARDS.filter((b) => b.section === s).map((b) => b.id);
+    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions']);
+    expect(ids('extras')).toEqual(['boomStarts', 'dudStarts', 'journeyman']);
+    expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns']);
   });
 });

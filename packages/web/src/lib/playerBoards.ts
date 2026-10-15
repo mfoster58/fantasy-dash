@@ -127,6 +127,43 @@ export const careerPpg = (ctx: BoardContext): BoardRow[] => {
   }));
 };
 
+const postseasonStarted = (ctx: BoardContext) => started(ctx).filter((l) => l.postseason);
+const intLabel = (v: number) => String(v);
+
+export const postPoints = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.points), fmtPts, (ls) => plural(ls.length, 'start'));
+export const postStarts = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(postseasonStarted(ctx), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`);
+export const postTouchdowns = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.touchdowns), intLabel, (ls) => plural(ls.length, 'start'));
+export const postYards = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.yards), intLabel, (ls) => plural(ls.length, 'start'));
+export const postReceptions = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.receptions), intLabel, (ls) => plural(ls.length, 'start'));
+
+export const boomStarts = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(started(ctx), (ls) => ls.filter((l) => l.points >= 30).length, intLabel, (ls) => plural(ls.length, 'start'));
+export const dudStarts = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(started(ctx), (ls) => ls.filter((l) => l.played && l.points < 5).length, intLabel, (ls) => plural(ls.length, 'start'));
+export const journeyman = (ctx: BoardContext): BoardRow[] =>
+  careerBoard(started(ctx), (ls) => new Set(ls.map((l) => l.userId)).size, intLabel, (ls) => plural(ls.length, 'start'));
+
+/** Current season, every rostered line, manager = whoever rostered the player most recently. */
+function leaderBoard(ctx: BoardContext, value: (ls: PlayerLine[]) => number, label: (v: number) => string): BoardRow[] {
+  const current = ctx.lines.filter((l) => l.year === ctx.currentYear);
+  const items = [...groupBy(current, (l) => l.playerId).entries()].map(([playerId, g]) => {
+    const latest = g.lines.reduce((a, b) => (b.week > a.week ? b : a));
+    return { playerId, value: value(g.lines), userId: latest.userId, latestYear: g.latestYear, latestWeek: g.latestWeek };
+  });
+  return rank(items.filter((i) => i.value > 0)).map((i) => ({
+    key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),
+    meta: String(ctx.currentYear), detail: null, userId: i.userId, to: null,
+  }));
+}
+export const leadPoints = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) => sum(ls, (l) => l.points), fmtPts);
+export const leadYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) => sum(ls, (l) => l.yards), intLabel);
+export const leadTouchdowns = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) => sum(ls, (l) => l.touchdowns), intLabel);
+
 export const BOARDS: BoardDef[] = [
   { id: 'bestWeek', section: 'allTime', title: 'Best week by a starter', definition: 'Most points by a player in one week while in a starting lineup.', valueHeader: 'Pts', compute: bestWeek },
   { id: 'bestSeason', section: 'allTime', title: 'Best season by a starter', definition: 'Most points a player scored for one manager in one season while started.', valueHeader: 'Pts', compute: bestSeason },
@@ -135,4 +172,15 @@ export const BOARDS: BoardDef[] = [
   { id: 'championshipRosters', section: 'allTime', title: 'Most championship rosters', definition: "Seasons on the champion's roster, starters and bench, in the championship game.", valueHeader: 'Titles', compute: championshipRosters },
   { id: 'benchBlunder', section: 'allTime', title: 'Biggest bench blunder', definition: 'Most points by a player left on the bench in one week.', valueHeader: 'Pts', compute: benchBlunder },
   { id: 'careerPpg', section: 'allTime', title: 'Career PPG', definition: `Points per game over weeks the player actually played, started or benched. At least ${MIN_PPG_GAMES} games.`, valueHeader: 'PPG', compute: careerPpg },
+  { id: 'postPoints', section: 'postseason', title: 'Most postseason points started', definition: 'Points while started in championship-bracket games.', valueHeader: 'Pts', compute: postPoints },
+  { id: 'postStarts', section: 'postseason', title: 'Most postseason starts', definition: 'Starts in championship-bracket games.', valueHeader: 'Starts', compute: postStarts },
+  { id: 'postTouchdowns', section: 'postseason', title: 'Most postseason touchdowns', definition: 'Passing, rushing and receiving touchdowns while started in the championship bracket.', valueHeader: 'TD', compute: postTouchdowns },
+  { id: 'postYards', section: 'postseason', title: 'Most postseason yards', definition: 'Passing, rushing and receiving yards while started in the championship bracket.', valueHeader: 'Yds', compute: postYards },
+  { id: 'postReceptions', section: 'postseason', title: 'Most postseason receptions', definition: 'Receptions while started in the championship bracket.', valueHeader: 'Rec', compute: postReceptions },
+  { id: 'boomStarts', section: 'extras', title: 'Most 30-point starts', definition: 'Weeks a player scored 30 or more while started.', valueHeader: 'Weeks', compute: boomStarts },
+  { id: 'dudStarts', section: 'extras', title: 'Most dud starts', definition: 'Weeks a player played and scored under 5 while started. Unplayed weeks do not count.', valueHeader: 'Weeks', compute: dudStarts },
+  { id: 'journeyman', section: 'extras', title: 'Journeyman', definition: 'Different managers who have started the player.', valueHeader: 'Mgrs', compute: journeyman },
+  { id: 'leadPoints', section: 'leaders', title: 'Most points', definition: 'Fantasy points this season on any roster, started or benched.', valueHeader: 'Pts', compute: leadPoints },
+  { id: 'leadYards', section: 'leaders', title: 'Most yards', definition: 'Passing, rushing and receiving yards this season on any roster.', valueHeader: 'Yds', compute: leadYards },
+  { id: 'leadTouchdowns', section: 'leaders', title: 'Most touchdowns', definition: 'Passing, rushing and receiving touchdowns this season on any roster.', valueHeader: 'TD', compute: leadTouchdowns },
 ];
