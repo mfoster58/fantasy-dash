@@ -44,6 +44,12 @@ describe('ironman', () => {
     expect(rows[0]).toMatchObject({ playerId: 'r1', value: 6, valueLabel: '6', meta: '2024 Wk 1 – 2025 Wk 3', detail: 'active' });
     expect(rows[1]).toMatchObject({ playerId: 'q1', value: 5, meta: '2024 Wk 1 – 2025 Wk 2', detail: null });
   });
+  it('never calls a run active when a past season is chosen', () => {
+    const past = { ...ctx, year: 2024, lines: ctx.lines.filter((l) => l.year === 2024) };
+    expect(ironman(past)[0]).toMatchObject({ playerId: 'q1', value: 3, meta: '2024 Wk 1 – 2024 Wk 3', detail: null });
+    const current = { ...ctx, year: 2025, lines: ctx.lines.filter((l) => l.year === 2025) };
+    expect(ironman(current)[0]).toMatchObject({ playerId: 'r1', value: 3, detail: 'active' });
+  });
 });
 
 describe('registry', () => {
@@ -110,7 +116,8 @@ describe('draft value by season', () => {
       ['r1', 20.5, '+20.5', '2025', 'Rd 1, pick 2', 'win'], ['w1', 1, '+1.0', '2025', 'Rd 2, pick 5', 'win'], ['q1', -12, '-12.0', '2025', 'Rd 1, pick 1', 'loss'],
     ]);
     expect(draftValue(dCtx).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 38.2, '2024'], ['r1', 20.5, '2025'], ['w1', 1, '2025']]);
-    expect(draftValue(dCtx, 'asc').map((r) => r.playerId)).toEqual(['w1', 'r1', 'q1']);
+    // under − All-time keeps each player's worst season instead
+    expect(draftValue(dCtx, 'asc').map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', -12, '2025'], ['r1', -5, '2024'], ['w1', 1, '2025']]);
     expect(draftValue({ ...dCtx, pos: 'K' })).toEqual([]);
   });
 });

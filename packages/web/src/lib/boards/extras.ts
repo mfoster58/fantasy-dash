@@ -33,10 +33,12 @@ export const loyalty = (ctx: BoardContext): BoardRow[] => {
 
 export const ironman = (ctx: BoardContext): BoardRow[] => {
   const runs = longestStartRun(skillOnly(ctx.lines));
+  // a run can only be live when the lines reach the current season
+  const mayBeActive = ctx.year === null || ctx.year === ctx.currentYear;
   const items = [...runs.entries()].map(([playerId, r]) => ({ playerId, value: r.length, run: r, latestYear: r.to.year, latestWeek: r.to.week }));
   return rank(items).map((i) => ({
     key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value),
-    meta: `${i.run.from.year} Wk ${i.run.from.week} – ${i.run.to.year} Wk ${i.run.to.week}`, detail: i.run.active ? 'active' : null, userId: null, to: null,
+    meta: `${i.run.from.year} Wk ${i.run.from.week} – ${i.run.to.year} Wk ${i.run.to.week}`, detail: mayBeActive && i.run.active ? 'active' : null, userId: null, to: null,
   }));
 };
 
@@ -89,13 +91,14 @@ export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
 const SKILL = new Set(['QB', 'RB', 'WR', 'TE']);
 const slot = (p: { round: number; pickNo: number }) => `Rd ${p.round}, pick ${p.pickNo}`;
 
-/** The chosen season's draft values, or under All-time each player's best single season. */
+/** The chosen season's draft values, or under All-time each player's best single season (worst under −). */
 export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): BoardRow[] => {
   const scoped = ctx.picks.filter((p) => inYear(ctx, p.year) && posOk(ctx, p.playerId));
+  const better = direction === 'asc' ? (a: number, b: number) => a < b : (a: number, b: number) => a > b;
   const best = new Map<string, DraftValue>();
   for (const p of scoped) {
     const cur = best.get(p.playerId);
-    if (!cur || p.value > cur.value || (p.value === cur.value && p.year > cur.year)) best.set(p.playerId, p);
+    if (!cur || better(p.value, cur.value) || (p.value === cur.value && p.year > cur.year)) best.set(p.playerId, p);
   }
   const items = [...best.values()].map((p) => ({ p, playerId: p.playerId, value: round1(p.value), latestYear: p.year, latestWeek: 0 }));
   return rank(items, direction).map(({ p, value }) => ({ key: `${p.year}-${p.playerId}`, playerId: p.playerId, value, valueLabel: fmtSigned(value, 1), meta: String(p.year), detail: slot(p), userId: null, to: null, tone: toneOf(value) }));

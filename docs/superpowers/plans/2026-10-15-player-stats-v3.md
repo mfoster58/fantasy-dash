@@ -23,7 +23,7 @@
 
 ## Review Focus
 
-1. A waiver claim whose player is dropped in the same week it was claimed: the window is empty and the row must not appear (Task 9 test "claim dropped the same week").
+1. A waiver claim processed after the last scored week, or whose window holds no scored league week: the row must not appear. A claim benched and dropped within one scored week stays, at zero starts (Task 9 tests "drops a claim whose window holds no scored week" and "benched then dropped the same week").
 2. A season chosen on Extras while the previous season has no `playerSeasons` (2023 is the first): Breakout and Fall-off must be empty, not crash (Task 10 test "first season has no pair").
 3. Ironman across the season boundary when the player sat on no roster in week 1 of the next season: the run must end at the last week of the prior season and not report `active` (Task 8 test "ends at a missing week across seasons").
 4. `?careerSeason=all` on the Career section and `?season=all` on leaders: both must be honoured and omitted from the URL only when they equal the section default (Task 4 test "writes and reads All-time per section").

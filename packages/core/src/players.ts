@@ -40,6 +40,7 @@ export function collectPlayerIds(seasons: Season[]): Set<PlayerId> {
       }
     }
     for (const p of s.draft?.picks ?? []) ids.add(p.playerId);
+    for (const t of s.transactions ?? []) for (const m of [...t.adds, ...t.drops]) ids.add(m.playerId);
   }
   return ids;
 }

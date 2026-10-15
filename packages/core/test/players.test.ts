@@ -29,6 +29,11 @@ describe('collectPlayerIds', () => {
     expect([...collectPlayerIds([season])].sort()).toEqual(['d1', 'd2']);
   });
 
+  it('includes players who only ever appear in transactions', () => {
+    const season = { weeks: [], draft: null, transactions: [{ adds: [{ playerId: 't1', userId: 'u' }], drops: [{ playerId: 't2', userId: 'u' }] }] } as unknown as Season;
+    expect([...collectPlayerIds([season])].sort()).toEqual(['t1', 't2']);
+  });
+
   it('gathers starters, bench and swap ids across seasons', () => {
     const season = {
       weeks: [{
