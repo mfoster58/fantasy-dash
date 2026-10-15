@@ -16,11 +16,28 @@ export const BENCH_RANKS: Record<string, number> = { QB: 14, RB: 40, WR: 40, TE:
 export const POSITION_WEIGHTS: Record<string, number> = { QB: 0.5 };
 
 /** e-folding length of the draft capital curve, in picks. */
-export const CAPITAL_DECAY = 45;
+export const CAPITAL_DECAY = 40;
 
-/** Draft capital of a pick slot: 100 at pick 1, ~27 at pick 60, ~3 at pick 160. */
+/** Draft capital of a pick slot: 100 at pick 1, ~23 at pick 60, ~2 at pick 160. */
 export function capital(pick: number): number {
   return 100 * Math.exp(-(pick - 1) / CAPITAL_DECAY);
+}
+
+/** The most capital an earned pick before 1 can add on top of pick 1's 100. */
+export const TOP_BONUS = 50;
+/** e-folding length, in picks before 1, over which TOP_BONUS is approached. */
+export const TOP_BONUS_DECAY = 25;
+
+/**
+ * Capital an earned pick is worth. On the board (pick >= 1) it is the slot's capital. Before pick 1 the capital
+ * stops compounding: it is 100 plus a bonus that approaches TOP_BONUS as the earned pick moves further ahead
+ * of 1, so a season that beats pick 1's expectation by a mile is worth at most 100 + TOP_BONUS. Off the board
+ * (null) is worth 0.
+ */
+export function earnedCapital(earnedPick: number | null): number {
+  if (earnedPick === null) return 0;
+  if (earnedPick >= 1) return capital(earnedPick);
+  return 100 + TOP_BONUS * (1 - Math.exp(-(1 - earnedPick) / TOP_BONUS_DECAY));
 }
 
 export function expectedAt(curve: ExpectedCurve, pick: number): number {
@@ -116,7 +133,8 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
  * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
  * scorers tie at N + 1. Contribution (weighted PoB floored at minus the weighted bench gap) is fitted against pick
  * number to give the season's expected curve; each pick's earned pick is that curve run backwards at its
- * contribution, and value is capital(earnedPick) minus capital(pickNo), with an off-the-board earned pick worth 0.
+ * contribution, and value is earnedCapital(earnedPick) minus capital(pickNo): capital at the earned pick, bounded at
+ * 100 + TOP_BONUS for earned picks before 1, 0 when off the board.
  * If the curve cannot be fitted the earned pick falls back to the redraft position. K, DEF and unknown positions
  * get null for every value field. Before the first scored week every value field is null.
  */
@@ -218,8 +236,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   const finished = base.map((p) => {
     if (p.contribution === null) return p;
     const earned = usable ? earnedPickFor(curve, p.contribution) : p.redraftPos;
-    const earnedCapital = earned === null ? 0 : capital(earned);
-    return { ...p, earnedPick: earned === null ? null : round1(earned), value: round1(earnedCapital - capital(p.pickNo)) };
+    return { ...p, earnedPick: earned === null ? null : round1(earned), value: round1(earnedCapital(earned) - capital(p.pickNo)) };
   });
   return { picks: finished, expectedCurve: curve, baselines };
 }

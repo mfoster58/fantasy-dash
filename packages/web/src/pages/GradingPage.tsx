@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import { BASELINE_RANKS, BENCH_RANKS, CAPITAL_DECAY, POSITION_WEIGHTS, capital, expectedAt, type Draft, type DraftPick, type Manager, type PlayerDirectory, type Season, type UserId } from '@fantasy-dash/core';
+import { BASELINE_RANKS, BENCH_RANKS, CAPITAL_DECAY, POSITION_WEIGHTS, TOP_BONUS, TOP_BONUS_DECAY, capital, earnedCapital, expectedAt, type Draft, type DraftPick, type Manager, type PlayerDirectory, type Season, type UserId } from '@fantasy-dash/core';
 import Headshot from '../components/Headshot';
 import PosPill from '../components/PosPill';
 import { fmtSigned } from '../lib/format';
@@ -86,10 +86,11 @@ function CurveChart({ draft, examples, players }: { draft: Draft; examples: Grad
 function CapitalChart({ draft }: { draft: Draft }) {
   const W = 720; const H = 220; const L = 44; const R = 16; const T = 16; const B = 24;
   const xMax = Math.max(160, ...draft.picks.map((p) => p.pickNo));
-  const yMax = capital(X_MIN) * 1.05;
+  const ceiling = 100 + TOP_BONUS;
+  const yMax = ceiling * 1.08;
   const x = (pick: number) => L + ((pick - X_MIN) / (xMax - X_MIN)) * (W - L - R);
   const y = (v: number) => T + ((yMax - v) / yMax) * (H - T - B);
-  const path = Array.from({ length: 120 }, (_, i) => X_MIN + (i / 119) * (xMax - X_MIN)).map((p, i) => `${i ? 'L' : 'M'}${x(p).toFixed(1)},${y(capital(p)).toFixed(1)}`).join(' ');
+  const path = Array.from({ length: 160 }, (_, i) => X_MIN + (i / 159) * (xMax - X_MIN)).map((p, i) => `${i ? 'L' : 'M'}${x(p).toFixed(1)},${y(earnedCapital(p)).toFixed(1)}`).join(' ');
   const yTicks = [0, 50, 100, 150, 200].filter((v) => v < yMax);
   const xTicks = [1, 20, 40, 60, 80, 100, 120, 140, 160].filter((v) => v <= xMax);
   const marks = [1, 30, 60, 130].filter((v) => v <= xMax);
@@ -102,6 +103,8 @@ function CapitalChart({ draft }: { draft: Draft }) {
       {shownTicks.map((v) => <text key={v} x={x(v)} y={H - B + 14} textAnchor="middle" fontSize={10} fill="var(--muted)" className="num">{v}</text>)}
       <text x={W - R} y={H - B + 14} textAnchor="end" fontSize={10} fill="var(--muted)">pick</text>
       <text transform={`translate(12 ${(T + H - B) / 2}) rotate(-90)`} textAnchor="middle" fontSize={10} fill="var(--muted)">draft capital</text>
+      <line x1={L} x2={x(1)} y1={y(ceiling)} y2={y(ceiling)} stroke="var(--muted)" strokeDasharray="3 3" />
+      <text x={L + 4} y={y(ceiling) - 4} fontSize={10} fill="var(--muted)" className="num">ceiling {ceiling}</text>
       <path d={path} fill="none" stroke="var(--ink)" strokeWidth={2} />
       {marks.map((v) => (
         <g key={v}>
@@ -115,14 +118,14 @@ function CapitalChart({ draft }: { draft: Draft }) {
 
 /** Capital spent against capital earned for each example, as paired bars; the difference is the value. */
 function ExampleBars({ examples, players }: { examples: GradingExample[]; players: PlayerDirectory }) {
-  const max = Math.max(100, ...examples.map(({ pick }) => Math.max(capital(pick.pickNo), pick.earnedPick === null ? 0 : capital(pick.earnedPick))));
+  const max = Math.max(100, ...examples.map(({ pick }) => Math.max(capital(pick.pickNo), earnedCapital(pick.earnedPick))));
   const pct = (v: number) => `${Math.max(0.5, (v / max) * 100).toFixed(1)}%`;
   return (
     <div className="space-y-2">
       {examples.map(({ key, pick }) => {
         const color = EXAMPLE_COLORS[key];
         const spent = capital(pick.pickNo);
-        const earned = pick.earnedPick === null ? 0 : capital(pick.earnedPick);
+        const earned = earnedCapital(pick.earnedPick);
         return (
           <div key={key} className="grid grid-cols-[9rem_minmax(0,1fr)_3.5rem] items-center gap-3 text-xs">
             <span className="truncate font-medium" style={{ color }}>{playerName(players, pick.playerId)}</span>
@@ -147,7 +150,7 @@ function ExampleTable({ examples, managers, teams, players }: { examples: Gradin
         </thead>
         <tbody>
           {examples.map(({ key, label, pick: p }) => {
-            const earned = p.earnedPick === null ? 0 : capital(p.earnedPick);
+            const earned = earnedCapital(p.earnedPick);
             return (
               <tr key={key} className="border-t border-line">
                 <td className="py-2 pr-3"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: EXAMPLE_COLORS[key] }} />{label}</td>
@@ -237,7 +240,8 @@ export function GradingGuide({ season, players }: { season: Season; players: Pla
       </Step>
 
       <Step n={4} title="Capital earned minus capital spent">
-        <p>Picks are priced on a trade-value curve: pick 1 is worth 100 and the value halves every {halfLife} picks, so pick 30 is about {capital(30).toFixed(0)}, pick 60 about {capital(60).toFixed(0)} and pick 130 about {capital(130).toFixed(0)}. Earned picks before 1 keep climbing the same curve. Off the board is worth 0.</p>
+        <p>Picks are priced on a trade-value curve: pick 1 is worth 100 and the value halves every {halfLife} picks, so pick 30 is about {capital(30).toFixed(0)}, pick 60 about {capital(60).toFixed(0)} and pick 130 about {capital(130).toFixed(0)}. Off the board is worth 0.</p>
+        <p>An earned pick before 1 does not keep compounding. Pick 1 is worth 100, and beating what pick 1 usually returns adds a bonus that approaches a ceiling of {TOP_BONUS} the further ahead the player lands (about {Math.round(TOP_BONUS * (1 - 1 / Math.E))} of it by {TOP_BONUS_DECAY} picks before 1). A monster season is worth at most {100 + TOP_BONUS}; it does not make one pick worth three first-rounders.</p>
         <p><strong>Value = capital at the earned pick − capital at the pick spent.</strong> The most you can lose is what you spent, so a round 13 whiff costs about {capital(teams * 12 + 1).toFixed(0)} while a round 1 whiff costs most of 100. Hits are judged on production, so a late pick that hits is worth the whole gap.</p>
         <CapitalChart draft={draft} />
         <ExampleBars examples={examples} players={players} />

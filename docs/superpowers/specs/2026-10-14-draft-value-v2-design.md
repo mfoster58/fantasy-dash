@@ -1,7 +1,7 @@
 # Draft value v2: production on one capital scale
 
 **Date:** 2026-10-14
-**Status:** approved by the user in conversation; supersedes the draft value method in the Phase 4 plan. Revised 2026-10-15: the two-part slot + production sum was replaced by a single capital-scale value (see *Earned pick* and *Value*).
+**Status:** approved by the user in conversation; supersedes the draft value method in the Phase 4 plan. Revised 2026-10-15: the two-part slot + production sum was replaced by a single capital-scale value (see *Earned pick* and *Value*). Revised again the same day: capital for earned picks before 1 is bounded (see *Value*) and the capital decay was steepened from 45 to 40.
 
 ## Why
 
@@ -41,9 +41,13 @@ Run the curve backwards for each pick: `earnedPick = 1 − k · ln((contribution
 
 ### Value
 
-`capital(pick) = 100 · exp(−(pick − 1) / 45)`; capital keeps rising on the same curve for earned picks before 1 (pick −27 ≈ 186). Off the board is worth 0.
+`capital(pick) = 100 · exp(−(pick − 1) / 40)` (pick 30 ≈ 48, pick 60 ≈ 23, pick 130 ≈ 4).
 
-`value = capital(earnedPick) − capital(pickNo)`, rounded to 1 decimal. Positive is good. The most a pick can lose is the capital spent on it (round 1 whiff ≈ −85 to −100, round 13 dart ≈ −5); hits are judged on production, so a late pick that hits is worth the whole gap, and a dominant early pick scores positive from pick 1.
+`earnedCapital(earnedPick)`: for an earned pick ≥ 1 it is `capital(earnedPick)`. For an earned pick before 1 the capital stops compounding: `100 + 50 · (1 − exp(−(1 − earnedPick) / 25))`, so beating pick 1's expectation adds a bonus that approaches a ceiling of 50 (about 32 of it by 25 picks before 1, 150 total at the limit). Off the board is worth 0.
+
+Why bounded: the fitted curve's top is low because first-round picks bust often (2023: pick 1 expected only 61 over baseline, and 18 players beat it), so "before pick 1" is common. Left on the exponential, McCaffrey 2023 (contribution 214, earned pick −45) was worth 278 capital and +181 value, ahead of every late-round steal; the user's intuition was that a 24-ppg season at pick 2 is a good pick, not three first-rounders, and that Mostert in round 15 or Kamara and Evans in round 9 are the real league winners. With the ceiling McCaffrey is +45 and those three are +117, +80 and +95. The decay was steepened at the same time so mid and late hits (Pickens 2025, pick 58: +68 → +72; Walker 2026: +72) net a little more while early busts barely move.
+
+`value = earnedCapital(earnedPick) − capital(pickNo)`, rounded to 1 decimal. Positive is good. The most a pick can lose is the capital spent on it (round 1 whiff ≈ −85 to −100, round 13 dart ≈ −5); hits are judged on production, so a late pick that hits is worth the whole gap, and a dominant early pick scores positive from pick 1 (at most +50 at pick 1).
 
 `redraftPos` is kept as a display statistic only and no longer enters the value.
 
@@ -53,15 +57,15 @@ If `lastScoredWeek` is 0 (draft done, no games played) every value field, includ
 
 | Player | Pick | Contribution | Earned pick | Value |
 |---|---|---|---|---|
-| Kenneth Walker | 23 | +87.5 | −21.6 | +103.8 |
-| Javonte Williams | 96 | +45.9 | −1.4 | +93.4 |
-| Jahmyr Gibbs | 1 | +103.6 | −27.0 | +86.4 |
-| Jaxon Smith-Njigba | 18 | +77.4 | −17.6 | +82.7 |
-| Justin Jefferson | 7 | +1.5 | 60.8 | −61.0 |
-| Saquon Barkley | 11 | −17.0 | off board | −80.1 |
-| De'Von Achane | 8 | −17.0 | off board | −85.6 |
+| Javonte Williams | 96 | +45.9 | −1.4 | +95 |
+| Chuba Hubbard | 68 | +48.7 | −3.2 | +89 |
+| Kenneth Walker | 23 | +87.5 | −21.6 | +72 |
+| Jaxon Smith-Njigba | 18 | +77.4 | −17.6 | +61 |
+| Jahmyr Gibbs | 1 | +103.6 | −27.0 | +34 |
+| Justin Jefferson | 7 | +1.5 | 60.8 | −64 |
+| De'Von Achane | 8 | −17.0 | off board | −84 |
 
-Manager totals run +190 to −202 (previously +169 to −338); 2025 final runs +192 to −162 (previously +340 to −458).
+Historical anchors: McCaffrey 2023 (pick 2) +45, Mostert 2023 (pick 143) +117, Evans 2023 (pick 84) +95, Kamara 2023 (pick 85) +80, Pickens 2025 (pick 58) +72. 2026 manager totals run about +183 to −191; 2025 final about +188 to −144.
 
 ### Games played, PPG, healthy
 
@@ -87,7 +91,7 @@ interface DraftPick {
   redraftPos: number | null;          // display only
   contribution: number | null;        // weighted PoB floored at bench level
   earnedPick: number | null;          // null = off the board
-  value: number | null;               // capital(earnedPick) − capital(pickNo)
+  value: number | null;               // earnedCapital(earnedPick) − capital(pickNo)
   tradedTo: { userId: UserId; week: number } | null;
 }
 ```
@@ -107,7 +111,7 @@ interface DraftPick {
 ### Analysis
 
 - **Draft grades card**: ranked list (rank badge, avatar, name, bar, total, letter) with the subline `X of Y picks beat their slot · +hits · −misses`. No methodology paragraph; the header carries a "How grading works" link to `/draft/grading`.
-- **Grading page** (`/draft/grading`, `GradingPage.tsx`): walks the method through the latest completed season with a draft. Sections: one-sentence idea; step 1 production over replacement (that season's baseline/bench table from `draft.baselines`, QB weight, K/DEF, bye note); step 2 the expectation curve (SVG scatter of contribution vs pick with the fitted curve, the floor, a shaded "better than pick 1" region, and five highlighted examples with their earned picks traced); step 3 earned pick; step 4 capital (SVG capital curve with reference picks, paired spent/earned bars per example, and a worked table: pick, capital spent, contribution, earned pick, capital earned, value); step 5 from picks to grades (that season's totals and letters); fine print. Examples come from `lib/grading.ts` `gradingExamples`: most productive player, biggest steal after pick 50, biggest bust, best late dart (after round 9), a late dart (after round 11) that is off the board.
+- **Grading page** (`/draft/grading`, `GradingPage.tsx`): walks the method through the latest completed season with a draft. Sections: one-sentence idea; step 1 production over replacement (that season's baseline/bench table from `draft.baselines`, QB weight, K/DEF, bye note); step 2 the expectation curve (SVG scatter of contribution vs pick with the fitted curve, the floor, a shaded "better than pick 1" region, and five highlighted examples with their earned picks traced); step 3 earned pick; step 4 capital (SVG capital curve with reference picks and the dashed 150 ceiling before pick 1, paired spent/earned bars per example, and a worked table: pick, capital spent, contribution, earned pick, capital earned, value); step 5 from picks to grades (that season's totals and letters); fine print. Examples come from `lib/grading.ts` `gradingExamples`: most productive player, biggest steal after pick 50, biggest bust, best late dart (after round 9), a late dart (after round 11) that is off the board.
 - **Steals and busts**: 10 each, by `value`. The pick line shows `pick N → redraft P · pick N · manager` and the total value, with PoB as the small trailing number.
 - **Top PPG (healthy)**: new card under the analysis grid. Top 10 picks by `ppg` among picks with `healthy === true` and a non-null value. Columns: Player (headshot, name, pos pill, team), Pick, Manager, G, PPG. Label "Top PPG (healthy)" with the in-season "(to date)" suffix. Footnote: "Healthy means the player has played every game their team has played."
 
