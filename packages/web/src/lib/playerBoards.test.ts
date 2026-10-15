@@ -5,7 +5,7 @@ import {
   BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, championshipRosters, championsOf, weeksStarted,
   boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
   draftValue, draftValuesOf, leadFpoe, leadPassTd, leadPassYards, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
-  lastPlaceRosters, lastPlacesOf, leadTouches, minGames,
+  lastPlaceRosters, lastPlacesOf, leadTouches, minGames, bestPlayoffStarts, worstToiletStarts,
   type BoardContext,
 } from './playerBoards';
 import type { XfpModel } from './xfp';
@@ -280,7 +280,7 @@ describe('BOARDS registry v2 order', () => {
   it('lays out leaders in grid order, touches in place of PPG, last place beside the toilet bowl', () => {
     expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
     expect(ids('career')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted', 'benchBlunder']);
-    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'championshipRosters', 'postToiletBowl', 'lastPlaceRosters']);
+    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'championshipRosters', 'postToiletBowl', 'worstToiletStarts', 'lastPlaceRosters']);
     expect(ids('extras')).toEqual(['boomStarts', 'dudStarts', 'journeyman', 'draftValue']);
     expect(BOARDS.find((b) => b.id === 'leadFpoe')!.sortable).toBe(true);
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
@@ -357,5 +357,27 @@ describe('per-game modes and tone', () => {
     expect(def('leadTouches').empty!({ ...ctx, year: 2025 }, 'both', 'pg')).toBe('No players with 3 games yet.');
     expect(def('careerPoints').empty!({ ...ctx, year: null }, 'ppg')).toBe('No players with 12 games yet.');
     expect(def('postPoints').empty!(ctx, 'ppg')).toBe('No players with 3 games yet.');
+  });
+});
+
+describe('postseason moments', () => {
+  const bracket = season(2023, [
+    week(3, [game(2023, 3, 1, side('a', 20, [line('q1', 20)]), side('b', 10, [line('r1', 10)]), 'SF'),
+             game(2023, 3, 2, side('c', 9, [line('w1', 9)]), side('d', 1, [line('t1', 1)]), 'Cons-R1')], true),
+    week(4, [game(2023, 4, 1, side('a', 33, [line('q1', 33)]), side('b', 12, [line('r1', 12)]), 'Final'),
+             game(2023, 4, 2, side('c', 2, [line('w1', 2)]), side('d', 0, [line('t1', 0, {}), line('k1', 0.5)]), 'Toilet Bowl')], true),
+  ]);
+  const c = { ...ctx, lines: flattenLines([bracket], players) };
+  it('best playoff starts rank bracket starts, Final only on request', () => {
+    expect(bestPlayoffStarts(c).map((r) => [r.playerId, r.value, r.meta, r.to])).toEqual([
+      ['q1', 33, '2023 · Wk 4 · Championship', '/scores/2023/4/1'], ['q1', 20, '2023 · Wk 3 · Semifinal', '/scores/2023/3/1'], ['r1', 12, '2023 · Wk 4 · Championship', '/scores/2023/4/1'], ['r1', 10, '2023 · Wk 3 · Semifinal', '/scores/2023/3/1'],
+    ]);
+    expect(bestPlayoffStarts(c, 'desc', 'final').map((r) => [r.playerId, r.value])).toEqual([['q1', 33], ['r1', 12]]);
+  });
+  it('worst toilet bowl starts rank played consolation starts lowest first, Toilet Bowl only on request', () => {
+    expect(worstToiletStarts(c).map((r) => [r.playerId, r.value, r.meta])).toEqual([
+      ['k1', 0.5, '2023 · Wk 4 · Toilet Bowl'], ['t1', 1, '2023 · Wk 3 · Consolation'], ['w1', 2, '2023 · Wk 4 · Toilet Bowl'], ['w1', 9, '2023 · Wk 3 · Consolation'],
+    ]); // t1's 0 in the toilet bowl is unplayed and excluded
+    expect(worstToiletStarts(c, 'desc', 'toilet').map((r) => r.playerId)).toEqual(['k1', 'w1']);
   });
 });

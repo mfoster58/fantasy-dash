@@ -36,7 +36,7 @@ describe('PlayersView', () => {
     expect(screen.getByText(/through 2025 week 1/i)).toBeInTheDocument();
     for (const h of ['League leaders', 'Career', 'Postseason', 'Extras']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
     // board titles are h3 headings; plain getByText would collide with value headers like "PPG"
-    for (const t of ['Rushing yards', 'Passing TDs', 'Most touches', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Most last place rosters', 'Average draft value']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    for (const t of ['Rushing yards', 'Passing TDs', 'Most touches', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Most last place rosters', 'Best playoff starts', 'Worst toilet bowl starts', 'Average draft value']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'PPG' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Career PPG' })).toBeNull();
     expect(within(region('Postseason')).getByText('Most championship rosters')).toBeInTheDocument();

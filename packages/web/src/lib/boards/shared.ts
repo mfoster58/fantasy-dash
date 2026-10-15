@@ -151,9 +151,9 @@ export function groupBy(lines: PlayerLine[], keyOf: (l: PlayerLine) => string): 
 }
 
 /** One row per line (a "moment"). */
-export function momentBoard(lines: PlayerLine[], value: (l: PlayerLine) => number, label: (v: number) => string): BoardRow[] {
+export function momentBoard(lines: PlayerLine[], value: (l: PlayerLine) => number, label: (v: number) => string, direction: Direction = 'desc'): BoardRow[] {
   const items = lines.map((l) => ({ ...l, value: value(l), latestYear: l.year, latestWeek: l.week }));
-  return rank(items).map((l) => ({
+  return rank(items, direction).map((l) => ({
     key: `${l.gameId}-${l.playerId}`, playerId: l.playerId, value: l.value, valueLabel: label(l.value),
     meta: when(l), detail: null, userId: l.userId, to: boxScore(l),
   }));

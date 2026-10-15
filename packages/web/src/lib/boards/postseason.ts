@@ -1,8 +1,8 @@
 import type { UserId } from '@fantasy-dash/core';
 import { fmtPts } from '../format';
 import type { PlayerLine } from '../playerLines';
-import type { Direction, BoardContext, BoardRow } from './shared';
-import { MIN_POST_GAMES, careerBoard, intLabel, plural, pointsBoard, round2, started, sum, yearsOf } from './shared';
+import type { BoardMode, Direction, BoardContext, BoardRow } from './shared';
+import { MIN_POST_GAMES, careerBoard, intLabel, momentBoard, plural, pointsBoard, round2, started, sum, yearsOf } from './shared';
 
 export const postseasonStarted = (ctx: BoardContext) => started(ctx).filter((l) => l.postseason);
 
@@ -33,3 +33,10 @@ export const lastPlaceRosters = (ctx: BoardContext): BoardRow[] => rosterSeasons
 
 export const postToiletBowl = (ctx: BoardContext): BoardRow[] =>
   careerBoard(started(ctx).filter((l) => l.consolation), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`, yearsOf);
+
+export const PLAYOFF_MODES: readonly BoardMode[] = [{ id: 'all', label: 'All rounds', valueHeader: 'Pts' }, { id: 'final', label: 'Final', valueHeader: 'Pts' }];
+export const CONSOLATION_MODES: readonly BoardMode[] = [{ id: 'all', label: 'All consolation', valueHeader: 'Pts' }, { id: 'toilet', label: 'Toilet Bowl', valueHeader: 'Pts' }];
+export const bestPlayoffStarts = (ctx: BoardContext, _d?: Direction, mode?: string): BoardRow[] =>
+  momentBoard(postseasonStarted(ctx).filter((l) => mode !== 'final' || l.tag === 'Final'), (l) => l.points, fmtPts);
+export const worstToiletStarts = (ctx: BoardContext, _d?: Direction, mode?: string): BoardRow[] =>
+  momentBoard(started(ctx).filter((l) => l.consolation && l.played && (mode !== 'toilet' || l.tag === 'Toilet Bowl')), (l) => l.points, fmtPts, 'asc');
