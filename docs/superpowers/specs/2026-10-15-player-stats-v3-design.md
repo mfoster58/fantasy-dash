@@ -46,8 +46,8 @@ export interface PlayerSeasonLine {
 // Season.playerSeasons: Record<PlayerId, PlayerSeasonLine>
 ```
 
-- Built in `buildSeason` from `playerSeasonPoints` and `playerGames` (already in `RawSeasonInput`), position from the directory with the same override used for draft grading.
-- `posRank` ties: equal points share the higher rank by `playerId` asc (deterministic).
+- Built in `buildSeason` from `playerSeasonPoints` and `playerGames` (already in `RawSeasonInput`), position from the directory with the same override used for draft grading. Ranks are computed over every NFL player; the sync then trims each season's `playerSeasons` to the ids kept in `players.json` (players ever rostered or drafted in the league) so the files stay small and every row has a name.
+- `posRank` ties: equal points are ordered by `playerId` asc (deterministic, no shared ranks).
 - Zod schema and `Season` type gain the field.
 
 ### Re-sync
