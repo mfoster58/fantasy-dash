@@ -238,12 +238,21 @@ export interface AllTimeRow {
   playoffApps: number; playoffWins: number; toiletBowls: number;
 }
 
+/** A draft pick remembered across seasons. */
+export interface HistoryDraftPick extends DraftPick {
+  year: number;
+  /** teams in that draft, for round.pick labels */
+  teams: number;
+}
+
 export interface History {
   /** oldest first */
   seasons: HistorySeason[];
   managers: Record<UserId, { displayName: string; avatar: string | null; seasons: number[] }>;
   h2h: Record<string, H2HSeries>;
   allTime: AllTimeRow[];
+  /** best draft picks by value across completed seasons, best first */
+  topDraftValues: HistoryDraftPick[];
 }
 
 /** Stable key for a pair of managers: lexicographically smaller id first. */

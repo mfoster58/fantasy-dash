@@ -36,6 +36,7 @@ export default function DraftPage() {
         draft={season.draft} managers={season.managers} players={players} inSeason={inSeason}
         selected={selected ?? season.draft.slotOrder[0]}
         onSelect={(u) => { setSelected(u); setHighlight(u); }}
+        history={history}
       />
     </section>
   );

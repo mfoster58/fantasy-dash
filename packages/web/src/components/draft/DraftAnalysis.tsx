@@ -1,4 +1,4 @@
-import type { Draft, DraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, DraftPick, History, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
@@ -6,13 +6,13 @@ import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos } from '../../lib/players';
 import { leagueExtremes, letterGrade, managerDraftSummaries, pickLabel } from '../../lib/draft';
 import TeamDraft from './TeamDraft';
-import TopPpg from './TopPpg';
+import TopDraftValues from './TopDraftValues';
 
 export const signClass = (n: number | null, fallback = 'text-muted') => (n === null || n === 0 ? fallback : n > 0 ? 'text-win' : 'text-loss');
 
 interface Props {
   draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean;
-  selected: UserId; onSelect: (userId: UserId) => void;
+  selected: UserId; onSelect: (userId: UserId) => void; history: History;
 }
 
 /** Card header in the style "small label / bold title". */
@@ -42,7 +42,7 @@ export function PickLine({ p, players, managers, teams }: { p: DraftPick; player
   );
 }
 
-export default function DraftAnalysis({ draft, managers, players, inSeason, selected, onSelect }: Props) {
+export default function DraftAnalysis({ draft, managers, players, inSeason, selected, onSelect, history }: Props) {
   const summaries = managerDraftSummaries(draft);
   const teams = draft.slotOrder.length;
   const { steals, busts } = leagueExtremes(draft, 10);
@@ -94,7 +94,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="card"><CardHeader label={`Best ten${note}`} title="The steals" /><ul className="divide-y divide-line px-4">{steals.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
         <div className="card"><CardHeader label={`Worst ten${note}`} title="The ones that hurt" /><ul className="divide-y divide-line px-4">{busts.map((p) => <PickLine key={p.pickNo} p={p} players={players} managers={managers} teams={teams} />)}</ul></div>
-        <TopPpg draft={draft} managers={managers} players={players} inSeason={inSeason} />
+        <TopDraftValues history={history} players={players} />
       </div>
     </div>
   );
