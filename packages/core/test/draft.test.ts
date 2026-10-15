@@ -222,10 +222,10 @@ describe('tradesFromTransactions', () => {
 });
 
 describe('capital', () => {
-  it('is 100 at pick 1 and decays with e-folding of 40 picks', () => {
+  it('is 100 at pick 1 and decays with e-folding of 35 picks', () => {
     expect(capital(1)).toBe(100);
-    expect(capital(41)).toBeCloseTo(100 / Math.E, 6);
-    expect(capital(160)).toBeCloseTo(1.88, 2);
+    expect(capital(36)).toBeCloseTo(100 / Math.E, 6);
+    expect(capital(160)).toBeCloseTo(1.06, 2);
   });
 });
 

@@ -16,9 +16,9 @@ export const BENCH_RANKS: Record<string, number> = { QB: 14, RB: 40, WR: 40, TE:
 export const POSITION_WEIGHTS: Record<string, number> = { QB: 0.5 };
 
 /** e-folding length of the draft capital curve, in picks. */
-export const CAPITAL_DECAY = 40;
+export const CAPITAL_DECAY = 35;
 
-/** Draft capital of a pick slot: 100 at pick 1, ~23 at pick 60, ~2 at pick 160. */
+/** Draft capital of a pick slot: 100 at pick 1, ~19 at pick 60, ~1 at pick 160. */
 export function capital(pick: number): number {
   return 100 * Math.exp(-(pick - 1) / CAPITAL_DECAY);
 }
