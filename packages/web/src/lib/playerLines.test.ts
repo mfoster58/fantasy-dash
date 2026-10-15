@@ -16,7 +16,8 @@ describe('flattenLines', () => {
     const q1 = lines.find((l) => l.playerId === 'q1' && l.week === 1)!;
     expect(q1).toEqual({
       playerId: 'q1', userId: 'a', year: 2025, week: 1, gameId: '2025-1-1', matchupId: 1, tag: null, started: true,
-      points: 30, yards: 310, touchdowns: 2, receptions: 0, played: true, postseason: false, position: 'QB',
+      points: 30, yards: 310, touchdowns: 2, receptions: 0, played: true, postseason: false, consolation: false, position: 'QB',
+      targets: 0, carries: 0, passAttempts: 0, rushYards: 10, recYards: 0, passYards: 300, rushTd: 0, recTd: 0, passTd: 2,
     });
     const r1 = lines.find((l) => l.playerId === 'r1')!;
     expect(r1).toMatchObject({ started: false, yards: 120, touchdowns: 1, receptions: 4, played: true });
@@ -29,6 +30,26 @@ describe('flattenLines', () => {
 
   it('does not count defensive touchdowns as touchdowns', () => {
     expect(lines.find((l) => l.playerId === 'KC')!.touchdowns).toBe(0);
+  });
+
+  it('carries raw opportunity and split fields, zero when absent', () => {
+    const q1 = lines.find((l) => l.playerId === 'q1' && l.week === 1)!;
+    expect(q1).toMatchObject({ targets: 0, carries: 0, passAttempts: 0, rushYards: 10, recYards: 0, passYards: 300, rushTd: 0, recTd: 0, passTd: 2 });
+    const rich = flattenLines([season(2025, [week(1, [game(2025, 1, 1,
+      side('a', 30, [line('r1', 30, { rec_tgt: 7, rec: 5, rush_att: 12, rush_yd: 70, rec_yd: 40, rush_td: 1, rec_td: 1, pass_att: 1 })]),
+      side('b', 0, [line('t1', 0, {})]))])])], players);
+    expect(rich.find((l) => l.playerId === 'r1')).toMatchObject({ targets: 7, carries: 12, passAttempts: 1, rushYards: 70, recYards: 40, passYards: 0, rushTd: 1, recTd: 1, passTd: 0, yards: 110, touchdowns: 2 });
+  });
+
+  it('flags consolation games and not championship-bracket ones', () => {
+    expect(lines.find((l) => l.week === 4 && l.playerId === 't1')!.consolation).toBe(true);   // Toilet Bowl
+    expect(lines.find((l) => l.week === 3 && l.playerId === 'q1')!.consolation).toBe(false);  // Final
+    const cons = flattenLines([season(2025, [
+      week(3, [game(2025, 3, 1, side('a', 1, [line('q1', 1)]), side('b', 0, [line('r1', 0)]), 'Cons-R1')], true),
+      week(4, [game(2025, 4, 1, side('a', 1, [line('w1', 1)]), side('b', 0, [line('t1', 0)]), 'Cons-7th')], true),
+    ])], players);
+    expect(cons.every((l) => l.consolation)).toBe(true);
+    expect(cons.every((l) => !l.postseason)).toBe(true);
   });
 
   it('flags championship-bracket games as postseason and consolation games as not', () => {

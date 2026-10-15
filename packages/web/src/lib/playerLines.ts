@@ -24,11 +24,23 @@ export interface PlayerLine {
   played: boolean;
   /** championship bracket only */
   postseason: boolean;
+  /** consolation bracket: Cons-R1, Toilet Bowl, Cons-7th */
+  consolation: boolean;
   /** from the player directory; '?' when unknown */
   position: string;
+  targets: number;
+  carries: number;
+  passAttempts: number;
+  rushYards: number;
+  recYards: number;
+  passYards: number;
+  rushTd: number;
+  recTd: number;
+  passTd: number;
 }
 
 export const POSTSEASON_TAGS: ReadonlySet<string> = new Set(['QF', 'SF', 'Final', '3rd', '5th']);
+export const CONSOLATION_TAGS: ReadonlySet<string> = new Set(['Cons-R1', 'Toilet Bowl', 'Cons-7th']);
 
 const n = (stats: Record<string, number>, key: string) => stats[key] ?? 0;
 
@@ -39,6 +51,7 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
       if (!wk.played) continue;
       for (const g of wk.games) {
         const postseason = g.tag !== null && POSTSEASON_TAGS.has(g.tag);
+        const consolation = g.tag !== null && CONSOLATION_TAGS.has(g.tag);
         for (const sideOf of g.sides) {
           const push = (p: CoreLine, started: boolean) => {
             const st = p.stats ?? {};
@@ -48,8 +61,12 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
               yards: n(st, 'pass_yd') + n(st, 'rush_yd') + n(st, 'rec_yd'),
               touchdowns: n(st, 'pass_td') + n(st, 'rush_td') + n(st, 'rec_td'),
               receptions: n(st, 'rec'),
+              targets: n(st, 'rec_tgt'), carries: n(st, 'rush_att'), passAttempts: n(st, 'pass_att'),
+              rushYards: n(st, 'rush_yd'), recYards: n(st, 'rec_yd'), passYards: n(st, 'pass_yd'),
+              rushTd: n(st, 'rush_td'), recTd: n(st, 'rec_td'), passTd: n(st, 'pass_td'),
               played: Object.keys(st).length > 0,
               postseason,
+              consolation,
               position: players[p.playerId]?.position ?? '?',
             });
           };
