@@ -29,7 +29,7 @@ export default function DraftPage() {
         </div>
       </header>
       <p className="text-xs text-muted">
-        {season.draft.rounds} rounds · {season.draft.type} · click a manager to highlight their picks and see their team below · hover a pick for details{inSeason ? ' · values are to date' : ''} · <Link to={`/history/${season.year}`} className="text-accent hover:underline">season review</Link>
+        {season.draft.rounds} rounds · {season.draft.type} · click any pick to highlight that manager's column and see their team below · hover a pick for details{inSeason ? ' · values are to date' : ''} · <Link to={`/history/${season.year}`} className="text-accent hover:underline">season review</Link>
       </p>
       <DraftBoard draft={season.draft} managers={season.managers} players={players} mode={mode} highlight={highlight} onHighlight={(u) => { setHighlight(u); if (u) setSelected(u); }} inSeason={inSeason} />
       <DraftAnalysis
