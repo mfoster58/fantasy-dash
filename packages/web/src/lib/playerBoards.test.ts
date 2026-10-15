@@ -291,7 +291,7 @@ describe('BOARDS registry v2 order', () => {
     for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
     expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
     expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Average draft value');
-    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'bestSeason', 'careerPoints', 'postPoints']);
+    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'bestSeason', 'careerPoints', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
   });
 });
 
