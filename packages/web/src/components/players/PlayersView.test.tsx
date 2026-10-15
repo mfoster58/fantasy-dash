@@ -10,60 +10,72 @@ const managers: History['managers'] = {
 };
 const seasons = [
   season(2024, [
-    week(1, [game(2024, 1, 1, side('a', 60, [line('q1', 40), line('r1', 20)]), side('b', 30, [line('w1', 10), line('t1', 20)]))]),
+    week(1, [game(2024, 1, 1, side('a', 60, [line('q1', 40, { pass_yd: 250 }), line('r1', 20, { rush_yd: 80 })]), side('b', 30, [line('w1', 10), line('t1', 20)]))]),
     week(3, [game(2024, 3, 1, side('a', 31, [line('q1', 31)], [line('t1', 3)]), side('b', 7, [line('r1', 7)]), 'Final')], true),
   ], 'a'),
   season(2025, [
     week(1, [game(2025, 1, 1, side('b', 35, [line('q1', 35, { pass_yd: 300, pass_td: 3 })]), side('a', 9, [line('r1', 9, { rush_yd: 40 })]))]),
   ], null, 1),
 ];
+const years = [2024, 2025];
 
 function LocationProbe() { const loc = useLocation(); return <output data-testid="loc">{loc.search}</output>; }
-const mount = (initial = '/players') => render(
+const mount = (initial = '/players', currentYear = 2025, lastScoredWeek = 1) => render(
   <MemoryRouter initialEntries={[initial]}>
     <Routes>
-      <Route path="/players" element={<><PlayersView seasons={seasons} players={players} managers={managers} currentYear={2025} lastScoredWeek={1} /><LocationProbe /></>} />
+      <Route path="/players" element={<><PlayersView seasons={seasons} players={players} managers={managers} years={years} currentYear={currentYear} lastScoredWeek={lastScoredWeek} /><LocationProbe /></>} />
     </Routes>
   </MemoryRouter>,
 );
+const region = (name: string) => screen.getByRole('region', { name });
+const firstRow = (boardTitle: string) => within(region(boardTitle)).getAllByRole('listitem')[0];
 
 describe('PlayersView', () => {
-  it('renders the four sections with every board and the through-week line', () => {
+  it('renders the four sections, every board, and the through-week line', () => {
     mount();
     expect(screen.getByText(/through 2025 week 1/i)).toBeInTheDocument();
     for (const h of ['League leaders', 'All-time', 'Postseason', 'Extras']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
-    expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
-    expect(screen.getByText('Most postseason receptions')).toBeInTheDocument();
-    expect(screen.getByText('Journeyman')).toBeInTheDocument();
-    expect(screen.getByText('Most yards')).toBeInTheDocument();
+    // board titles are h3 headings; plain getByText would collide with value headers like "PPG"
+    for (const t of ['Rushing yards', 'Passing TDs', 'PPG', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Cumulative draft value']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    expect(within(region('Postseason')).getByText('Most championship rosters')).toBeInTheDocument();
+    expect(within(region('All-time')).queryByText('Most championship rosters')).toBeNull();
   });
 
-  it('filters every board by position and writes the choice to the URL', () => {
+  it('filters one section at a time and writes each to its own URL parameter', () => {
     mount();
-    const best = screen.getByRole('region', { name: 'Best week by a starter' });
-    expect(within(best).getAllByRole('listitem')[0]).toHaveTextContent('Quincy One');
-    fireEvent.click(screen.getByRole('button', { name: 'RB' }));
-    expect(screen.getByTestId('loc')).toHaveTextContent('?pos=RB');
-    expect(within(screen.getByRole('region', { name: 'Best week by a starter' })).getAllByRole('listitem')[0]).toHaveTextContent('Ricky One');
-    expect(within(screen.getByRole('region', { name: 'Most yards' })).getAllByRole('listitem')[0]).toHaveTextContent('Ricky One');
-    fireEvent.click(screen.getByRole('button', { name: 'All' }));
-    expect(screen.getByTestId('loc')).toHaveTextContent('');
+    expect(firstRow('Best week by a starter')).toHaveTextContent('Quincy One');
+    fireEvent.click(within(region('All-time')).getByRole('button', { name: 'RB' }));
+    expect(screen.getByTestId('loc')).toHaveTextContent('?all=RB');
+    expect(firstRow('Best week by a starter')).toHaveTextContent('Ricky One');
+    expect(firstRow('Most points')).toHaveTextContent('Quincy One'); // leaders untouched
+    fireEvent.click(within(region('League leaders')).getByRole('button', { name: 'RB' }));
+    expect(screen.getByTestId('loc').textContent).toContain('lead=RB');
+    expect(screen.getByTestId('loc').textContent).toContain('all=RB');
+    expect(firstRow('Most points')).toHaveTextContent('Ricky One');
+    fireEvent.click(within(region('All-time')).getByRole('button', { name: 'All' }));
+    expect(screen.getByTestId('loc').textContent).not.toContain('all=');
   });
 
-  it('reads the position from the URL and falls back to All for junk', () => {
-    mount('/players?pos=QB');
-    expect(screen.getByRole('button', { name: 'QB' })).toHaveAttribute('aria-pressed', 'true');
-    mount('/players?pos=XYZ');
-    expect(screen.getAllByRole('button', { name: 'All' }).at(-1)).toHaveAttribute('aria-pressed', 'true');
+  it('switches the leaders season from the picker and the URL', () => {
+    mount();
+    expect(firstRow('Most points')).toHaveTextContent('35.00');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '2024' } });
+    expect(screen.getByTestId('loc')).toHaveTextContent('season=2024');
+    expect(firstRow('Most points')).toHaveTextContent('71.00'); // q1 40 + 31 in 2024
+    expect(firstRow('Best week by a starter')).toHaveTextContent('40.00'); // all-time unaffected by the season picker
   });
 
-  it('says the season has not started when the current year has no lines', () => {
-    render(
-      <MemoryRouter>
-        <PlayersView seasons={seasons} players={players} managers={managers} currentYear={2026} lastScoredWeek={0} />
-      </MemoryRouter>,
-    );
+  it('falls back for junk parameters', () => {
+    mount('/players?all=XYZ&season=1999&lead=rb');
+    expect(within(region('All-time')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(region('League leaders')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('combobox')).toHaveValue('2025');
+  });
+
+  it('shows the not-started message for a season with no lines and keeps the other sections', () => {
+    mount('/players', 2026, 0);
     expect(screen.getByText('Season has not started.')).toBeInTheDocument();
     expect(screen.queryByText('Most yards')).toBeNull();
+    expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
   });
 });
