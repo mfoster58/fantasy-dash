@@ -9,6 +9,7 @@ export const links: { to: string; label: string }[] = [
   { to: '/h2h', label: 'Head to Head' },
   { to: '/all-time', label: 'All-Time' },
   { to: '/history', label: 'History' },
+  { to: '/players', label: 'Player stats' },
   { to: '/draft', label: 'Draft' },
 ];
 

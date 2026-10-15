@@ -26,4 +26,9 @@ describe('Nav', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('links to the player stats tab', () => {
+    render(<MemoryRouter><Nav /></MemoryRouter>);
+    expect(screen.getAllByRole('link', { name: 'Player stats' })[0]).toHaveAttribute('href', '/players');
+  });
 });

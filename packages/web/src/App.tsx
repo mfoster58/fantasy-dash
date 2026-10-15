@@ -9,6 +9,7 @@ import H2HPage from './pages/H2HPage';
 import HistoryPage from './pages/HistoryPage';
 import SeasonReviewPage from './pages/SeasonReviewPage';
 import DraftPage from './pages/DraftPage';
+import PlayersPage from './pages/PlayersPage';
 import { currentSeason, loadAllSeasons, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
@@ -54,6 +55,7 @@ export const router = createBrowserRouter(
         { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
         { path: 'history', element: <HistoryPage /> },
         { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
+        { path: 'players', loader: () => loadAllSeasons(), element: <PlayersPage /> },
         { path: 'draft', loader: () => redirect(`/draft/${currentSeason.year}`) },
         { path: 'draft/:season', loader: seasonLoader, element: <DraftPage /> },
       ],
