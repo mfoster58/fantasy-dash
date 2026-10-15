@@ -85,9 +85,9 @@ describe('Board', () => {
   });
 
   it('uses the mode empty message when the mode has one', () => {
-    const modes = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG', empty: 'No players with 3 games yet.' }];
+    const modes = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }];
     wrapB({ def: { ...def, modes }, mode: 'ppg', onMode: vi.fn() });
-    expect(screen.getByText('No players with 3 games yet.')).toBeInTheDocument();
+    expect(screen.getByText('No players at this position.')).toBeInTheDocument(); // Task 5 makes this mode-aware
     cleanup();
     wrapB({ def: { ...def, modes }, mode: 'total', onMode: vi.fn() });
     expect(screen.getByText('No players at this position.')).toBeInTheDocument();

@@ -18,7 +18,7 @@ interface Props {
   pos: PosFilter;
   onPos: (p: PosFilter) => void;
   columns: 2 | 3;
-  seasonPicker?: { years: number[]; value: number; onChange: (y: number) => void };
+  seasonPicker?: { years: number[]; value: number | 'all'; onChange: (v: number | 'all') => void; allTime?: boolean };
   /** when set, shown in place of the boards */
   emptyMessage?: string | null;
 }
@@ -57,7 +57,7 @@ export default function Section({ id, title, note, boards, ctx, players, manager
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <PositionFilter value={pos} onChange={onPos} />
-        {seasonPicker && <SeasonPicker years={seasonPicker.years} value={seasonPicker.value} onChange={seasonPicker.onChange} />}
+        {seasonPicker && <SeasonPicker years={seasonPicker.years} value={seasonPicker.value} onChange={seasonPicker.onChange} allTime={seasonPicker.allTime} />}
       </div>
       {emptyMessage ? (
         <p className="card p-4 text-sm text-muted">{emptyMessage}</p>

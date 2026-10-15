@@ -16,7 +16,7 @@ const sortable: BoardDef = { id: 'sortable', section: 'extras', title: 'Sortable
 const moded: BoardDef = { id: 'moded', section: 'extras', title: 'Moded board', definition: 'Two readings.', valueHeader: 'Pts',
   modes: [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }],
   compute: (_ctx, _direction, mode) => (mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
-const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, currentYear: 2025, pos: 'All', picks: [], xfp: null };
+const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {} };
 const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('Section', () => {
@@ -99,7 +99,8 @@ describe('Section', () => {
     const onPos = vi.fn();
     const onChange = vi.fn();
     wrap(<Section id="leaders" title="League leaders" note="" boards={[big]} ctx={ctx} players={players} managers={managers} pos="RB" onPos={onPos} columns={3}
-      seasonPicker={{ years: [2024, 2025], value: 2025, onChange }} emptyMessage="Season has not started." />);
+      seasonPicker={{ years: [2024, 2025], value: 2025, onChange, allTime: true }} emptyMessage="Season has not started." />);
+    expect(screen.getByRole('option', { name: 'All-time' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'League leaders' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'TE' }));
