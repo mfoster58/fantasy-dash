@@ -56,11 +56,11 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="section-label">{activeMode?.valueHeader ?? def.valueHeader}</span>
           {def.sortable && onDirection && <Toggle label="Direction" options={DIRECTIONS} value={direction} onChange={onDirection} />}
-          {def.modes && activeMode && <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={(m) => onMode?.(m)} />}
+          {def.modes && activeMode && onMode && <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />}
         </div>
       </header>
       {rows.length === 0 ? (
-        <p className="px-3 py-4 text-sm text-muted">No players at this position.</p>
+        <p className="px-3 py-4 text-sm text-muted">{activeMode?.empty ?? 'No players at this position.'}</p>
       ) : (
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {

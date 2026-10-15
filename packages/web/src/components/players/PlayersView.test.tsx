@@ -47,7 +47,7 @@ describe('PlayersView', () => {
     mount();
     expect(firstRow('Most points')).toHaveTextContent('35.00');
     fireEvent.click(within(region('Most points')).getByRole('button', { name: 'PPG' }));
-    expect(within(region('Most points')).getByText('No players at this position.')).toBeInTheDocument(); // nobody has 3 played games in 2025
+    expect(within(region('Most points')).getByText('No players with 3 games yet.')).toBeInTheDocument(); // nobody has 3 played games in 2025
     fireEvent.click(within(region('Most points')).getByRole('button', { name: 'Total' }));
     expect(firstRow('Most points')).toHaveTextContent('35.00');
   });

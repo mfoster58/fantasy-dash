@@ -76,9 +76,21 @@ describe('Board', () => {
     fireEvent.click(within(group).getByRole('button', { name: 'Car' }));
     expect(onMode).toHaveBeenCalledWith('car');
     cleanup();
-    wrapB({ def: { ...def, modes }, rows: [row(0)] }); // no mode given: first mode is the default
+    wrapB({ def: { ...def, modes }, rows: [row(0)], onMode }); // no mode given: first mode is the default
     expect(screen.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Touches')).toBeInTheDocument();
+    cleanup();
+    wrapB({ def: { ...def, modes }, rows: [row(0)] }); // uncontrolled: no toggle
+    expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
+  });
+
+  it('uses the mode empty message when the mode has one', () => {
+    const modes = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG', empty: 'No players with 3 games yet.' }];
+    wrapB({ def: { ...def, modes }, mode: 'ppg', onMode: vi.fn() });
+    expect(screen.getByText('No players with 3 games yet.')).toBeInTheDocument();
+    cleanup();
+    wrapB({ def: { ...def, modes }, mode: 'total', onMode: vi.fn() });
+    expect(screen.getByText('No players at this position.')).toBeInTheDocument();
   });
 
   it('offers an Over/Under toggle only for sortable boards', () => {

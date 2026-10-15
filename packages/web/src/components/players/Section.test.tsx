@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { History } from '@fantasy-dash/core';
 import type { BoardContext, BoardDef, BoardRow } from '../../lib/playerBoards';
@@ -53,6 +53,27 @@ describe('Section', () => {
     expect(within(screen.getByRole('region', { name: 'Big board' })).getAllByRole('listitem')).toHaveLength(8);
     expect(within(screen.getByRole('region', { name: 'Sortable board' })).getAllByRole('listitem')).toHaveLength(6);
     expect(within(screen.getByRole('region', { name: 'Fourth board' })).getAllByRole('listitem')).toHaveLength(5);
+  });
+
+  it('expands boards one at a time below the grid breakpoint and collapses everything when the layout changes', () => {
+    let matches = false;
+    const listeners: (() => void)[] = [];
+    const mql = { get matches() { return matches; }, addEventListener: (_: string, fn: () => void) => listeners.push(fn), removeEventListener: vi.fn() };
+    vi.stubGlobal('matchMedia', vi.fn(() => mql));
+    try {
+      wrap(<Section id="extras" title="Extras" note="" boards={[big, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
+      const bigBoard = screen.getByRole('region', { name: 'Big board' });
+      fireEvent.click(within(bigBoard).getByRole('button', { name: /show all/i }));
+      expect(within(bigBoard).getAllByRole('listitem')).toHaveLength(8);
+      expect(within(screen.getByRole('region', { name: 'Sortable board' })).getAllByRole('listitem')).toHaveLength(5);
+      expect(within(screen.getByRole('region', { name: 'Moded board' })).getAllByRole('listitem')).toHaveLength(5);
+      // widen: row 0 would now cover all three boards, so the stale row key must not expand the other two
+      matches = true;
+      act(() => { for (const fn of listeners) fn(); });
+      for (const name of ['Big board', 'Sortable board', 'Moded board']) expect(within(screen.getByRole('region', { name })).getAllByRole('listitem')).toHaveLength(5);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('passes the chosen mode to a moded board and keeps it per board', () => {

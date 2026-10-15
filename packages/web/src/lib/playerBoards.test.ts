@@ -69,10 +69,10 @@ describe('careerPoints and weeksStarted', () => {
     const many = Array.from({ length: 12 }, (_, i) => week(i + 1, [game(2023, i + 1, 1, side('a', 10, [line('r1', 10)]), side('b', 1, [line('t1', 0, {})]))]));
     const big = { ...ctx, lines: flattenLines([season(2023, many), ...seasons], players) };
     const rows = careerPoints(big, 'desc', 'ppg');
-    // r1: 12 × 10 in 2023 + 20, 12, 7, 9, 11, 22 = 201 over 18 starts
-    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 11.17, valueLabel: '11.2', detail: '18 starts', meta: '3 seasons' });
-    // t1: 12 unplayed starts still count as starts in 2023, plus 20 (2024 wk1) and 0 (2025 wk1) → 20 over 14
-    expect(rows.find((r) => r.playerId === 't1')).toMatchObject({ value: 1.43, detail: '14 starts' });
+    // r1: 12 × 10 in 2023 + 20, 12, 7, 9, 11, 22 = 201 over 18 played starts
+    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 11.17, valueLabel: '11.2', detail: '18 games', meta: '3 seasons' });
+    // t1: 12 unplayed starts in 2023 and an unplayed 2025 start do not count; only 1 played start → below the minimum
+    expect(rows.find((r) => r.playerId === 't1')).toBeUndefined();
   });
 });
 
@@ -107,7 +107,7 @@ describe('postseason boards', () => {
     expect(postPoints(ctx, 'desc', 'ppg')).toEqual([]); // nobody has 3 postseason starts
     const extra = season(2023, [week(3, [game(2023, 3, 1, side('a', 10, [line('r1', 10)]), side('b', 1, [line('t1', 1)]), 'SF')], true)]);
     const c = { ...ctx, lines: flattenLines([extra, ...seasons], players) };
-    expect(postPoints(c, 'desc', 'ppg')).toEqual([expect.objectContaining({ playerId: 'r1', value: 13, valueLabel: '13.0', detail: '3 starts', meta: '2023, 2024, 2025' })]);
+    expect(postPoints(c, 'desc', 'ppg')).toEqual([expect.objectContaining({ playerId: 'r1', value: 13, valueLabel: '13.0', detail: '3 games', meta: '2023, 2024, 2025' })]);
   });
   it('sum touchdowns, yards and receptions from the stats', () => {
     const rich = season(2023, [week(3, [game(2023, 3, 1,
@@ -175,9 +175,10 @@ describe('leaders splits', () => {
   });
   it('yards boards show the stat totals underneath', () => {
     expect(leadYards(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 312, '300 pass · 12 rush'], ['w1', 110, '110 rec'], ['r1', 105, '90 rush · 15 rec']]);
-    expect(leadRushYards(c)[0]).toMatchObject({ playerId: 'r1', detail: '0 car' });
-    expect(leadRecYards(c)[0]).toMatchObject({ playerId: 'w1', detail: '7 rec · 0 tgt' });
-    expect(leadPassYards(c)[0]).toMatchObject({ playerId: 'q1', detail: '0 att' });
+    // volume stats missing from the fixture lines: zero parts drop rather than print "0 car"
+    expect(leadRushYards(c)[0]).toMatchObject({ playerId: 'r1', detail: null });
+    expect(leadRecYards(c)[0]).toMatchObject({ playerId: 'w1', detail: '7 rec' });
+    expect(leadPassYards(c)[0]).toMatchObject({ playerId: 'q1', detail: null });
   });
   it('touches add receptions and carries, with a mode for each, and show targets underneath', () => {
     const vol = season(2025, [
@@ -188,7 +189,7 @@ describe('leaders splits', () => {
     ]);
     const v = { ...ctx, lines: flattenLines([vol], players) };
     expect(leadTouches(v).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([
-      ['r1', 33, '33', '3 rec · 30 car · 5 tgt'], ['w1', 7, '7', '7 rec · 0 car · 14 tgt'], ['t1', 3, '3', '2 rec · 1 car · 2 tgt'],
+      ['r1', 33, '33', '3 rec · 30 car · 5 tgt'], ['w1', 7, '7', '7 rec · 14 tgt'], ['t1', 3, '3', '2 rec · 1 car · 2 tgt'],
     ]);
     expect(leadTouches(v, 'desc', 'rec').map((r) => [r.playerId, r.value])).toEqual([['w1', 7], ['r1', 3], ['t1', 2]]);
     expect(leadTouches(v, 'desc', 'car').map((r) => [r.playerId, r.value])).toEqual([['r1', 30], ['t1', 1]]);
@@ -282,6 +283,10 @@ describe('BOARDS registry v2 order', () => {
   it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
     for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
+    const empty = (id: string) => BOARDS.find((b) => b.id === id)!.modes!.map((m) => m.empty ?? null);
+    expect(empty('leadPoints')).toEqual([null, 'No players with 3 games yet.']);
+    expect(empty('careerPoints')).toEqual([null, 'No players with 12 games yet.']);
+    expect(empty('postPoints')).toEqual([null, 'No players with 3 games yet.']);
     expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
     expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Average draft value');
     expect(BOARDS.filter((b) => b.modes)).toHaveLength(4);

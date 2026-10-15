@@ -47,6 +47,8 @@ export default function Section({ id, title, note, boards, ctx, players, manager
   const [directions, setDirections] = useState<Record<string, Direction>>({});
   const [modes, setModes] = useState<Record<string, string>>({});
   const perRow = useGridColumns() ? columns : 1;
+  // row indexes mean different boards once the column count changes, so start collapsed again
+  useEffect(() => { setExpandedRows({}); }, [perRow]);
   return (
     <section id={id} aria-labelledby={`section-${id}`} className="scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">

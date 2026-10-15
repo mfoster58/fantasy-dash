@@ -11,7 +11,7 @@ export interface BoardRow {
   playerId: PlayerId;
   value: number;
   valueLabel: string;
-  /** "2025 · Wk 7" for a single game, the years list for a career row */
+  /** "2025 · Wk 7" for a single game; "3 seasons" for an all-time or extras career row; the years list for a postseason row */
   meta: string;
   detail: string | null;
   userId: UserId | null;
@@ -33,7 +33,13 @@ export interface BoardContext {
 }
 
 /** One way of reading a board; the first mode is the default. */
-export interface BoardMode { id: string; label: string; valueHeader: string }
+export interface BoardMode {
+  id: string;
+  label: string;
+  valueHeader: string;
+  /** empty-state copy when this mode's own threshold, not the position filter, is the usual reason for no rows */
+  empty?: string;
+}
 
 export interface BoardDef {
   id: string;
@@ -49,11 +55,15 @@ export interface BoardDef {
 }
 
 export const MAX_ROWS = 25;
+/** played games needed before a PPG mode ranks a player */
 const MIN_PPG_GAMES = 12;
 const MIN_LEADER_GAMES = 3;
 const MIN_POST_GAMES = 3;
 
-const POINTS_MODES: readonly BoardMode[] = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }];
+const pointsModes = (minGames: number): readonly BoardMode[] => [
+  { id: 'total', label: 'Total', valueHeader: 'Pts' },
+  { id: 'ppg', label: 'PPG', valueHeader: 'PPG', empty: `No players with ${minGames} games yet.` },
+];
 const TOUCH_MODES: readonly BoardMode[] = [{ id: 'both', label: 'Both', valueHeader: 'Touches' }, { id: 'rec', label: 'Rec', valueHeader: 'Rec' }, { id: 'car', label: 'Car', valueHeader: 'Car' }];
 
 export function championsOf(seasons: Season[]): Record<number, UserId | null> {
@@ -135,10 +145,11 @@ function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => number | 
 const sum = (ls: PlayerLine[], f: (l: PlayerLine) => number) => round2(ls.reduce((s, l) => s + f(l), 0));
 const started = (ctx: BoardContext) => ctx.lines.filter((l) => l.started);
 
-/** Total points or, in ppg mode, points per start over players with at least `minStarts`. */
-function pointsBoard(lines: PlayerLine[], mode: string | undefined, minStarts: number, meta?: (ls: PlayerLine[]) => string): BoardRow[] {
+/** Total points or, in ppg mode, points per played start over players with at least `minGames` played starts (unplayed starts count as neither). */
+function pointsBoard(lines: PlayerLine[], mode: string | undefined, minGames: number, meta?: (ls: PlayerLine[]) => string): BoardRow[] {
   if (mode === 'ppg') {
-    return careerBoard(lines, (ls) => (ls.length >= minStarts ? round2(sum(ls, (l) => l.points) / ls.length) : null), fmtPpg, (ls) => plural(ls.length, 'start'), meta);
+    const played = lines.filter((l) => l.played);
+    return careerBoard(played, (ls) => (ls.length >= minGames ? round2(sum(ls, (l) => l.points) / ls.length) : null), fmtPpg, (ls) => plural(ls.length, 'game'), meta);
   }
   return careerBoard(lines, (ls) => sum(ls, (l) => l.points), fmtPts, (ls) => plural(ls.length, 'start'), meta);
 }
@@ -254,9 +265,9 @@ export const leadPoints = (ctx: BoardContext, _direction?: Direction, mode?: str
 export const leadYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.yards),
   (ls) => parts([[sum(ls, (l) => l.passYards), 'pass'], [sum(ls, (l) => l.rushYards), 'rush'], [sum(ls, (l) => l.recYards), 'rec']])), intLabel);
 export const leadTouchdowns = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.touchdowns)), intLabel);
-export const leadRushYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushYards), (ls) => `${sum(ls, (l) => l.carries)} car`), intLabel);
-export const leadRecYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recYards), (ls) => `${sum(ls, (l) => l.receptions)} rec · ${sum(ls, (l) => l.targets)} tgt`), intLabel);
-export const leadPassYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passYards), (ls) => `${sum(ls, (l) => l.passAttempts)} att`), intLabel);
+export const leadRushYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushYards), (ls) => parts([[sum(ls, (l) => l.carries), 'car']])), intLabel);
+export const leadRecYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recYards), (ls) => parts([[sum(ls, (l) => l.receptions), 'rec'], [sum(ls, (l) => l.targets), 'tgt']])), intLabel);
+export const leadPassYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passYards), (ls) => parts([[sum(ls, (l) => l.passAttempts), 'att']])), intLabel);
 export const leadRushTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushTd)), intLabel);
 export const leadRecTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recTd)), intLabel);
 export const leadPassTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passTd)), intLabel);
@@ -264,7 +275,7 @@ export const leadPassTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, po
 export const leadTouches = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => {
   const pick = (l: PlayerLine) => (mode === 'rec' ? l.receptions : mode === 'car' ? l.carries : l.receptions + l.carries);
   return leaderBoard(ctx, positive((ls) => sum(ls, pick),
-    (ls) => `${sum(ls, (l) => l.receptions)} rec · ${sum(ls, (l) => l.carries)} car · ${sum(ls, (l) => l.targets)} tgt`), intLabel);
+    (ls) => parts([[sum(ls, (l) => l.receptions), 'rec'], [sum(ls, (l) => l.carries), 'car'], [sum(ls, (l) => l.targets), 'tgt']])), intLabel);
 };
 
 /** Played lines with a prediction, paired with it. */
@@ -297,7 +308,7 @@ export const leadXfp = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) 
 
 export const BOARDS: BoardDef[] = [
   // League leaders, grid order (3 per row)
-  { id: 'leadPoints', section: 'leaders', title: 'Most points', definition: `Fantasy points this season on any roster, started or benched. PPG averages over weeks the player actually played, at least ${MIN_LEADER_GAMES} games.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: leadPoints },
+  { id: 'leadPoints', section: 'leaders', title: 'Most points', definition: `Fantasy points this season on any roster, started or benched. PPG averages over weeks the player actually played, at least ${MIN_LEADER_GAMES} games.`, valueHeader: 'Pts', modes: pointsModes(MIN_LEADER_GAMES), compute: leadPoints },
   { id: 'leadYards', section: 'leaders', title: 'Most yards', definition: 'Passing, rushing and receiving yards this season on any roster.', valueHeader: 'Yds', compute: leadYards },
   { id: 'leadTouchdowns', section: 'leaders', title: 'Most touchdowns', definition: 'Passing, rushing and receiving touchdowns this season on any roster.', valueHeader: 'TD', compute: leadTouchdowns },
   { id: 'leadRushYards', section: 'leaders', title: 'Rushing yards', definition: 'Rushing yards this season on any roster.', valueHeader: 'Yds', compute: leadRushYards },
@@ -312,11 +323,11 @@ export const BOARDS: BoardDef[] = [
   // All-time
   { id: 'bestWeek', section: 'allTime', title: 'Best week by a starter', definition: 'Most points by a player in one week while in a starting lineup.', valueHeader: 'Pts', compute: bestWeek },
   { id: 'bestSeason', section: 'allTime', title: 'Best season by a starter', definition: 'Most points a player scored for one manager in one season while started.', valueHeader: 'Pts', compute: bestSeason },
-  { id: 'careerPoints', section: 'allTime', title: 'Most career points started', definition: `Total points scored while in a starting lineup, every season and manager. PPG averages per start, at least ${MIN_PPG_GAMES} starts.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: careerPoints },
+  { id: 'careerPoints', section: 'allTime', title: 'Most career points started', definition: `Total points scored while in a starting lineup, every season and manager. PPG averages over played starts, at least ${MIN_PPG_GAMES} games.`, valueHeader: 'Pts', modes: pointsModes(MIN_PPG_GAMES), compute: careerPoints },
   { id: 'weeksStarted', section: 'allTime', title: 'Most weeks started', definition: 'Weeks in a starting lineup across every season.', valueHeader: 'Starts', compute: weeksStarted },
   { id: 'benchBlunder', section: 'allTime', title: 'Biggest bench blunder', definition: 'Most points by a player left on the bench in one week.', valueHeader: 'Pts', compute: benchBlunder },
   // Postseason
-  { id: 'postPoints', section: 'postseason', title: 'Most postseason points started', definition: `Points while started in championship-bracket games. PPG averages per start, at least ${MIN_POST_GAMES} starts.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: postPoints },
+  { id: 'postPoints', section: 'postseason', title: 'Most postseason points started', definition: `Points while started in championship-bracket games. PPG averages over played starts, at least ${MIN_POST_GAMES} games.`, valueHeader: 'Pts', modes: pointsModes(MIN_POST_GAMES), compute: postPoints },
   { id: 'postStarts', section: 'postseason', title: 'Most postseason starts', definition: 'Starts in championship-bracket games.', valueHeader: 'Starts', compute: postStarts },
   { id: 'postTouchdowns', section: 'postseason', title: 'Most postseason touchdowns', definition: 'Passing, rushing and receiving touchdowns while started in the championship bracket.', valueHeader: 'TD', compute: postTouchdowns },
   { id: 'postYards', section: 'postseason', title: 'Most postseason yards', definition: 'Passing, rushing and receiving yards while started in the championship bracket.', valueHeader: 'Yds', compute: postYards },
