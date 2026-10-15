@@ -51,28 +51,24 @@ export const journeyman = (ctx: BoardContext): BoardRow[] =>
 
 
 /** Rows from per-player event counts; ties fall to the most recent event. */
-function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number; group: string }[], detail: (groups: Set<string>, n: number) => string): BoardRow[] {
-  const by = new Map<string, { n: number; years: Set<number>; groups: Set<string>; latest: number }>();
+function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number }[]): BoardRow[] {
+  const by = new Map<string, { n: number; years: Set<number>; latest: number }>();
   for (const e of events) {
     if (!posOk(ctx, e.playerId)) continue;
-    const g = by.get(e.playerId) ?? { n: 0, years: new Set<number>(), groups: new Set<string>(), latest: 0 };
-    g.n += 1; g.years.add(e.year); g.groups.add(e.group); g.latest = Math.max(g.latest, e.created);
+    const g = by.get(e.playerId) ?? { n: 0, years: new Set<number>(), latest: 0 };
+    g.n += 1; g.years.add(e.year); g.latest = Math.max(g.latest, e.created);
     by.set(e.playerId, g);
   }
   const items = [...by.entries()].map(([playerId, g]) => ({ playerId, value: g.n, g, latestYear: Math.max(...g.years), latestWeek: 0, secondary: g.latest }));
-  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: seasonsMeta(ctx, i.g.years), detail: detail(i.g.groups, i.g.n), userId: null, to: null }));
+  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: seasonsMeta(ctx, i.g.years), detail: null, userId: null, to: null }));
 }
-
-export const tradeBait = (ctx: BoardContext): BoardRow[] => countBoard(ctx,
-  txInScope(ctx).filter(({ tx }) => tx.type === 'trade').flatMap(({ year, tx }) => tx.adds.map((a) => ({ playerId: a.playerId, year, created: tx.created, group: a.userId }))),
-  (managers) => plural(managers.size, 'manager'));
 
 export const fodder = (ctx: BoardContext): BoardRow[] => {
   const scoped = txInScope(ctx);
   const pickups = new Map<string, number>();
   for (const { tx } of scoped) if (tx.type !== 'trade') for (const a of tx.adds) pickups.set(a.playerId, (pickups.get(a.playerId) ?? 0) + 1);
   const skill = (playerId: string) => !KICKING_DEF.has(ctx.players[playerId]?.position ?? '');
-  const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.filter((d) => skill(d.playerId)).map((d) => ({ playerId: d.playerId, year, created: tx.created, group: d.userId }))), () => '');
+  const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.filter((d) => skill(d.playerId)).map((d) => ({ playerId: d.playerId, year, created: tx.created }))));
   return rows.map((r) => ({ ...r, detail: `picked up ${plural(pickups.get(r.playerId) ?? 0, 'time')}` }));
 };
 

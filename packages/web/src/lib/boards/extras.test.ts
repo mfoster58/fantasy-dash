@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
 import { game, line, players, season, side, week } from '../../test/playerFixtures';
 import type { Draft, Season, Transaction } from '@fantasy-dash/core';
-import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, tradeBait, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
+import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
 
 const seasons = [
   season(2024, [
@@ -54,7 +54,7 @@ describe('ironman', () => {
 
 describe('registry', () => {
   it('lays out Extras in grid order', () => {
-    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'tradeBait', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'breakout', 'fallOff']);
+    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'breakout', 'fallOff']);
     expect(BOARDS.filter((b) => b.section === 'career').map((b) => b.id)).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
   });
 });
@@ -73,12 +73,10 @@ const txCtx: BoardContext = { ...ctx, transactions: [
   ] },
 ] };
 
-describe('trade bait and fodder', () => {
-  it('count trades moving the player and drops of the player', () => {
-    expect(tradeBait(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail])).toEqual([['q1', 2, '2 seasons', '2 managers'], ['r1', 1, '1 season', '1 manager']]);
+describe('fodder', () => {
+  it('counts drops of the player', () => {
     // drops: w1 by a (2024 free agent), by b and by a (2025) = 3 ; q1 in both trades = 2 ; r1 in the 2024 trade = 1
     expect(fodder(txCtx).map((r) => [r.playerId, r.value, r.detail])).toEqual([['w1', 3, 'picked up 1 time'], ['q1', 2, 'picked up 1 time'], ['r1', 1, 'picked up 0 times']]);
-    expect(tradeBait({ ...txCtx, year: 2025 }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 1, '2025']]);
   });
   it('fodder leaves out kickers and defenses, which get streamed every week', () => {
     const streamed = { ...txCtx, transactions: [{ year: 2024, transactions: [t({ type: 'free_agent', drops: [{ playerId: 'KC', userId: 'a' }, { playerId: 'k1', userId: 'a' }, { playerId: 'w1', userId: 'a' }] })] }] };

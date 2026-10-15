@@ -12,7 +12,7 @@ export * from './boards/postseason';
 export * from './boards/extras';
 
 const { bestWeek, bestSeason, careerPoints, weeksStarted } = career;
-const { boomStarts, dudStarts, journeyman, draftValue, benchBlunder, benchWarmers, loyalty, ironman, fodder, tradeBait, waiverHeroes, waiverVillains, mrIrrelevant, breakout, fallOff, pairEmpty } = extras;
+const { boomStarts, dudStarts, journeyman, draftValue, benchBlunder, benchWarmers, loyalty, ironman, fodder, waiverHeroes, waiverVillains, mrIrrelevant, breakout, fallOff, pairEmpty } = extras;
 const { leadPoints, leadYards, leadTouchdowns, leadRushYards, leadRecYards, leadPassYards, leadRushTd, leadRecTd, leadPassTd, leadTouches, leadFpoe, leadXfp } = leaders;
 const { postPoints, postStarts, postTouchdowns, postYards, postReceptions, championshipRosters, postToiletBowl, lastPlaceRosters, bestPlayoffStarts, worstToiletStarts, PLAYOFF_MODES, CONSOLATION_MODES } = post;
 
@@ -55,7 +55,6 @@ export const BOARDS: BoardDef[] = [
   { id: 'loyalty', section: 'extras', title: 'Loyalty', definition: 'Most starts for a single manager. Kickers and defenses excluded.', valueHeader: 'Starts', compute: loyalty },
   { id: 'ironman', section: 'extras', title: 'Ironman', definition: 'Longest run of consecutive league weeks in a starting lineup, any manager, carrying across seasons. Kickers and defenses excluded.', valueHeader: 'Weeks', compute: ironman },
   { id: 'fodder', section: 'extras', title: 'Fodder', definition: 'Times the player was dropped, any manager. Pickups underneath count waiver and free-agent adds. Kickers and defenses excluded.', valueHeader: 'Drops', compute: fodder },
-  { id: 'tradeBait', section: 'extras', title: 'Trade bait', definition: 'Completed trades that moved the player, with the number of managers who received him.', valueHeader: 'Trades', compute: tradeBait },
   { id: 'waiverHeroes', section: 'extras', title: 'Waiver heroes', definition: 'Points a waiver claim returned: starts for the claiming manager from the claim until that manager dropped the player. FAAB bid underneath.', valueHeader: 'Pts', compute: waiverHeroes },
   { id: 'waiverVillains', section: 'extras', title: 'Waiver villains', definition: 'FAAB dollars per started point for claims of $10 or more, worst first. A claim that never started counts as one point.', valueHeader: '$/pt', compute: waiverVillains },
   { id: 'draftValue', section: 'extras', title: 'Draft value', definition: "Draft value from the draft board for the chosen season; under All-time, each player's best single season, or worst under −. The current season's value moves weekly.", valueHeader: 'Value', sortable: true, directionLabels: ['+', '\u2212'], compute: draftValue },
