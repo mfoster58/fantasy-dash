@@ -50,7 +50,7 @@ export const router = createBrowserRouter(
         { path: 'scores/:season/:week/:matchupId', loader: seasonLoader, element: <BoxScorePage /> },
         { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
         { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
-        { path: 'all-time', element: <AllTimePage /> },
+        { path: 'all-time', loader: () => loadAllSeasons(), element: <AllTimePage /> },
         { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
         { path: 'history', element: <HistoryPage /> },
         { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
