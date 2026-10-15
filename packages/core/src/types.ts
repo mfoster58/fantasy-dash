@@ -259,6 +259,8 @@ export interface History {
   allTime: AllTimeRow[];
   /** best draft picks by value across completed seasons, best first */
   topDraftValues: HistoryDraftPick[];
+  /** worst draft picks by value across completed seasons, worst first */
+  worstDraftValues: HistoryDraftPick[];
 }
 
 /** Stable key for a pair of managers: lexicographically smaller id first. */

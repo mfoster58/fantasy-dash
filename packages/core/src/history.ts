@@ -126,15 +126,26 @@ export function buildAllTime(seasons: Season[]): AllTimeRow[] {
   return rows;
 }
 
-/** Top `n` draft picks by value across completed seasons, best first (ties: points over baseline desc, then year desc). */
-export function topDraftValues(seasons: Season[], n = 10): HistoryDraftPick[] {
+function valuedPicks(seasons: Season[]): HistoryDraftPick[] {
   const all: HistoryDraftPick[] = [];
   for (const s of seasons) {
     if (s.status !== 'complete' || !s.draft) continue;
     for (const p of s.draft.picks) if (p.value !== null) all.push({ ...p, year: s.year, teams: s.draft.slotOrder.length });
   }
-  return all
+  return all;
+}
+
+/** Top `n` draft picks by value across completed seasons, best first (ties: points over baseline desc, then year desc). Deep enough that a position filter still fills a 25-row list. */
+export function topDraftValues(seasons: Season[], n = 100): HistoryDraftPick[] {
+  return valuedPicks(seasons)
     .sort((a, b) => b.value! - a.value! || (b.pointsOverBaseline ?? 0) - (a.pointsOverBaseline ?? 0) || b.year - a.year)
+    .slice(0, n);
+}
+
+/** Bottom `n` draft picks by value across completed seasons, worst first (ties: points over baseline asc, then year desc). */
+export function worstDraftValues(seasons: Season[], n = 100): HistoryDraftPick[] {
+  return valuedPicks(seasons)
+    .sort((a, b) => a.value! - b.value! || (a.pointsOverBaseline ?? 0) - (b.pointsOverBaseline ?? 0) || b.year - a.year)
     .slice(0, n);
 }
 
@@ -189,5 +200,6 @@ export function buildHistory(seasons: Season[]): History {
     h2h,
     allTime: buildAllTime(sorted),
     topDraftValues: topDraftValues(sorted),
+    worstDraftValues: worstDraftValues(sorted),
   };
 }

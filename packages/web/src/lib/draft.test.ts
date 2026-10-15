@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Draft, DraftPick } from '@fantasy-dash/core';
-import { managerDraftSummaries, leagueExtremes, topHealthyPpg, valueColor, posLabel, letterGrade, pickLabel } from './draft';
+import { managerDraftSummaries, leagueExtremes, topHealthyPpg, valueColor, posLabel, letterGrade, pickLabel, byPosition } from './draft';
+import type { PlayerDirectory } from '@fantasy-dash/core';
 
 const pick = (pickNo: number, userId: string, value: number | null, pob: number, extra: Partial<DraftPick> = {}): DraftPick => ({
   round: 1, pickNo, slot: pickNo, userId, playerId: `p${pickNo}`, isKeeper: false,
@@ -23,11 +24,23 @@ describe('managerDraftSummaries', () => {
 });
 
 describe('leagueExtremes', () => {
-  it('returns the top steals and busts by value, ignoring unvalued picks, 10 by default', () => {
+  it('returns the top steals and busts by value, ignoring unvalued picks, 25 by default', () => {
     const { steals, busts } = leagueExtremes(draft, 2);
     expect(steals.map((p) => p.pickNo)).toEqual([4, 1]);
     expect(busts.map((p) => p.pickNo)).toEqual([2, 3]);
     expect(leagueExtremes(draft).steals).toHaveLength(4);
+  });
+});
+
+describe('byPosition', () => {
+  it('filters rows to a position by the directory, and keeps everything for null', () => {
+    const players: PlayerDirectory = {
+      p1: { id: 'p1', name: 'A', firstName: 'A', lastName: 'A', position: 'RB', team: 'SF', yearsExp: 1 },
+      p2: { id: 'p2', name: 'B', firstName: 'B', lastName: 'B', position: 'WR', team: 'SF', yearsExp: 1 },
+    };
+    expect(byPosition(draft.picks, players, 'RB').map((p) => p.playerId)).toEqual(['p1']);
+    expect(byPosition(draft.picks, players, 'TE')).toEqual([]);
+    expect(byPosition(draft.picks, players, null)).toHaveLength(5);
   });
 });
 

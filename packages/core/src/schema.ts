@@ -210,6 +210,7 @@ export const HistorySchema = z.object({
   })),
   allTime: z.array(AllTimeRow),
   topDraftValues: z.array(DraftPick.extend({ year: z.number(), teams: z.number() })),
+  worstDraftValues: z.array(DraftPick.extend({ year: z.number(), teams: z.number() })),
 });
 
 // Compile-time drift guards: a field added to a type without a schema update fails typecheck.
