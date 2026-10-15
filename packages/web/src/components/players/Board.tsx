@@ -16,8 +16,11 @@ export default function Board({ def, rows, players, managers }: Props) {
   const shown = all ? rows : rows.slice(0, PREVIEW);
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
-      <header className="flex items-baseline justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
-        <h3 id={`board-${def.id}`} className="section-label text-ink">{def.title}</h3>
+      <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
+        <div className="min-w-0">
+          <h3 id={`board-${def.id}`} className="section-label text-ink">{def.title}</h3>
+          <p className="mt-0.5 text-xs text-muted">{def.definition}</p>
+        </div>
         <span className="section-label shrink-0">{def.valueHeader}</span>
       </header>
       {rows.length === 0 ? (

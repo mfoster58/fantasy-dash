@@ -20,6 +20,7 @@ describe('Board', () => {
     const rows = Array.from({ length: 8 }, (_, i) => row(i));
     wrap(<Board def={def} rows={rows} players={players} managers={managers} />);
     expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
+    expect(screen.getByText('Most points in a week.')).toBeInTheDocument(); // definition visible, not only on hover
     expect(screen.getAllByRole('listitem')).toHaveLength(5);
     fireEvent.click(screen.getByRole('button', { name: /show all/i }));
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
