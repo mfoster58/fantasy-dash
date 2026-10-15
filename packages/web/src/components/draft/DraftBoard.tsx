@@ -77,10 +77,12 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
         {rounds.map((round) => (
           <div key={round} className="grid border-t border-line" style={{ gridTemplateColumns: cols }}>
             <div className="num flex items-center justify-center text-xs text-muted">{round}</div>
-            {draft.slotOrder.map((_, i) => {
+            {draft.slotOrder.map((columnUserId, i) => {
               const slot = i + 1;
               const p = bySlot.get(`${round}-${slot}`);
-              if (!p) return <div key={slot} className="h-14 border-l border-line" />;
+              const columnActive = highlight === columnUserId;
+              const clickColumn = () => onHighlight(columnActive ? null : columnUserId);
+              if (!p) return <div key={slot} className="h-14 border-l border-line" onClick={clickColumn} />;
               const pos = playerPos(players, p.playerId);
               const isHl = highlight !== null && p.userId === highlight;
               const dim = highlight !== null && !isHl;
@@ -93,7 +95,8 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                   data-highlight={isHl ? 'true' : 'false'}
                   title={cellTitle(p, players, managers, inSeason)}
                   style={{ background }}
-                  className={`relative flex h-14 flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${ring}`}
+                  onClick={clickColumn}
+                  className={`relative flex h-14 cursor-pointer flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${ring}`}
                 >
                   {(p.isKeeper || p.tradedTo) && (
                     <span className="absolute right-1 top-1 flex items-center gap-1">

@@ -93,5 +93,9 @@ describe('DraftBoard', () => {
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells[0]).toHaveAttribute('data-highlight', 'true');
     expect(cells[1]).toHaveAttribute('data-highlight', 'false');
+    fireEvent.click(cells[1]);                       // any cell selects its column's manager
+    expect(onHighlight).toHaveBeenLastCalledWith('b');
+    fireEvent.click(cells[0]);                       // clicking the active column clears it
+    expect(onHighlight).toHaveBeenLastCalledWith(null);
   });
 });
