@@ -18,7 +18,11 @@ export interface BoardRow {
   to: string | null;
   /** colours the value: win = green, loss = red */
   tone?: 'win' | 'loss';
+  /** every manager behind an aggregate row, most weeks first; more than one renders as a count with a tooltip */
+  managers?: RowManager[];
 }
+
+export interface RowManager { userId: UserId; weeks: number }
 
 export interface DraftValue { year: number; playerId: PlayerId; value: number; round: number; pickNo: number }
 export interface SeasonTransactions { year: number; transactions: Transaction[] }
@@ -150,6 +154,15 @@ export function groupBy(lines: PlayerLine[], keyOf: (l: PlayerLine) => string): 
   return groups;
 }
 
+/** Managers behind a set of lines, most weeks first, the newer manager first on a tie. */
+export function managersOf(lines: PlayerLine[]): RowManager[] {
+  return [...groupBy(lines, (l) => l.userId).entries()]
+    .sort(([, x], [, y]) => y.lines.length - x.lines.length || y.latestYear - x.latestYear || y.latestWeek - x.latestWeek)
+    .map(([userId, g]) => ({ userId, weeks: g.lines.length }));
+}
+/** The lone manager behind the lines, or null when several share them. */
+export const soleManager = (managers: RowManager[]): UserId | null => (managers.length === 1 ? managers[0].userId : null);
+
 /** One row per line (a "moment"). */
 export function momentBoard(lines: PlayerLine[], value: (l: PlayerLine) => number, label: (v: number) => string, direction: Direction = 'desc'): BoardRow[] {
   const items = lines.map((l) => ({ ...l, value: value(l), latestYear: l.year, latestWeek: l.week }));
@@ -164,10 +177,13 @@ export function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => nu
   const items = [...groupBy(lines, (l) => l.playerId).entries()]
     .map(([playerId, g]) => ({ playerId, value: value(g.lines), latestYear: g.latestYear, latestWeek: g.latestWeek, lines: g.lines, secondary: secondary?.(g.lines) }))
     .filter((i): i is typeof i & { value: number } => i.value !== null && i.value > 0);
-  return rank(items).map((i) => ({
-    key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),
-    meta: meta(i.lines), detail: detail(i.lines), userId: null, to: null,
-  }));
+  return rank(items).map((i) => {
+    const managers = managersOf(i.lines);
+    return {
+      key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),
+      meta: meta(i.lines), detail: detail(i.lines), userId: soleManager(managers), to: null, managers,
+    };
+  });
 }
 
 export const sum = (ls: PlayerLine[], f: (l: PlayerLine) => number) => round2(ls.reduce((s, l) => s + f(l), 0));

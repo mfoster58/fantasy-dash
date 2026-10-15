@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
@@ -47,6 +48,9 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
 
 export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
+  // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
+  const [openManagers, setOpenManagers] = useState<Record<string, boolean>>({});
+  const managerName = (id: string) => managers[id]?.displayName ?? id;
   const activeMode = def.modes?.find((m) => m.id === mode) ?? def.modes?.[0];
   const activeMode2 = def.modes2?.find((m) => m.id === mode2) ?? def.modes2?.[0];
   const header = (activeMode?.valueHeader ?? def.valueHeader) + (activeMode2?.valueHeader ?? '');
@@ -87,7 +91,26 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                     {metaNode}
                     {r.detail && <><span aria-hidden>·</span><span>{r.detail}</span></>}
-                    {r.userId && (
+                    {r.managers && r.managers.length > 1 ? (
+                      <>
+                        <span aria-hidden>·</span>
+                        <button
+                          type="button"
+                          title={r.managers.map((x) => `${managerName(x.userId)} ${x.weeks} wks`).join(', ')}
+                          aria-expanded={openManagers[r.key] ?? false}
+                          onClick={() => setOpenManagers((m) => ({ ...m, [r.key]: !m[r.key] }))}
+                          className="underline decoration-dotted underline-offset-2 hover:text-ink"
+                        >
+                          {r.managers.length} managers
+                        </button>
+                        {openManagers[r.key] && r.managers.map((x) => (
+                          <Link key={x.userId} to={`/h2h?a=${x.userId}`} className="flex items-center gap-1 hover:text-accent">
+                            <Avatar avatar={managers[x.userId]?.avatar ?? null} name={managerName(x.userId)} size={14} />
+                            <span>{managerName(x.userId)} {x.weeks} wks</span>
+                          </Link>
+                        ))}
+                      </>
+                    ) : r.userId && (
                       <>
                         <span aria-hidden>·</span>
                         <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-1 hover:text-accent">

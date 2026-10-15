@@ -332,6 +332,19 @@ describe('per-game modes and tone', () => {
   });
 });
 
+describe('managers on aggregate rows', () => {
+  it('list every manager by weeks rostered, newest first on ties, and name a lone manager as the row manager', () => {
+    // q1 all-time: a 3 weeks (2024), b 3 weeks (2025, one benched) → tie, b newer
+    expect(leadPoints({ ...ctx, year: null }).find((r) => r.playerId === 'q1')!.managers).toEqual([{ userId: 'b', weeks: 3 }, { userId: 'a', weeks: 3 }]);
+    // r1 in 2025: a wk1, wk2; b wk3
+    expect(leadPoints(c25).find((r) => r.playerId === 'r1')!.managers).toEqual([{ userId: 'a', weeks: 2 }, { userId: 'b', weeks: 1 }]);
+    const pts = careerPoints(ctx);
+    expect(pts.find((r) => r.playerId === 'q1')).toMatchObject({ userId: null, managers: [{ userId: 'a', weeks: 3 }, { userId: 'b', weeks: 2 }] });
+    // t1 was only ever started by b, so the row names b
+    expect(pts.find((r) => r.playerId === 't1')).toMatchObject({ userId: 'b', managers: [{ userId: 'b', weeks: 2 }] });
+  });
+});
+
 describe('postseason moments', () => {
   const bracket = season(2023, [
     week(3, [game(2023, 3, 1, side('a', 20, [line('q1', 20)]), side('b', 10, [line('r1', 10)]), 'SF'),

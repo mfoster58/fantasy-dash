@@ -2,11 +2,11 @@ import type { UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtSigned } from '../format';
 import type { PlayerLine } from '../playerLines';
 import type { Direction, BoardContext, BoardRow } from './shared';
-import { fmt1, groupBy, intLabel, metaOf, minGames, parts, perGame, plural, rank, round1, round2, sum, toneOf } from './shared';
+import { fmt1, groupBy, intLabel, managersOf, metaOf, minGames, parts, perGame, plural, rank, round1, round2, sum, toneOf } from './shared';
 
 export interface LeaderItem { value: number; detail: string | null }
 
-/** Every line given, one row per player; manager = whoever rostered the player most recently. `build` returns null to drop a player. */
+/** Every line given, one row per player; `userId` is whoever rostered the player most recently, `managers` everyone who did. `build` returns null to drop a player. */
 export function leaderBoard(ctx: BoardContext, build: (ls: PlayerLine[]) => LeaderItem | null, label: (v: number) => string, direction: Direction = 'desc'): BoardRow[] {
   const items: { playerId: string; value: number; detail: string | null; userId: UserId; latestYear: number; latestWeek: number; lines: PlayerLine[] }[] = [];
   for (const [playerId, g] of groupBy(ctx.lines, (l) => l.playerId)) {
@@ -18,7 +18,7 @@ export function leaderBoard(ctx: BoardContext, build: (ls: PlayerLine[]) => Lead
   const meta = metaOf(ctx);
   return rank(items, direction).map((i) => ({
     key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),
-    meta: meta(i.lines), detail: i.detail, userId: i.userId, to: null,
+    meta: meta(i.lines), detail: i.detail, userId: i.userId, to: null, managers: managersOf(i.lines),
   }));
 }
 export const positive = (f: (ls: PlayerLine[]) => number, detail: (ls: PlayerLine[]) => string | null = () => null) =>

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
 import { game, line, players, season, side, week } from '../../test/playerFixtures';
 import type { Draft, Season, Transaction } from '@fantasy-dash/core';
-import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, tradeBait, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
+import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
 
 const seasons = [
   season(2024, [
@@ -54,7 +54,7 @@ describe('ironman', () => {
 
 describe('registry', () => {
   it('lays out Extras in grid order', () => {
-    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'tradeBait', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'breakout', 'fallOff']);
+    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'breakout', 'fallOff']);
     expect(BOARDS.filter((b) => b.section === 'career').map((b) => b.id)).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
   });
 });
@@ -73,12 +73,10 @@ const txCtx: BoardContext = { ...ctx, transactions: [
   ] },
 ] };
 
-describe('trade bait and fodder', () => {
-  it('count trades moving the player and drops of the player', () => {
-    expect(tradeBait(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail])).toEqual([['q1', 2, '2 seasons', '2 managers'], ['r1', 1, '1 season', '1 manager']]);
+describe('fodder', () => {
+  it('counts drops of the player', () => {
     // drops: w1 by a (2024 free agent), by b and by a (2025) = 3 ; q1 in both trades = 2 ; r1 in the 2024 trade = 1
     expect(fodder(txCtx).map((r) => [r.playerId, r.value, r.detail])).toEqual([['w1', 3, 'picked up 1 time'], ['q1', 2, 'picked up 1 time'], ['r1', 1, 'picked up 0 times']]);
-    expect(tradeBait({ ...txCtx, year: 2025 }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 1, '2025']]);
   });
   it('fodder leaves out kickers and defenses, which get streamed every week', () => {
     const streamed = { ...txCtx, transactions: [{ year: 2024, transactions: [t({ type: 'free_agent', drops: [{ playerId: 'KC', userId: 'a' }, { playerId: 'k1', userId: 'a' }, { playerId: 'w1', userId: 'a' }] })] }] };
@@ -92,6 +90,15 @@ describe('waiver heroes and villains', () => {
   it('heroes rank started points per claim; villains rank dollars per point for claims of $10 or more', () => {
     expect(waiverHeroes(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['q1', 53, '2025 · Wk 1', '$9 · 2 starts', 'b'], ['w1', 0, '2024 · Wk 2', '$30 · 0 starts', 'b']]);
     expect(waiverVillains(txCtx).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['w1', 30, '$30.0/pt', '$30 · 0.00 pts · 0 starts']]);
+  });
+  it('heroes count free-agent adds as FA and $0 claims as $0; villains ignore both', () => {
+    // b adds r1 off the street in 2025 wk3 and starts him for 22; a claims w1 for $0 in 2025 wk3 and starts him for 4
+    const fa: BoardContext = { ...ctx, transactions: [{ year: 2025, transactions: [
+      t({ id: 'g', type: 'free_agent', week: 3, created: 1, adds: [{ playerId: 'r1', userId: 'b' }] }),
+      t({ id: 'h', type: 'waiver', week: 3, created: 2, adds: [{ playerId: 'w1', userId: 'a' }], bid: 0 }),
+    ] }] };
+    expect(waiverHeroes(fa).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['r1', 22, '2025 · Wk 3', 'FA · 1 start', 'b'], ['w1', 4, '2025 · Wk 3', '$0 · 1 start', 'a']]);
+    expect(waiverVillains(fa)).toEqual([]);
   });
 });
 
@@ -130,6 +137,15 @@ describe('Mr. Irrelevant', () => {
       ['w1', 40, '40.00', '2025', 'WR70 · 10.0 ppg · Rd 2, pick 5', 'b'],
     ]);
     expect(mrIrrelevant({ ...dCtx, year: 2025 }).map((r) => r.playerId)).toEqual(['w1']);
+  });
+  it('under a position filter takes the last pick at that position in each draft, and says so', () => {
+    expect(mrIrrelevant({ ...dCtx, pos: 'RB' }).map((r) => [r.playerId, r.meta, r.detail])).toEqual([
+      ['r1', '2025', 'RB3 · 16.7 ppg · Rd 1, pick 2 · last RB drafted'],
+      ['r1', '2024', 'RB20 · 8.3 ppg · Rd 1, pick 2 · last RB drafted'],
+    ]);
+    // kickers and defenses count once they are the chosen position
+    expect(mrIrrelevant({ ...dCtx, pos: 'K' }).map((r) => [r.playerId, r.meta, r.detail])).toEqual([['k1', '2024', '— · Rd 2, pick 3 · last K drafted']]);
+    expect(mrIrrelevant({ ...dCtx, pos: 'FLEX' }).map((r) => [r.playerId, r.meta])).toEqual([['r1', '2024'], ['w1', '2025']]);
   });
   it('last pick with no games shows zero and a dash', () => {
     const c = { ...dCtx, playerSeasons: { 2024: {}, 2025: {} } };

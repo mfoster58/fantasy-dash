@@ -51,28 +51,24 @@ export const journeyman = (ctx: BoardContext): BoardRow[] =>
 
 
 /** Rows from per-player event counts; ties fall to the most recent event. */
-function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number; group: string }[], detail: (groups: Set<string>, n: number) => string): BoardRow[] {
-  const by = new Map<string, { n: number; years: Set<number>; groups: Set<string>; latest: number }>();
+function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number }[]): BoardRow[] {
+  const by = new Map<string, { n: number; years: Set<number>; latest: number }>();
   for (const e of events) {
     if (!posOk(ctx, e.playerId)) continue;
-    const g = by.get(e.playerId) ?? { n: 0, years: new Set<number>(), groups: new Set<string>(), latest: 0 };
-    g.n += 1; g.years.add(e.year); g.groups.add(e.group); g.latest = Math.max(g.latest, e.created);
+    const g = by.get(e.playerId) ?? { n: 0, years: new Set<number>(), latest: 0 };
+    g.n += 1; g.years.add(e.year); g.latest = Math.max(g.latest, e.created);
     by.set(e.playerId, g);
   }
   const items = [...by.entries()].map(([playerId, g]) => ({ playerId, value: g.n, g, latestYear: Math.max(...g.years), latestWeek: 0, secondary: g.latest }));
-  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: seasonsMeta(ctx, i.g.years), detail: detail(i.g.groups, i.g.n), userId: null, to: null }));
+  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: seasonsMeta(ctx, i.g.years), detail: null, userId: null, to: null }));
 }
-
-export const tradeBait = (ctx: BoardContext): BoardRow[] => countBoard(ctx,
-  txInScope(ctx).filter(({ tx }) => tx.type === 'trade').flatMap(({ year, tx }) => tx.adds.map((a) => ({ playerId: a.playerId, year, created: tx.created, group: a.userId }))),
-  (managers) => plural(managers.size, 'manager'));
 
 export const fodder = (ctx: BoardContext): BoardRow[] => {
   const scoped = txInScope(ctx);
   const pickups = new Map<string, number>();
   for (const { tx } of scoped) if (tx.type !== 'trade') for (const a of tx.adds) pickups.set(a.playerId, (pickups.get(a.playerId) ?? 0) + 1);
   const skill = (playerId: string) => !KICKING_DEF.has(ctx.players[playerId]?.position ?? '');
-  const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.filter((d) => skill(d.playerId)).map((d) => ({ playerId: d.playerId, year, created: tx.created, group: d.userId }))), () => '');
+  const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.filter((d) => skill(d.playerId)).map((d) => ({ playerId: d.playerId, year, created: tx.created }))));
   return rows.map((r) => ({ ...r, detail: `picked up ${plural(pickups.get(r.playerId) ?? 0, 'time')}` }));
 };
 
@@ -80,12 +76,15 @@ const claims = (ctx: BoardContext): WaiverClaim[] => waiverClaims(ctx.transactio
 const claimRow = (c: WaiverClaim, value: number, label: string, detail: string): BoardRow =>
   ({ key: `${c.year}-${c.week}-${c.playerId}-${c.userId}`, playerId: c.playerId, value, valueLabel: label, meta: `${c.year} · Wk ${c.week}`, detail, userId: c.userId, to: null });
 
+const bidLabel = (c: WaiverClaim) => (c.bid === null ? 'FA' : `$${c.bid}`);
+
+/** Every pickup, waiver or free agent, by the started points it returned. */
 export const waiverHeroes = (ctx: BoardContext): BoardRow[] =>
-  rank(claims(ctx).filter((c) => c.bid >= 1).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
-    .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `$${c.bid} · ${plural(c.starts, 'start')}`));
+  rank(claims(ctx).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
+    .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `${bidLabel(c)} · ${plural(c.starts, 'start')}`));
 
 export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
-  rank(claims(ctx).filter((c) => c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
+  rank(claims(ctx).filter((c): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
     .map(({ c, value }) => claimRow(c, value, `$${value.toFixed(1)}/pt`, `$${c.bid} · ${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));
 
 const SKILL = new Set(['QB', 'RB', 'WR', 'TE']);
@@ -104,18 +103,20 @@ export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): Bo
   return rank(items, direction).map(({ p, value }) => ({ key: `${p.year}-${p.playerId}`, playerId: p.playerId, value, valueLabel: fmtSigned(value, 1), meta: String(p.year), detail: slot(p), userId: null, to: null, tone: toneOf(value) }));
 };
 
-/** The last QB/RB/WR/TE pick of each draft and what he scored that season. */
+/** The last QB/RB/WR/TE pick of each draft and what he scored that season; under a position filter, the last pick at that position. */
 export const mrIrrelevant = (ctx: BoardContext): BoardRow[] => {
   const items: { playerId: string; value: number; year: number; detail: string; userId: UserId; latestYear: number; latestWeek: number }[] = [];
+  const eligible = (playerId: string) => (ctx.pos === 'All' ? SKILL.has(ctx.players[playerId]?.position ?? '') : posOk(ctx, playerId));
+  const note = ctx.pos === 'All' ? '' : ` · last ${ctx.pos === 'FLEX' ? 'RB, WR or TE' : ctx.pos} drafted`;
   for (const [y, draft] of Object.entries(ctx.drafts)) {
     const year = Number(y);
     if (!draft || !inYear(ctx, year)) continue;
-    const last = [...draft.picks].filter((p) => SKILL.has(ctx.players[p.playerId]?.position ?? '')).sort((a, b) => b.pickNo - a.pickNo)[0];
-    if (!last || !posOk(ctx, last.playerId)) continue;
+    const last = [...draft.picks].filter((p) => eligible(p.playerId)).sort((a, b) => b.pickNo - a.pickNo)[0];
+    if (!last) continue;
     const line = ctx.playerSeasons[year]?.[last.playerId];
     const pos = ctx.players[last.playerId]?.position ?? '?';
     const finish = line && line.games > 0 ? `${pos}${line.posRank ?? '?'} · ${fmt1(line.points / line.games)} ppg` : '—';
-    items.push({ playerId: last.playerId, value: line?.points ?? 0, year, detail: `${finish} · ${slot(last)}`, userId: last.userId, latestYear: year, latestWeek: 0 });
+    items.push({ playerId: last.playerId, value: line?.points ?? 0, year, detail: `${finish} · ${slot(last)}${note}`, userId: last.userId, latestYear: year, latestWeek: 0 });
   }
   return rank(items).map((i) => ({ key: `${i.year}-${i.playerId}`, playerId: i.playerId, value: i.value, valueLabel: fmtPts(i.value), meta: String(i.year), detail: i.detail, userId: i.userId, to: `/draft/${i.year}` }));
 };
