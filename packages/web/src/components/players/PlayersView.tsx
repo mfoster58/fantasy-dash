@@ -27,7 +27,7 @@ export default function PlayersView({ seasons, players, managers, currentYear, l
 
   const allLines = useMemo(() => flattenLines(seasons, players), [seasons, players]);
   const champions = useMemo(() => championsOf(seasons), [seasons]);
-  const ctx: BoardContext = useMemo(() => ({ lines: filterLines(allLines, pos), players, champions, currentYear }), [allLines, pos, players, champions, currentYear]);
+  const ctx: BoardContext = useMemo(() => ({ lines: filterLines(allLines, pos), players, champions, currentYear, pos, picks: [], xfp: null }), [allLines, pos, players, champions, currentYear]);
   const seasonStarted = allLines.some((l) => l.year === currentYear);
 
   return (
