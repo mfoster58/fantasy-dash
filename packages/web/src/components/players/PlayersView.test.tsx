@@ -36,9 +36,20 @@ describe('PlayersView', () => {
     expect(screen.getByText(/through 2025 week 1/i)).toBeInTheDocument();
     for (const h of ['League leaders', 'All-time', 'Postseason', 'Extras']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
     // board titles are h3 headings; plain getByText would collide with value headers like "PPG"
-    for (const t of ['Rushing yards', 'Passing TDs', 'PPG', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Cumulative draft value']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    for (const t of ['Rushing yards', 'Passing TDs', 'Most touches', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Most last place rosters', 'Average draft value']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'PPG' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Career PPG' })).toBeNull();
     expect(within(region('Postseason')).getByText('Most championship rosters')).toBeInTheDocument();
     expect(within(region('All-time')).queryByText('Most championship rosters')).toBeNull();
+  });
+
+  it('switches the leaders points board to PPG from its toggle', () => {
+    mount();
+    expect(firstRow('Most points')).toHaveTextContent('35.00');
+    fireEvent.click(within(region('Most points')).getByRole('button', { name: 'PPG' }));
+    expect(within(region('Most points')).getByText('No players at this position.')).toBeInTheDocument(); // nobody has 3 played games in 2025
+    fireEvent.click(within(region('Most points')).getByRole('button', { name: 'Total' }));
+    expect(firstRow('Most points')).toHaveTextContent('35.00');
   });
 
   it('filters one section at a time and writes each to its own URL parameter', () => {

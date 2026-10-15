@@ -24,12 +24,16 @@ export interface BoardContext {
   lines: PlayerLine[];
   players: PlayerDirectory;
   champions: Record<number, UserId | null>;
+  lastPlaces: Record<number, UserId | null>;
   currentYear: number;
   /** the section's position filter; lines are already narrowed, picks are not */
   pos: PosFilter;
   picks: DraftValue[];
   xfp: XfpModel | null;
 }
+
+/** One way of reading a board; the first mode is the default. */
+export interface BoardMode { id: string; label: string; valueHeader: string }
 
 export interface BoardDef {
   id: string;
@@ -39,15 +43,25 @@ export interface BoardDef {
   valueHeader: string;
   /** offers an Over/Under direction toggle */
   sortable?: boolean;
-  compute: (ctx: BoardContext, direction?: Direction) => BoardRow[];
+  /** offers a mode toggle; `compute` receives the chosen mode id */
+  modes?: readonly BoardMode[];
+  compute: (ctx: BoardContext, direction?: Direction, mode?: string) => BoardRow[];
 }
 
 export const MAX_ROWS = 25;
 const MIN_PPG_GAMES = 12;
 const MIN_LEADER_GAMES = 3;
+const MIN_POST_GAMES = 3;
+
+const POINTS_MODES: readonly BoardMode[] = [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }];
+const TOUCH_MODES: readonly BoardMode[] = [{ id: 'both', label: 'Both', valueHeader: 'Touches' }, { id: 'rec', label: 'Rec', valueHeader: 'Rec' }, { id: 'car', label: 'Car', valueHeader: 'Car' }];
 
 export function championsOf(seasons: Season[]): Record<number, UserId | null> {
   return Object.fromEntries(seasons.map((s) => [s.year, s.honors.champion]));
+}
+
+export function lastPlacesOf(seasons: Season[]): Record<number, UserId | null> {
+  return Object.fromEntries(seasons.map((s) => [s.year, s.honors.lastPlace]));
 }
 
 export function draftValuesOf(seasons: Season[]): DraftValue[] {
@@ -60,8 +74,14 @@ export function draftValuesOf(seasons: Season[]): DraftValue[] {
 
 const when = (l: { year: number; week: number; tag: PlayerLine['tag'] }) => `${l.year} · Wk ${l.week}${l.tag ? ` · ${fmtTag(l.tag)}` : ''}`;
 const boxScore = (l: PlayerLine) => `/scores/${l.year}/${l.week}/${l.matchupId}`;
-const yearsOf = (lines: PlayerLine[]) => [...new Set(lines.map((l) => l.year))].sort((a, b) => a - b).join(', ');
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const distinctYears = (lines: PlayerLine[]) => [...new Set(lines.map((l) => l.year))].sort((a, b) => a - b);
+/** "2023, 2025": kept for postseason boards, where the years are the story */
+const yearsOf = (lines: PlayerLine[]) => distinctYears(lines).join(', ');
+/** "3 seasons": all-time and extras boards */
+const seasonsOf = (lines: PlayerLine[]) => plural(distinctYears(lines).length, 'season');
+/** "300 pass · 12 rush", dropping zero parts */
+const parts = (ps: [number, string][]) => ps.filter(([v]) => v > 0).map(([v, w]) => `${v} ${w}`).join(' · ') || null;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const intLabel = (v: number) => String(v);
@@ -101,17 +121,27 @@ function momentBoard(lines: PlayerLine[], value: (l: PlayerLine) => number, labe
   }));
 }
 
-/** One row per player, aggregated over every season. */
-function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => number, label: (v: number) => string, detail: (ls: PlayerLine[]) => string | null): BoardRow[] {
-  const items = [...groupBy(lines, (l) => l.playerId).entries()].map(([playerId, g]) => ({ playerId, value: value(g.lines), latestYear: g.latestYear, latestWeek: g.latestWeek, lines: g.lines }));
-  return rank(items.filter((i) => i.value > 0)).map((i) => ({
+/** One row per player, aggregated over every season. `value` may return null to drop a player. */
+function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => number | null, label: (v: number) => string, detail: (ls: PlayerLine[]) => string | null, meta: (ls: PlayerLine[]) => string = seasonsOf): BoardRow[] {
+  const items = [...groupBy(lines, (l) => l.playerId).entries()]
+    .map(([playerId, g]) => ({ playerId, value: value(g.lines), latestYear: g.latestYear, latestWeek: g.latestWeek, lines: g.lines }))
+    .filter((i): i is typeof i & { value: number } => i.value !== null && i.value > 0);
+  return rank(items).map((i) => ({
     key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),
-    meta: yearsOf(i.lines), detail: detail(i.lines), userId: null, to: null,
+    meta: meta(i.lines), detail: detail(i.lines), userId: null, to: null,
   }));
 }
 
 const sum = (ls: PlayerLine[], f: (l: PlayerLine) => number) => round2(ls.reduce((s, l) => s + f(l), 0));
 const started = (ctx: BoardContext) => ctx.lines.filter((l) => l.started);
+
+/** Total points or, in ppg mode, points per start over players with at least `minStarts`. */
+function pointsBoard(lines: PlayerLine[], mode: string | undefined, minStarts: number, meta?: (ls: PlayerLine[]) => string): BoardRow[] {
+  if (mode === 'ppg') {
+    return careerBoard(lines, (ls) => (ls.length >= minStarts ? round2(sum(ls, (l) => l.points) / ls.length) : null), fmtPpg, (ls) => plural(ls.length, 'start'), meta);
+  }
+  return careerBoard(lines, (ls) => sum(ls, (l) => l.points), fmtPts, (ls) => plural(ls.length, 'start'), meta);
+}
 
 // All-time
 
@@ -129,50 +159,40 @@ export const bestSeason = (ctx: BoardContext): BoardRow[] => {
   }));
 };
 
-export const careerPoints = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(started(ctx), (ls) => sum(ls, (l) => l.points), fmtPts, (ls) => plural(ls.length, 'start'));
+export const careerPoints = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => pointsBoard(started(ctx), mode, MIN_PPG_GAMES);
 
 export const weeksStarted = (ctx: BoardContext): BoardRow[] =>
   careerBoard(started(ctx), (ls) => ls.length, String, (ls) => plural(ls.length, 'start'));
 
 export const benchBlunder = (ctx: BoardContext): BoardRow[] => momentBoard(ctx.lines.filter((l) => !l.started), (l) => l.points, fmtPts);
 
-export const careerPpg = (ctx: BoardContext): BoardRow[] => {
-  const played = ctx.lines.filter((l) => l.played);
-  const items = [...groupBy(played, (l) => l.playerId).entries()]
-    .filter(([, g]) => g.lines.length >= MIN_PPG_GAMES)
-    .map(([playerId, g]) => ({ playerId, value: round2(sum(g.lines, (l) => l.points) / g.lines.length), games: g.lines.length, lines: g.lines, latestYear: g.latestYear, latestWeek: g.latestWeek }));
-  return rank(items).map((i) => ({
-    key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: fmtPpg(i.value),
-    meta: yearsOf(i.lines), detail: plural(i.games, 'game'), userId: null, to: null,
-  }));
-};
-
 // Postseason
 
 const postseasonStarted = (ctx: BoardContext) => started(ctx).filter((l) => l.postseason);
 
-export const postPoints = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.points), fmtPts, (ls) => plural(ls.length, 'start'));
+export const postPoints = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => pointsBoard(postseasonStarted(ctx), mode, MIN_POST_GAMES, yearsOf);
 export const postStarts = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(postseasonStarted(ctx), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`);
+  careerBoard(postseasonStarted(ctx), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`, yearsOf);
 export const postTouchdowns = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.touchdowns), intLabel, (ls) => plural(ls.length, 'start'));
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.touchdowns), intLabel, (ls) => plural(ls.length, 'start'), yearsOf);
 export const postYards = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.yards), intLabel, (ls) => plural(ls.length, 'start'));
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.yards), intLabel, (ls) => plural(ls.length, 'start'), yearsOf);
 export const postReceptions = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.receptions), intLabel, (ls) => plural(ls.length, 'start'));
+  careerBoard(postseasonStarted(ctx), (ls) => sum(ls, (l) => l.receptions), intLabel, (ls) => plural(ls.length, 'start'), yearsOf);
 
-export const championshipRosters = (ctx: BoardContext): BoardRow[] => {
-  const onChampion = ctx.lines.filter((l) => l.tag === 'Final' && ctx.champions[l.year] === l.userId);
-  // one line per player per year, bench included
+/** Seasons a player spent on `owner[year]`'s roster in the `tag` game, starters and bench, one per year. */
+function rosterSeasons(ctx: BoardContext, tag: PlayerLine['tag'], owner: Record<number, UserId | null>): BoardRow[] {
+  const on = ctx.lines.filter((l) => l.tag === tag && owner[l.year] != null && owner[l.year] === l.userId);
   const seen = new Set<string>();
-  const unique = onChampion.filter((l) => { const k = `${l.playerId}|${l.year}`; if (seen.has(k)) return false; seen.add(k); return true; });
-  return careerBoard(unique, (ls) => ls.length, String, () => null);
-};
+  const unique = on.filter((l) => { const k = `${l.playerId}|${l.year}`; if (seen.has(k)) return false; seen.add(k); return true; });
+  return careerBoard(unique, (ls) => ls.length, String, () => null, yearsOf);
+}
+
+export const championshipRosters = (ctx: BoardContext): BoardRow[] => rosterSeasons(ctx, 'Final', ctx.champions);
+export const lastPlaceRosters = (ctx: BoardContext): BoardRow[] => rosterSeasons(ctx, 'Toilet Bowl', ctx.lastPlaces);
 
 export const postToiletBowl = (ctx: BoardContext): BoardRow[] =>
-  careerBoard(started(ctx).filter((l) => l.consolation), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`);
+  careerBoard(started(ctx).filter((l) => l.consolation), (ls) => ls.length, intLabel, (ls) => `${fmtPts(sum(ls, (l) => l.points))} pts`, yearsOf);
 
 // Extras
 
@@ -189,16 +209,13 @@ export const draftValue = (ctx: BoardContext): BoardRow[] => {
     if (!matchesPos(ctx.players[p.playerId]?.position ?? '?', ctx.pos)) continue;
     byPlayer.set(p.playerId, [...(byPlayer.get(p.playerId) ?? []), p]);
   }
-  const items = [...byPlayer.entries()].map(([playerId, picks]) => {
-    const sorted = [...picks].sort((a, b) => a.year - b.year);
-    return {
-      playerId, value: round1(sorted.reduce((s, p) => s + p.value, 0)), picks: sorted,
-      latestYear: sorted[sorted.length - 1].year, latestWeek: 0,
-    };
-  });
+  const items = [...byPlayer.entries()].map(([playerId, picks]) => ({
+    playerId, value: round1(picks.reduce((s, p) => s + p.value, 0) / picks.length), seasons: picks.length,
+    latestYear: Math.max(...picks.map((p) => p.year)), latestWeek: 0,
+  }));
   return rank(items).map((i) => ({
     key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: fmtSigned(i.value, 1),
-    meta: i.picks.map((p) => p.year).join(', '), detail: i.picks.map((p) => `${p.year} ${fmtSigned(p.value, 1)}`).join(' · '), userId: null, to: null,
+    meta: plural(i.seasons, 'season'), detail: null, userId: null, to: null,
   }));
 };
 
@@ -221,23 +238,34 @@ function leaderBoard(ctx: BoardContext, build: (ls: PlayerLine[]) => LeaderItem 
     meta: String(ctx.currentYear), detail: i.detail, userId: i.userId, to: null,
   }));
 }
-const positive = (f: (ls: PlayerLine[]) => number) => (ls: PlayerLine[]): LeaderItem | null => { const v = f(ls); return v > 0 ? { value: v, detail: null } : null; };
+const positive = (f: (ls: PlayerLine[]) => number, detail: (ls: PlayerLine[]) => string | null = () => null) =>
+  (ls: PlayerLine[]): LeaderItem | null => { const v = f(ls); return v > 0 ? { value: v, detail: detail(ls) } : null; };
 
-export const leadPoints = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.points)), fmtPts);
-export const leadYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.yards)), intLabel);
+export const leadPoints = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => {
+  if (mode === 'ppg') {
+    return leaderBoard(ctx, (ls) => {
+      const played = ls.filter((l) => l.played);
+      if (played.length < MIN_LEADER_GAMES) return null;
+      return { value: round2(sum(played, (l) => l.points) / played.length), detail: plural(played.length, 'game') };
+    }, fmtPpg);
+  }
+  return leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.points)), fmtPts);
+};
+export const leadYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.yards),
+  (ls) => parts([[sum(ls, (l) => l.passYards), 'pass'], [sum(ls, (l) => l.rushYards), 'rush'], [sum(ls, (l) => l.recYards), 'rec']])), intLabel);
 export const leadTouchdowns = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.touchdowns)), intLabel);
-export const leadRushYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushYards)), intLabel);
-export const leadRecYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recYards)), intLabel);
-export const leadPassYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passYards)), intLabel);
+export const leadRushYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushYards), (ls) => `${sum(ls, (l) => l.carries)} car`), intLabel);
+export const leadRecYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recYards), (ls) => `${sum(ls, (l) => l.receptions)} rec · ${sum(ls, (l) => l.targets)} tgt`), intLabel);
+export const leadPassYards = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passYards), (ls) => `${sum(ls, (l) => l.passAttempts)} att`), intLabel);
 export const leadRushTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.rushTd)), intLabel);
 export const leadRecTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.recTd)), intLabel);
 export const leadPassTd = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, positive((ls) => sum(ls, (l) => l.passTd)), intLabel);
 
-export const leadPpg = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) => {
-  const played = ls.filter((l) => l.played);
-  if (played.length < MIN_LEADER_GAMES) return null;
-  return { value: round2(sum(played, (l) => l.points) / played.length), detail: plural(played.length, 'game') };
-}, fmtPpg);
+export const leadTouches = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => {
+  const pick = (l: PlayerLine) => (mode === 'rec' ? l.receptions : mode === 'car' ? l.carries : l.receptions + l.carries);
+  return leaderBoard(ctx, positive((ls) => sum(ls, pick),
+    (ls) => `${sum(ls, (l) => l.receptions)} rec · ${sum(ls, (l) => l.carries)} car · ${sum(ls, (l) => l.targets)} tgt`), intLabel);
+};
 
 /** Played lines with a prediction, paired with it. */
 function modelled(ctx: BoardContext, ls: PlayerLine[]): { line: PlayerLine; xfp: number }[] {
@@ -269,7 +297,7 @@ export const leadXfp = (ctx: BoardContext): BoardRow[] => leaderBoard(ctx, (ls) 
 
 export const BOARDS: BoardDef[] = [
   // League leaders, grid order (3 per row)
-  { id: 'leadPoints', section: 'leaders', title: 'Most points', definition: 'Fantasy points this season on any roster, started or benched.', valueHeader: 'Pts', compute: leadPoints },
+  { id: 'leadPoints', section: 'leaders', title: 'Most points', definition: `Fantasy points this season on any roster, started or benched. PPG averages over weeks the player actually played, at least ${MIN_LEADER_GAMES} games.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: leadPoints },
   { id: 'leadYards', section: 'leaders', title: 'Most yards', definition: 'Passing, rushing and receiving yards this season on any roster.', valueHeader: 'Yds', compute: leadYards },
   { id: 'leadTouchdowns', section: 'leaders', title: 'Most touchdowns', definition: 'Passing, rushing and receiving touchdowns this season on any roster.', valueHeader: 'TD', compute: leadTouchdowns },
   { id: 'leadRushYards', section: 'leaders', title: 'Rushing yards', definition: 'Rushing yards this season on any roster.', valueHeader: 'Yds', compute: leadRushYards },
@@ -278,27 +306,27 @@ export const BOARDS: BoardDef[] = [
   { id: 'leadRushTd', section: 'leaders', title: 'Rushing TDs', definition: 'Rushing touchdowns this season on any roster.', valueHeader: 'TD', compute: leadRushTd },
   { id: 'leadRecTd', section: 'leaders', title: 'Receiving TDs', definition: 'Receiving touchdowns this season on any roster.', valueHeader: 'TD', compute: leadRecTd },
   { id: 'leadPassTd', section: 'leaders', title: 'Passing TDs', definition: 'Passing touchdowns this season on any roster.', valueHeader: 'TD', compute: leadPassTd },
-  { id: 'leadPpg', section: 'leaders', title: 'PPG', definition: `Points per game over weeks the player actually played this season. At least ${MIN_LEADER_GAMES} games.`, valueHeader: 'PPG', compute: leadPpg },
+  { id: 'leadTouches', section: 'leaders', title: 'Most touches', definition: 'Receptions plus carries this season on any roster. Rec and Car rank one or the other; targets shown underneath.', valueHeader: 'Touches', modes: TOUCH_MODES, compute: leadTouches },
   { id: 'leadFpoe', section: 'leaders', title: 'FPOE', definition: `Fantasy points over expected: actual minus xFP, summed over the season. Over shows the luckiest or most efficient, Under the least. At least ${MIN_LEADER_GAMES} modelled games.`, valueHeader: 'FPOE', sortable: true, compute: leadFpoe },
   { id: 'leadXfp', section: 'leaders', title: 'xFP', definition: 'Expected fantasy points from volume: a per-position fit of points on targets, carries and pass attempts across league history. No field position or air yards, so an approximation. QB, RB, WR and TE only.', valueHeader: 'xFP', compute: leadXfp },
   // All-time
   { id: 'bestWeek', section: 'allTime', title: 'Best week by a starter', definition: 'Most points by a player in one week while in a starting lineup.', valueHeader: 'Pts', compute: bestWeek },
   { id: 'bestSeason', section: 'allTime', title: 'Best season by a starter', definition: 'Most points a player scored for one manager in one season while started.', valueHeader: 'Pts', compute: bestSeason },
-  { id: 'careerPoints', section: 'allTime', title: 'Most career points started', definition: 'Total points scored while in a starting lineup, every season and manager.', valueHeader: 'Pts', compute: careerPoints },
+  { id: 'careerPoints', section: 'allTime', title: 'Most career points started', definition: `Total points scored while in a starting lineup, every season and manager. PPG averages per start, at least ${MIN_PPG_GAMES} starts.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: careerPoints },
   { id: 'weeksStarted', section: 'allTime', title: 'Most weeks started', definition: 'Weeks in a starting lineup across every season.', valueHeader: 'Starts', compute: weeksStarted },
   { id: 'benchBlunder', section: 'allTime', title: 'Biggest bench blunder', definition: 'Most points by a player left on the bench in one week.', valueHeader: 'Pts', compute: benchBlunder },
-  { id: 'careerPpg', section: 'allTime', title: 'Career PPG', definition: `Points per game over weeks the player actually played, started or benched. At least ${MIN_PPG_GAMES} games.`, valueHeader: 'PPG', compute: careerPpg },
   // Postseason
-  { id: 'postPoints', section: 'postseason', title: 'Most postseason points started', definition: 'Points while started in championship-bracket games.', valueHeader: 'Pts', compute: postPoints },
+  { id: 'postPoints', section: 'postseason', title: 'Most postseason points started', definition: `Points while started in championship-bracket games. PPG averages per start, at least ${MIN_POST_GAMES} starts.`, valueHeader: 'Pts', modes: POINTS_MODES, compute: postPoints },
   { id: 'postStarts', section: 'postseason', title: 'Most postseason starts', definition: 'Starts in championship-bracket games.', valueHeader: 'Starts', compute: postStarts },
   { id: 'postTouchdowns', section: 'postseason', title: 'Most postseason touchdowns', definition: 'Passing, rushing and receiving touchdowns while started in the championship bracket.', valueHeader: 'TD', compute: postTouchdowns },
   { id: 'postYards', section: 'postseason', title: 'Most postseason yards', definition: 'Passing, rushing and receiving yards while started in the championship bracket.', valueHeader: 'Yds', compute: postYards },
   { id: 'postReceptions', section: 'postseason', title: 'Most postseason receptions', definition: 'Receptions while started in the championship bracket.', valueHeader: 'Rec', compute: postReceptions },
   { id: 'championshipRosters', section: 'postseason', title: 'Most championship rosters', definition: "Seasons on the champion's roster, starters and bench, in the championship game.", valueHeader: 'Titles', compute: championshipRosters },
   { id: 'postToiletBowl', section: 'postseason', title: 'Most toilet bowl starts', definition: 'Starts in consolation games: the first round, the toilet bowl and the 7th place game.', valueHeader: 'Starts', compute: postToiletBowl },
+  { id: 'lastPlaceRosters', section: 'postseason', title: 'Most last place rosters', definition: "Seasons on the last-place finisher's roster, starters and bench, in the toilet bowl.", valueHeader: 'Seasons', compute: lastPlaceRosters },
   // Extras
   { id: 'boomStarts', section: 'extras', title: 'Most 30-point starts', definition: 'Weeks a player scored 30 or more while started.', valueHeader: 'Weeks', compute: boomStarts },
   { id: 'dudStarts', section: 'extras', title: 'Most dud starts', definition: 'Weeks a player played and scored under 5 while started. Unplayed weeks do not count. Kickers and defenses excluded.', valueHeader: 'Weeks', compute: dudStarts },
   { id: 'journeyman', section: 'extras', title: 'Journeyman', definition: 'Different managers who have started the player. Kickers and defenses excluded.', valueHeader: 'Mgrs', compute: journeyman },
-  { id: 'draftValue', section: 'extras', title: 'Cumulative draft value', definition: "Sum of the player's draft value across every season they were drafted, from the draft board. The current season's value moves weekly.", valueHeader: 'Value', compute: draftValue },
+  { id: 'draftValue', section: 'extras', title: 'Average draft value', definition: "The player's draft value from the draft board, averaged over the seasons they were drafted. The current season's value moves weekly.", valueHeader: 'Value', compute: draftValue },
 ];

@@ -64,6 +64,23 @@ describe('Board', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
 
+  it('offers a mode toggle for moded boards and shows the mode value header', () => {
+    const onMode = vi.fn();
+    const modes = [{ id: 'both', label: 'Both', valueHeader: 'Touches' }, { id: 'rec', label: 'Rec', valueHeader: 'Rec' }, { id: 'car', label: 'Car', valueHeader: 'Car' }];
+    wrapB({ def: { ...def, modes }, rows: [row(0)], mode: 'rec', onMode });
+    const group = screen.getByRole('group', { name: 'View' });
+    expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['Both', 'Rec', 'Car']);
+    expect(within(group).getByRole('button', { name: 'Rec' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Rec', { selector: '.section-label' })).toBeInTheDocument();
+    expect(screen.queryByText('Pts')).toBeNull();
+    fireEvent.click(within(group).getByRole('button', { name: 'Car' }));
+    expect(onMode).toHaveBeenCalledWith('car');
+    cleanup();
+    wrapB({ def: { ...def, modes }, rows: [row(0)] }); // no mode given: first mode is the default
+    expect(screen.getByRole('button', { name: 'Both' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Touches')).toBeInTheDocument();
+  });
+
   it('offers an Over/Under toggle only for sortable boards', () => {
     const onDirection = vi.fn();
     wrapB({ def: { ...def, sortable: true }, rows: [row(0)], direction: 'desc', onDirection });

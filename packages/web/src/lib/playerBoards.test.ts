@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { flattenLines } from './playerLines';
 import { game, line, players, season, side, week } from '../test/playerFixtures';
 import {
-  BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, careerPpg, championshipRosters, championsOf, weeksStarted,
+  BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, championshipRosters, championsOf, weeksStarted,
   boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
-  draftValue, draftValuesOf, leadFpoe, leadPassTd, leadPassYards, leadPpg, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
+  draftValue, draftValuesOf, leadFpoe, leadPassTd, leadPassYards, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
+  lastPlaceRosters, lastPlacesOf, leadTouches,
   type BoardContext,
 } from './playerBoards';
 import type { XfpModel } from './xfp';
@@ -21,11 +22,13 @@ const s2025 = season(2025, [
   week(3, [game(2025, 3, 1, side('b', 22, [line('r1', 22)], [line('q1', 50)]), side('a', 4, [line('w1', 4)]), 'Final')], true),
 ], 'b');
 const seasons = [s2024, s2025];
-const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), currentYear: 2025, pos: 'All', picks: [], xfp: null };
+const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), currentYear: 2025, pos: 'All', picks: [], xfp: null };
 
-describe('championsOf', () => {
-  it('maps year to champion', () => {
+describe('championsOf and lastPlacesOf', () => {
+  it('map year to champion and to last place', () => {
     expect(championsOf(seasons)).toEqual({ 2024: 'a', 2025: 'b' });
+    expect(lastPlacesOf(seasons)).toEqual({ 2024: null, 2025: null });
+    expect(lastPlacesOf([{ ...s2024, honors: { ...s2024.honors, lastPlace: 'b' } }])).toEqual({ 2024: 'b' });
   });
 });
 
@@ -51,13 +54,25 @@ describe('bestSeason', () => {
 });
 
 describe('careerPoints and weeksStarted', () => {
-  it('aggregates across seasons and managers', () => {
+  it('aggregates across seasons and managers with a seasons count instead of a years list', () => {
     const pts = careerPoints(ctx);
-    expect(pts[0]).toMatchObject({ playerId: 'q1', value: 149, valueLabel: '149.00', meta: '2024, 2025', detail: '5 starts', userId: null, to: null });
+    expect(pts[0]).toMatchObject({ playerId: 'q1', value: 149, valueLabel: '149.00', meta: '2 seasons', detail: '5 starts', userId: null, to: null });
     expect(pts[1]).toMatchObject({ playerId: 'r1', value: 81 });
     const wk = weeksStarted(ctx);
-    expect(wk[0]).toMatchObject({ playerId: 'r1', value: 6, valueLabel: '6' });
+    expect(wk[0]).toMatchObject({ playerId: 'r1', value: 6, valueLabel: '6', meta: '2 seasons' });
     expect(wk[1]).toMatchObject({ playerId: 'q1', value: 5 });
+    expect(wk.find((r) => r.playerId === 'w1')).toMatchObject({ meta: '2 seasons' });
+    expect(weeksStarted({ ...ctx, lines: ctx.lines.filter((l) => l.year === 2025) })[0]).toMatchObject({ meta: '1 season' });
+  });
+  it('switches to points per start with a minimum of starts in ppg mode', () => {
+    expect(careerPoints(ctx, 'desc', 'ppg')).toEqual([]); // nobody has 12 starts in the fixture
+    const many = Array.from({ length: 12 }, (_, i) => week(i + 1, [game(2023, i + 1, 1, side('a', 10, [line('r1', 10)]), side('b', 1, [line('t1', 0, {})]))]));
+    const big = { ...ctx, lines: flattenLines([season(2023, many), ...seasons], players) };
+    const rows = careerPoints(big, 'desc', 'ppg');
+    // r1: 12 × 10 in 2023 + 20, 12, 7, 9, 11, 22 = 201 over 18 starts
+    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 11.17, valueLabel: '11.2', detail: '18 starts', meta: '3 seasons' });
+    // t1: 12 unplayed starts still count as starts in 2023, plus 20 (2024 wk1) and 0 (2025 wk1) → 20 over 14
+    expect(rows.find((r) => r.playerId === 't1')).toMatchObject({ value: 1.43, detail: '14 starts' });
   });
 });
 
@@ -79,26 +94,20 @@ describe('benchBlunder', () => {
   });
 });
 
-describe('careerPpg', () => {
-  it('averages points over played lines, started or benched, with a minimum of games', () => {
-    expect(careerPpg(ctx)).toEqual([]); // nobody has 12 played games in the fixture
-    const many = Array.from({ length: 12 }, (_, i) => week(i + 1, [game(2023, i + 1, 1, side('a', 10, [line('r1', 10)]), side('b', 1, [line('t1', 0, {})]))]));
-    const big = { ...ctx, lines: flattenLines([season(2023, many), ...seasons], players) };
-    const r1 = careerPpg(big).find((r) => r.playerId === 'r1')!;
-    // 12 × 10 in 2023 + 20, 12, 7, 9, 11, 22 = 201 over 18 played games
-    expect(r1).toMatchObject({ value: 11.17, valueLabel: '11.2', detail: '18 games', meta: '2023, 2024, 2025' });
-    expect(careerPpg(big).find((r) => r.playerId === 't1')).toBeUndefined(); // 12 unplayed weeks do not count
-  });
-});
-
 describe('postseason boards', () => {
   // Finals: 2024 wk3 a: q1 31 (bench t1 3) vs b: r1 7 ; 2025 wk3 b: r1 22 (bench q1 50) vs a: w1 4. Toilet bowls never appear here.
-  it('count only started lines in championship-bracket games', () => {
+  it('count only started lines in championship-bracket games and keep the years list', () => {
     expect(postPoints(ctx).slice(0, 2)).toEqual([
       expect.objectContaining({ playerId: 'q1', value: 31, valueLabel: '31.00', meta: '2024', detail: '1 start' }),
       expect.objectContaining({ playerId: 'r1', value: 29, meta: '2024, 2025', detail: '2 starts' }),
     ]);
     expect(postStarts(ctx)[0]).toMatchObject({ playerId: 'r1', value: 2, valueLabel: '2', detail: '29.00 pts' });
+  });
+  it('postseason points average per start in ppg mode with a minimum of starts', () => {
+    expect(postPoints(ctx, 'desc', 'ppg')).toEqual([]); // nobody has 3 postseason starts
+    const extra = season(2023, [week(3, [game(2023, 3, 1, side('a', 10, [line('r1', 10)]), side('b', 1, [line('t1', 1)]), 'SF')], true)]);
+    const c = { ...ctx, lines: flattenLines([extra, ...seasons], players) };
+    expect(postPoints(c, 'desc', 'ppg')).toEqual([expect.objectContaining({ playerId: 'r1', value: 13, valueLabel: '13.0', detail: '3 starts', meta: '2023, 2024, 2025' })]);
   });
   it('sum touchdowns, yards and receptions from the stats', () => {
     const rich = season(2023, [week(3, [game(2023, 3, 1,
@@ -140,6 +149,10 @@ describe('league leaders', () => {
     expect(leadYards(ctx)).toEqual([]); // fixture lines carry no yardage in 2025
     expect(leadTouchdowns(ctx)).toEqual([]);
   });
+  it('points switch to per played game in ppg mode, three games minimum', () => {
+    const rows = leadPoints(ctx, 'desc', 'ppg');
+    expect(rows.map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['q1', 34.33, '34.3', '3 games'], ['r1', 14, '14.0', '3 games']]);
+  });
   it('return nothing when the current season has no lines', () => {
     expect(leadPoints({ ...ctx, currentYear: 2026 })).toEqual([]);
   });
@@ -160,16 +173,32 @@ describe('leaders splits', () => {
     expect(leadRecTd(c).map((r) => [r.playerId, r.value])).toEqual([['w1', 1]]);
     expect(leadPassTd(c).map((r) => [r.playerId, r.value])).toEqual([['q1', 3]]);
   });
+  it('yards boards show the stat totals underneath', () => {
+    expect(leadYards(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 312, '300 pass · 12 rush'], ['w1', 110, '110 rec'], ['r1', 105, '90 rush · 15 rec']]);
+    expect(leadRushYards(c)[0]).toMatchObject({ playerId: 'r1', detail: '0 car' });
+    expect(leadRecYards(c)[0]).toMatchObject({ playerId: 'w1', detail: '7 rec · 0 tgt' });
+    expect(leadPassYards(c)[0]).toMatchObject({ playerId: 'q1', detail: '0 att' });
+  });
+  it('touches add receptions and carries, with a mode for each, and show targets underneath', () => {
+    const vol = season(2025, [
+      week(1, [game(2025, 1, 1,
+        side('a', 50, [line('r1', 20, { rush_att: 18, rec: 3, rec_tgt: 4 }), line('w1', 15, { rec: 7, rec_tgt: 11 })]),
+        side('b', 15, [line('q1', 30, { pass_att: 30 }), line('t1', 5, { rec: 2, rec_tgt: 2, rush_att: 1 })]))]),
+      week(2, [game(2025, 2, 1, side('a', 10, [line('r1', 10, { rush_att: 12, rec_tgt: 1 })]), side('b', 1, [line('w1', 1, { rec_tgt: 3 })]))]),
+    ]);
+    const v = { ...ctx, lines: flattenLines([vol], players) };
+    expect(leadTouches(v).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([
+      ['r1', 33, '33', '3 rec · 30 car · 5 tgt'], ['w1', 7, '7', '7 rec · 0 car · 14 tgt'], ['t1', 3, '3', '2 rec · 1 car · 2 tgt'],
+    ]);
+    expect(leadTouches(v, 'desc', 'rec').map((r) => [r.playerId, r.value])).toEqual([['w1', 7], ['r1', 3], ['t1', 2]]);
+    expect(leadTouches(v, 'desc', 'car').map((r) => [r.playerId, r.value])).toEqual([['r1', 30], ['t1', 1]]);
+  });
 });
 
-describe('leaders PPG, FPOE and xFP', () => {
+describe('leaders FPOE and xFP', () => {
   // 2025 lines: q1 35 (wk1), 18 (wk2), 50 bench (wk3) all played; t1 wk1 unplayed; r1 9, 11, 22; w1 4.
   const flat: XfpModel = { coef: {}, predict: (l) => (l.position === 'QB' ? 30 : l.position === 'RB' ? 10 : null) };
   const c = { ...ctx, xfp: flat };
-  it('PPG needs three played games', () => {
-    const rows = leadPpg(c);
-    expect(rows.map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['q1', 34.33, '34.3', '3 games'], ['r1', 14, '14.0', '3 games']]);
-  });
   it('FPOE is actual minus predicted over modelled lines, sortable both ways', () => {
     // q1: (35-30)+(18-30)+(50-30) = 13 ; r1: (9-10)+(11-10)+(22-10) = 12 ; w1 has 1 line (<3) → out ; t1 TE → no model
     expect(leadFpoe(c).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['q1', 13, '+13.0', 'xFP 90.0'], ['r1', 12, '+12.0', 'xFP 30.0']]);
@@ -198,6 +227,12 @@ describe('toilet bowl and exclusions', () => {
     expect(postToiletBowl(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 2, '25.00 pts'], ['k1', 1, '1.00 pts'], ['r1', 1, '7.00 pts'], ['w1', 1, '2.00 pts'], ['KC', 1, '10.00 pts']]);
     expect(postPoints(c).some((r) => r.playerId === 'KC')).toBe(false);
   });
+  it('last place rosters count seasons on the last-place roster in the toilet bowl, bench included', () => {
+    const bowl2 = season(2024, [week(4, [game(2024, 4, 1, side('b', 3, [line('k1', 3)], [line('q1', 0, {})]), side('a', 9, [line('r1', 9)]), 'Toilet Bowl')], true)]);
+    const lp = { ...c, lines: flattenLines([cons, bowl2, ...seasons], players), lastPlaces: { 2023: 'b', 2024: 'b', 2025: null } };
+    expect(lastPlaceRosters(lp).map((r) => [r.playerId, r.value, r.valueLabel, r.meta])).toEqual([['k1', 2, '2', '2023, 2024'], ['q1', 1, '1', '2024']]);
+    expect(lastPlaceRosters({ ...lp, lastPlaces: {} })).toEqual([]);
+  });
   it('dud starts and journeyman drop kickers and defenses', () => {
     expect(dudStarts(c).some((r) => r.playerId === 'KC' || r.playerId === 'k1')).toBe(false);
     expect(journeyman(c).some((r) => r.playerId === 'KC' || r.playerId === 'k1')).toBe(false);
@@ -220,12 +255,13 @@ describe('cumulative draft value', () => {
       { year: 2025, playerId: 'q1', value: -12 }, { year: 2025, playerId: 'r1', value: 20.5 },
     ]);
   });
-  it('sums per player, lists each year, respects the position filter, and never yields NaN', () => {
+  it('averages per player, counts seasons drafted, respects the position filter, and never yields NaN', () => {
     const c = { ...ctx, picks: draftValuesOf(drafts) };
     expect(draftValue(c).map((r) => [r.playerId, r.value, r.valueLabel, r.meta, r.detail])).toEqual([
-      ['q1', 26.2, '+26.2', '2024, 2025', '2024 +38.2 · 2025 -12.0'],
-      ['r1', 15.5, '+15.5', '2024, 2025', '2024 -5.0 · 2025 +20.5'],
+      ['q1', 13.1, '+13.1', '2 seasons', null],
+      ['r1', 7.8, '+7.8', '2 seasons', null],
     ]);
+    expect(draftValue({ ...c, picks: c.picks.filter((p) => p.year === 2024) }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 38.2, '1 season'], ['r1', -5, '1 season']]);
     expect(draftValue({ ...c, pos: 'RB' }).map((r) => r.playerId)).toEqual(['r1']);
     expect(draftValue({ ...c, pos: 'K' })).toEqual([]);
     expect(draftValue(c).every((r) => Number.isFinite(r.value))).toBe(true);
@@ -234,13 +270,20 @@ describe('cumulative draft value', () => {
 
 describe('BOARDS registry v2 order', () => {
   const ids = (s: string) => BOARDS.filter((b) => b.section === s).map((b) => b.id);
-  it('lays out leaders in grid order and moves championship rosters to postseason', () => {
-    expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadPpg', 'leadFpoe', 'leadXfp']);
-    expect(ids('allTime')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted', 'benchBlunder', 'careerPpg']);
-    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'championshipRosters', 'postToiletBowl']);
+  it('lays out leaders in grid order, touches in place of PPG, last place beside the toilet bowl', () => {
+    expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
+    expect(ids('allTime')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted', 'benchBlunder']);
+    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'championshipRosters', 'postToiletBowl', 'lastPlaceRosters']);
     expect(ids('extras')).toEqual(['boomStarts', 'dudStarts', 'journeyman', 'draftValue']);
     expect(BOARDS.find((b) => b.id === 'leadFpoe')!.sortable).toBe(true);
     expect(BOARDS.filter((b) => b.sortable)).toHaveLength(1);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);
+  });
+  it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
+    const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
+    for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
+    expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
+    expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Average draft value');
+    expect(BOARDS.filter((b) => b.modes)).toHaveLength(4);
   });
 });

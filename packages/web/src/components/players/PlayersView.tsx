@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import type { History, PlayerDirectory, Season } from '@fantasy-dash/core';
-import { BOARDS, championsOf, draftValuesOf, type BoardContext, type Section as SectionId } from '../../lib/playerBoards';
+import { BOARDS, championsOf, draftValuesOf, lastPlacesOf, type BoardContext, type Section as SectionId } from '../../lib/playerBoards';
 import { filterLines, flattenLines, isPosFilter, type PosFilter } from '../../lib/playerLines';
 import { fitXfp } from '../../lib/xfp';
 import Section from './Section';
@@ -26,6 +26,7 @@ export default function PlayersView({ seasons, players, managers, years, current
 
   const allLines = useMemo(() => flattenLines(seasons, players), [seasons, players]);
   const champions = useMemo(() => championsOf(seasons), [seasons]);
+  const lastPlaces = useMemo(() => lastPlacesOf(seasons), [seasons]);
   const picks = useMemo(() => draftValuesOf(seasons), [seasons]);
   const xfp = useMemo(() => fitXfp(allLines), [allLines]);
   const leadersHasLines = allLines.some((l) => l.year === leadersYear);
@@ -40,7 +41,7 @@ export default function PlayersView({ seasons, players, managers, years, current
       </header>
       {SECTIONS.map((s) => {
         const pos = posOf(s.param);
-        const ctx: BoardContext = { lines: filterLines(allLines, pos), players, champions, currentYear: s.id === 'leaders' ? leadersYear : currentYear, pos, picks, xfp };
+        const ctx: BoardContext = { lines: filterLines(allLines, pos), players, champions, lastPlaces, currentYear: s.id === 'leaders' ? leadersYear : currentYear, pos, picks, xfp };
         return (
           <Section
             key={s.id}

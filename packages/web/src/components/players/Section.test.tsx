@@ -13,24 +13,56 @@ const big: BoardDef = { id: 'big', section: 'extras', title: 'Big board', defini
 const small: BoardDef = { id: 'small', section: 'extras', title: 'Small board', definition: 'Two rows.', valueHeader: 'N', compute: () => rows(2, 's') };
 const sortable: BoardDef = { id: 'sortable', section: 'extras', title: 'Sortable board', definition: 'Direction aware.', valueHeader: 'N', sortable: true,
   compute: (_ctx, direction) => (direction === 'asc' ? rows(6, 'u') : rows(6, 'o')) };
-const ctx: BoardContext = { lines: [], players, champions: {}, currentYear: 2025, pos: 'All', picks: [], xfp: null };
+const moded: BoardDef = { id: 'moded', section: 'extras', title: 'Moded board', definition: 'Two readings.', valueHeader: 'Pts',
+  modes: [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }],
+  compute: (_ctx, _direction, mode) => (mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
+const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, currentYear: 2025, pos: 'All', picks: [], xfp: null };
 const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('Section', () => {
-  it('expands every board together and leaves short boards alone', () => {
-    wrap(<Section id="extras" title="Extras" note="Every season" boards={[big, small, sortable]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+  it('expands only the boards in the same grid row and leaves short boards alone', () => {
+    // two columns: row 1 = big + small, row 2 = sortable + moded
+    wrap(<Section id="extras" title="Extras" note="Every season" boards={[big, small, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const bigBoard = screen.getByRole('region', { name: 'Big board' });
     const sortBoard = screen.getByRole('region', { name: 'Sortable board' });
     const smallBoard = screen.getByRole('region', { name: 'Small board' });
+    const modedBoard = screen.getByRole('region', { name: 'Moded board' });
     expect(within(bigBoard).getAllByRole('listitem')).toHaveLength(5);
     expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(5);
     expect(within(smallBoard).getAllByRole('listitem')).toHaveLength(2);
     fireEvent.click(within(bigBoard).getByRole('button', { name: /show all/i }));
     expect(within(bigBoard).getAllByRole('listitem')).toHaveLength(8);
-    expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(modedBoard).getAllByRole('listitem')).toHaveLength(5);
     expect(within(smallBoard).getAllByRole('listitem')).toHaveLength(2);
     expect(within(smallBoard).queryByRole('button')).toBeNull();
+    fireEvent.click(within(modedBoard).getByRole('button', { name: /show all/i }));
+    expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(modedBoard).getAllByRole('listitem')).toHaveLength(7);
     expect(within(sortBoard).getByRole('button', { name: /show less/i })).toBeInTheDocument();
+    fireEvent.click(within(sortBoard).getByRole('button', { name: /show less/i }));
+    expect(within(modedBoard).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(bigBoard).getAllByRole('listitem')).toHaveLength(8); // row 1 untouched
+  });
+
+  it('groups rows by three in a three-column section', () => {
+    const third: BoardDef = { ...big, id: 'third', title: 'Third board' };
+    const fourth: BoardDef = { ...big, id: 'fourth', title: 'Fourth board' };
+    wrap(<Section id="leaders" title="Leaders" note="" boards={[big, sortable, third, fourth]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
+    fireEvent.click(within(screen.getByRole('region', { name: 'Third board' })).getByRole('button', { name: /show all/i }));
+    expect(within(screen.getByRole('region', { name: 'Big board' })).getAllByRole('listitem')).toHaveLength(8);
+    expect(within(screen.getByRole('region', { name: 'Sortable board' })).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(screen.getByRole('region', { name: 'Fourth board' })).getAllByRole('listitem')).toHaveLength(5);
+  });
+
+  it('passes the chosen mode to a moded board and keeps it per board', () => {
+    wrap(<Section id="extras" title="Extras" note="" boards={[moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    const board = screen.getByRole('region', { name: 'Moded board' });
+    expect(within(board).getAllByRole('listitem')[1]).toHaveTextContent('x1');
+    expect(within(board).getByRole('button', { name: 'Total' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(board).getByRole('button', { name: 'PPG' }));
+    expect(within(board).getAllByRole('listitem')[1]).toHaveTextContent('g1');
+    expect(within(board).getByRole('button', { name: 'PPG' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('passes the direction to a sortable board', () => {

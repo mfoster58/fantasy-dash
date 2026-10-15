@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardContext, BoardDef, Direction } from '../../lib/playerBoards';
 import type { PosFilter } from '../../lib/playerLines';
@@ -23,10 +23,30 @@ interface Props {
   emptyMessage?: string | null;
 }
 
-/** One titled block of boards with its own position filter, optional season picker and a shared expand state. */
+/** Tailwind's md breakpoint, where the board grid gains its columns. */
+const GRID_QUERY = '(min-width: 768px)';
+
+/** True when the grid is laid out in columns; true where matchMedia is unavailable (tests, SSR). */
+function useGridColumns(): boolean {
+  const query = () => (typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(GRID_QUERY).matches : true);
+  const [wide, setWide] = useState(query);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia(GRID_QUERY);
+    const onChange = () => setWide(mql.matches);
+    onChange();
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return wide;
+}
+
+/** One titled block of boards with its own position filter, optional season picker, and expand state shared per grid row. */
 export default function Section({ id, title, note, boards, ctx, players, managers, pos, onPos, columns, seasonPicker, emptyMessage }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [directions, setDirections] = useState<Record<string, Direction>>({});
+  const [modes, setModes] = useState<Record<string, string>>({});
+  const perRow = useGridColumns() ? columns : 1;
   return (
     <section id={id} aria-labelledby={`section-${id}`} className="scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -41,19 +61,23 @@ export default function Section({ id, title, note, boards, ctx, players, manager
         <p className="card p-4 text-sm text-muted">{emptyMessage}</p>
       ) : (
         <div className={`grid gap-4 ${columns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-          {boards.map((b) => {
+          {boards.map((b, i) => {
+            const row = Math.floor(i / perRow);
             const direction = directions[b.id] ?? 'desc';
+            const mode = modes[b.id] ?? b.modes?.[0]?.id;
             return (
               <Board
                 key={b.id}
                 def={b}
-                rows={b.compute(ctx, direction)}
+                rows={b.compute(ctx, direction, mode)}
                 players={players}
                 managers={managers}
-                expanded={expanded}
-                onToggle={() => setExpanded((v) => !v)}
+                expanded={expandedRows[row] ?? false}
+                onToggle={() => setExpandedRows((m) => ({ ...m, [row]: !m[row] }))}
                 direction={direction}
                 onDirection={b.sortable ? (d) => setDirections((m) => ({ ...m, [b.id]: d })) : undefined}
+                mode={mode}
+                onMode={b.modes ? (m) => setModes((s) => ({ ...s, [b.id]: m })) : undefined}
               />
             );
           })}

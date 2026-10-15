@@ -11,17 +11,41 @@ interface Props {
   rows: BoardRow[];
   players: PlayerDirectory;
   managers: History['managers'];
-  /** section-wide: every board in the section expands together */
+  /** controlled by the section, which expands the boards in the same grid row together */
   expanded: boolean;
   onToggle: () => void;
   direction?: Direction;
   onDirection?: (d: Direction) => void;
+  /** current mode id for a board with `def.modes`; defaults to the first mode */
+  mode?: string;
+  onMode?: (m: string) => void;
 }
 
 const PREVIEW = 5;
 
-export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection }: Props) {
+function Toggle<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <span role="group" aria-label={label} className="flex gap-0.5">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          aria-pressed={value === o.id}
+          onClick={() => onChange(o.id)}
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${value === o.id ? 'bg-ink text-bg' : 'bg-surface-2 text-muted hover:text-ink'}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </span>
+  );
+}
+
+const DIRECTIONS: { id: Direction; label: string }[] = [{ id: 'desc', label: 'Over' }, { id: 'asc', label: 'Under' }];
+
+export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
+  const activeMode = def.modes?.find((m) => m.id === mode) ?? def.modes?.[0];
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
@@ -30,22 +54,9 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
           <p className="mt-0.5 text-xs text-muted">{def.definition}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="section-label">{def.valueHeader}</span>
-          {def.sortable && onDirection && (
-            <span role="group" aria-label="Direction" className="flex gap-0.5">
-              {(['desc', 'asc'] as Direction[]).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={direction === d}
-                  onClick={() => onDirection(d)}
-                  className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${direction === d ? 'bg-ink text-bg' : 'bg-surface-2 text-muted hover:text-ink'}`}
-                >
-                  {d === 'desc' ? 'Over' : 'Under'}
-                </button>
-              ))}
-            </span>
-          )}
+          <span className="section-label">{activeMode?.valueHeader ?? def.valueHeader}</span>
+          {def.sortable && onDirection && <Toggle label="Direction" options={DIRECTIONS} value={direction} onChange={onDirection} />}
+          {def.modes && activeMode && <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={(m) => onMode?.(m)} />}
         </div>
       </header>
       {rows.length === 0 ? (
