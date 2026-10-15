@@ -129,11 +129,11 @@ export const skillOnly = (ls: PlayerLine[]) => ls.filter((l) => !KICKING_DEF.has
 export const matchesPos = (position: string, pos: PosFilter) =>
   pos === 'All' ? true : pos === 'FLEX' ? ['RB', 'WR', 'TE'].includes(position) : position === pos;
 
-/** Sort by value (desc by default), newest (year, week) desc, playerId asc, then cap at MAX_ROWS. */
-export function rank<T extends { value: number; latestYear: number; latestWeek: number; playerId: string }>(items: T[], direction: Direction = 'desc'): T[] {
+/** Sort by value (desc by default), then secondary desc, newest (year, week) desc, playerId asc, then cap at MAX_ROWS. */
+export function rank<T extends { value: number; latestYear: number; latestWeek: number; playerId: string; secondary?: number }>(items: T[], direction: Direction = 'desc'): T[] {
   const sign = direction === 'asc' ? -1 : 1;
   return [...items]
-    .sort((x, y) => sign * (y.value - x.value) || y.latestYear - x.latestYear || y.latestWeek - x.latestWeek || (x.playerId < y.playerId ? -1 : x.playerId > y.playerId ? 1 : 0))
+    .sort((x, y) => sign * (y.value - x.value) || (y.secondary ?? 0) - (x.secondary ?? 0) || y.latestYear - x.latestYear || y.latestWeek - x.latestWeek || (x.playerId < y.playerId ? -1 : x.playerId > y.playerId ? 1 : 0))
     .slice(0, MAX_ROWS);
 }
 
@@ -160,9 +160,9 @@ export function momentBoard(lines: PlayerLine[], value: (l: PlayerLine) => numbe
 }
 
 /** One row per player, aggregated over every line given. `value` may return null to drop a player. */
-export function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => number | null, label: (v: number) => string, detail: (ls: PlayerLine[]) => string | null, meta: (ls: PlayerLine[]) => string = seasonsOf): BoardRow[] {
+export function careerBoard(lines: PlayerLine[], value: (ls: PlayerLine[]) => number | null, label: (v: number) => string, detail: (ls: PlayerLine[]) => string | null, meta: (ls: PlayerLine[]) => string = seasonsOf, secondary?: (ls: PlayerLine[]) => number): BoardRow[] {
   const items = [...groupBy(lines, (l) => l.playerId).entries()]
-    .map(([playerId, g]) => ({ playerId, value: value(g.lines), latestYear: g.latestYear, latestWeek: g.latestWeek, lines: g.lines }))
+    .map(([playerId, g]) => ({ playerId, value: value(g.lines), latestYear: g.latestYear, latestWeek: g.latestWeek, lines: g.lines, secondary: secondary?.(g.lines) }))
     .filter((i): i is typeof i & { value: number } => i.value !== null && i.value > 0);
   return rank(items).map((i) => ({
     key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: label(i.value),

@@ -77,12 +77,16 @@ describe('careerPoints and weeksStarted', () => {
 });
 
 describe('championshipRosters', () => {
-  it('counts seasons on the champion roster in the final, bench included, and lists the years', () => {
+  it('counts seasons on the champion roster in the final, bench included, breaking ties by postseason points on that roster', () => {
     const rows = championshipRosters(ctx);
-    // 2024 final: a (champion) started q1, benched t1. 2025 final: b (champion) started r1, benched q1.
-    expect(rows[0]).toMatchObject({ playerId: 'q1', value: 2, valueLabel: '2', meta: '2024, 2025' });
-    expect(rows.map((r) => r.playerId).sort()).toEqual(['q1', 'r1', 't1']);
-    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 1, meta: '2025' });
+    // 2024 final: a (champion) started q1 31, benched t1 3. 2025 final: b (champion) started r1 22, benched q1 50.
+    expect(rows.map((r) => [r.playerId, r.value, r.meta, r.detail])).toEqual([['q1', 2, '2024, 2025', '81.00 pts'], ['r1', 1, '2025', '22.00 pts'], ['t1', 1, '2024', '3.00 pts']]);
+  });
+  it('ties on seasons fall to points even when the lower scorer is newer', () => {
+    // make t1 the newer one-season player with fewer points: swap the 2025 champion to a, whose final roster is w1 (4)
+    const c = { ...ctx, champions: { 2024: 'a', 2025: 'a' } };
+    // 2024 a: q1 31, t1 3 ; 2025 a: w1 4 → q1 (31) first, then t1 (3, 2024) before w1 (4, 2025)? No: points decide: w1 4 > t1 3
+    expect(championshipRosters(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 1, '31.00 pts'], ['w1', 1, '4.00 pts'], ['t1', 1, '3.00 pts']]);
   });
 });
 
@@ -233,7 +237,7 @@ describe('toilet bowl and exclusions', () => {
   it('last place rosters count seasons on the last-place roster in the toilet bowl, bench included', () => {
     const bowl2 = season(2024, [week(4, [game(2024, 4, 1, side('b', 3, [line('k1', 3)], [line('q1', 0, {})]), side('a', 9, [line('r1', 9)]), 'Toilet Bowl')], true)]);
     const lp = { ...c, lines: flattenLines([cons, bowl2, ...seasons], players), lastPlaces: { 2023: 'b', 2024: 'b', 2025: null } };
-    expect(lastPlaceRosters(lp).map((r) => [r.playerId, r.value, r.valueLabel, r.meta])).toEqual([['k1', 2, '2', '2023, 2024'], ['q1', 1, '1', '2024']]);
+    expect(lastPlaceRosters(lp).map((r) => [r.playerId, r.value, r.valueLabel, r.meta, r.detail])).toEqual([['k1', 2, '2', '2023, 2024', '4.00 pts'], ['q1', 1, '1', '2024', '0.00 pts']]);
     expect(lastPlaceRosters({ ...lp, lastPlaces: {} })).toEqual([]);
   });
   it('dud starts and journeyman drop kickers and defenses', () => {
