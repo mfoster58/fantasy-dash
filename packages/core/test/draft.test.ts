@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDraft, computeDraftValues, tradesFromTransactions, capital, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, type DraftValueInput } from '../src/draft';
+import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earnedCapital, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, TOP_BONUS, TOP_BONUS_DECAY, type DraftValueInput } from '../src/draft';
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
@@ -128,7 +128,7 @@ describe('computeDraftValues', () => {
         expect(p.value).toBeCloseTo(-capital(p.pickNo), 1);
       } else {
         expect(p.earnedPick).toBeCloseTo(earned, 1);
-        expect(p.value).toBeCloseTo(capital(earned) - capital(p.pickNo), 0);
+        expect(p.value).toBeCloseTo(earnedCapital(earned) - capital(p.pickNo), 0);
       }
     }
     // contribution 0 sits above the fitted floor here, so even the zero scorer earns a (late) pick
@@ -144,7 +144,8 @@ describe('computeDraftValues', () => {
     expect(top.redraftPos).toBe(1);
     expect(top.earnedPick).toBeLessThan(1);
     expect(top.value).toBeGreaterThan(0);
-    expect(top.value).toBeCloseTo(capital(top.earnedPick!) - 100, 0);
+    expect(top.value).toBeCloseTo(earnedCapital(top.earnedPick!) - 100, 0);
+    expect(top.value).toBeLessThanOrEqual(TOP_BONUS);
   });
 
   it('fills games played, ppg and healthy from the inputs', () => {
@@ -221,10 +222,25 @@ describe('tradesFromTransactions', () => {
 });
 
 describe('capital', () => {
-  it('is 100 at pick 1 and decays with e-folding of 45 picks', () => {
+  it('is 100 at pick 1 and decays with e-folding of 40 picks', () => {
     expect(capital(1)).toBe(100);
-    expect(capital(46)).toBeCloseTo(100 / Math.E, 6);
-    expect(capital(160)).toBeCloseTo(2.92, 2);
+    expect(capital(41)).toBeCloseTo(100 / Math.E, 6);
+    expect(capital(160)).toBeCloseTo(1.88, 2);
+  });
+});
+
+describe('earnedCapital', () => {
+  it('matches the slot capital on the board and is 0 off the board', () => {
+    expect(earnedCapital(null)).toBe(0);
+    expect(earnedCapital(1)).toBe(100);
+    expect(earnedCapital(30)).toBeCloseTo(capital(30), 9);
+  });
+  it('is continuous at pick 1 and rises toward 100 + TOP_BONUS before it', () => {
+    expect(earnedCapital(0.999)).toBeCloseTo(100, 1);
+    expect(earnedCapital(1 - TOP_BONUS_DECAY)).toBeCloseTo(100 + TOP_BONUS * (1 - 1 / Math.E), 6);
+    expect(earnedCapital(-45)).toBeLessThan(100 + TOP_BONUS);
+    expect(earnedCapital(-45)).toBeGreaterThan(earnedCapital(-10));
+    expect(earnedCapital(-1000)).toBeCloseTo(100 + TOP_BONUS, 6);
   });
 });
 

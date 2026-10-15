@@ -32,6 +32,7 @@ describe('GradingGuide', () => {
     expect(screen.getByText('RB24')).toBeInTheDocument();
     expect(screen.getByText('150.0')).toBeInTheDocument();
     expect(screen.getAllByRole('img').length).toBeGreaterThanOrEqual(2);     // two charts
+    expect(screen.getByText('ceiling 150')).toBeInTheDocument();             // bounded earned capital before pick 1
     const table = screen.getByText('Most productive player').closest('table')!;
     expect(table).toHaveTextContent('Star Back');
     expect(table).toHaveTextContent('Biggest bust');

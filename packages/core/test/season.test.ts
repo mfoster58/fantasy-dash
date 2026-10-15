@@ -8,7 +8,7 @@ describe('buildSeason (mini league)', () => {
     expect(season.draft?.picks).toHaveLength(8);
     expect(season.draft?.picks[2]).toMatchObject({ userId: 'uc', playerId: 'q3', isKeeper: true });
     const q3 = season.draft?.picks.find((p) => p.playerId === 'q3');
-    expect(q3).toMatchObject({ posDraftRank: 3, redraftPos: 1, value: 4.7, seasonPoints: 90 });
+    expect(q3).toMatchObject({ posDraftRank: 3, redraftPos: 1, value: 5.2, seasonPoints: 90 });
   });
 
   it('blanks provisional bracket seeds until the regular season is fully scored', () => {
