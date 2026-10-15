@@ -9,6 +9,7 @@ export * from './players';
 export * from './season';
 export * from './draft';
 export * from './transactions';
+export * from './playerSeasons';
 export * from './history';
 
 export * from './schema';

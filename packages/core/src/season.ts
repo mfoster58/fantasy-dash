@@ -10,6 +10,7 @@ import { optimalLineup, optimalSwaps, type LineupPlayer } from './lineup';
 import { computeHonors, resolveBracket, tagForGame } from './bracket';
 import { buildDraft, tradesFromTransactions } from './draft';
 import { transactionsOf } from './transactions';
+import { playerSeasonsOf } from './playerSeasons';
 import { computeStandings, isRegularSeason } from './standings';
 
 export interface RawSeasonInput {
@@ -181,6 +182,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     honors,
     draft,
     transactions: transactionsOf(input.transactions, rosterToUser),
+    playerSeasons: playerSeasonsOf(input.playerSeasonPoints, input.playerGames, players),
   };
 }
 

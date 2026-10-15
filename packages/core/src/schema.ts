@@ -130,6 +130,8 @@ const Transaction = z.object({
   bid: z.number().nullable(),
 });
 
+const PlayerSeasonLine = z.object({ points: z.number(), games: z.number(), posRank: z.number().nullable() });
+
 export const SeasonSchema = z.object({
   year: z.number(),
   leagueId: z.string(),
@@ -146,6 +148,7 @@ export const SeasonSchema = z.object({
   honors: Honors,
   draft: Draft.nullable(),
   transactions: z.array(Transaction),
+  playerSeasons: z.record(PlayerSeasonLine),
 });
 
 export const PlayerDirectorySchema = z.record(z.object({

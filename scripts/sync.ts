@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds,
+  SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds, trimPlayerSeasons,
   SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2,
   type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type SleeperTransaction, type StatMap,
 } from '@fantasy-dash/core';
@@ -180,6 +180,8 @@ async function main() {
   seasons.sort((a, b) => a.year - b.year);
 
   const players = trimPlayers(fullPlayers, collectPlayerIds(seasons));
+  const kept = new Set(Object.keys(players));
+  for (let i = 0; i < seasons.length; i++) seasons[i] = trimPlayerSeasons(seasons[i], kept);
   const history = buildHistory(seasons);
 
   for (const s of seasons) SeasonSchema.parse(s);

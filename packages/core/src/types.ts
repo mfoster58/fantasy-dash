@@ -192,6 +192,7 @@ export interface Season {
   honors: Honors;
   draft: Draft | null;
   transactions: Transaction[];
+  playerSeasons: Record<PlayerId, PlayerSeasonLine>;
 }
 
 export interface H2HGame {
@@ -280,4 +281,14 @@ export interface Transaction {
   drops: TransactionMove[];
   /** FAAB dollars for a waiver claim (0 when the claim carried no bid); null for every other type */
   bid: number | null;
+}
+
+/** NFL-wide season totals under league scoring for one player. */
+export interface PlayerSeasonLine {
+  /** weeks 1..lastScoredWeek */
+  points: number;
+  /** scored weeks with gp >= 1 */
+  games: number;
+  /** rank among players at the same position by points (ties by id); null for an unknown position */
+  posRank: number | null;
 }
