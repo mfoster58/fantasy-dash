@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSeason } from '../src/season';
-import { buildHistory, buildAllTime, summarizeSeries } from '../src/history';
+import { buildHistory, buildAllTime, summarizeSeries, topDraftValues } from '../src/history';
 import type { H2HSeries } from '../src/types';
 import { miniInput } from './fixtures/mini';
 
@@ -18,6 +18,19 @@ describe('buildHistory', () => {
       { year: 2024, leagueId: 'L2024', status: 'complete', lastScoredWeek: 3, playoffWeekStart: 4 },
       { year: 2025, leagueId: 'L2025', status: 'complete', lastScoredWeek: 3, playoffWeekStart: 4 },
     ]);
+  });
+
+  it('keeps the best draft picks across completed seasons, best first', () => {
+    const top = history.topDraftValues;
+    expect(top.length).toBeGreaterThan(0);
+    expect(top.every((p) => p.value !== null && p.teams === 4 && [2024, 2025].includes(p.year))).toBe(true);
+    for (let i = 1; i < top.length; i++) expect(top[i - 1].value!).toBeGreaterThanOrEqual(top[i].value!);
+    expect(top[0]).toMatchObject({ playerId: 'q3', year: 2025 });   // q3 is the best pick in both seasons; newer year wins the tie
+    const inSeason = miniInput();
+    inSeason.league.status = 'in_season';
+    inSeason.league.settings.last_scored_leg = 2;
+    expect(topDraftValues([buildSeason(inSeason)])).toEqual([]);
+    expect(topDraftValues([s2024], 2)).toHaveLength(2);
   });
 
   it('collects managers with the latest display name and their seasons', () => {

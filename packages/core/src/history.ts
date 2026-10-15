@@ -1,6 +1,6 @@
 import { computeStreak, isRegularSeason, type Result } from './standings';
 import { round2, round4 } from './scoring';
-import { h2hKey, type AllTimeRow, type H2HSeries, type History, type Season, type UserId } from './types';
+import { h2hKey, type AllTimeRow, type H2HSeries, type History, type HistoryDraftPick, type Season, type UserId } from './types';
 
 /** Fill streak, totals, biggest win, closest game and average margin from `games` (newest first). */
 export function summarizeSeries(series: H2HSeries): H2HSeries {
@@ -126,6 +126,18 @@ export function buildAllTime(seasons: Season[]): AllTimeRow[] {
   return rows;
 }
 
+/** Top `n` draft picks by value across completed seasons, best first (ties: points over baseline desc, then year desc). */
+export function topDraftValues(seasons: Season[], n = 10): HistoryDraftPick[] {
+  const all: HistoryDraftPick[] = [];
+  for (const s of seasons) {
+    if (s.status !== 'complete' || !s.draft) continue;
+    for (const p of s.draft.picks) if (p.value !== null) all.push({ ...p, year: s.year, teams: s.draft.slotOrder.length });
+  }
+  return all
+    .sort((a, b) => b.value! - a.value! || (b.pointsOverBaseline ?? 0) - (a.pointsOverBaseline ?? 0) || b.year - a.year)
+    .slice(0, n);
+}
+
 export function buildHistory(seasons: Season[]): History {
   const sorted = [...seasons].sort((a, b) => a.year - b.year);
 
@@ -176,5 +188,6 @@ export function buildHistory(seasons: Season[]): History {
     managers,
     h2h,
     allTime: buildAllTime(sorted),
+    topDraftValues: topDraftValues(sorted),
   };
 }
