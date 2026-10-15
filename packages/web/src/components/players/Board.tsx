@@ -87,7 +87,14 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                     {metaNode}
                     {r.detail && <><span aria-hidden>·</span><span>{r.detail}</span></>}
-                    {r.userId && (
+                    {r.managers && r.managers.length > 1 ? (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span title={r.managers.map((x) => `${managers[x.userId]?.displayName ?? x.userId} ${x.weeks} wks`).join(', ')} className="cursor-help underline decoration-dotted underline-offset-2">
+                          {r.managers.length} managers
+                        </span>
+                      </>
+                    ) : r.userId && (
                       <>
                         <span aria-hidden>·</span>
                         <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-1 hover:text-accent">

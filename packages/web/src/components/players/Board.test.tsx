@@ -52,6 +52,18 @@ describe('Board', () => {
     expect(within(second).queryByRole('link')).toBeNull();
   });
 
+  it('shows several managers as a count with a tooltip naming each, and one manager as the usual link', () => {
+    const many = row(0, { userId: 'a', managers: [{ userId: 'b', weeks: 14 }, { userId: 'a', weeks: 9 }] });
+    const one = row(1, { userId: 'a', managers: [{ userId: 'a', weeks: 3 }] });
+    wrapB({ rows: [many, one], managers: { ...managers, b: { displayName: 'bob', avatar: null, seasons: [2025] } } });
+    const first = screen.getAllByRole('listitem')[0];
+    expect(within(first).getByText('2 managers')).toHaveAttribute('title', 'bob 14 wks, alice 9 wks');
+    expect(within(first).queryByRole('link', { name: /alice|bob/ })).toBeNull();
+    const second = screen.getAllByRole('listitem')[1];
+    expect(within(second).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(second).queryByText(/managers/)).toBeNull();
+  });
+
   it('shows an empty state and no buttons with no rows', () => {
     wrapB();
     expect(screen.getByText('No players at this position.')).toBeInTheDocument();
