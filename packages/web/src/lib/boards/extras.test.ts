@@ -129,6 +129,15 @@ describe('Mr. Irrelevant', () => {
     ]);
     expect(mrIrrelevant({ ...dCtx, year: 2025 }).map((r) => r.playerId)).toEqual(['w1']);
   });
+  it('under a position filter takes the last pick at that position in each draft, and says so', () => {
+    expect(mrIrrelevant({ ...dCtx, pos: 'RB' }).map((r) => [r.playerId, r.meta, r.detail])).toEqual([
+      ['r1', '2025', 'RB3 · 16.7 ppg · Rd 1, pick 2 · last RB drafted'],
+      ['r1', '2024', 'RB20 · 8.3 ppg · Rd 1, pick 2 · last RB drafted'],
+    ]);
+    // kickers and defenses count once they are the chosen position
+    expect(mrIrrelevant({ ...dCtx, pos: 'K' }).map((r) => [r.playerId, r.meta, r.detail])).toEqual([['k1', '2024', '— · Rd 2, pick 3 · last K drafted']]);
+    expect(mrIrrelevant({ ...dCtx, pos: 'FLEX' }).map((r) => [r.playerId, r.meta])).toEqual([['r1', '2024'], ['w1', '2025']]);
+  });
   it('last pick with no games shows zero and a dash', () => {
     const c = { ...dCtx, playerSeasons: { 2024: {}, 2025: {} } };
     expect(mrIrrelevant({ ...c, year: 2024 })[0]).toMatchObject({ playerId: 'r1', value: 0, valueLabel: '0.00', detail: '— · Rd 1, pick 2' });

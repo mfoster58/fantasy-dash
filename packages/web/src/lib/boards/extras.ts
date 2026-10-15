@@ -100,18 +100,20 @@ export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): Bo
   return rank(items, direction).map(({ p, value }) => ({ key: `${p.year}-${p.playerId}`, playerId: p.playerId, value, valueLabel: fmtSigned(value, 1), meta: String(p.year), detail: slot(p), userId: null, to: null, tone: toneOf(value) }));
 };
 
-/** The last QB/RB/WR/TE pick of each draft and what he scored that season. */
+/** The last QB/RB/WR/TE pick of each draft and what he scored that season; under a position filter, the last pick at that position. */
 export const mrIrrelevant = (ctx: BoardContext): BoardRow[] => {
   const items: { playerId: string; value: number; year: number; detail: string; userId: UserId; latestYear: number; latestWeek: number }[] = [];
+  const eligible = (playerId: string) => (ctx.pos === 'All' ? SKILL.has(ctx.players[playerId]?.position ?? '') : posOk(ctx, playerId));
+  const note = ctx.pos === 'All' ? '' : ` · last ${ctx.pos === 'FLEX' ? 'RB, WR or TE' : ctx.pos} drafted`;
   for (const [y, draft] of Object.entries(ctx.drafts)) {
     const year = Number(y);
     if (!draft || !inYear(ctx, year)) continue;
-    const last = [...draft.picks].filter((p) => SKILL.has(ctx.players[p.playerId]?.position ?? '')).sort((a, b) => b.pickNo - a.pickNo)[0];
-    if (!last || !posOk(ctx, last.playerId)) continue;
+    const last = [...draft.picks].filter((p) => eligible(p.playerId)).sort((a, b) => b.pickNo - a.pickNo)[0];
+    if (!last) continue;
     const line = ctx.playerSeasons[year]?.[last.playerId];
     const pos = ctx.players[last.playerId]?.position ?? '?';
     const finish = line && line.games > 0 ? `${pos}${line.posRank ?? '?'} · ${fmt1(line.points / line.games)} ppg` : '—';
-    items.push({ playerId: last.playerId, value: line?.points ?? 0, year, detail: `${finish} · ${slot(last)}`, userId: last.userId, latestYear: year, latestWeek: 0 });
+    items.push({ playerId: last.playerId, value: line?.points ?? 0, year, detail: `${finish} · ${slot(last)}${note}`, userId: last.userId, latestYear: year, latestWeek: 0 });
   }
   return rank(items).map((i) => ({ key: `${i.year}-${i.playerId}`, playerId: i.playerId, value: i.value, valueLabel: fmtPts(i.value), meta: String(i.year), detail: i.detail, userId: i.userId, to: `/draft/${i.year}` }));
 };
