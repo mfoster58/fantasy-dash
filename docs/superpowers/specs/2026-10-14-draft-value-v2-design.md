@@ -1,7 +1,7 @@
-# Draft value v2: redraft position, draft capital, production
+# Draft value v2: production on one capital scale
 
 **Date:** 2026-10-14
-**Status:** approved by the user in conversation; supersedes the draft value method in the Phase 4 plan.
+**Status:** approved by the user in conversation; supersedes the draft value method in the Phase 4 plan. Revised 2026-10-15: the two-part slot + production sum was replaced by a single capital-scale value (see *Earned pick* and *Value*).
 
 ## Why
 
@@ -29,37 +29,39 @@ Before any ranking, a player's points are scaled by `maxTeamGames / teamGames[te
 
 Rank every directory player at a valued position by weighted PoB descending (ties: season points desc, then id asc) across all positions together. The rank is `redraftPos`, where the player would go if the league redrafted today on production. Players with 0 points tie at N + 1 where N is the number of ranked players with points > 0.
 
-### Slot value (draft capital)
+### Why one scale (revised 2026-10-15)
 
-`capital(pick) = 100 · exp(−(pick − 1) / 45)`. Pick 1 = 100, pick 15 ≈ 73, pick 30 ≈ 52, pick 60 ≈ 27, pick 110 ≈ 9, pick 160 ≈ 3.
+The first revision summed a slot value (capital at redraft position minus capital at the pick) and a production value (contribution minus the fitted expectation at the pick, in points). Reviewing it on the 2026 and 2025 boards showed three problems: the two parts measure the same outcome twice, so steals and busts were double counted; production is in raw points and grows all season while slot is capped at ±100, so by week 17 production was 2–3× slot (2025: McCaffrey +165 production vs +22 slot); and a late zero-point dart sat 7–10 points under the curve's late asymptote, so eight bench whiffs cost a full letter grade even though the waiver wire replaces them for free. The user asked for top players to be rewarded for out-producing a typical RB1 without skewing totals, and for late whiffs to be nearly free.
 
-`slotValue = capital(redraftPos) − capital(pickNo)`, rounded to 1 decimal.
+### Earned pick
 
-### Production value
+Fit the expected-contribution curve as before: `expected(pick) = a · exp(−(pick − 1) / k) + c`, `k` searched over the integers 10..120, `a` and `c` by linear regression at each `k`, least squared error over all valued picks, fitted to `contribution`.
 
-Fit an expected-contribution curve to the season's own draft: `expected(pick) = a · exp(−(pick − 1) / k) + c`. Choose `k` from the integers 10..120 and `a`, `c` by simple linear regression on `x = exp(−(pick−1)/k)` at each `k`, keeping the triple with the smallest squared error over all valued picks. The offset `c` lets late-pick expectation sit below replacement, so a late dart that scores nothing is near expectation. Fit uses `contribution`, not raw PoB.
+Run the curve backwards for each pick: `earnedPick = 1 − k · ln((contribution − c) / a)`. This is the pick at which that much contribution is typically found this season. It is below 1 for a player who out-produces what pick 1 returns (Gibbs 2026 through week 5: −27; McCaffrey 2025: −17.4) and null ("off the board") when `contribution ≤ c` or the fit is degenerate (`a ≤ 0`). If the curve cannot be fitted at all (fewer than two valued picks) the earned pick falls back to `redraftPos`. Stored to 1 decimal.
 
-`productionValue = contribution − expected(pickNo)`, rounded to 1 decimal, in points to date. (An earlier revision multiplied by a full-season pace `weeks.length / lastScoredWeek`; it was removed on 2026-10-14 because five weeks × 3.4 let production swamp slot value early in the season. Without it, production grows naturally as the season fills in and the two parts are on comparable scales by season's end.)
+### Value
 
-### Total
+`capital(pick) = 100 · exp(−(pick − 1) / 45)`; capital keeps rising on the same curve for earned picks before 1 (pick −27 ≈ 186). Off the board is worth 0.
 
-`value = slotValue + productionValue`, rounded to 1 decimal. Positive is good.
+`value = capital(earnedPick) − capital(pickNo)`, rounded to 1 decimal. Positive is good. The most a pick can lose is the capital spent on it (round 1 whiff ≈ −85 to −100, round 13 dart ≈ −5); hits are judged on production, so a late pick that hits is worth the whole gap, and a dominant early pick scores positive from pick 1.
 
-If `lastScoredWeek` is 0 (draft done, no games played) every value field, including PoB and redraftPos, is null.
+`redraftPos` is kept as a display statistic only and no longer enters the value.
+
+If `lastScoredWeek` is 0 (draft done, no games played) every value field, including PoB, contribution, earned pick and redraftPos, is null.
 
 ### Reference results (2026 board, through week 5)
 
-| Player | Pick → redraft | Slot | Production | Total |
+| Player | Pick | Contribution | Earned pick | Value |
 |---|---|---|---|---|
-| Jaxon Smith-Njigba | 18 → 2 | +29 | +53 | +82 |
-| Jahmyr Gibbs | 1 → 1 | 0 | +61 | +61 |
-| Matthew Golden | 110 → 35 | +38 | +16 | +54 |
-| Parker Washington | 60 → 30 | +25 | +13 | +38 |
-| Omarion Hampton | 14 → 70 | −53 | −30 | −83 |
-| Saquon Barkley | 11 → 129 | −74 | −32 | −106 |
-| De'Von Achane | 8 → 126 | −79 | −35 | −114 |
+| Kenneth Walker | 23 | +87.5 | −21.6 | +103.8 |
+| Javonte Williams | 96 | +45.9 | −1.4 | +93.4 |
+| Jahmyr Gibbs | 1 | +103.6 | −27.0 | +86.4 |
+| Jaxon Smith-Njigba | 18 | +77.4 | −17.6 | +82.7 |
+| Justin Jefferson | 7 | +1.5 | 60.8 | −61.0 |
+| Saquon Barkley | 11 | −17.0 | off board | −80.1 |
+| De'Von Achane | 8 | −17.0 | off board | −85.6 |
 
-These were computed with a redraft pool of drafted players only, before the QB weight, and without a pace factor (which matches the final method). The implementation uses the whole directory as the redraft pool. Signs and ordering must match; magnitudes differ slightly.
+Manager totals run +190 to −202 (previously +169 to −338); 2025 final runs +192 to −162 (previously +340 to −458).
 
 ### Games played, PPG, healthy
 
@@ -82,15 +84,15 @@ interface DraftPick {
   ppg: number | null;
   healthy: boolean;
   pointsOverBaseline: number | null;  // null for DEF / unknown / no games yet
-  redraftPos: number | null;
-  slotValue: number | null;
-  productionValue: number | null;
-  value: number | null;               // slotValue + productionValue
+  redraftPos: number | null;          // display only
+  contribution: number | null;        // weighted PoB floored at bench level
+  earnedPick: number | null;          // null = off the board
+  value: number | null;               // capital(earnedPick) − capital(pickNo)
   tradedTo: { userId: UserId; week: number } | null;
 }
 ```
 
-`posFinishRank` is removed. `Draft` gains `expectedCurve: { a: number; k: number; c: number } | null` so the UI can explain the fit. Zod schema, `satisfies` guards, and the sync's `RawSeasonInput` (`playerGames`, `teamGames`, `trades`) change accordingly. `SleeperClient` gains `getTransactions(leagueId, week)` and a `SleeperTransaction` type (`type`, `status`, `leg`, `created`, `adds`, `drops`, `roster_ids`).
+`posFinishRank` is removed. `Draft` gains `expectedCurve: { a: number; k: number; c: number } | null` and `baselines: Record<pos, { baselineRank, baselinePoints, benchRank, benchPoints }>` (empty before week 1) so the grading page can explain the fit with the season's own numbers. Zod schema, `satisfies` guards, and the sync's `RawSeasonInput` (`playerGames`, `teamGames`, `trades`) change accordingly. `SleeperClient` gains `getTransactions(leagueId, week)` and a `SleeperTransaction` type (`type`, `status`, `leg`, `created`, `adds`, `drops`, `roster_ids`).
 
 ## UI
 
@@ -98,14 +100,14 @@ interface DraftPick {
 
 - **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −120, full green at ≥ +120, linear in between, mixed in OKLCH. Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
 - **Cell content**: in value mode the trailing number is the total `value` (signed, 0 decimals).
-- **Tooltip** lines: name · pos · team; `Pick N (round R)`; `Season points[ to date]: X`; `Redraft position[ today]: P (drafted WRk)`; `Slot value: ±S · Production value: ±Q`; `Points over baseline: ±B`; `PPG: x.x over G games`; `Keeper` if keeper; `Traded to NAME in week W` if traded.
+- **Tooltip** lines: name · pos · team; `Pick N (round R)`; `Season points[ to date]: X`; `Redraft position[ today]: P (drafted WRk)`; `Earned pick: E (drafted N)` or `Earned pick: off the board`; `Points over baseline: ±B`; `PPG: x.x over G games`; `Keeper` if keeper; `Traded to NAME in week W` if traded.
 - **Keeper marker**: no text. The cell gets an inset accent ring (`ring-1 ring-inset ring-accent`, same treatment the manager highlight uses, which takes precedence when both apply) and a 10px lock icon (inline SVG, `aria-label="Keeper"`) in the top-right corner.
 - **Trade marker**: a 10px swap icon (inline SVG, two opposing arrows, `aria-label="Traded"`) followed by the receiving manager's display name, in the cell's second line before the value number. Truncates with the line.
 
 ### Analysis
 
-- **Grades table** columns: Manager, Value, Slot, Production, Pts over baseline, Best pick, Worst pick. Sorted by Value desc, tiebreak Pts over baseline desc. Best/worst are by `value`. Methodology note replaces the current one:
-  > Value has two parts. Slot value converts the pick taken and the player's redraft position (where they would go if the league redrafted on this season's production) into draft capital on a trade-value curve, so a late dart that misses costs almost nothing and an early whiff costs most of what was spent. Production value is points over the positional baseline minus what a pick in that slot typically returns this season[, to date]. Quarterback points count at half weight, matching how a one-QB league actually prices them. Kickers and defenses are excluded.
+- **Draft grades card**: ranked list (rank badge, avatar, name, bar, total, letter) with the subline `X of Y picks beat their slot · +hits · −misses`. No methodology paragraph; the header carries a "How grading works" link to `/draft/grading`.
+- **Grading page** (`/draft/grading`, `GradingPage.tsx`): walks the method through the latest completed season with a draft. Sections: one-sentence idea; step 1 production over replacement (that season's baseline/bench table from `draft.baselines`, QB weight, K/DEF, bye note); step 2 the expectation curve (SVG scatter of contribution vs pick with the fitted curve, the floor, a shaded "better than pick 1" region, and five highlighted examples with their earned picks traced); step 3 earned pick; step 4 capital (SVG capital curve with reference picks, paired spent/earned bars per example, and a worked table: pick, capital spent, contribution, earned pick, capital earned, value); step 5 from picks to grades (that season's totals and letters); fine print. Examples come from `lib/grading.ts` `gradingExamples`: most productive player, biggest steal after pick 50, biggest bust, best late dart (after round 9), a late dart (after round 11) that is off the board.
 - **Steals and busts**: 10 each, by `value`. The pick line shows `pick N → redraft P · pick N · manager` and the total value, with PoB as the small trailing number.
 - **Top PPG (healthy)**: new card under the analysis grid. Top 10 picks by `ppg` among picks with `healthy === true` and a non-null value. Columns: Player (headshot, name, pos pill, team), Pick, Manager, G, PPG. Label "Top PPG (healthy)" with the in-season "(to date)" suffix. Footnote: "Healthy means the player has played every game their team has played."
 
@@ -119,8 +121,8 @@ Sync adds the games/team/trade collection (one extra request per week per season
 
 ## Testing
 
-- Core: unit tests for `capital`, `fitExpectedCurve` (recovers a known a/k from synthetic data), `computeDraftValues` (DEF null, redraft ties, slot/production/total on a small fixture, QB weight, zero-weeks null), trade resolution (latest by created, roster → user mapping), healthy/ppg.
-- Web: `valueColor` endpoints and midpoint, `managerDraftSummaries` sort, `leagueExtremes` size 10, `topHealthyPpg` filtering, DraftBoard renders lock/trade markers.
+- Core: unit tests for `capital`, `fitExpectedCurve` (recovers a known a/k from synthetic data), `earnedPickFor` (inverts the curve, before-1 for dominance, null at/below the floor), `computeDraftValues` (DEF null, redraft ties, contribution floor, earned pick/value consistency, dominant pick 1 positive, fallback without a curve, baselines, QB weight, zero-weeks null), trade resolution (latest by created, roster → user mapping), healthy/ppg.
+- Web: `valueColor` endpoints and midpoint, `managerDraftSummaries` sort, `leagueExtremes` size 10, `topHealthyPpg` filtering, DraftBoard renders lock/trade markers, `gradingExamples`/`gradeTotals`, GradingGuide renders baselines, charts, example table and grades.
 - Screenshot check of `/draft/2026` and `/draft/2025` in both modes at desktop and phone widths.
 
 ## Out of scope

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDraft, computeDraftValues, tradesFromTransactions, capital, fitExpectedCurve, expectedAt, BASELINE_RANKS, type DraftValueInput } from '../src/draft';
+import { buildDraft, computeDraftValues, tradesFromTransactions, capital, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, type DraftValueInput } from '../src/draft';
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
@@ -23,9 +23,10 @@ describe('buildDraft', () => {
     const d = buildDraft(draft, picks, rosterToUser, noValue);
     expect(d).toMatchObject({ draftId: 'D1', type: 'snake', rounds: 2 });
     expect(d.picks.map((p) => p.pickNo)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(d.picks[2]).toEqual({ round: 1, pickNo: 3, slot: 3, userId: 'ua', playerId: 'p3', isKeeper: true, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null });
+    expect(d.picks[2]).toEqual({ round: 1, pickNo: 3, slot: 3, userId: 'ua', playerId: 'p3', isKeeper: true, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: null, tradedTo: null });
     expect(d.picks[0].isKeeper).toBe(false);
     expect(d.expectedCurve).toBeNull();
+    expect(d.baselines).toEqual({});
   });
 
   it('uses draft_order for the slot order', () => {
@@ -50,7 +51,7 @@ describe('computeDraftValues', () => {
   };
   players.rbA.team = 'DET'; players.qbA.team = 'KC';
   const seasonPoints = { rbA: 100, rbB: 250, rbC: 50, rbX: 300, qbA: 400, qbB: 380, qbX: 390, def1: 90, mys: 999 };
-  const pick = (pickNo: number, playerId: string): DraftPick => ({ round: 1, pickNo, slot: pickNo, userId: `u${pickNo}`, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null, tradedTo: null });
+  const pick = (pickNo: number, playerId: string): DraftPick => ({ round: 1, pickNo, slot: pickNo, userId: `u${pickNo}`, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: null, tradedTo: null });
   const input: DraftValueInput = {
     seasonPoints, players,
     gamesPlayed: { rbA: 5, qbA: 4, rbB: 5, def1: 5 },
@@ -62,13 +63,13 @@ describe('computeDraftValues', () => {
     ],
   };
   const drafted = [pick(1, 'rbA'), pick(2, 'qbA'), pick(3, 'rbB'), pick(4, 'mys'), pick(5, 'qbB'), pick(6, 'rbC'), pick(7, 'def1'), pick(8, 'rbY')];
-  const { picks, expectedCurve } = computeDraftValues(drafted, input);
+  const { picks, expectedCurve, baselines } = computeDraftValues(drafted, input);
   const by = Object.fromEntries(picks.map((p) => [p.playerId, p]));
 
   it('leaves value fields null for kickers and defenses but keeps points, games and ppg', () => {
     const { picks: [k] } = computeDraftValues([pick(1, 'k1')], { ...input, seasonPoints: { k1: 120 }, players: { k1: info('k1', 'K') }, gamesPlayed: { k1: 5 } });
     expect(k).toMatchObject({ seasonPoints: 120, gamesPlayed: 5, ppg: 24, posDraftRank: null, pointsOverBaseline: null, redraftPos: null, value: null });
-    expect(by.def1).toMatchObject({ seasonPoints: 90, gamesPlayed: 5, ppg: 18, healthy: false, posDraftRank: null, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null });
+    expect(by.def1).toMatchObject({ seasonPoints: 90, gamesPlayed: 5, ppg: 18, healthy: false, posDraftRank: null, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: null });
   });
 
   it('leaves value fields null for players with an unknown position', () => {
@@ -106,25 +107,44 @@ describe('computeDraftValues', () => {
     expect(by.qbA.pointsOverBaseline).toBe(400);   // displayed PoB stays unweighted
   });
 
-  it('computes slot value as capital gained between the pick and the redraft position', () => {
-    expect(by.rbA.slotValue).toBeCloseTo(capital(6) - capital(1), 1);   // -10.5
-    expect(by.qbA.slotValue).toBeCloseTo(capital(3) - capital(2), 1);   // -2.2
-    expect(by.rbB.slotValue).toBeCloseTo(capital(2) - capital(3), 1);   // +2.2
-    expect(by.qbB.slotValue).toBe(0);
-    expect(by.rbY.slotValue).toBe(0);
+  it('reports the baseline and bench players per position', () => {
+    // RB pool: rbX 300, rbB 250, rbA 100, rbC 50 (4 scorers): ranks 24/40 are beyond the pool, so both are 0
+    expect(baselines.RB).toEqual({ baselineRank: 24, baselinePoints: 0, benchRank: 40, benchPoints: 0 });
+    expect(baselines.QB).toEqual({ baselineRank: 10, baselinePoints: 0, benchRank: 14, benchPoints: 0 });
+    expect(Object.keys(baselines).sort()).toEqual(['QB', 'RB']);
   });
 
-  it('fits the expected curve on weighted valued picks and reports production in points to date', () => {
+  it('fits the expected curve to contribution and values each pick as capital earned minus capital spent', () => {
     expect(expectedCurve).not.toBeNull();
     const weighted = (p: DraftPick) => (players[p.playerId].position === 'QB' ? 0.5 : 1) * p.pointsOverBaseline!;
     const valued = picks.filter((p) => p.pointsOverBaseline !== null);
-    expect(expectedCurve).toEqual(fitExpectedCurve(valued.map((p) => ({ pick: p.pickNo, contribution: Math.max(weighted(p), 0) }))));
-    for (const p of valued) {
-      const expected = Math.round((Math.max(weighted(p), 0) - expectedAt(expectedCurve!, p.pickNo)) * 10) / 10;
-      expect(p.productionValue).toBeCloseTo(expected, 1);
-      expect(p.value).toBeCloseTo(p.slotValue! + p.productionValue!, 1);
-    }
     expect(valued.map((p) => p.playerId).sort()).toEqual(['qbA', 'qbB', 'rbA', 'rbB', 'rbC', 'rbY']);
+    for (const p of valued) expect(p.contribution).toBe(weighted(p));          // bench gap is 0 here, so the floor is 0
+    expect(expectedCurve).toEqual(fitExpectedCurve(valued.map((p) => ({ pick: p.pickNo, contribution: p.contribution! }))));
+    for (const p of valued) {
+      const earned = earnedPickFor(expectedCurve!, p.contribution!);
+      if (earned === null) {
+        expect(p.earnedPick).toBeNull();
+        expect(p.value).toBeCloseTo(-capital(p.pickNo), 1);
+      } else {
+        expect(p.earnedPick).toBeCloseTo(earned, 1);
+        expect(p.value).toBeCloseTo(capital(earned) - capital(p.pickNo), 0);
+      }
+    }
+    // contribution 0 sits above the fitted floor here, so even the zero scorer earns a (late) pick
+    expect(by.rbY.earnedPick).toBeGreaterThan(by.rbB.earnedPick!);
+  });
+
+  it('gives a dominant top pick a positive value by earning a pick before 1', () => {
+    // Straight line of contributions 100..10 except pick 1 at 400: earned pick well before 1, value > 0
+    const dir: PlayerDirectory = {}; const pts: Record<string, number> = {}; const dp: DraftPick[] = [];
+    for (let i = 1; i <= 10; i++) { dir[`rb${i}`] = info(`rb${i}`, 'RB'); pts[`rb${i}`] = i === 1 ? 400 : 110 - i * 10; dp.push(pick(i, `rb${i}`)); }
+    const res = computeDraftValues(dp, { ...input, seasonPoints: pts, players: dir });
+    const top = res.picks[0];
+    expect(top.redraftPos).toBe(1);
+    expect(top.earnedPick).toBeLessThan(1);
+    expect(top.value).toBeGreaterThan(0);
+    expect(top.value).toBeCloseTo(capital(top.earnedPick!) - 100, 0);
   });
 
   it('fills games played, ppg and healthy from the inputs', () => {
@@ -155,9 +175,18 @@ describe('computeDraftValues', () => {
     const res = computeDraftValues([pick(1, 'wr1'), pick(2, 'bench'), pick(3, 'bust')], { ...input, seasonPoints: pts, players: deep });
     const b = Object.fromEntries(res.picks.map((p) => [p.playerId, p]));
     expect(b.bust.pointsOverBaseline).toBe(-175);
-    const curve = res.expectedCurve!;
-    expect(b.bust.productionValue).toBeCloseTo(Math.round((-75 - expectedAt(curve, 3)) * 10) / 10, 1);
-    expect(b.bench.productionValue).toBeCloseTo(Math.round((-30 - expectedAt(curve, 2)) * 10) / 10, 1);
+    expect(b.bust.contribution).toBe(-75);
+    expect(b.bench.contribution).toBe(-30);
+    expect(res.baselines.WR).toEqual({ baselineRank: 24, baselinePoints: 180, benchRank: 40, benchPoints: 105 });
+  });
+
+  it('falls back to the redraft position when the curve cannot be fitted', () => {
+    // one valued pick: fewer than 2 points to fit
+    const res = computeDraftValues([pick(3, 'rbA')], input);
+    expect(res.expectedCurve).toBeNull();
+    const [p] = res.picks;
+    expect(p.earnedPick).toBe(p.redraftPos);
+    expect(p.value).toBeCloseTo(capital(p.redraftPos!) - capital(3), 1);
   });
 
   it('marks the latest completed trade per player', () => {
@@ -168,7 +197,8 @@ describe('computeDraftValues', () => {
   it('nulls every value field before the first scored week', () => {
     const res = computeDraftValues(drafted, { ...input, lastScoredWeek: 0 });
     expect(res.expectedCurve).toBeNull();
-    for (const p of res.picks) expect(p).toMatchObject({ pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: null });
+    for (const p of res.picks) expect(p).toMatchObject({ pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: null });
+    expect(res.baselines).toEqual({});
     expect(res.picks[0].posDraftRank).toBe(1);
   });
 });
@@ -195,6 +225,22 @@ describe('capital', () => {
     expect(capital(1)).toBe(100);
     expect(capital(46)).toBeCloseTo(100 / Math.E, 6);
     expect(capital(160)).toBeCloseTo(2.92, 2);
+  });
+});
+
+describe('earnedPickFor', () => {
+  const curve = { a: 50, k: 35, c: -7.5 };
+  it('inverts the expected curve', () => {
+    expect(earnedPickFor(curve, expectedAt(curve, 1))).toBeCloseTo(1, 6);
+    expect(earnedPickFor(curve, expectedAt(curve, 60))).toBeCloseTo(60, 6);
+  });
+  it('goes before pick 1 for contribution above what pick 1 returns', () => {
+    expect(earnedPickFor(curve, 100)!).toBeLessThan(1);
+  });
+  it('is null at or below the floor and for a degenerate fit', () => {
+    expect(earnedPickFor(curve, -7.5)).toBeNull();
+    expect(earnedPickFor(curve, -20)).toBeNull();
+    expect(earnedPickFor({ a: -5, k: 35, c: 0 }, 10)).toBeNull();
   });
 });
 

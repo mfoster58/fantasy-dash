@@ -14,10 +14,10 @@ const players: PlayerDirectory = {
 };
 const pick = (round: number, pickNo: number, slot: number, userId: string, playerId: string, value: number | null, extra: Partial<DraftPick> = {}): DraftPick => ({
   round, pickNo, slot, userId, playerId, isKeeper: false, posDraftRank: 1, seasonPoints: 120.5, gamesPlayed: 5, ppg: 24.1, healthy: true,
-  pointsOverBaseline: 15.25, redraftPos: 2, slotValue: value === null ? null : 4, productionValue: value === null ? null : value - 4, value, tradedTo: null, ...extra,
+  pointsOverBaseline: 15.25, redraftPos: 2, contribution: value === null ? null : 20, earnedPick: value === null ? null : 1.5, value, tradedTo: null, ...extra,
 });
 const draft: Draft = {
-  draftId: 'D', type: 'snake', rounds: 2, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36, c: 0 },
+  draftId: 'D', type: 'snake', rounds: 2, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36, c: 0 }, baselines: {},
   picks: [pick(1, 1, 1, 'a', 'p1', 6.5, { tradedTo: { userId: 'b', week: 3 } }), pick(1, 2, 2, 'b', 'p2', -30, { isKeeper: true }), pick(2, 3, 2, 'b', 'p3', 0), pick(2, 4, 1, 'a', 'p4', 12)],
 };
 

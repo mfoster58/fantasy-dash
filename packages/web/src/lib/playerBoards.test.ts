@@ -244,9 +244,9 @@ describe('toilet bowl and exclusions', () => {
 describe('cumulative draft value', () => {
   const withDraft = (year: number, picks: { playerId: string; value: number | null }[]) => ({
     ...season(year, []),
-    draft: { draftId: 'd', type: 'snake', rounds: 1, slotOrder: [], expectedCurve: null, picks: picks.map((p, i) => ({
+    draft: { draftId: 'd', type: 'snake', rounds: 1, slotOrder: [], expectedCurve: null, baselines: {}, picks: picks.map((p, i) => ({
       round: 1, pickNo: i + 1, slot: i + 1, userId: 'a', playerId: p.playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null,
-      healthy: false, pointsOverBaseline: null, redraftPos: null, slotValue: null, productionValue: null, value: p.value, tradedTo: null,
+      healthy: false, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: p.value, tradedTo: null,
     })) },
   });
   const drafts = [withDraft(2024, [{ playerId: 'q1', value: 38.2 }, { playerId: 'r1', value: -5 }, { playerId: 'k1', value: null }]), withDraft(2025, [{ playerId: 'q1', value: -12 }, { playerId: 'r1', value: 20.5 }])];

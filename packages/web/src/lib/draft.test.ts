@@ -5,15 +5,15 @@ import { managerDraftSummaries, leagueExtremes, topHealthyPpg, valueColor, posLa
 const pick = (pickNo: number, userId: string, value: number | null, pob: number, extra: Partial<DraftPick> = {}): DraftPick => ({
   round: 1, pickNo, slot: pickNo, userId, playerId: `p${pickNo}`, isKeeper: false,
   posDraftRank: 1, seasonPoints: 100, gamesPlayed: 5, ppg: 20, healthy: true,
-  pointsOverBaseline: pob, redraftPos: 1, slotValue: value === null ? null : value / 2, productionValue: value === null ? null : value / 2, value, tradedTo: null, ...extra,
+  pointsOverBaseline: pob, redraftPos: 1, contribution: pob, earnedPick: value === null ? null : 1, value, tradedTo: null, ...extra,
 });
-const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36, c: 0 },
+const draft: Draft = { draftId: 'D', type: 'snake', rounds: 1, slotOrder: ['a', 'b'], expectedCurve: { a: 40, k: 36, c: 0 }, baselines: {},
   picks: [pick(1, 'a', 5, 40), pick(2, 'b', -8, -20), pick(3, 'a', -2, 10), pick(4, 'b', 12, 60), pick(5, 'a', null, 5)] };
 
 describe('managerDraftSummaries', () => {
-  it('sums value parts and points over baseline per manager, finds best and worst, sorts by value', () => {
+  it('sums value and points over baseline per manager, finds best and worst, sorts by value', () => {
     const [first, second] = managerDraftSummaries(draft);
-    expect(first).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalSlot: 2, totalProduction: 2, totalPoB: 40, valued: 2, beat: 1, hits: 12, misses: -8 });
+    expect(first).toMatchObject({ userId: 'b', picks: 2, totalValue: 4, totalPoB: 40, valued: 2, beat: 1, hits: 12, misses: -8 });
     expect(first.best?.pickNo).toBe(4);
     expect(first.worst?.pickNo).toBe(2);
     expect(second).toMatchObject({ userId: 'a', picks: 3, totalValue: 3, totalPoB: 55 });
