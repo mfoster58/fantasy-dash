@@ -40,6 +40,24 @@ export function earnedCapital(earnedPick: number | null): number {
   return 100 + TOP_BONUS * (1 - Math.exp(-(1 - earnedPick) / TOP_BONUS_DECAY));
 }
 
+/** Surplus premium: a hit's gain is scaled by up to this fraction, in proportion to the capital the pick saved. */
+export const SURPLUS_PREMIUM = 0.25;
+
+/** The premium multiplier for a hit at `pick`: 1 at pick 1 (nothing saved), 1 + SURPLUS_PREMIUM for a pick that cost nothing. */
+export function surplusMultiplier(pick: number): number {
+  return 1 + SURPLUS_PREMIUM * (1 - capital(pick) / 100);
+}
+
+/**
+ * Value of a pick: capital at the earned pick minus capital spent. A positive gain is scaled by surplusMultiplier(pick),
+ * so the same production is worth more from a cheap pick than from an expensive one. A miss is not scaled: it costs
+ * at most what was spent.
+ */
+export function pickValue(earnedPick: number | null, pick: number): number {
+  const gain = earnedCapital(earnedPick) - capital(pick);
+  return gain > 0 ? gain * surplusMultiplier(pick) : gain;
+}
+
 export function expectedAt(curve: ExpectedCurve, pick: number): number {
   return curve.a * Math.exp(-(pick - 1) / curve.k) + curve.c;
 }
@@ -133,8 +151,8 @@ export function tradesFromTransactions(transactions: SleeperTransaction[], roste
  * players with points > 0 by weighted PoB desc (POSITION_WEIGHTS; ties: points desc, id asc); zero
  * scorers tie at N + 1. Contribution (weighted PoB floored at minus the weighted bench gap) is fitted against pick
  * number to give the season's expected curve; each pick's earned pick is that curve run backwards at its
- * contribution, and value is earnedCapital(earnedPick) minus capital(pickNo): capital at the earned pick, bounded at
- * 100 + TOP_BONUS for earned picks before 1, 0 when off the board.
+ * contribution, and value is pickValue(earnedPick, pickNo): capital at the earned pick (bounded at 100 + TOP_BONUS
+ * for earned picks before 1, 0 when off the board) minus capital spent, with a positive gain scaled by the surplus premium.
  * If the curve cannot be fitted the earned pick falls back to the redraft position. K, DEF and unknown positions
  * get null for every value field. Before the first scored week every value field is null.
  */
@@ -236,7 +254,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   const finished = base.map((p) => {
     if (p.contribution === null) return p;
     const earned = usable ? earnedPickFor(curve, p.contribution) : p.redraftPos;
-    return { ...p, earnedPick: earned === null ? null : round1(earned), value: round1(earnedCapital(earned) - capital(p.pickNo)) };
+    return { ...p, earnedPick: earned === null ? null : round1(earned), value: round1(pickValue(earned, p.pickNo)) };
   });
   return { picks: finished, expectedCurve: curve, baselines };
 }

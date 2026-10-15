@@ -47,7 +47,7 @@ Run the curve backwards for each pick: `earnedPick = 1 − k · ln((contribution
 
 Why bounded: the fitted curve's top is low because first-round picks bust often (2023: pick 1 expected only 61 over baseline, and 18 players beat it), so "before pick 1" is common. Left on the exponential, McCaffrey 2023 (contribution 214, earned pick −45) was worth 278 capital and +181 value, ahead of every late-round steal; the user's intuition was that a 24-ppg season at pick 2 is a good pick, not three first-rounders, and that Mostert in round 15 or Kamara and Evans in round 9 are the real league winners. With the ceiling McCaffrey is +45 and those three are +117, +80 and +95. The decay was steepened at the same time so mid and late hits net a little more while early busts barely move; the user then chose 35 over 40 after seeing a comparison (Pickens 2025, pick 58: +68 → +76; Walker 2026: +76; team totals drift up ~10–30 and the best-to-worst spread narrows slightly).
 
-`value = earnedCapital(earnedPick) − capital(pickNo)`, rounded to 1 decimal. Positive is good. The most a pick can lose is the capital spent on it (round 1 whiff ≈ −85 to −100, round 13 dart ≈ −5); hits are judged on production, so a late pick that hits is worth the whole gap, and a dominant early pick scores positive from pick 1 (at most +50 at pick 1).
+`gain = earnedCapital(earnedPick) − capital(pickNo)`. **Surplus premium:** a positive gain is multiplied by `1 + 0.25 · (1 − capital(pickNo) / 100)` (×1 at pick 1, ≈ ×1.14 at pick 30, ≈ ×1.24 at pick 100); a negative gain is not scaled. `value` is the result rounded to 1 decimal. Rationale (user, 2026-10-15): late-round top hits are league winners and were structurally capped near 100 because a cheap pick's value is just its earned capital; the premium lifts true late gems 15–30 in proportion to production while a middling late hit moves ~10. Rejected alternative: a flat bonus per round gained (ADP-difference style), which paid a deep mediocre pick as much as a genuine steal and also bumped before-pick-1 stars. Positive is good. The most a pick can lose is the capital spent on it (round 1 whiff ≈ −85 to −100, round 13 dart ≈ −5); hits are judged on production, so a late pick that hits is worth the whole gap, and a dominant early pick scores positive from pick 1 (at most +50 at pick 1).
 
 `redraftPos` is kept as a display statistic only and no longer enters the value.
 
@@ -57,15 +57,15 @@ If `lastScoredWeek` is 0 (draft done, no games played) every value field, includ
 
 | Player | Pick | Contribution | Earned pick | Value |
 |---|---|---|---|---|
-| Javonte Williams | 96 | +45.9 | −1.4 | +98 |
-| Chuba Hubbard | 68 | +48.7 | −3.2 | +93 |
-| Kenneth Walker | 23 | +87.5 | −21.6 | +76 |
-| Jaxon Smith-Njigba | 18 | +77.4 | −17.6 | +65 |
+| Javonte Williams | 96 | +45.9 | −1.4 | +121 |
+| Chuba Hubbard | 68 | +48.7 | −3.2 | +113 |
+| Kenneth Walker | 23 | +87.5 | −21.6 | +85 |
+| Jaxon Smith-Njigba | 18 | +77.4 | −17.6 | +70 |
 | Jahmyr Gibbs | 1 | +103.6 | −27.0 | +34 |
 | Justin Jefferson | 7 | +1.5 | 60.8 | −66 |
 | De'Von Achane | 8 | −17.0 | off board | −82 |
 
-Historical anchors: McCaffrey 2023 (pick 2) +45, Mostert 2023 (pick 143) +118, Evans 2023 (pick 84) +98, Kamara 2023 (pick 85) +82, Pickens 2025 (pick 58) +76. 2026 manager totals run about +201 to −162; 2025 final about +199 to −122.
+Historical anchors: McCaffrey 2023 (pick 2) +45, Mostert 2023 (pick 143) +147, Evans 2023 (pick 84) +121, Kamara 2023 (pick 85) +101, Pickens 2025 (pick 58) +91. 2026 manager totals run about +265 to −150; 2025 final about +248 to −111. Totals shift upward with the premium; grades are rank-based so letters are unaffected.
 
 ### Games played, PPG, healthy
 
@@ -102,7 +102,7 @@ interface DraftPick {
 
 ### Board
 
-- **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −120, full green at ≥ +120, linear in between, mixed in OKLCH. Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
+- **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −60, full green at ≥ +60, linear in between, mixed in OKLCH, laid over transparent at 45% (was ±120 and 30%; the user wanted a more drastic gradient with more visible green). Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
 - **Cell content**: in value mode the trailing number is the total `value` (signed, 0 decimals).
 - **Tooltip** lines: name · pos · team; `Pick N (round R)`; `Season points[ to date]: X`; `Redraft position[ today]: P (drafted WRk)`; `Earned pick: E (drafted N)` or `Earned pick: off the board`; `Points over baseline: ±B`; `PPG: x.x over G games`; `Keeper` if keeper; `Traded to NAME in week W` if traded.
 - **Keeper marker**: no text. The cell gets an inset accent ring (`ring-1 ring-inset ring-accent`, same treatment the manager highlight uses, which takes precedence when both apply) and a 10px lock icon (inline SVG, `aria-label="Keeper"`) in the top-right corner.

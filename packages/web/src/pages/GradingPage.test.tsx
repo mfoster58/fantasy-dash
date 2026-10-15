@@ -38,6 +38,7 @@ describe('GradingGuide', () => {
     expect(table).toHaveTextContent('Biggest bust');
     expect(table).toHaveTextContent('off the board');
     expect(table).toHaveTextContent('+60.0');
+    expect(table).toHaveTextContent('×1.20');                                 // surplus premium at pick 55
     const grades = screen.getByRole('list').querySelectorAll('li');
     expect(grades).toHaveLength(2);
     expect(grades[0]).toHaveTextContent('alice');

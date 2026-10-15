@@ -62,10 +62,10 @@ describe('DraftBoard', () => {
   it('colors value mode on a red-yellow-green scale and shows the total value', () => {
     render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
     const cells = screen.getAllByTestId('draft-cell');
-    expect(cells[0].style.background).toMatch(/(#2f9e5f|rgb\(47, 158, 95\)) 5%/);
+    expect(cells[0].style.background).toMatch(/(#2f9e5f|rgb\(47, 158, 95\)) 11%/);
     expect(cells[0].style.background).toContain('transparent');
-    expect(cells[1].style.background).toMatch(/(#d64545|rgb\(214, 69, 69\)) 25%/);
-    expect(cells[3].style.background).toMatch(/(#e6c229|rgb\(230, 194, 41\)) 30%, transparent/);
+    expect(cells[1].style.background).toMatch(/(#d64545|rgb\(214, 69, 69\))(, | 50%)/);
+    expect(cells[3].style.background).toMatch(/(#e6c229|rgb\(230, 194, 41\)) 45%, transparent/);
     expect(cells[2].style.background).toBe('transparent');
     expect(cells[0].style.color).toBe('');
     expect(cells[0]).toHaveTextContent('+7');

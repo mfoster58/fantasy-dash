@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earnedCapital, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, TOP_BONUS, TOP_BONUS_DECAY, type DraftValueInput } from '../src/draft';
+import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earnedCapital, pickValue, surplusMultiplier, SURPLUS_PREMIUM, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, TOP_BONUS, TOP_BONUS_DECAY, type DraftValueInput } from '../src/draft';
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
@@ -128,7 +128,7 @@ describe('computeDraftValues', () => {
         expect(p.value).toBeCloseTo(-capital(p.pickNo), 1);
       } else {
         expect(p.earnedPick).toBeCloseTo(earned, 1);
-        expect(p.value).toBeCloseTo(earnedCapital(earned) - capital(p.pickNo), 0);
+        expect(p.value).toBeCloseTo(pickValue(earned, p.pickNo), 0);
       }
     }
     // contribution 0 sits above the fitted floor here, so even the zero scorer earns a (late) pick
@@ -144,7 +144,7 @@ describe('computeDraftValues', () => {
     expect(top.redraftPos).toBe(1);
     expect(top.earnedPick).toBeLessThan(1);
     expect(top.value).toBeGreaterThan(0);
-    expect(top.value).toBeCloseTo(earnedCapital(top.earnedPick!) - 100, 0);
+    expect(top.value).toBeCloseTo(earnedCapital(top.earnedPick!) - 100, 0);   // no premium at pick 1
     expect(top.value).toBeLessThanOrEqual(TOP_BONUS);
   });
 
@@ -226,6 +226,18 @@ describe('capital', () => {
     expect(capital(1)).toBe(100);
     expect(capital(36)).toBeCloseTo(100 / Math.E, 6);
     expect(capital(160)).toBeCloseTo(1.06, 2);
+  });
+});
+
+describe('pickValue', () => {
+  it('scales a hit by the surplus premium in proportion to capital saved, and never scales a miss', () => {
+    expect(surplusMultiplier(1)).toBe(1);
+    expect(surplusMultiplier(1000)).toBeCloseTo(1 + SURPLUS_PREMIUM, 6);
+    expect(pickValue(1, 1)).toBe(0);
+    expect(pickValue(5, 1)).toBeCloseTo(capital(5) - 100, 9);                                   // miss from pick 1: raw gap
+    expect(pickValue(null, 120)).toBeCloseTo(-capital(120), 9);                                 // off the board costs what was spent
+    expect(pickValue(5, 120)).toBeCloseTo((capital(5) - capital(120)) * surplusMultiplier(120), 9);
+    expect(pickValue(5, 120)).toBeGreaterThan(pickValue(5, 20));                                // same production, cheaper pick, more value
   });
 });
 

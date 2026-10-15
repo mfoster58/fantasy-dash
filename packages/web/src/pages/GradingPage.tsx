@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import { BASELINE_RANKS, BENCH_RANKS, CAPITAL_DECAY, POSITION_WEIGHTS, TOP_BONUS, TOP_BONUS_DECAY, capital, earnedCapital, expectedAt, type Draft, type DraftPick, type Manager, type PlayerDirectory, type Season, type UserId } from '@fantasy-dash/core';
+import { BASELINE_RANKS, BENCH_RANKS, CAPITAL_DECAY, POSITION_WEIGHTS, SURPLUS_PREMIUM, TOP_BONUS, TOP_BONUS_DECAY, capital, earnedCapital, expectedAt, surplusMultiplier, type Draft, type DraftPick, type Manager, type PlayerDirectory, type Season, type UserId } from '@fantasy-dash/core';
 import Headshot from '../components/Headshot';
 import PosPill from '../components/PosPill';
 import { fmtSigned } from '../lib/format';
@@ -146,7 +146,7 @@ function ExampleTable({ examples, managers, teams, players }: { examples: Gradin
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="section-label text-left"><th className="py-1.5 pr-3">Example</th><th className="py-1.5 pr-3">Player</th><th className="num py-1.5 pr-3 text-right">Pick</th><th className="num py-1.5 pr-3 text-right">Capital spent</th><th className="num py-1.5 pr-3 text-right">Contribution</th><th className="num py-1.5 pr-3 text-right">Earned pick</th><th className="num py-1.5 pr-3 text-right">Capital earned</th><th className="num py-1.5 text-right">Value</th></tr>
+          <tr className="section-label text-left"><th className="py-1.5 pr-3">Example</th><th className="py-1.5 pr-3">Player</th><th className="num py-1.5 pr-3 text-right">Pick</th><th className="num py-1.5 pr-3 text-right">Capital spent</th><th className="num py-1.5 pr-3 text-right">Contribution</th><th className="num py-1.5 pr-3 text-right">Earned pick</th><th className="num py-1.5 pr-3 text-right">Capital earned</th><th className="num py-1.5 pr-3 text-right">Premium</th><th className="num py-1.5 text-right">Value</th></tr>
         </thead>
         <tbody>
           {examples.map(({ key, label, pick: p }) => {
@@ -162,6 +162,7 @@ function ExampleTable({ examples, managers, teams, players }: { examples: Gradin
                 <td className="num py-2 pr-3 text-right">{fmtSigned(p.contribution!, 1)}</td>
                 <td className="num py-2 pr-3 text-right">{p.earnedPick === null ? <span className="text-muted">off the board</span> : fmt1(p.earnedPick)}</td>
                 <td className="num py-2 pr-3 text-right">{fmt1(earned)}</td>
+                <td className="num py-2 pr-3 text-right">{p.value! > 0 ? `×${surplusMultiplier(p.pickNo).toFixed(2)}` : <span className="text-muted">—</span>}</td>
                 <td className={`num py-2 text-right font-semibold ${signClass(p.value!)}`}>{fmtSigned(p.value!, 1)}</td>
               </tr>
             );
@@ -196,7 +197,7 @@ export function GradingGuide({ season, players }: { season: Season; players: Pla
       </header>
 
       <div className="card px-4 py-3 text-sm leading-relaxed">
-        <p><strong>Every pick gets one number: draft capital gained.</strong> A pick spends capital (an early pick is worth a lot, a late pick very little). The player's production is converted into the pick where that much production is usually found in this season's draft, which is the capital the pick earned. Value is capital earned minus capital spent. A dominant player earns more than pick 1, a miss costs only what was spent, and a late dart that hits is worth the whole gap.</p>
+        <p><strong>Every pick gets one number: draft capital gained.</strong> A pick spends capital (an early pick is worth a lot, a late pick very little). The player's production is converted into the pick where that much production is usually found in this season's draft, which is the capital the pick earned. Value is capital earned minus capital spent, with hits on cheap picks scaled up a little. A dominant player earns more than pick 1, a miss costs only what was spent, and a late dart that hits is worth the whole gap and then some.</p>
       </div>
 
       <Step n={1} title="Production over replacement">
@@ -243,6 +244,7 @@ export function GradingGuide({ season, players }: { season: Season; players: Pla
         <p>Picks are priced on a trade-value curve: pick 1 is worth 100 and the value halves every {halfLife} picks, so pick 30 is about {capital(30).toFixed(0)}, pick 60 about {capital(60).toFixed(0)} and pick 130 about {capital(130).toFixed(0)}. Off the board is worth 0.</p>
         <p>An earned pick before 1 does not keep compounding. Pick 1 is worth 100, and beating what pick 1 usually returns adds a bonus that approaches a ceiling of {TOP_BONUS} the further ahead the player lands (about {Math.round(TOP_BONUS * (1 - 1 / Math.E))} of it by {TOP_BONUS_DECAY} picks before 1). A monster season is worth at most {100 + TOP_BONUS}; it does not make one pick worth three first-rounders.</p>
         <p><strong>Value = capital at the earned pick − capital at the pick spent.</strong> The most you can lose is what you spent, so a round 13 whiff costs about {capital(teams * 12 + 1).toFixed(0)} while a round 1 whiff costs most of 100. Hits are judged on production, so a late pick that hits is worth the whole gap.</p>
+        <p><strong>Hits get a surplus premium.</strong> The same production is worth more from a cheap pick than from an expensive one, because the cheap pick also left capital to spend elsewhere. A positive gain is multiplied by 1 plus {Math.round(SURPLUS_PREMIUM * 100)}% of the share of capital the pick saved: nothing extra at pick 1, about ×{surplusMultiplier(30).toFixed(2)} at pick 30, ×{surplusMultiplier(100).toFixed(2)} by pick 100. Misses are never scaled.</p>
         <CapitalChart draft={draft} />
         <ExampleBars examples={examples} players={players} />
         <ExampleTable examples={examples} managers={season.managers} teams={teams} players={players} />
