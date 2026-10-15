@@ -29,20 +29,42 @@ const mount = (initial = '/players', currentYear = 2025, lastScoredWeek = 1) => 
 );
 const region = (name: string) => screen.getByRole('region', { name });
 const firstRow = (boardTitle: string) => within(region(boardTitle)).getAllByRole('listitem')[0];
+const tab = (name: string) => screen.getByRole('tab', { name });
+const loc = () => screen.getByTestId('loc').textContent ?? '';
 
 describe('PlayersView', () => {
-  it('renders the four sections, every board, and the through-week line', () => {
+  it('shows one section at a time, League leaders by default, switching from the tab bar and the URL', () => {
     mount();
     expect(screen.getByText(/through 2025 week 1/i)).toBeInTheDocument();
-    for (const h of ['League leaders', 'Career', 'Postseason', 'Extras']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
-    // board titles are h3 headings; plain getByText would collide with value headers like "PPG"
-    for (const t of ['Rushing yards', 'Passing TDs', 'Most touches', 'FPOE', 'xFP', 'Most toilet bowl starts', 'Most last place rosters', 'Best playoff starts', 'Worst toilet bowl starts', 'Draft value', 'Mr. Irrelevant', 'Biggest breakout', 'Biggest fall-off', 'Bench warmers', 'Loyalty', 'Ironman', 'Fodder', 'Waiver heroes', 'Waiver villains']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Trade bait' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'PPG' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Career PPG' })).toBeNull();
-    expect(within(region('Postseason')).getByText('Most championship rosters')).toBeInTheDocument();
-    expect(within(region('Career')).queryByText('Most championship rosters')).toBeNull();
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['League leaders', 'Career', 'Postseason', 'Extras']);
+    expect(tab('League leaders')).toHaveAttribute('aria-selected', 'true');
+    expect(region('League leaders')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Career' })).toBeNull();
+    fireEvent.click(tab('Career'));
+    expect(loc()).toContain('tab=career');
+    expect(tab('Career')).toHaveAttribute('aria-selected', 'true');
+    expect(region('Career')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'League leaders' })).toBeNull();
+    fireEvent.click(tab('League leaders'));
+    expect(loc()).not.toContain('tab=');
+  });
+
+  it('reads the tab from the URL and falls back to League leaders for junk', () => {
+    mount('/players?tab=extras');
+    expect(region('Extras')).toBeInTheDocument();
     expect(within(region('Extras')).getByText('Biggest bench blunder')).toBeInTheDocument();
+    for (const t of ['Draft value', 'Mr. Irrelevant', 'Biggest breakout', 'Biggest fall-off', 'Bench warmers', 'Loyalty', 'Ironman', 'Fodder', 'Waiver heroes', 'Waiver villains']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Trade bait' })).toBeNull();
+    fireEvent.click(tab('Postseason'));
+    for (const t of ['Most toilet bowl starts', 'Most last place rosters', 'Best playoff starts', 'Worst toilet bowl starts']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    expect(within(region('Postseason')).getByText('Most championship rosters')).toBeInTheDocument();
+  });
+
+  it('ignores a junk tab', () => {
+    mount('/players?tab=nope');
+    expect(region('League leaders')).toBeInTheDocument();
+    for (const t of ['Rushing yards', 'Passing TDs', 'Most touches', 'FPOE', 'xFP']) expect(screen.getByRole('heading', { name: t })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'PPG' })).toBeNull();
   });
 
   it('switches the leaders points board to PPG from its toggle', () => {
@@ -54,64 +76,75 @@ describe('PlayersView', () => {
     expect(firstRow('Most points')).toHaveTextContent('35.00');
   });
 
-  it('filters one section at a time and writes each to its own URL parameter', () => {
-    mount();
+  it('keeps each section\'s filter in its own URL parameter across tab switches', () => {
+    mount('/players?tab=career');
     expect(firstRow('Best week by a starter')).toHaveTextContent('Quincy One');
     fireEvent.click(within(region('Career')).getByRole('button', { name: 'RB' }));
-    expect(screen.getByTestId('loc')).toHaveTextContent('?career=RB');
+    expect(loc()).toContain('career=RB');
     expect(firstRow('Best week by a starter')).toHaveTextContent('Ricky One');
+    fireEvent.click(tab('League leaders'));
     expect(firstRow('Most points')).toHaveTextContent('Quincy One'); // leaders untouched
     fireEvent.click(within(region('League leaders')).getByRole('button', { name: 'RB' }));
-    expect(screen.getByTestId('loc').textContent).toContain('lead=RB');
-    expect(screen.getByTestId('loc').textContent).toContain('career=RB');
+    expect(loc()).toContain('lead=RB');
+    expect(loc()).toContain('career=RB');
     expect(firstRow('Most points')).toHaveTextContent('Ricky One');
+    fireEvent.click(tab('Career'));
+    expect(within(region('Career')).getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(within(region('Career')).getByRole('button', { name: 'All' }));
-    expect(screen.getByTestId('loc').textContent).not.toContain('career=');
+    expect(loc()).not.toContain('career=');
+    expect(loc()).toContain('tab=career');
   });
 
   it('switches the leaders season from the picker and the URL', () => {
     mount();
     expect(firstRow('Most points')).toHaveTextContent('35.00');
-    fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '2024' } });
-    expect(screen.getByTestId('loc')).toHaveTextContent('season=2024');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '2024' } });
+    expect(loc()).toContain('season=2024');
     expect(firstRow('Most points')).toHaveTextContent('71.00'); // q1 40 + 31 in 2024
-    expect(firstRow('Best week by a starter')).toHaveTextContent('40.00'); // all-time unaffected by the season picker
+    fireEvent.click(tab('Career'));
+    expect(firstRow('Best week by a starter')).toHaveTextContent('40.00'); // all-time unaffected by the leaders picker
   });
 
   it('falls back for junk parameters', () => {
     mount('/players?career=XYZ&season=1999&lead=rb');
-    expect(within(region('Career')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(region('League leaders')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getAllByRole('combobox')[0]).toHaveValue('2025');
+    expect(screen.getByRole('combobox')).toHaveValue('2025');
+    fireEvent.click(tab('Career'));
+    expect(within(region('Career')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('shows the not-started message for a season with no lines and keeps the other sections', () => {
+  it('shows the not-started message for a season with no lines and keeps the other tabs', () => {
     mount('/players', 2026, 0);
     expect(screen.getByText('Season has not started.')).toBeInTheDocument();
     expect(screen.queryByText('Most yards')).toBeNull();
+    fireEvent.click(tab('Career'));
     expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
   });
 
   it('writes and reads All-time per section', () => {
     mount('/players?season=all&extrasSeason=2024');
-    const pickers = screen.getAllByRole('combobox');
-    expect(pickers).toHaveLength(3); // leaders, career, extras
-    expect(pickers[0]).toHaveValue('all');
-    expect(pickers[1]).toHaveValue('all'); // career default
-    expect(pickers[2]).toHaveValue('2024');
+    expect(screen.getByRole('combobox')).toHaveValue('all');
     expect(firstRow('Most points')).toHaveTextContent('2 seasons'); // q1 across both seasons
-    fireEvent.change(pickers[1], { target: { value: '2024' } });
-    expect(screen.getByTestId('loc').textContent).toContain('careerSeason=2024');
+    fireEvent.click(tab('Career'));
+    expect(screen.getByRole('combobox')).toHaveValue('all'); // career default
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '2024' } });
+    expect(loc()).toContain('careerSeason=2024');
     expect(firstRow('Best week by a starter')).toHaveTextContent('2024 · Wk 1');
-    fireEvent.change(pickers[0], { target: { value: '2025' } });
-    expect(screen.getByTestId('loc').textContent).not.toContain('season=all');
-    fireEvent.change(pickers[2], { target: { value: 'all' } });
-    expect(screen.getByTestId('loc').textContent).not.toContain('extrasSeason');
+    fireEvent.click(tab('Extras'));
+    expect(screen.getByRole('combobox')).toHaveValue('2024');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'all' } });
+    expect(loc()).not.toContain('extrasSeason');
+    fireEvent.click(tab('Postseason'));
+    expect(screen.queryByRole('combobox')).toBeNull(); // postseason has no picker
+    fireEvent.click(tab('League leaders'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
+    expect(loc()).not.toContain('season=all');
   });
 
   it('shows the season note per section', () => {
-    mount('/players?careerSeason=2025');
+    mount('/players?careerSeason=2025&tab=career');
     expect(within(region('Career')).getByText('2025 season')).toBeInTheDocument();
+    fireEvent.click(tab('Extras'));
     expect(within(region('Extras')).getByText('Every season')).toBeInTheDocument();
   });
 });

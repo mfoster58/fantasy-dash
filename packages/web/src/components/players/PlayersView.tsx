@@ -15,6 +15,7 @@ const SECTIONS: { id: SectionId; param: string; seasonParam: string | null; defa
   { id: 'postseason', param: 'post', seasonParam: null, defaultSeason: null, title: 'Postseason', note: 'Championship bracket unless the board says otherwise', columns: 2 },
   { id: 'extras', param: 'extra', seasonParam: 'extrasSeason', defaultSeason: 'all', title: 'Extras', note: null, columns: 2 },
 ];
+const DEFAULT_TAB: SectionId = 'leaders';
 
 export default function PlayersView({ seasons, players, managers, years, currentYear, lastScoredWeek }: Props) {
   const [params, setParams] = useSearchParams();
@@ -28,6 +29,8 @@ export default function PlayersView({ seasons, players, managers, years, current
     return years.includes(n) ? n : fallback;
   };
   const setPick = (param: string, fallback: SeasonPick) => (v: SeasonPick) => update((next) => { if (v === fallback) next.delete(param); else next.set(param, String(v)); });
+  const tab: SectionId = SECTIONS.find((s) => s.id === params.get('tab'))?.id ?? DEFAULT_TAB;
+  const setTab = (id: SectionId) => update((next) => { if (id === DEFAULT_TAB) next.delete('tab'); else next.set('tab', id); });
 
   const allLines = useMemo(() => flattenLines(seasons, players), [seasons, players]);
   const champions = useMemo(() => championsOf(seasons), [seasons]);
@@ -39,14 +42,27 @@ export default function PlayersView({ seasons, players, managers, years, current
   const drafts = useMemo(() => Object.fromEntries(seasons.map((s) => [s.year, s.draft])), [seasons]);
 
   return (
-    <section className="space-y-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-3">
+    <section className="space-y-6">
+      <header className="space-y-3">
         <h1 className="text-[22px] font-semibold">Player stats <span className="num font-normal text-muted">through {currentYear} week {lastScoredWeek}</span></h1>
-        <nav aria-label="Sections" className="flex flex-wrap gap-3 text-xs">
-          {SECTIONS.map((s) => <a key={s.id} href={`#${s.id}`} className="text-muted hover:text-accent">{s.title}</a>)}
-        </nav>
+        <div role="tablist" aria-label="Sections" className="flex flex-wrap gap-1 border-b border-line">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              role="tab"
+              id={`tab-${s.id}`}
+              aria-selected={s.id === tab}
+              aria-controls={s.id}
+              onClick={() => setTab(s.id)}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm ${s.id === tab ? 'border-ink font-medium text-ink' : 'border-transparent text-muted hover:text-ink'}`}
+            >
+              {s.title}
+            </button>
+          ))}
+        </div>
       </header>
-      {SECTIONS.map((s) => {
+      {SECTIONS.filter((s) => s.id === tab).map((s) => {
         const pos = posOf(s.param);
         const fallback: SeasonPick = s.defaultSeason === 'current' ? currentYear : 'all';
         const pick: SeasonPick = s.seasonParam ? pickOf(s.seasonParam, fallback) : 'all';
