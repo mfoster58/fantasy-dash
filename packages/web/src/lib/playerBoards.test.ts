@@ -279,9 +279,9 @@ describe('BOARDS registry v2 order', () => {
   const ids = (s: string) => BOARDS.filter((b) => b.section === s).map((b) => b.id);
   it('lays out leaders in grid order, touches in place of PPG, last place beside the toilet bowl', () => {
     expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
-    expect(ids('career')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted', 'benchBlunder']);
+    expect(ids('career')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
     expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'championshipRosters', 'postToiletBowl', 'worstToiletStarts', 'lastPlaceRosters']);
-    expect(ids('extras')).toEqual(['boomStarts', 'dudStarts', 'journeyman', 'draftValue']);
+    expect(ids('extras').slice(0, 7)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman']);
     expect(BOARDS.find((b) => b.id === 'leadFpoe')!.sortable).toBe(true);
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);

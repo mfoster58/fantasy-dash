@@ -27,4 +27,3 @@ export const careerPoints = (ctx: BoardContext, _direction?: Direction, mode?: s
 export const weeksStarted = (ctx: BoardContext): BoardRow[] =>
   careerBoard(started(ctx), (ls) => ls.length, String, (ls) => plural(ls.length, 'start'), metaOf(ctx));
 
-export const benchBlunder = (ctx: BoardContext): BoardRow[] => momentBoard(ctx.lines.filter((l) => !l.started), (l) => l.points, fmtPts);
