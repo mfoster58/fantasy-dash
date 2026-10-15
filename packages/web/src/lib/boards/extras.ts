@@ -1,9 +1,15 @@
-import type { UserId } from '@fantasy-dash/core';
+import type { Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPts, fmtSigned } from '../format';
 import type { PlayerLine } from '../playerLines';
 import { longestStartRun } from '../ironman';
+import { waiverClaims, type WaiverClaim } from '../waivers';
 import type { BoardContext, BoardRow, Direction, DraftValue } from './shared';
-import { careerBoard, groupBy, intLabel, matchesPos, metaOf, momentBoard, plural, rank, round1, skillOnly, started, sum, toneOf } from './shared';
+import { careerBoard, groupBy, inYear, intLabel, matchesPos, metaOf, momentBoard, plural, rank, round1, skillOnly, started, sum, toneOf } from './shared';
+
+const txInScope = (ctx: BoardContext): { year: number; tx: Transaction }[] =>
+  ctx.transactions.filter((s) => inYear(ctx, s.year)).flatMap((s) => s.transactions.map((tx) => ({ year: s.year, tx })));
+const posOk = (ctx: BoardContext, playerId: string) => matchesPos(ctx.players[playerId]?.position ?? '?', ctx.pos);
+const seasonsMeta = (ctx: BoardContext, years: Set<number>) => (ctx.year === null ? plural(years.size, 'season') : String(ctx.year));
 
 export const benchBlunder = (ctx: BoardContext): BoardRow[] => momentBoard(ctx.lines.filter((l) => !l.started), (l) => l.points, fmtPts);
 
@@ -56,3 +62,40 @@ export const draftValue = (ctx: BoardContext, direction: Direction = 'desc'): Bo
     meta: plural(i.seasons, 'season'), detail: null, userId: null, to: null, tone: toneOf(i.value),
   }));
 };
+
+/** Rows from per-player event counts; ties fall to the most recent event. */
+function countBoard(ctx: BoardContext, events: { playerId: string; year: number; created: number; group: string }[], detail: (groups: Set<string>, n: number) => string): BoardRow[] {
+  const by = new Map<string, { n: number; years: Set<number>; groups: Set<string>; latest: number }>();
+  for (const e of events) {
+    if (!posOk(ctx, e.playerId)) continue;
+    const g = by.get(e.playerId) ?? { n: 0, years: new Set<number>(), groups: new Set<string>(), latest: 0 };
+    g.n += 1; g.years.add(e.year); g.groups.add(e.group); g.latest = Math.max(g.latest, e.created);
+    by.set(e.playerId, g);
+  }
+  const items = [...by.entries()].map(([playerId, g]) => ({ playerId, value: g.n, g, latestYear: Math.max(...g.years), latestWeek: 0, secondary: g.latest }));
+  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: seasonsMeta(ctx, i.g.years), detail: detail(i.g.groups, i.g.n), userId: null, to: null }));
+}
+
+export const tradeBait = (ctx: BoardContext): BoardRow[] => countBoard(ctx,
+  txInScope(ctx).filter(({ tx }) => tx.type === 'trade').flatMap(({ year, tx }) => tx.adds.map((a) => ({ playerId: a.playerId, year, created: tx.created, group: a.userId }))),
+  (managers) => plural(managers.size, 'manager'));
+
+export const fodder = (ctx: BoardContext): BoardRow[] => {
+  const scoped = txInScope(ctx);
+  const pickups = new Map<string, number>();
+  for (const { tx } of scoped) if (tx.type !== 'trade') for (const a of tx.adds) pickups.set(a.playerId, (pickups.get(a.playerId) ?? 0) + 1);
+  const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.map((d) => ({ playerId: d.playerId, year, created: tx.created, group: d.userId }))), () => '');
+  return rows.map((r) => ({ ...r, detail: `picked up ${plural(pickups.get(r.playerId) ?? 0, 'time')}` }));
+};
+
+const claims = (ctx: BoardContext): WaiverClaim[] => waiverClaims(ctx.transactions.filter((s) => inYear(ctx, s.year)), ctx.lines).filter((c) => posOk(ctx, c.playerId));
+const claimRow = (c: WaiverClaim, value: number, label: string, detail: string): BoardRow =>
+  ({ key: `${c.year}-${c.week}-${c.playerId}-${c.userId}`, playerId: c.playerId, value, valueLabel: label, meta: `${c.year} · Wk ${c.week}`, detail, userId: c.userId, to: null });
+
+export const waiverHeroes = (ctx: BoardContext): BoardRow[] =>
+  rank(claims(ctx).filter((c) => c.bid >= 1).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
+    .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `$${c.bid} · ${plural(c.starts, 'start')}`));
+
+export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
+  rank(claims(ctx).filter((c) => c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
+    .map(({ c, value }) => claimRow(c, value, `$${value.toFixed(1)}/pt`, `$${c.bid} · ${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));

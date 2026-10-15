@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
 import { game, line, players, season, side, week } from '../../test/playerFixtures';
-import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, type BoardContext } from '../playerBoards';
+import type { Transaction } from '@fantasy-dash/core';
+import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, tradeBait, fodder, waiverHeroes, waiverVillains, type BoardContext } from '../playerBoards';
 
 const seasons = [
   season(2024, [
@@ -47,7 +48,39 @@ describe('ironman', () => {
 
 describe('registry', () => {
   it('lays out Extras in grid order', () => {
-    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id).slice(0, 7)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman']);
+    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id).slice(0, 11)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'tradeBait', 'waiverHeroes', 'waiverVillains']);
     expect(BOARDS.filter((b) => b.section === 'career').map((b) => b.id)).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
+  });
+});
+
+const t = (over: Partial<Transaction>): Transaction => ({ id: 'x', type: 'trade', week: 1, created: 1, adds: [], drops: [], bid: null, ...over });
+const txCtx: BoardContext = { ...ctx, transactions: [
+  { year: 2024, transactions: [
+    t({ id: 'a', adds: [{ playerId: 'q1', userId: 'b' }, { playerId: 'r1', userId: 'a' }], drops: [{ playerId: 'q1', userId: 'a' }, { playerId: 'r1', userId: 'b' }] }),
+    t({ id: 'b', created: 2, type: 'free_agent', drops: [{ playerId: 'w1', userId: 'a' }] }),
+    t({ id: 'c', created: 3, type: 'waiver', week: 2, adds: [{ playerId: 'w1', userId: 'b' }], bid: 30 }),
+  ] },
+  { year: 2025, transactions: [
+    t({ id: 'd', adds: [{ playerId: 'q1', userId: 'a' }], drops: [{ playerId: 'q1', userId: 'b' }] }),
+    t({ id: 'e', created: 2, type: 'waiver', week: 1, adds: [{ playerId: 'q1', userId: 'b' }], drops: [{ playerId: 'w1', userId: 'b' }], bid: 9 }),
+    t({ id: 'f', created: 3, type: 'commissioner', drops: [{ playerId: 'w1', userId: 'a' }] }),
+  ] },
+] };
+
+describe('trade bait and fodder', () => {
+  it('count trades moving the player and drops of the player', () => {
+    expect(tradeBait(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail])).toEqual([['q1', 2, '2 seasons', '2 managers'], ['r1', 1, '1 season', '1 manager']]);
+    // drops: w1 by a (2024 free agent), by b and by a (2025) = 3 ; q1 in both trades = 2 ; r1 in the 2024 trade = 1
+    expect(fodder(txCtx).map((r) => [r.playerId, r.value, r.detail])).toEqual([['w1', 3, 'picked up 1 time'], ['q1', 2, 'picked up 1 time'], ['r1', 1, 'picked up 0 times']]);
+    expect(tradeBait({ ...txCtx, year: 2025 }).map((r) => [r.playerId, r.value, r.meta])).toEqual([['q1', 1, '2025']]);
+  });
+});
+
+describe('waiver heroes and villains', () => {
+  // w1 claimed by b for $30 in 2024 wk2: b started w1 in 2024 wk1 only (before the claim) → 0 starts.
+  // q1 claimed by b for $9 in 2025 wk1: b started q1 wk1 35, wk2 18; benched wk3 → 53 pts, 2 starts.
+  it('heroes rank started points per claim; villains rank dollars per point for claims of $10 or more', () => {
+    expect(waiverHeroes(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['q1', 53, '2025 · Wk 1', '$9 · 2 starts', 'b'], ['w1', 0, '2024 · Wk 2', '$30 · 0 starts', 'b']]);
+    expect(waiverVillains(txCtx).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['w1', 30, '$30.0/pt', '$30 · 0.00 pts · 0 starts']]);
   });
 });
