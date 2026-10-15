@@ -27,6 +27,6 @@ export const week = (n: number, games: Game[], isPlayoff = false): Week => ({ we
 export const season = (year: number, weeks: Week[], champion: string | null = null, lastScoredWeek = weeks.length): Season => ({
   year, leagueId: 'L', status: 'complete', lastScoredWeek, playoffWeekStart: 3, playoffTeams: 2,
   rosterSlots: [], scoring: {}, managers: {}, brackets: { winners: [], consolation: [] }, standings: [],
-  honors: { champion, runnerUp: null, third: null, pointsTitle: null, lastPlace: null }, draft: null,
+  honors: { champion, runnerUp: null, third: null, pointsTitle: null, lastPlace: null }, draft: null, transactions: [], playerSeasons: {},
   weeks,
 } as Season);
