@@ -9,7 +9,7 @@ const players: PlayerDirectory = {
   q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
 };
 const managers: History['managers'] = { a: { displayName: 'alice', avatar: 'av', seasons: [2025] } };
-const def: BoardDef = { id: 'x', section: 'allTime', title: 'Best week by a starter', definition: 'Most points in a week.', valueHeader: 'Pts', compute: () => [] };
+const def: BoardDef = { id: 'x', section: 'career', title: 'Best week by a starter', definition: 'Most points in a week.', valueHeader: 'Pts', compute: () => [] };
 const row = (i: number, extra: Partial<BoardRow> = {}): BoardRow => ({
   key: `k${i}`, playerId: i === 0 ? 'q1' : `p${i}`, value: 100 - i, valueLabel: `${100 - i}.00`, meta: '2025 · Wk 1', detail: null, userId: null, to: null, ...extra,
 });

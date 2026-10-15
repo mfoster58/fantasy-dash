@@ -60,7 +60,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         </div>
       </header>
       {rows.length === 0 ? (
-        <p className="px-3 py-4 text-sm text-muted">{activeMode?.empty ?? 'No players at this position.'}</p>
+        <p className="px-3 py-4 text-sm text-muted">No players at this position.</p>
       ) : (
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {
