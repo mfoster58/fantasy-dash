@@ -44,9 +44,11 @@ describe('AllTimeRecords', () => {
     const blow = screen.getByTestId('records-blowouts');
     expect(within(blow).getByText('Blowouts')).toBeInTheDocument();
     const blowRow = within(blow).getByRole('link');
-    expect(blowRow).toHaveTextContent('alice180.40vs80.00bob');
-    expect(blowRow).not.toHaveTextContent('–');
-    expect(blowRow).toHaveTextContent('+100.40');
+    expect(blowRow).toHaveTextContent('alice180.40vsbob80.00');
+    expect(blowRow).toHaveTextContent('2025 · Wk 16');
+    expect(blowRow).toHaveTextContent('Championship');
+    expect(blowRow).toHaveTextContent('by 100.40');
+    expect(blowRow).not.toHaveTextContent('+100.40');
   });
 
   it('says so when a list is empty', () => {

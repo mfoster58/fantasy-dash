@@ -1,20 +1,18 @@
 import { Link } from 'react-router';
 import type { History, PlayoffTag, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
-import { fmtPts, fmtSigned, fmtTag } from '../lib/format';
+import { fmtPts, fmtTag } from '../lib/format';
 import type { AllTimeRecords as Records, MatchupEntry, ScoreEntry } from '../lib/allTimeRecords';
 
 interface Props { records: Records; managers: History['managers'] }
+type Managers = History['managers'];
 
 const linkFor = (gameId: string) => {
   const [year, week, matchupId] = gameId.split('-');
   return `/scores/${year}/${week}/${matchupId}`;
 };
 
-const when = (g: { year: number; week: number; tag: PlayoffTag | null }) =>
-  `${g.year} · Wk ${g.week}${g.tag ? ` · ${fmtTag(g.tag)}` : ''}`;
-
-const row = 'flex items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2';
+const row = 'block px-3 py-2.5 transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none';
 
 function Card({ id, title, note, count, children }: { id: string; title: string; note: string; count: number; children: React.ReactNode }) {
   return (
@@ -28,56 +26,58 @@ function Card({ id, title, note, count, children }: { id: string; title: string;
   );
 }
 
-/** Avatar then name; `reverse` puts the avatar on the outside of a right-aligned side. */
-function Name({ userId, managers, size = 24, reverse = false }: { userId: UserId; managers: History['managers']; size?: number; reverse?: boolean }) {
+/** Mirrors the scoreboard card's header: context on the left, the row's headline fact on the right. */
+function RowHeader({ rank, game, right }: { rank: number; game: { year: number; week: number; tag: PlayoffTag | null }; right: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-xs">
+      <span className="flex min-w-0 items-baseline gap-1.5 text-muted">
+        <span className="num w-4 shrink-0">{rank}</span>
+        <span className="num whitespace-nowrap">{game.year} · Wk {game.week}{game.tag && ' · '}</span>
+        {game.tag && <span className="truncate font-semibold text-accent">{fmtTag(game.tag)}</span>}
+      </span>
+      {right}
+    </div>
+  );
+}
+
+function Team({ userId, points, managers, align, lost }: { userId: UserId; points: number; managers: Managers; align: 'left' | 'right'; lost: boolean }) {
   const m = managers[userId];
   const name = m?.displayName ?? userId;
+  const right = align === 'right';
   return (
-    <span className={`flex min-w-0 items-center gap-2 ${reverse ? 'flex-row-reverse' : ''}`}>
-      <Avatar avatar={m?.avatar ?? null} name={name} size={size} />
-      <span className="truncate font-medium">{name}</span>
+    <span className={`flex min-w-0 items-center gap-2 ${right ? 'flex-row-reverse text-right' : ''} ${lost ? 'text-muted' : ''}`}>
+      <Avatar avatar={m?.avatar ?? null} name={name} size={32} />
+      <span className={`min-w-0 flex-1 truncate text-sm leading-tight ${lost ? '' : 'font-semibold'}`} title={name}>{name}</span>
+      <span className={`num shrink-0 text-xl leading-none ${lost ? '' : 'font-semibold text-ink'}`}>{fmtPts(points)}</span>
     </span>
   );
 }
 
-function ScoreRow({ e, rank, managers }: { e: ScoreEntry; rank: number; managers: History['managers'] }) {
+function ScoreRow({ e, rank, managers }: { e: ScoreEntry; rank: number; managers: Managers }) {
+  const opp = managers[e.opponent]?.displayName ?? e.opponent;
   return (
     <li>
       <Link to={linkFor(e.gameId)} className={row}>
-        <span className="num w-5 shrink-0 text-right text-xs text-muted">{rank}</span>
-        <span className="min-w-0 flex-1">
-          <Name userId={e.userId} managers={managers} />
-          <span className="mt-0.5 block truncate text-xs text-muted">
-            {when(e)} · vs {managers[e.opponent]?.displayName ?? e.opponent} <span className="num">{fmtPts(e.oppPoints)}</span>
-          </span>
-        </span>
-        <span className="num shrink-0 text-lg font-semibold">{fmtPts(e.points)}</span>
+        <RowHeader rank={rank} game={e} right={<span className="truncate text-muted">vs {opp} <span className="num">{fmtPts(e.oppPoints)}</span></span>} />
+        <div className="mt-1.5">
+          <Team userId={e.userId} points={e.points} managers={managers} align="left" lost={false} />
+        </div>
       </Link>
     </li>
   );
 }
 
-function MatchupRow({ e, rank, managers }: { e: MatchupEntry; rank: number; managers: History['managers'] }) {
+function MatchupRow({ e, rank, managers }: { e: MatchupEntry; rank: number; managers: Managers }) {
   const tie = e.margin === 0;
   return (
     <li>
       <Link to={linkFor(e.gameId)} className={row}>
-        <span className="num w-5 shrink-0 text-right text-xs text-muted">{rank}</span>
-        <span className="min-w-0 flex-1">
-          <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-sm">
-            <span className="flex min-w-0 items-center justify-end gap-2 text-right">
-              <Name userId={e.high.userId} managers={managers} size={20} />
-              <span className="num shrink-0">{fmtPts(e.high.points)}</span>
-            </span>
-            <span className="section-label text-[10px]">vs</span>
-            <span className="flex min-w-0 items-center gap-2 text-muted">
-              <span className="num shrink-0">{fmtPts(e.low.points)}</span>
-              <Name userId={e.low.userId} managers={managers} size={20} reverse />
-            </span>
-          </span>
-          <span className="mt-0.5 block text-center text-xs text-muted">{when(e)}</span>
-        </span>
-        <span className={`num shrink-0 text-lg font-semibold ${tie ? 'text-muted' : ''}`}>{tie ? 'Tie' : fmtSigned(e.margin, 2)}</span>
+        <RowHeader rank={rank} game={e} right={<span className="section-label shrink-0 text-ink">{tie ? 'Tie' : <>by <span className="num">{fmtPts(e.margin)}</span></>}</span>} />
+        <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3">
+          <Team userId={e.high.userId} points={e.high.points} managers={managers} align="left" lost={false} />
+          <span className="section-label px-0.5 text-[12px] lowercase tracking-[0.12em]" style={{ fontVariant: 'small-caps' }}>vs</span>
+          <Team userId={e.low.userId} points={e.low.points} managers={managers} align="right" lost={!tie} />
+        </div>
       </Link>
     </li>
   );
