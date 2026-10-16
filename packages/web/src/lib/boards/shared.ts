@@ -1,5 +1,6 @@
-import type { Draft, PlayerDirectory, PlayerId, PlayerSeasonLine, Season, Transaction, UserId } from '@fantasy-dash/core';
+import type { Draft, History, PlayerDirectory, PlayerId, PlayerSeasonLine, Season, Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtTag } from '../format';
+import type { ManagerSeason, TeamGame } from '../managerGames';
 import type { PlayerLine, PosFilter } from '../playerLines';
 import type { XfpModel } from '../xfp';
 
@@ -45,6 +46,10 @@ export interface BoardContext {
   transactions: SeasonTransactions[];
   playerSeasons: Record<number, Record<PlayerId, PlayerSeasonLine>>;
   drafts: Record<number, Draft | null>;
+  /** manager side, already narrowed to the section's season like `lines` */
+  teamGames: TeamGame[];
+  managerSeasons: ManagerSeason[];
+  managers: History['managers'];
 }
 
 /** One way of reading a board; the first mode is the default. */

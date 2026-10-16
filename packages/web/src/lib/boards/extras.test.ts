@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
-import { game, line, players, season, side, week } from '../../test/playerFixtures';
+import { emptyManagerCtx, game, line, players, season, side, week } from '../../test/playerFixtures';
 import type { Draft, Season, Transaction } from '@fantasy-dash/core';
 import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
 
@@ -18,7 +18,7 @@ const seasons = [
 ];
 export const ctx: BoardContext = {
   lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null, currentYear: 2025, pos: 'All',
-  picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {},
+  picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {}, ...emptyManagerCtx,
 };
 
 describe('bench warmers', () => {

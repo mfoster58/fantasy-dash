@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { flattenLines } from './playerLines';
-import { game, line, players, season, side, week } from '../test/playerFixtures';
+import { emptyManagerCtx, game, line, players, season, side, week } from '../test/playerFixtures';
 import {
   BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, championshipRosters, championsOf, weeksStarted,
   boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
@@ -23,7 +23,7 @@ const s2025 = season(2025, [
   week(3, [game(2025, 3, 1, side('b', 22, [line('r1', 22)], [line('q1', 50)]), side('a', 4, [line('w1', 4)]), 'Final')], true),
 ], 'b');
 const seasons = [s2024, s2025];
-const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {} };
+const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {}, ...emptyManagerCtx };
 
 describe('championsOf and lastPlacesOf', () => {
   it('map year to champion and to last place', () => {

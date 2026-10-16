@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import type { History, PlayerDirectory, Season } from '@fantasy-dash/core';
 import { boardsFor, championsOf, draftValuesOf, lastPlacesOf, type BoardContext, type Tab } from '../../lib/playerBoards';
 import { SUB_TABS, TABS, subTabsOf, type SubTab } from '../../lib/boards/tabs';
+import { managerSeasonsOf, teamGamesOf } from '../../lib/managerGames';
 import { filterLines, flattenLines, isPosFilter, type PosFilter } from '../../lib/playerLines';
 import { fitXfp } from '../../lib/xfp';
 import Section from '../players/Section';
@@ -39,6 +40,8 @@ export default function RecordsView({ seasons, players, managers, years, current
   const transactions = useMemo(() => seasons.map((s) => ({ year: s.year, transactions: s.transactions })), [seasons]);
   const playerSeasons = useMemo(() => Object.fromEntries(seasons.map((s) => [s.year, s.playerSeasons])), [seasons]);
   const drafts = useMemo(() => Object.fromEntries(seasons.map((s) => [s.year, s.draft])), [seasons]);
+  const allTeamGames = useMemo(() => teamGamesOf(seasons), [seasons]);
+  const allManagerSeasons = useMemo(() => managerSeasonsOf(seasons, allTeamGames), [seasons, allTeamGames]);
 
   const panel = (s: SubTab) => {
     const pos = s.positions ? posOf(s.id) : 'All';
@@ -46,7 +49,9 @@ export default function RecordsView({ seasons, players, managers, years, current
     const pick: SeasonPick = s.picker ? pickOf(`${s.id}Season`, fallback) : 'all';
     const year = pick === 'all' ? null : pick;
     const lines = filterLines(allLines, pos).filter((l) => year === null || l.year === year);
-    const ctx: BoardContext = { lines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts };
+    const teamGames = allTeamGames.filter((g) => year === null || g.year === year);
+    const managerSeasons = allManagerSeasons.filter((m) => year === null || m.year === year);
+    const ctx: BoardContext = { lines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
     const note = s.note ?? (year === null ? 'Every season' : `${year} season`);
     const empty = s.id === 'leaders' && year !== null && !allLines.some((l) => l.year === year) ? 'Season has not started.' : null;
     return (

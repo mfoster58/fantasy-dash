@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { History } from '@fantasy-dash/core';
 import type { BoardContext, BoardDef, BoardRow } from '../../lib/playerBoards';
-import { players } from '../../test/playerFixtures';
+import { emptyManagerCtx, players } from '../../test/playerFixtures';
 import Section from './Section';
 
 const managers: History['managers'] = { a: { displayName: 'alice', avatar: null, seasons: [2025] } };
@@ -16,7 +16,7 @@ const sortable: BoardDef = { id: 'sortable', tab: 'players', sub: 'alltime', tit
 const moded: BoardDef = { id: 'moded', tab: 'players', sub: 'alltime', title: 'Moded board', definition: 'Two readings.', valueHeader: 'Pts',
   modes: [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }],
   compute: (_ctx, _direction, mode) => (mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
-const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {} };
+const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {}, ...emptyManagerCtx };
 const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('Section', () => {
