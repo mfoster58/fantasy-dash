@@ -7,10 +7,12 @@ import * as post from './boards/postseason';
 import * as pm from './boards/playerMoments';
 import * as ps from './boards/playerStreaks';
 import * as ma from './boards/managers/alltime';
+import * as ms from './boards/managers/seasons';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
 export * from './boards/managers/alltime';
+export * from './boards/managers/seasons';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -98,6 +100,22 @@ export const BOARDS: BoardDef[] = [
   { id: 'mEfficiency', tab: 'managers', sub: 'malltime', title: 'Best lineup efficiency', definition: 'Points started divided by the points the best possible lineup would have scored, over every game played, playoffs included. At least one complete season.', valueHeader: 'Eff', compute: ma.mEfficiency },
   { id: 'mWorstEfficiency', tab: 'managers', sub: 'malltime', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game played. At least one complete season.', valueHeader: 'Eff', compute: ma.mWorstEfficiency },
   { id: 'mWeeklyHighs', tab: 'managers', sub: 'malltime', title: 'Most weekly high scores', definition: 'Regular-season weeks with the top score in the league.', valueHeader: 'Weeks', compute: ma.mWeeklyHighs },
+  // Managers → Seasons
+  { id: 'msPoints', tab: 'managers', sub: 'mseasons', title: 'Most points in a season', definition: 'Regular-season points. Under All-time, complete seasons only.', valueHeader: 'Pts', compute: ms.msPoints },
+  { id: 'msFewest', tab: 'managers', sub: 'mseasons', title: 'Fewest points in a season', definition: 'Regular-season points, lowest first. Under All-time, complete seasons only.', valueHeader: 'Pts', compute: ms.msFewest },
+  { id: 'msPpg', tab: 'managers', sub: 'mseasons', title: 'Best points per game', definition: 'Regular-season points per game, at least 3 games.', valueHeader: 'PPG', compute: ms.msPpg },
+  { id: 'msAgainst', tab: 'managers', sub: 'mseasons', title: 'Most points against', definition: 'Regular-season points scored by opponents. Under All-time, complete seasons only.', valueHeader: 'Pts', compute: ms.msAgainst },
+  { id: 'msRecord', tab: 'managers', sub: 'mseasons', title: 'Best record', definition: 'Regular-season win percentage, ties as half, points for breaking ties. At least 3 games.', valueHeader: 'Win %', compute: ms.msRecord },
+  { id: 'msWorstRecord', tab: 'managers', sub: 'mseasons', title: 'Worst record', definition: 'Regular-season win percentage, lowest first, fewer points breaking ties. At least 3 games.', valueHeader: 'Win %', compute: ms.msWorstRecord },
+  { id: 'msDiff', tab: 'managers', sub: 'mseasons', title: 'Biggest points differential', definition: 'Regular-season points for minus points against.', valueHeader: '+/−', compute: ms.msDiff },
+  { id: 'msAllPlay', tab: 'managers', sub: 'mseasons', title: 'Best season vs everyone', definition: 'All-play win percentage: the record against every other team every week. At least 3 games.', valueHeader: 'All-play', compute: ms.msAllPlay },
+  { id: 'msWorstAllPlay', tab: 'managers', sub: 'mseasons', title: 'Worst season vs everyone', definition: 'All-play win percentage, lowest first. At least 3 games.', valueHeader: 'All-play', compute: ms.msWorstAllPlay },
+  { id: 'msLucky', tab: 'managers', sub: 'mseasons', title: 'Luckiest season', definition: 'Actual wins minus the wins the all-play record implies over the same games: the schedule gave them this many extra wins. At least 3 games.', valueHeader: 'Wins', compute: ms.msLucky },
+  { id: 'msUnlucky', tab: 'managers', sub: 'mseasons', title: 'Unluckiest season', definition: 'Actual wins minus the wins the all-play record implies, most negative first. At least 3 games.', valueHeader: 'Wins', compute: ms.msUnlucky },
+  { id: 'msNoTitle', tab: 'managers', sub: 'mseasons', title: 'Best team without the title', definition: 'Best all-play win percentage among seasons whose manager did not win the championship. Complete seasons only.', valueHeader: 'All-play', compute: ms.msNoTitle },
+  { id: 'msEfficiency', tab: 'managers', sub: 'mseasons', title: 'Best lineup efficiency', definition: 'Points started divided by the best possible lineup, over every game that season, playoffs included.', valueHeader: 'Eff', compute: ms.msEfficiency },
+  { id: 'msWorstEfficiency', tab: 'managers', sub: 'mseasons', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game that season.', valueHeader: 'Eff', compute: ms.msWorstEfficiency },
+  { id: 'msBench', tab: 'managers', sub: 'mseasons', title: 'Most points left on the bench', definition: 'Points the best possible lineup would have added, summed over every game that season.', valueHeader: 'Pts', compute: ms.msBench },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
