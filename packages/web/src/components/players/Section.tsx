@@ -24,7 +24,7 @@ interface Props {
   seasonPicker?: { years: number[]; value: number | 'all'; onChange: (v: number | 'all') => void; allTime?: boolean };
   /** when set, shown in place of the boards */
   emptyMessage?: string | null;
-  /** another tab is chosen: stay mounted, so toggles and expand state survive, but out of view */
+  /** another tab is chosen: stay mounted, so toggles and expand state survive, but out of view and without computing any board */
   hidden?: boolean;
 }
 
@@ -71,7 +71,7 @@ export default function Section({ id, title, note, boards, ctx, allLines, player
       </div>
       {emptyMessage ? (
         <p className="card p-4 text-sm text-muted">{emptyMessage}</p>
-      ) : (
+      ) : hidden ? null : (
         <div className={`grid gap-4 ${columns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
           {boards.map((b, i) => {
             const row = Math.floor(i / perRow);

@@ -141,6 +141,20 @@ describe('Section', () => {
     expect(select('Manager board')).toHaveValue('WR');
   });
 
+  it('does not compute its boards while hidden, and keeps its toggle state for when it shows again', () => {
+    const compute = vi.fn(() => rows(7, 'h'));
+    const spy: BoardDef = { ...moded, id: 'spy', title: 'Spy board', compute };
+    const ui = (hidden: boolean) => <Section id="s" title="S" note="" boards={[spy]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} hidden={hidden} />;
+    const { rerender } = wrap(ui(false));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Spy board' })).getByRole('button', { name: 'PPG' }));
+    const calls = compute.mock.calls.length;
+    rerender(<MemoryRouter>{ui(true)}</MemoryRouter>);
+    expect(screen.queryByRole('region', { name: 'Spy board' })).toBeNull();
+    expect(compute.mock.calls.length).toBe(calls);
+    rerender(<MemoryRouter>{ui(false)}</MemoryRouter>);
+    expect(within(screen.getByRole('region', { name: 'Spy board' })).getByRole('button', { name: 'PPG' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('renders its own position filter and optional season picker, and an empty message instead of boards', () => {
     const onPos = vi.fn();
     const onChange = vi.fn();
