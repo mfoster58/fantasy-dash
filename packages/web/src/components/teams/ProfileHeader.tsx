@@ -8,7 +8,7 @@ const TONE = { win: 'text-win', loss: 'text-loss', gold: 'text-gold' } as const;
 interface Props {
   avatar: string | null; name: string;
   eyebrow: ReactNode; title: string; subtitle?: ReactNode;
-  badges: ReactNode[];
+  badges?: ReactNode[];
   tiles: Tile[];
   /** row under the tiles, e.g. "Fielded as" chips */
   chips?: ReactNode;
@@ -27,7 +27,7 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
             <div className="section-label flex flex-wrap items-center gap-x-2">{eyebrow}</div>
             <h1 className="mt-1 line-clamp-2 text-[26px] font-semibold leading-tight tracking-tight sm:text-[30px]" title={title}>{title}</h1>
             {subtitle && <div className="mt-0.5 text-sm text-muted">{subtitle}</div>}
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">{badges.map((b, i) => <span key={i}>{b}</span>)}</div>
+            {badges && badges.length > 0 && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">{badges.map((b, i) => <span key={i}>{b}</span>)}</div>}
           </div>
         </div>
         <dl className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3">

@@ -150,9 +150,9 @@ describe('fieldedAs', () => {
 });
 
 describe('franchisePlayers', () => {
-  it('ranks by weeks rostered then points started', () => {
+  it('ranks by points while started, then starts, then weeks rostered', () => {
     const lines = flattenLines([build()], players);
-    const top = franchisePlayers(lines, 'a', 6);
+    const top = franchisePlayers(lines, 'a');
     expect(top.map((f) => [f.playerId, f.weeks, f.starts, f.started])).toEqual([['q1', 2, 2, 40], ['r1', 2, 2, 20], ['w1', 2, 0, 0]]);
     expect(top[0]).toMatchObject({ from: 2025, to: 2025, seasons: 1, high: 20, position: 'QB' });
   });
@@ -180,6 +180,8 @@ describe('careerProfile', () => {
     expect(c.longestWinStreak).toBe(1);
     expect(c.bestFinish).toBe('2nd');
     expect(c.record).toEqual({ w: 1, l: 1, t: 0 });
+    expect([c.completeSeasons, c.playoffApps]).toEqual([1, 1]);
+    expect(c.allTimeTeam.season[0]).toMatchObject({ slot: 'QB', pick: { playerId: 'q1', year: 2025, points: 40 } });
   });
 
   it('lists rivalries from the manager\'s point of view with the current streak, winners first', () => {

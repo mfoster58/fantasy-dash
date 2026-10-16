@@ -39,7 +39,8 @@ export function managerRecords(ctx: BoardContext, userId: UserId, maxRank = 3): 
       if (rank > maxRank) continue;
       // the Records page shows a row's player beside the manager; here the name leads the detail instead
       const detail = r.player ? [playerName(ctx.players, r.player), r.detail].filter(Boolean).join(' · ') : r.detail;
-      out.push({ sub: sub.id, subTitle: sub.title, boardId: def.id, title: def.title, rank, valueLabel: r.valueLabel, meta: r.meta, detail });
+      // transaction tallies carry only a season count as their meta, which says nothing on a profile
+      out.push({ sub: sub.id, subTitle: sub.title, boardId: def.id, title: def.title, rank, valueLabel: r.valueLabel, meta: sub.id === 'mtransactions' ? '' : r.meta, detail });
     }
   }
   return out;

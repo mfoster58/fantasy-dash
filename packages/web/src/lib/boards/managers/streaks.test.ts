@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { boardsFor } from '../../playerBoards';
 import { mctx } from './shared.test';
-import { longestGameRun, mDrought, mHighRun, mLoseStreak, mPlayoffStreak, mRun100, mWinStreak } from './streaks';
+import { longestGameRun, mHighRun, mLoseStreak, mPlayoffStreak, mRun100, mWinStreak } from './streaks';
 
 // a: W (120), T, W (150, Final), L (70, 2025). b: L, T, L, W (100, 2025). Week 1 of 2024 high score: a.
 const ctx = mctx();
@@ -28,12 +28,7 @@ describe('manager streak boards', () => {
   it('counts consecutive complete seasons with a berth, active when they reach the latest complete season', () => {
     expect(mPlayoffStreak(ctx).map((r) => [r.userId, r.value, r.meta, r.detail])).toEqual([['a', 1, '2024', 'active'], ['b', 1, '2024', 'active']]);
   });
-  it('measures title droughts in complete seasons and says when they are still running', () => {
-    expect(mDrought(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1, meta: '2024', detail: 'and counting' })]); // a won 2024
-    const gone = { ...ctx, managerSeasons: [...ctx.managerSeasons, { ...ctx.managerSeasons[0], year: 2023, userId: 'c', champion: false, runnerUp: false, lastPlace: false, playoffBerth: false }] };
-    expect(mDrought(gone).find((r) => r.userId === 'c')).toMatchObject({ value: 1, meta: '2023', detail: null }); // left the league: not counting
-  });
   it('is registered in order', () => {
-    expect(boardsFor('managers', 'mstreaks').map((b) => b.id)).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mDrought', 'mRun100', 'mHighRun']);
+    expect(boardsFor('managers', 'mstreaks').map((b) => b.id)).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mRun100', 'mHighRun']);
   });
 });

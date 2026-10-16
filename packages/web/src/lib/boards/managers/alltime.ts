@@ -1,4 +1,5 @@
 import { fmtPct, fmtPpg, fmtPts, fmtRecord, fmtWinPct } from '../../format';
+import type { TeamGame } from '../../managerGames';
 import type { BoardContext, BoardRow } from '../shared';
 import { plural, round2 } from '../shared';
 import { careerRows, hasComplete, yearsList, type CareerAgg } from './shared';
@@ -24,7 +25,6 @@ export const mBerths = (ctx: BoardContext): BoardRow[] => careerRows(ctx, count(
 export const mPlayoffWins = (ctx: BoardContext): BoardRow[] => careerRows(ctx, (a) => a.games.filter((g) => g.postseason && g.result === 'W').length || null, String, (a) => plural(a.games.filter((g) => g.postseason).length, 'playoff game'));
 export const mBerthsNoTitle = (ctx: BoardContext): BoardRow[] => careerRows(ctx, (a) => (tot(a, (s) => (s.champion ? 1 : 0)) === 0 ? count((s) => s.playoffBerth)(a) : null), String, yearsWhere((s) => s.playoffBerth));
 export const mLastPlaces = (ctx: BoardContext): BoardRow[] => careerRows(ctx, count((s) => s.lastPlace), String, yearsWhere((s) => s.lastPlace));
-export const mSeasons = (ctx: BoardContext): BoardRow[] => careerRows(ctx, (a) => a.seasons.length || null, String, record);
 const efficiency = (a: CareerAgg) => {
   const played = a.games.filter((g) => g.ceiling > 0);
   const ceiling = played.reduce((t, g) => t + g.ceiling, 0);
@@ -34,3 +34,28 @@ const efficiencyDetail = (a: CareerAgg) => plural(a.games.filter((g) => g.ceilin
 export const mEfficiency = (ctx: BoardContext): BoardRow[] => careerRows(ctx, efficiency, fmtPct, efficiencyDetail);
 export const mWorstEfficiency = (ctx: BoardContext): BoardRow[] => careerRows(ctx, efficiency, fmtPct, efficiencyDetail, 'asc');
 export const mWeeklyHighs = (ctx: BoardContext): BoardRow[] => careerRows(ctx, (a) => tot(a, (s) => s.row.weeklyHighs) || null, String, gamesDetail);
+
+const weekKey = (g: TeamGame) => `${g.year}-${g.week}`;
+/** the league's median score each week, every game counted */
+export function weekMedians(games: TeamGame[]): Map<string, number> {
+  const byWeek = new Map<string, number[]>();
+  for (const g of games) byWeek.set(weekKey(g), [...(byWeek.get(weekKey(g)) ?? []), g.points]);
+  const out = new Map<string, number>();
+  for (const [k, pts] of byWeek) {
+    const s = [...pts].sort((x, y) => x - y);
+    const m = s.length / 2;
+    out.set(k, s.length % 2 ? s[Math.floor(m)] : (s[m - 1] + s[m]) / 2);
+  }
+  return out;
+}
+const results = (a: CareerAgg, r: TeamGame['result']) => a.games.filter((g) => g.result === r);
+/** wins while scoring under that week's median: the lucky ones */
+export const mLuckyWins = (ctx: BoardContext): BoardRow[] => {
+  const med = weekMedians(ctx.teamGames);
+  return careerRows(ctx, (a) => results(a, 'W').filter((g) => g.points < (med.get(weekKey(g)) ?? 0)).length || null, String, (a) => `of ${plural(results(a, 'W').length, 'win')}`);
+};
+/** losses while scoring over that week's median: the unlucky ones */
+export const mUnluckyLosses = (ctx: BoardContext): BoardRow[] => {
+  const med = weekMedians(ctx.teamGames);
+  return careerRows(ctx, (a) => results(a, 'L').filter((g) => g.points > (med.get(weekKey(g)) ?? Infinity)).length || null, String, (a) => { const n = results(a, 'L').length; return `of ${n} ${n === 1 ? 'loss' : 'losses'}`; });
+};
