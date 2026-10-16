@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useLoaderData, useParams } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
+import { TrophyIcon } from '../components/Icons';
 import DraftDeskCard from '../components/teams/DraftDeskCard';
 import FranchisePlayers from '../components/teams/FranchisePlayers';
 import LeagueRecords from '../components/teams/LeagueRecords';
@@ -33,7 +34,7 @@ export default function ManagerPage() {
         subtitle={latest && <Link to={`/teams/${latest.year}/${userId}`} className="hover:text-accent">{latest.teamName} · {latest.year} team page →</Link>}
         badges={[
           <span className="num">Seasons <b className="text-ink">{c.seasons.length}</b> · {c.seasons.length ? `${c.seasons[c.seasons.length - 1].year}–${c.seasons[0].year}` : ''}</span>,
-          c.titles > 0 ? <span className="text-gold">🏆 {c.titles} title{c.titles === 1 ? '' : 's'}</span> : null,
+          c.titles > 0 ? <span className="inline-flex items-center gap-1 text-gold"><TrophyIcon /> {c.titles} title{c.titles === 1 ? '' : 's'}</span> : null,
           <span>Longest win streak <b className="num text-ink">{c.longestWinStreak}</b></span>,
           <span>Week highs <b className="num text-ink">{c.weekHighs}</b></span>,
         ].filter(Boolean)}

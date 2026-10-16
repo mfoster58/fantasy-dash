@@ -21,6 +21,8 @@
   --loss: #e46a6f;
   --warn: #e3a93b;
   --gold: #e3b341;
+  --silver: #b4bcc8;
+  --bronze: #c98a4b;
   --pos-QB: #e45d5d;
   --pos-RB: #43b97c;
   --pos-WR: #5a8ff0;
@@ -42,6 +44,8 @@
   --loss: #c13d47;
   --warn: #b7791f;
   --gold: #b8860b;
+  --silver: #7c8794;
+  --bronze: #a0632b;
   --pos-QB: #cc3f3f;
   --pos-RB: #23935a;
   --pos-WR: #3069d1;
@@ -62,6 +66,8 @@
   --color-loss: var(--loss);
   --color-warn: var(--warn);
   --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }

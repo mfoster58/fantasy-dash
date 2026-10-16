@@ -19,6 +19,7 @@ function build(): Season {
   s.managers = { a: { userId: 'a', displayName: 'alice', teamName: 'Team Alice', avatar: null, rosterId: 1 } };
   s.status = 'in_season';
   s.transactions = [tx('t1', 'waiver', 2, 200, ['w1'], ['k1'], 12), tx('t2', 'free_agent', 1, 100, ['r1'], [])];
+  s.playerSeasons = { q1: { points: 40, games: 2, posRank: 4 } };
   return s;
 }
 
@@ -70,7 +71,7 @@ describe('seasonProfile', () => {
     const qb = p.positions.find((x) => x.pos === 'QB')!;
     expect(qb.started).toBe(40);
     expect(qb.rank).toBe(1);
-    expect(qb.players[0]).toMatchObject({ playerId: 'q1', starts: 2, started: 40, high: 20, bench: 0 });
+    expect(qb.players[0]).toMatchObject({ playerId: 'q1', starts: 2, started: 40, high: 20, bench: 0, ppg: 20, posRank: 4 });
     const wr = p.positions.find((x) => x.pos === 'WR')!;
     expect(wr.started).toBe(0);
     expect(wr.players).toEqual([]);
@@ -110,11 +111,11 @@ describe('finalPlacement', () => {
   });
 
   it('labels the podium and the toilet bowl with icons', () => {
-    expect(finishOf(s, 'a')).toEqual({ place: 1, label: '1st', icon: '🏆', note: 'Champion' });
-    expect(finishOf(s, 'c')).toEqual({ place: 2, label: '2nd', icon: '🥈', note: 'Runner-up' });
-    expect(finishOf(s, 'd')).toEqual({ place: 3, label: '3rd', icon: '🥉', note: 'Third place' });
+    expect(finishOf(s, 'a')).toEqual({ place: 1, label: '1st', icon: 'champion', note: 'Champion' });
+    expect(finishOf(s, 'c')).toEqual({ place: 2, label: '2nd', icon: 'runnerUp', note: 'Runner-up' });
+    expect(finishOf(s, 'd')).toEqual({ place: 3, label: '3rd', icon: 'third', note: 'Third place' });
     expect(finishOf(s, 'b')).toEqual({ place: 4, label: '4th', icon: null, note: 'of 6' });
-    expect(finishOf(s, 'e')).toEqual({ place: 6, label: '6th', icon: '🚽', note: 'Toilet bowl' });
+    expect(finishOf(s, 'e')).toEqual({ place: 6, label: '6th', icon: 'toilet', note: 'Toilet bowl' });
     expect(finishOf({ ...s, status: 'in_season' }, 'a')).toEqual({ place: null, label: '—', icon: null, note: null });
   });
 });

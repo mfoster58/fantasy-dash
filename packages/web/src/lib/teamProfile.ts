@@ -3,6 +3,7 @@ import { teamGamesOf, type TeamGame } from './managerGames';
 import { letterGrade, managerDraftSummaries } from './draft';
 import { flattenLines, type PlayerLine } from './playerLines';
 import { waiverClaims } from './waivers';
+import type { FinishKind } from '../components/Icons';
 
 export const PROFILE_POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'] as const;
 
@@ -40,8 +41,8 @@ export interface Finish {
   place: number | null;
   /** `1st` … `10th`, or `—` */
   label: string;
-  /** 🏆 🥈 🥉 for the podium, 🚽 for the toilet bowl loser */
-  icon: string | null;
+  /** trophy and medals for the podium, the toilet for the last-place loser */
+  icon: FinishKind | null;
   note: string | null;
 }
 
@@ -50,8 +51,8 @@ export function finishOf(season: Season, userId: UserId, placement = finalPlacem
   const place = placement.get(userId);
   if (place === undefined) return { place: null, label: '—', icon: null, note: null };
   const teams = season.standings.length;
-  const [icon, note] = place === 1 ? ['🏆', 'Champion'] : place === 2 ? ['🥈', 'Runner-up'] : place === 3 ? ['🥉', 'Third place']
-    : place === teams ? ['🚽', 'Toilet bowl'] : [null, `of ${teams}`];
+  const [icon, note]: [FinishKind | null, string] = place === 1 ? ['champion', 'Champion'] : place === 2 ? ['runnerUp', 'Runner-up'] : place === 3 ? ['third', 'Third place']
+    : place === teams ? ['toilet', 'Toilet bowl'] : [null, `of ${teams}`];
   return { place, label: ordinal(place), icon, note };
 }
 
@@ -119,6 +120,10 @@ export interface PositionPlayer {
   /** points while on the bench */
   bench: number;
   total: number;
+  /** points per start; null without a start */
+  ppg: number | null;
+  /** season rank among NFL players at the position, by points */
+  posRank: number | null;
 }
 
 export interface PositionGroup {
@@ -227,7 +232,7 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
           leagueStarted.set(pos, m);
         }
         if (sd.userId !== userId) continue;
-        const touch = (id: PlayerId) => byPlayer.get(id) ?? byPlayer.set(id, { playerId: id, position: posOf(id), started: 0, starts: 0, high: 0, bench: 0, total: 0 }).get(id)!;
+        const touch = (id: PlayerId) => byPlayer.get(id) ?? byPlayer.set(id, { playerId: id, position: posOf(id), started: 0, starts: 0, high: 0, bench: 0, total: 0, ppg: null, posRank: season.playerSeasons[id]?.posRank ?? null }).get(id)!;
         for (const e of sd.starters) {
           if (!e.player) continue;
           const p = touch(e.player.playerId);
@@ -237,7 +242,7 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
       }
     }
   }
-  for (const p of byPlayer.values()) { p.started = round2(p.started); p.bench = round2(p.bench); p.total = round2(p.total); p.high = round2(p.high); }
+  for (const p of byPlayer.values()) { p.started = round2(p.started); p.bench = round2(p.bench); p.total = round2(p.total); p.high = round2(p.high); p.ppg = p.starts > 0 ? round2(p.started / p.starts) : null; }
   const myStartedTotal = [...byPlayer.values()].reduce((t, p) => t + p.started, 0);
   const leagueStartedTotal = [...leagueStarted.values()].reduce((t, m) => t + [...m.values()].reduce((a, b) => a + b, 0), 0);
   const positions: PositionGroup[] = PROFILE_POSITIONS.map((pos) => {

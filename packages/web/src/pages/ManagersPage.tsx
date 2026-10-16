@@ -1,4 +1,5 @@
 import { Link, useLoaderData } from 'react-router';
+import { TrophyIcon } from '../components/Icons';
 import type { Season } from '@fantasy-dash/core';
 import Avatar from '../components/Avatar';
 import TeamsTabs from '../components/teams/TeamsTabs';
@@ -20,7 +21,7 @@ export default function ManagersPage() {
               <Link to={`/managers/${r.userId}`} className="card flex h-full items-center gap-3 p-4 transition-colors hover:border-accent">
                 <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId} size={44} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{m?.displayName ?? r.userId}{r.titles > 0 && <span className="ml-1.5 text-xs text-gold">🏆{r.titles > 1 ? r.titles : ''}</span>}</span>
+                  <span className="block truncate font-semibold">{m?.displayName ?? r.userId}{r.titles > 0 && <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs text-gold"><TrophyIcon title="Titles" />{r.titles > 1 ? <span className="num">{r.titles}</span> : null}</span>}</span>
                   <span className="num block text-xs text-muted">{r.seasons} season{r.seasons === 1 ? '' : 's'} · {fmtRecord(r)} · {fmtWinPct(r.winPct)}</span>
                 </span>
                 <span className="num text-lg font-semibold text-muted">#{r.rank}</span>

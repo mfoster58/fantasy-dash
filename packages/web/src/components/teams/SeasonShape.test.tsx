@@ -18,8 +18,7 @@ describe('SeasonShape', () => {
     const [league, mine] = [...screen.getByRole('img').querySelectorAll('path')].map((p) => p.getAttribute('d') ?? '');
     expect((mine.match(/M/g) ?? []).length).toBe(2);
     expect((league.match(/M/g) ?? []).length).toBe(1);
-    expect(screen.getByTestId('playoff-band')).toBeInTheDocument();
-    expect(screen.getByText('Playoffs')).toBeInTheDocument();
+    expect(screen.getByTestId('playoff-line')).toBeInTheDocument();
     expect(screen.getByText('W')).toBeInTheDocument();
     expect(screen.getByText('L')).toBeInTheDocument();
   });
@@ -28,7 +27,6 @@ describe('SeasonShape', () => {
     render(<SeasonShape wide label="Season by season" mineCaption="110.0 a week" leagueCaption="league average" points={[{ label: '2024', mine: 110, league: 100 }, { label: '2025', mine: 120, league: 100 }]} />);
     const dots = screen.getByRole('img').querySelectorAll('circle');
     expect([...dots].map((d) => d.getAttribute('fill'))).toEqual(['var(--accent)', 'var(--accent)']);
-    expect(screen.queryByTestId('playoff-band')).toBeNull();
-    expect(screen.queryByText('Playoffs')).toBeNull();
+    expect(screen.queryByTestId('playoff-line')).toBeNull();
   });
 });
