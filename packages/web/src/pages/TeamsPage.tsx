@@ -1,42 +1,62 @@
-import { Link, useLoaderData, useNavigate } from 'react-router';
+import { useLoaderData, useNavigate } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
-import Avatar from '../components/Avatar';
+import Headshot from '../components/Headshot';
 import { FinishIcon } from '../components/Icons';
 import SeasonPicker from '../components/SeasonPicker';
+import IndexRow, { Spark, type RowStat } from '../components/teams/IndexRow';
 import TeamsTabs from '../components/teams/TeamsTabs';
-import { history } from '../data/load';
-import { fmtPts, fmtRecord } from '../lib/format';
-import { finalPlacement, finishOf } from '../lib/teamProfile';
+import { history, players } from '../data/load';
+import { fmtPct, fmtPts, fmtRecord, fmtWinPct } from '../lib/format';
+import { teamRows } from '../lib/indexRows';
+import { playerName } from '../lib/players';
+import { ordinal } from '../lib/teamProfile';
 
-/** Every team in one season, in standings order. */
+/** Every team in one season, in standings order, one row each with the season's shape and headline numbers. */
 export default function TeamsPage() {
   const { season } = useLoaderData() as { seasons: Season[]; season: Season };
   const navigate = useNavigate();
   const years = history.seasons.map((s) => s.year);
-  const placement = finalPlacement(season);
+  const rows = teamRows(season);
   return (
     <section className="space-y-4">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-[22px] font-semibold tracking-tight">Teams <span className="num font-normal text-muted">{season.year}</span></h1>
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight">Teams <span className="num font-normal text-muted">{season.year}</span></h1>
+          <p className="text-sm text-muted">{season.status === 'complete' ? 'Final standings.' : `Through week ${season.lastScoredWeek}.`} Open a team for its full profile.</p>
+        </div>
         <SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}`)} />
       </header>
       <TeamsTabs teamsTo={`/teams/${season.year}`} />
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {season.standings.map((r) => {
-          const m = season.managers[r.userId];
-          const finish = finishOf(season, r.userId, placement);
+      <ul className="space-y-3">
+        {rows.map((t) => {
+          const r = t.row;
+          const stats: RowStat[] = [
+            { label: 'Record', value: fmtRecord(r), sub: r.streak !== '-' ? `streak ${r.streak}` : null },
+            { label: 'Pts for', value: fmtPts(r.pf), sub: ordinal(t.pfRank), tone: t.pfRank === 1 ? 'win' : null },
+            { label: 'Pts against', value: fmtPts(r.pa), sub: `${ordinal(t.paRank)} fewest` },
+            { label: 'All-play', value: `${r.allPlay.w}–${r.allPlay.l}`, sub: fmtWinPct(r.allPlay.pct) },
+            { label: 'Efficiency', value: fmtPct(r.efficiency) },
+            { label: 'Week highs', value: String(r.weeklyHighs) },
+          ];
           return (
-            <li key={r.userId}>
-              <Link to={`/teams/${season.year}/${r.userId}`} className="card flex h-full items-center gap-3 p-4 transition-colors hover:border-accent">
-                <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId} size={44} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{m?.teamName ?? m?.displayName ?? r.userId}</span>
-                  <span className="block truncate text-xs text-muted">{m?.displayName}</span>
-                  <span className="num mt-1 block text-xs text-muted">{fmtRecord(r)} · {fmtPts(r.pf)} pts{finish.place !== null && <> · <span className="inline-flex items-center gap-1 whitespace-nowrap">{finish.icon && <FinishIcon kind={finish.icon} />}{finish.label}</span></>}</span>
+            <IndexRow key={t.userId} to={`/teams/${season.year}/${t.userId}`} rank={r.rank} avatar={t.avatar} name={t.managerName}
+              title={t.teamName} subtitle={t.managerName}
+              badge={t.finish.place !== null
+                ? <span className={`inline-flex items-center gap-1 font-medium ${t.finish.place === 1 ? 'text-gold' : t.finish.place === season.standings.length ? 'text-loss' : ''}`}>{t.finish.icon && <FinishIcon kind={t.finish.icon} />}{t.finish.label}{t.finish.note && <span className="font-normal text-muted">· {t.finish.note}</span>}</span>
+                : <span className="text-muted">Seed #{r.rank} · {r.rank <= season.playoffTeams ? <span className="text-win">in the top {season.playoffTeams}</span> : <span className="text-loss">outside the top {season.playoffTeams}</span>}</span>}
+              stats={stats}
+              visual={
+                <span className="flex items-center gap-4">
+                  {t.topScorer && (
+                    <span className="hidden items-center gap-2 xl:flex" title="Most points while started">
+                      <Headshot players={players} id={t.topScorer.playerId} size={32} />
+                      <span className="min-w-0"><span className="block max-w-[8rem] truncate text-xs font-medium">{playerName(players, t.topScorer.playerId)}</span><span className="num block text-[10px] text-muted">{fmtPts(t.topScorer.points)} started</span></span>
+                    </span>
+                  )}
+                  <Spark points={t.spark} label={`${t.teamName}: points by week against the league average`} />
                 </span>
-                <span className="num text-lg font-semibold text-muted">#{r.rank}</span>
-              </Link>
-            </li>
+              }
+              cta="View team" />
           );
         })}
       </ul>

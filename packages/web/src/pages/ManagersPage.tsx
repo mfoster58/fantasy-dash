@@ -1,32 +1,45 @@
-import { Link, useLoaderData } from 'react-router';
-import { TrophyIcon } from '../components/Icons';
+import { useLoaderData } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
-import Avatar from '../components/Avatar';
+import { FinishIcon, TrophyIcon } from '../components/Icons';
+import IndexRow, { Spark, type RowStat } from '../components/teams/IndexRow';
 import TeamsTabs from '../components/teams/TeamsTabs';
 import { currentSeason, history } from '../data/load';
-import { fmtRecord, fmtWinPct } from '../lib/format';
+import { fmtPpg, fmtRecord, fmtWinPct } from '../lib/format';
+import { managerRows } from '../lib/indexRows';
 
-/** Everyone who has managed a team, by all-time rank. */
+/** Everyone who has managed a team, by all-time rank, one row each with every season's finish and the career numbers. */
 export default function ManagersPage() {
-  useLoaderData() as Season[];
+  const seasons = useLoaderData() as Season[];
+  const rows = managerRows(seasons, history);
   return (
     <section className="space-y-4">
-      <header><h1 className="text-[22px] font-semibold tracking-tight">Managers</h1></header>
+      <header>
+        <h1 className="text-[22px] font-semibold tracking-tight">Managers</h1>
+        <p className="text-sm text-muted">Ranked all-time. Open a manager for the career profile.</p>
+      </header>
       <TeamsTabs teamsTo={`/teams/${currentSeason.year}`} />
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {history.allTime.map((r) => {
-          const m = history.managers[r.userId];
+      <ul className="space-y-3">
+        {rows.map((m) => {
+          const stats: RowStat[] = [
+            { label: 'Record', value: fmtRecord(m) },
+            { label: 'Win %', value: fmtWinPct(m.winPct) },
+            { label: 'PPG', value: fmtPpg(m.ppg) },
+            { label: 'Playoffs', value: `${m.playoffApps} of ${m.completeSeasons}` },
+            { label: 'Titles', value: String(m.titles), tone: m.titles > 0 ? 'gold' : null },
+            { label: 'Week highs', value: String(m.weeklyHighs) },
+          ];
           return (
-            <li key={r.userId}>
-              <Link to={`/managers/${r.userId}`} className="card flex h-full items-center gap-3 p-4 transition-colors hover:border-accent">
-                <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId} size={44} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{m?.displayName ?? r.userId}{r.titles > 0 && <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs text-gold"><TrophyIcon title="Titles" />{r.titles > 1 ? <span className="num">{r.titles}</span> : null}</span>}</span>
-                  <span className="num block text-xs text-muted">{r.seasons} season{r.seasons === 1 ? '' : 's'} · {fmtRecord(r)} · {fmtWinPct(r.winPct)}</span>
+            <IndexRow key={m.userId} to={`/managers/${m.userId}`} rank={m.rank} avatar={m.avatar} name={m.name}
+              title={<>{m.name}{m.titles > 0 && <span className="ml-2 inline-flex items-center gap-0.5 text-gold" title={`${m.titles} title${m.titles === 1 ? '' : 's'}`}>{Array.from({ length: m.titles }, (_, i) => <TrophyIcon key={i} />)}</span>}</>}
+              subtitle={m.teamName}
+              badge={m.seasons.map((s) => (
+                <span key={s.year} className={`num inline-flex items-center gap-1 rounded border border-line px-1.5 py-0.5 ${s.status === 'complete' ? '' : 'text-muted'}`} data-testid={`chip-${m.userId}-${s.year}`}>
+                  {s.year} {s.status === 'complete' ? <>{s.icon && <FinishIcon kind={s.icon} size="1.1em" />}<span className={s.finish === '1st' ? 'font-semibold text-gold' : ''}>{s.finish}</span></> : <>#{s.rank}</>}
                 </span>
-                <span className="num text-lg font-semibold text-muted">#{r.rank}</span>
-              </Link>
-            </li>
+              ))}
+              stats={stats}
+              visual={<Spark points={m.spark} label={`${m.name}: points per game by season against the league average`} />}
+              cta="View manager" />
           );
         })}
       </ul>
