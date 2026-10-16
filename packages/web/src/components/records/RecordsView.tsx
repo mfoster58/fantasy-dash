@@ -8,12 +8,12 @@ import { filterLines, flattenLines, isPosFilter, type PosFilter } from '../../li
 import { fitXfp } from '../../lib/xfp';
 import Section from '../players/Section';
 
-interface Props { seasons: Season[]; players: PlayerDirectory; managers: History['managers']; years: number[]; currentYear: number; lastScoredWeek: number }
+interface Props { seasons: Season[]; players: PlayerDirectory; managers: History['managers']; years: number[]; currentYear: number }
 type SeasonPick = number | 'all';
 
 const tabButton = (selected: boolean) => `-mb-px border-b-2 px-3 py-2 text-sm ${selected ? 'border-ink font-medium text-ink' : 'border-transparent text-muted hover:text-ink'}`;
 
-export default function RecordsView({ seasons, players, managers, years, currentYear, lastScoredWeek }: Props) {
+export default function RecordsView({ seasons, players, managers, years, currentYear }: Props) {
   const [params, setParams] = useSearchParams();
   const update = (mutate: (next: URLSearchParams) => void) => { const next = new URLSearchParams(params); mutate(next); setParams(next, { replace: true }); };
   const posOf = (param: string): PosFilter => { const raw = params.get(param); return isPosFilter(raw) ? raw : 'All'; };
@@ -77,10 +77,7 @@ export default function RecordsView({ seasons, players, managers, years, current
   return (
     <section className="space-y-6">
       <header className="space-y-3">
-        <div>
-          <h1 className="text-[22px] font-semibold">Records <span className="num font-normal text-muted">through {currentYear} week {lastScoredWeek}</span></h1>
-          <p className="text-xs text-muted">Leaderboards about the players started in this league and the managers who ran them, scored by the league's own rules.</p>
-        </div>
+        <h1 className="text-[22px] font-semibold">Records</h1>
         <div role="tablist" aria-label="Tabs" className="flex gap-1 border-b border-line">
           {TABS.map((t) => (
             <button key={t.id} type="button" role="tab" id={`tab-top-${t.id}`} aria-selected={t.id === tab} aria-controls={`subtabs-${t.id}`} onClick={() => setTab(t.id)} className={tabButton(t.id === tab)}>

@@ -20,10 +20,10 @@ const seasons = [
 const years = [2024, 2025];
 
 function LocationProbe() { const loc = useLocation(); return <output data-testid="loc">{loc.search}</output>; }
-const mount = (initial = '/records', currentYear = 2025, lastScoredWeek = 1) => render(
+const mount = (initial = '/records', currentYear = 2025) => render(
   <MemoryRouter initialEntries={[initial]}>
     <Routes>
-      <Route path="/records" element={<><RecordsView seasons={seasons} players={players} managers={managers} years={years} currentYear={currentYear} lastScoredWeek={lastScoredWeek} /><LocationProbe /></>} />
+      <Route path="/records" element={<><RecordsView seasons={seasons} players={players} managers={managers} years={years} currentYear={currentYear} /><LocationProbe /></>} />
     </Routes>
   </MemoryRouter>,
 );
@@ -37,8 +37,9 @@ const loc = () => screen.getByTestId('loc').textContent ?? '';
 describe('RecordsView', () => {
   it('opens on Players → All-time and lists both tab bars with board counts', () => {
     mount();
-    expect(screen.getByRole('heading', { level: 1, name: /Records/ })).toBeInTheDocument();
-    expect(screen.getByText(/through 2025 week 1/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Records$/);
+    expect(screen.queryByText(/through 2025/)).toBeNull();
+    expect(screen.queryByText(/Leaderboards about/)).toBeNull();
     expect(tabs('Tabs').getAllByRole('tab').map((t) => t.textContent)).toEqual(['Players', 'Managers']);
     expect(tabs('Sections').getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())).toEqual(['All-time', 'Moments', 'Streaks', 'Postseason', 'Leaders']);
     expect(sub(/^All-time/)).toHaveAttribute('aria-selected', 'true');
@@ -88,7 +89,7 @@ describe('RecordsView', () => {
   });
 
   it('falls back for junk params and shows the not-started message on Leaders only', () => {
-    mount('/records?sub=leaders&leaders=XYZ&leadersSeason=1999', 2026, 0);
+    mount('/records?sub=leaders&leaders=XYZ&leadersSeason=1999', 2026);
     expect(within(region('Leaders')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Season has not started.')).toBeInTheDocument();
     fireEvent.click(sub(/^Moments/));
