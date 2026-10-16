@@ -73,6 +73,8 @@ export interface BoardDef {
   directionLabels?: [string, string];
   /** offers a mode toggle; `compute` receives the chosen mode id */
   modes?: readonly BoardMode[];
+  /** render `modes` as a dropdown instead of a row of pills */
+  modeSelect?: boolean;
   /** second, independent toggle; its valueHeaders are suffixes appended to the first header */
   modes2?: readonly BoardMode[];
   /** empty-state copy when the mode's own threshold, not the position filter, is the usual reason for no rows */

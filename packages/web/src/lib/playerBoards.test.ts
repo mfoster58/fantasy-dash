@@ -270,7 +270,7 @@ describe('BOARDS registry by tab and sub-tab', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
     for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
     expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
-    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'careerPoints', 'bestSeason', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
+    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'careerPoints', 'bestSeason', 'posTopRun', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
   });
   it('names the sub-tabs of each tab in order', () => {
     expect(subTabsOf('players').map((s) => [s.id, s.title, s.picker, s.positions])).toEqual([

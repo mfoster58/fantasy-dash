@@ -44,6 +44,25 @@ describe('player streaks', () => {
     expect(rows.find((r) => r.playerId === 'w1')).toMatchObject({ value: 3, meta: '2024 Wk 1 – 2024 Wk 3', detail: 'active', userId: 'b', managers: [{ userId: 'b', weeks: 3 }] });
     expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 2 }); // the only started RB each week; week 3 has no stat from any SF player, so it is an inferred bye and skipped
   });
+  it('posTopRun widens to the top 3, 5 or 10 at the position in its modes, ties sharing a rank', () => {
+    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1 });
+    const four = { ...players, r2: rb('r2'), r3: rb('r3'), r4: rb('r4') };
+    const rbs = season(2024, [
+      week(1, [game(2024, 1, 1, side('a', 35, [line('r1', 20), line('r2', 15)]), side('b', 20, [line('r3', 10), line('r4', 10)]))]),
+      week(2, [game(2024, 2, 1, side('a', 17, [line('r1', 2), line('r2', 15)]), side('b', 30, [line('r3', 10), line('r4', 20)]))]),
+      week(3, [game(2024, 3, 1, side('a', 29, [line('r1', 14), line('r2', 15)]), side('b', 11, [line('r3', 10), line('r4', 1)]))]),
+    ]);
+    const c = { ...ctx, players: four, lines: flattenLines([rbs], four) };
+    const by = (rows: ReturnType<typeof posTopRun>) => Object.fromEntries(rows.map((r) => [r.playerId, r.value]));
+    expect(by(posTopRun(c))).toEqual({ r1: 1, r2: 1, r4: 1 });
+    expect(by(posTopRun(c, 'desc', '1'))).toEqual({ r1: 1, r2: 1, r4: 1 });
+    expect(by(posTopRun(c, 'desc', '3'))).toEqual({ r1: 1, r2: 3, r3: 3, r4: 2 }); // r3 and r4 tie for third in week 1
+    expect(by(posTopRun(c, 'desc', '5'))).toEqual({ r1: 3, r2: 3, r3: 3, r4: 3 });
+    const def = BOARDS.find((b) => b.id === 'posTopRun')!;
+    expect(def.modes!.map((m) => [m.id, m.label])).toEqual([['1', 'Top scorer'], ['3', 'Top 3'], ['5', 'Top 5'], ['10', 'Top 10']]);
+    expect(def.modeSelect).toBe(true);
+  });
+
   it('run15 and posTopRun skip a player\'s bye week instead of breaking on it', () => {
     // q1 (KC) is started on his bye in week 2 with no stats; t1 (KC) is benched on it. Nobody else is a QB or TE.
     const byeSeason = season(2024, [

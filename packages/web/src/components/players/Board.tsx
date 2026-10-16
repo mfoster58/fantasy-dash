@@ -46,6 +46,15 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
   );
 }
 
+/** A compact dropdown for a toggle with too many options for pills. */
+export function Select<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value as T)} className="rounded border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink">
+      {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+    </select>
+  );
+}
+
 export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
@@ -66,7 +75,9 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="section-label">{header}</span>
           {def.sortable && onDirection && <Toggle label="Direction" options={directions} value={direction} onChange={onDirection} />}
-          {def.modes && activeMode && onMode && <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />}
+          {def.modes && activeMode && onMode && (def.modeSelect
+            ? <Select label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />
+            : <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />)}
           {def.modes2 && activeMode2 && onMode2 && <Toggle label="Per game" options={def.modes2.map((m) => ({ id: m.id, label: m.label }))} value={activeMode2.id} onChange={onMode2} />}
         </div>
       </header>

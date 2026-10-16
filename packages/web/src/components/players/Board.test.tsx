@@ -105,6 +105,18 @@ describe('Board', () => {
     expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
   });
 
+  it('renders the modes as a dropdown when the definition asks for one', () => {
+    const onMode = vi.fn();
+    const modes = [{ id: '1', label: 'Top scorer', valueHeader: 'Weeks' }, { id: '3', label: 'Top 3', valueHeader: 'Weeks' }, { id: '5', label: 'Top 5', valueHeader: 'Weeks' }];
+    wrapB({ def: { ...def, modes, modeSelect: true }, rows: [row(0)], mode: '3', onMode });
+    const select = screen.getByRole('combobox', { name: 'View' });
+    expect(select).toHaveValue('3');
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Top scorer', 'Top 3', 'Top 5']);
+    expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
+    fireEvent.change(select, { target: { value: '5' } });
+    expect(onMode).toHaveBeenCalledWith('5');
+  });
+
   it('shows the empty copy it is given, else the position copy', () => {
     wrapB({ empty: 'No players with 3 games yet.' });
     expect(screen.getByText('No players with 3 games yet.')).toBeInTheDocument();
