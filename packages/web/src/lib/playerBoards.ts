@@ -11,6 +11,7 @@ import * as ms from './boards/managers/seasons';
 import * as mg from './boards/managers/games';
 import * as mst from './boards/managers/streaks';
 import * as mp from './boards/managers/playoffs';
+import * as md from './boards/managers/draft';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
@@ -19,6 +20,7 @@ export * from './boards/managers/seasons';
 export * from './boards/managers/games';
 export * from './boards/managers/streaks';
 export * from './boards/managers/playoffs';
+export * from './boards/managers/draft';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -149,6 +151,13 @@ export const BOARDS: BoardDef[] = [
   { id: 'mpFinalsLost', tab: 'managers', sub: 'mplayoffs', title: 'Most Finals lost', definition: 'Championship games lost.', valueHeader: 'Losses', compute: mp.mpFinalsLost },
   { id: 'mpToiletApps', tab: 'managers', sub: 'mplayoffs', title: 'Most Toilet Bowl appearances', definition: 'Games in the last-place game of the consolation bracket.', valueHeader: 'Games', compute: mp.mpToiletApps },
   { id: 'mpToiletWins', tab: 'managers', sub: 'mplayoffs', title: 'Most Toilet Bowl wins', definition: 'Last-place games won, which is to say last place avoided.', valueHeader: 'Wins', compute: mp.mpToiletWins },
+  // Managers → Draft
+  { id: 'mdBestClass', tab: 'managers', sub: 'mdraft', title: 'Best draft class', definition: "Sum of a manager's pick values in one draft, from the draft board. Under All-time, complete seasons only.", valueHeader: 'Value', compute: md.mdBestClass },
+  { id: 'mdWorstClass', tab: 'managers', sub: 'mdraft', title: 'Worst draft class', definition: "Sum of a manager's pick values in one draft, lowest first. Under All-time, complete seasons only.", valueHeader: 'Value', compute: md.mdWorstClass },
+  { id: 'mdSteal', tab: 'managers', sub: 'mdraft', title: 'Biggest steal', definition: 'The single pick with the most draft value.', valueHeader: 'Value', compute: md.mdSteal },
+  { id: 'mdBust', tab: 'managers', sub: 'mdraft', title: 'Biggest bust', definition: 'The single pick with the least draft value.', valueHeader: 'Value', compute: md.mdBust },
+  { id: 'mdLate', tab: 'managers', sub: 'mdraft', title: 'Most value from late rounds', definition: 'Sum of pick values from round 9 on in one draft.', valueHeader: 'Value', compute: md.mdLate },
+  { id: 'mdFirstRound', tab: 'managers', sub: 'mdraft', title: 'Best first-round record', definition: "Average value of a manager's first-round picks across complete seasons, at least two.", valueHeader: 'Avg', empty: md.firstRoundEmpty, compute: md.mdFirstRound },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
