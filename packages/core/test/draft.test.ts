@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earnedCapital, pickValue, surplusMultiplier, SURPLUS_PREMIUM, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, TOP_BONUS, TOP_BONUS_DECAY, type DraftValueInput } from '../src/draft';
+import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earnedCapital, pickValue, surplusMultiplier, SURPLUS_PREMIUM, fitExpectedCurve, expectedAt, earnedPickFor, BASELINE_RANKS, POSITION_WEIGHTS, TOP_BONUS, TOP_BONUS_DECAY, type DraftValueInput } from '../src/draft';
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
@@ -96,11 +96,20 @@ describe('computeDraftValues', () => {
     expect(p.pointsOverBaseline).toBe(170 - 80); // te3 170 minus te12 80
   });
 
+  it('weights each position\'s points over baseline toward where this league drafts it', () => {
+    // fitted by scripts/fit-position-weights.ts on the 2023-2025 drafts; receivers are the reference at 1
+    expect(POSITION_WEIGHTS).toEqual({ QB: 0.65, RB: 0.65, TE: 0.5 });
+    const tePlayers: PlayerDirectory = { te1: info('te1', 'TE'), te2: info('te2', 'TE') };
+    const { picks: [te] } = computeDraftValues([pick(1, 'te1'), pick(2, 'te2')], { ...input, seasonPoints: { te1: 200, te2: 100 }, players: tePlayers });
+    expect(te.pointsOverBaseline).toBe(200);
+    expect(te.contribution).toBe(100);
+  });
+
   it('ranks the redraft order across positions by weighted points over baseline, zero scorers tied last', () => {
-    // QB PoB weighs 0.5: rbX 300, rbB 250, qbA 200, qbX 195, qbB 190, rbA 100, rbC 50 -> 7 scorers; rbY ties at 8
-    expect(by.rbB.redraftPos).toBe(2);
-    expect(by.qbA.redraftPos).toBe(3);
-    expect(by.qbB.redraftPos).toBe(5);
+    // RB and QB PoB both weigh 0.65: qbA 260, qbX 253.5, qbB 247, rbX 195, rbB 162.5, rbA 65, rbC 32.5 -> 7 scorers; rbY ties at 8
+    expect(by.qbA.redraftPos).toBe(1);
+    expect(by.qbB.redraftPos).toBe(3);
+    expect(by.rbB.redraftPos).toBe(5);
     expect(by.rbA.redraftPos).toBe(6);
     expect(by.rbC.redraftPos).toBe(7);
     expect(by.rbY.redraftPos).toBe(8);
@@ -116,7 +125,7 @@ describe('computeDraftValues', () => {
 
   it('fits the expected curve to contribution and values each pick as capital earned minus capital spent', () => {
     expect(expectedCurve).not.toBeNull();
-    const weighted = (p: DraftPick) => (players[p.playerId].position === 'QB' ? 0.5 : 1) * p.pointsOverBaseline!;
+    const weighted = (p: DraftPick) => (POSITION_WEIGHTS[players[p.playerId].position!] ?? 1) * p.pointsOverBaseline!;
     const valued = picks.filter((p) => p.pointsOverBaseline !== null);
     expect(valued.map((p) => p.playerId).sort()).toEqual(['qbA', 'qbB', 'rbA', 'rbB', 'rbC', 'rbY']);
     for (const p of valued) expect(p.contribution).toBe(weighted(p));          // bench gap is 0 here, so the floor is 0

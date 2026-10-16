@@ -9,11 +9,16 @@ export const BASELINE_RANKS: Record<string, number> = { QB: 10, RB: 24, WR: 24, 
 export const BENCH_RANKS: Record<string, number> = { QB: 14, RB: 40, WR: 40, TE: 16 };
 
 /**
- * Scarcity weight applied to points over baseline before ranking and valuing. A one-QB lineup with deep
- * replacement makes a QB point worth less than an RB/WR point; 0.5 matches where the league's next-year
- * ADP actually places top quarterbacks. Positions not listed weigh 1.
+ * Market weight applied to points over baseline before ranking and valuing. Points over replacement are not what
+ * the league pays for: it drafts tight ends two to three rounds later than their production merits, and backs and
+ * quarterbacks somewhat later, so the same production earns a later pick at those positions. Fitted by
+ * scripts/fit-position-weights.ts on the league's 2023-2025 drafts: for the top finishers at each position (QB 6,
+ * RB 12, WR 12, TE 6) the mean of capital earned minus the capital of the league's slot for that positional rank is
+ * made the same for every position, receivers fixed at 1 as the reference. The result moves with that top-K choice
+ * (TE 0.45-0.65, RB 0.6-0.8 across the alternatives the script prints), so the weights are a calibration, not a
+ * measurement. Positions not listed weigh 1.
  */
-export const POSITION_WEIGHTS: Record<string, number> = { QB: 0.5 };
+export const POSITION_WEIGHTS: Record<string, number> = { QB: 0.65, RB: 0.65, TE: 0.5 };
 
 /** e-folding length of the draft capital curve, in picks. */
 export const CAPITAL_DECAY = 35;

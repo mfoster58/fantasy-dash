@@ -30,6 +30,8 @@ describe('GradingGuide', () => {
     expect(screen.getByRole('heading', { name: 'How grading works' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '2025 draft' })).toHaveAttribute('href', '/draft/2025');
     expect(screen.getByText('RB24')).toBeInTheDocument();
+    expect(screen.getByText('× 0.65')).toBeInTheDocument();                   // the running back market weight beside its baseline row
+    expect(screen.getByText(/tight ends count at 50%, quarterbacks and running backs at 65%/)).toBeInTheDocument();
     expect(screen.getByText('150.0')).toBeInTheDocument();
     expect(screen.getAllByRole('img').length).toBeGreaterThanOrEqual(2);     // two charts
     expect(screen.getByText('ceiling 150')).toBeInTheDocument();             // bounded earned capital before pick 1
