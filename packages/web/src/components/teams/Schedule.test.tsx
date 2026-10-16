@@ -9,21 +9,20 @@ const entries: ScheduleEntry[] = [
   { kind: 'played', week: 1, tag: null, isPlayoff: false, matchupId: 1, opponentId: 'b', points: 120, oppPoints: 90, result: 'W', leagueAvg: 100, high: true, low: false },
   { kind: 'played', week: 2, tag: null, isPlayoff: false, matchupId: 2, opponentId: 'c', points: 95, oppPoints: 130, result: 'L', leagueAvg: 100, high: false, low: true },
   { kind: 'upcoming', week: 3, tag: null, isPlayoff: false, matchupId: 1, opponentId: 'b', projected: 118.4, oppProjected: 101.2 },
-  { kind: 'bye', week: 15 },
+  { kind: 'bye', week: 15, leagueAvg: 100 },
   { kind: 'played', week: 16, tag: 'SF', isPlayoff: true, matchupId: 2, opponentId: 'c', points: 100, oppPoints: 99, result: 'W', leagueAvg: 100, high: false, low: false },
 ];
 
 describe('Schedule', () => {
-  it('lists played games with opponent, score, high/low chips, result pill and box score link', () => {
+  it('lists played games with opponent, score, result pill and box score link', () => {
     render(<MemoryRouter><Schedule entries={entries} managers={managers} year={2025} /></MemoryRouter>);
     const rows = screen.getAllByRole('link');
     expect(rows.map((r) => r.getAttribute('href'))).toEqual(['/scores/2025/1/1', '/scores/2025/2/2', '/scores/2025/3/1', '/scores/2025/16/2']);
     expect(rows[0]).toHaveTextContent('Bobcats');
-    expect(rows[0]).toHaveTextContent('Season high');
     expect(rows[0]).toHaveTextContent('W');
-    expect(rows[0]).not.toHaveTextContent('▲');
+    expect(rows[0]).not.toHaveTextContent(/season high|▲/i);
     expect(rows[1]).toHaveTextContent('cara');
-    expect(rows[1]).toHaveTextContent('Season low');
+    expect(rows[1]).not.toHaveTextContent(/season low|▼/i);
     expect(rows[3]).toHaveTextContent('Semifinal');
   });
 

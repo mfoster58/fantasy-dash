@@ -4,9 +4,10 @@ import SeasonPicker from '../components/SeasonPicker';
 import ProfileHeader from '../components/teams/ProfileHeader';
 import RosterBreakdown from '../components/teams/RosterBreakdown';
 import Schedule from '../components/teams/Schedule';
-import SeasonShape from '../components/teams/SeasonShape';
+import SeasonShape, { type ShapePoint } from '../components/teams/SeasonShape';
 import TeamMoves from '../components/teams/TeamMoves';
 import TeamPicks from '../components/teams/TeamPicks';
+import TopStarts from '../components/teams/TopStarts';
 import TeamsTabs from '../components/teams/TeamsTabs';
 import { history, players } from '../data/load';
 import { fmtPct, fmtPpg, fmtPts, fmtRecord, fmtWinPct } from '../lib/format';
@@ -55,9 +56,11 @@ export default function TeamPage() {
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
-          <SeasonShape label="Week by week" points={p.weeks.map((w) => ({ label: `Week ${w.week}`, mine: w.points, league: w.leagueAvg, result: w.result, playoff: w.isPlayoff }))} mineCaption={`${fmtPpg(p.ppw)} a week`} leagueCaption={`${fmtPpg(p.leagueAvgPpw)} league average`} />
+          <SeasonShape label="Week by week" points={p.schedule.flatMap((e): ShapePoint[] => e.kind === 'played' ? [{ label: `Week ${e.week}`, mine: e.points, league: e.leagueAvg, result: e.result, playoff: e.isPlayoff }] : e.kind === 'bye' ? [{ label: `Week ${e.week}`, mine: null, league: e.leagueAvg, playoff: true }] : [])} mineCaption={`${fmtPpg(p.ppw)} a week`} leagueCaption={`${fmtPpg(p.leagueAvgPpw)} league average`} />
           <Schedule entries={p.schedule} managers={season.managers} year={season.year} />
           {season.draft && p.picks.length > 0 && <TeamPicks picks={p.picks} teams={season.draft.slotOrder.length} grade={p.grade} value={p.draftValue} year={season.year} players={players} seasonTeams={season.playerTeams} />}
+          <TopStarts label="Single-week highs" title="Best starts" rows={p.bestStarts} empty="Nothing started yet." players={players} seasonTeams={season.playerTeams} managers={season.managers} year={season.year} />
+          <TopStarts label="Waivers and free agents" title="Best waiver starts" rows={p.bestWaiverStarts} empty="No pickup has started yet." players={players} seasonTeams={season.playerTeams} managers={season.managers} year={season.year} />
         </div>
         <div className="space-y-4">
           <RosterBreakdown positions={p.positions} neverStarted={p.neverStarted} players={players} seasonTeams={season.playerTeams} weeksPlayed={p.weeksPlayed} />
