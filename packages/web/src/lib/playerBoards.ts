@@ -10,6 +10,7 @@ import * as ma from './boards/managers/alltime';
 import * as ms from './boards/managers/seasons';
 import * as mg from './boards/managers/games';
 import * as mst from './boards/managers/streaks';
+import * as mp from './boards/managers/playoffs';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
@@ -17,6 +18,7 @@ export * from './boards/managers/alltime';
 export * from './boards/managers/seasons';
 export * from './boards/managers/games';
 export * from './boards/managers/streaks';
+export * from './boards/managers/playoffs';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -138,6 +140,15 @@ export const BOARDS: BoardDef[] = [
   { id: 'mDrought', tab: 'managers', sub: 'mstreaks', title: 'Longest title drought', definition: 'Complete seasons since the manager last won the championship, or since they joined. The current season does not count until it ends.', valueHeader: 'Seasons', compute: mst.mDrought },
   { id: 'mRun100', tab: 'managers', sub: 'mstreaks', title: 'Longest run of 100-point games', definition: 'Consecutive games scoring 100 or more, every game counted, carried across seasons.', valueHeader: 'Games', compute: mst.mRun100 },
   { id: 'mHighRun', tab: 'managers', sub: 'mstreaks', title: 'Most consecutive weeks as high scorer', definition: 'Consecutive regular-season weeks with the top score in the league.', valueHeader: 'Weeks', compute: mst.mHighRun },
+  // Managers → Playoffs
+  { id: 'mpHigh', tab: 'managers', sub: 'mplayoffs', title: 'Highest playoff score', definition: 'Most points by a team in a championship-bracket game.', valueHeader: 'Pts', compute: mp.mpHigh },
+  { id: 'mpLow', tab: 'managers', sub: 'mplayoffs', title: 'Lowest playoff score', definition: 'Fewest points by a team in a championship-bracket game.', valueHeader: 'Pts', compute: mp.mpLow },
+  { id: 'mpBlowout', tab: 'managers', sub: 'mplayoffs', title: 'Biggest playoff blowout', definition: 'Largest margin of victory in the championship bracket, the winner named.', valueHeader: 'Margin', compute: mp.mpBlowout },
+  { id: 'mpClosest', tab: 'managers', sub: 'mplayoffs', title: 'Closest playoff game', definition: 'Smallest margin of victory in the championship bracket, the winner named.', valueHeader: 'Margin', compute: mp.mpClosest },
+  { id: 'mpLowSeed', tab: 'managers', sub: 'mplayoffs', title: 'Lowest seed to win it all', definition: 'Champions by their regular-season seed, the longest shot first. Complete seasons only.', valueHeader: 'Seed', compute: mp.mpLowSeed },
+  { id: 'mpFinalsLost', tab: 'managers', sub: 'mplayoffs', title: 'Most Finals lost', definition: 'Championship games lost.', valueHeader: 'Losses', compute: mp.mpFinalsLost },
+  { id: 'mpToiletApps', tab: 'managers', sub: 'mplayoffs', title: 'Most Toilet Bowl appearances', definition: 'Games in the last-place game of the consolation bracket.', valueHeader: 'Games', compute: mp.mpToiletApps },
+  { id: 'mpToiletWins', tab: 'managers', sub: 'mplayoffs', title: 'Most Toilet Bowl wins', definition: 'Last-place games won, which is to say last place avoided.', valueHeader: 'Wins', compute: mp.mpToiletWins },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
