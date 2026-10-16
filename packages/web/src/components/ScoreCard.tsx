@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { Game, GameSide, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Game, GameSide, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
 import Headshot from './Headshot';
 import PosPill from './PosPill';
@@ -12,6 +12,8 @@ interface Props {
   played: boolean;
   managers: Record<UserId, Manager>;
   players: PlayerDirectory;
+  /** that season's player -> team map */
+  seasonTeams: Record<PlayerId, string>;
   to: string;
 }
 
@@ -27,7 +29,7 @@ const effColor = (e: number) => {
   return `color-mix(in srgb, ${tone} 65%, transparent)`;
 };
 
-export default function ScoreCard({ game, played, managers, players, to }: Props) {
+export default function ScoreCard({ game, played, managers, players, seasonTeams, to }: Props) {
   const outcome = (side: GameSide): Outcome =>
     !played || game.winner === null ? 'even' : game.winner === side.userId ? 'won' : 'lost';
   const [a, b] = game.sides;
@@ -54,7 +56,7 @@ export default function ScoreCard({ game, played, managers, players, to }: Props
           <h3 className="section-label mb-2.5">Top performers</h3>
           <div className="grid gap-y-3 sm:grid-cols-2 sm:gap-x-8 [&>*+*]:max-sm:border-t [&>*+*]:max-sm:border-line [&>*+*]:max-sm:pt-3">
             {game.sides.map((s) => (
-              <Performers key={s.userId} side={s} players={players} />
+              <Performers key={s.userId} side={s} players={players} seasonTeams={seasonTeams} />
             ))}
           </div>
         </div>
@@ -119,7 +121,7 @@ function EffBar({ value, align }: { value: number; align: Align }) {
   );
 }
 
-function Performers({ side, players }: { side: GameSide; players: PlayerDirectory }) {
+function Performers({ side, players, seasonTeams }: { side: GameSide; players: PlayerDirectory; seasonTeams: Record<PlayerId, string> }) {
   const top = topPerformersBySide(side);
   return (
     <ul className="min-w-0 space-y-2">
@@ -128,7 +130,7 @@ function Performers({ side, players }: { side: GameSide; players: PlayerDirector
           <Headshot players={players} id={t.playerId} size={28} />
           <span className="truncate text-[13px] font-medium">{playerName(players, t.playerId)}</span>
           <span className="flex justify-center"><PosPill pos={playerPos(players, t.playerId)} /></span>
-          <span className="text-xs text-muted">{playerTeam(players, t.playerId) || 'FA'}</span>
+          <span className="text-xs text-muted">{playerTeam(players, t.playerId, seasonTeams) || 'FA'}</span>
           <span className="num pl-1 text-right text-sm">{fmtPts(t.points)}</span>
         </li>
       ))}

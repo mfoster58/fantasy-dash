@@ -1,8 +1,10 @@
 import type {
-  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperPlayer, SleeperRoster, SleeperTransaction, SleeperUser, StatMap,
+  SleeperBracketGame, SleeperDraft, SleeperDraftPick, SleeperLeague, SleeperMatchup, SleeperPlayer, SleeperRoster, SleeperTransaction, SleeperUser, SleeperWeekStat, StatMap,
 } from './types';
 
 const BASE = 'https://api.sleeper.app/v1';
+/** Sleeper's newer stats host; its weekly rows carry the player's team for that week, which the v1 stat map lacks. */
+const STATS_BASE = 'https://api.sleeper.com';
 
 export interface SleeperClientOptions {
   fetchFn?: typeof fetch;
@@ -30,8 +32,8 @@ export class SleeperClient {
     this.backoffMs = opts.backoffMs ?? 500;
   }
 
-  private async get<T>(path: string): Promise<T | null> {
-    const url = `${BASE}${path}`;
+  private async get<T>(path: string, base = BASE): Promise<T | null> {
+    const url = `${base}${path}`;
     for (let attempt = 0; ; attempt++) {
       const at = Math.max(Date.now(), this.lastRequestAt + this.minIntervalMs);
       this.lastRequestAt = at;
@@ -61,4 +63,6 @@ export class SleeperClient {
   getPlayers() { return this.get<Record<string, SleeperPlayer>>(`/players/nfl`); }
   getProjections(season: string, week: number) { return this.get<StatMap>(`/projections/nfl/regular/${season}/${week}`); }
   getStats(season: string, week: number) { return this.get<StatMap>(`/stats/nfl/regular/${season}/${week}`); }
+  /** Every NFL player's stat row for the week, with the team they played for that week. */
+  getWeekStats(season: string, week: number) { return this.get<SleeperWeekStat[]>(`/stats/nfl/${season}/${week}?season_type=regular`, STATS_BASE); }
 }

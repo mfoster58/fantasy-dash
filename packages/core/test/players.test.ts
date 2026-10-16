@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toPlayerDirectory, trimPlayers, collectPlayerIds } from '../src/players';
+import { toPlayerDirectory, trimPlayers, collectPlayerIds, weekTeams } from '../src/players';
 import type { Season } from '../src/types';
 
 describe('toPlayerDirectory', () => {
@@ -20,6 +20,16 @@ describe('trimPlayers', () => {
   it('keeps only requested ids', () => {
     const dir = toPlayerDirectory({ a: { player_id: 'a', full_name: 'A' }, b: { player_id: 'b', full_name: 'B' } });
     expect(Object.keys(trimPlayers(dir, new Set(['b', 'zzz'])))).toEqual(['b']);
+  });
+});
+
+describe('weekTeams', () => {
+  it('maps each row to the team it lists, skipping rows without one', () => {
+    expect(weekTeams([
+      { player_id: '4866', team: 'NYG', stats: { gp: 1 } },
+      { player_id: 'PHI', team: 'PHI' },
+      { player_id: '999', team: null },
+    ])).toEqual({ '4866': 'NYG', PHI: 'PHI' });
   });
 });
 

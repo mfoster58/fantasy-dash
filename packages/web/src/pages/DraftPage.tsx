@@ -9,7 +9,7 @@ import { history, players } from '../data/load';
 export default function DraftPage() {
   const season = useLoaderData() as Season;
   const navigate = useNavigate();
-  const [mode, setMode] = useState<BoardMode>('position');
+  const [mode, setMode] = useState<BoardMode>('value');
   const [highlight, setHighlight] = useState<UserId | null>(null);
   const [selected, setSelected] = useState<UserId | null>(null);
   const years = history.seasons.map((s) => s.year);
@@ -31,9 +31,9 @@ export default function DraftPage() {
       <p className="text-xs text-muted">
         {season.draft.rounds} rounds · {season.draft.type} · click any pick to highlight that manager's column and see their team below · hover a pick for details{inSeason ? ' · values are to date' : ''} · <Link to={`/history/${season.year}`} className="text-accent hover:underline">season review</Link>
       </p>
-      <DraftBoard draft={season.draft} managers={season.managers} players={players} mode={mode} highlight={highlight} onHighlight={(u) => { setHighlight(u); if (u) setSelected(u); }} inSeason={inSeason} />
+      <DraftBoard draft={season.draft} managers={season.managers} players={players} seasonTeams={season.playerTeams} mode={mode} highlight={highlight} onHighlight={(u) => { setHighlight(u); if (u) setSelected(u); }} inSeason={inSeason} />
       <DraftAnalysis
-        draft={season.draft} managers={season.managers} players={players} inSeason={inSeason}
+        draft={season.draft} managers={season.managers} players={players} seasonTeams={season.playerTeams} inSeason={inSeason}
         selected={selected ?? season.draft.slotOrder[0]}
         onSelect={(u) => { setSelected(u); setHighlight(u); }}
         history={history}

@@ -62,7 +62,7 @@ export default function BoxScorePage() {
         </div>
       </header>
 
-      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} />
+      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} />
 
       {week.played && (
         <div className="grid gap-4 lg:grid-cols-2">

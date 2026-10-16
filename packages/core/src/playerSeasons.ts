@@ -18,9 +18,11 @@ export function playerSeasonsOf(points: Record<PlayerId, number>, games: Record<
   return out;
 }
 
-/** Keep only the listed players; ranks are untouched. */
+/** Keep only the listed players in the per-player maps (season lines and teams); ranks are untouched. */
 export function trimPlayerSeasons(season: Season, keep: Set<PlayerId>): Season {
   const playerSeasons: Record<PlayerId, PlayerSeasonLine> = {};
   for (const [id, line] of Object.entries(season.playerSeasons)) if (keep.has(id)) playerSeasons[id] = line;
-  return { ...season, playerSeasons };
+  const playerTeams: Record<PlayerId, string> = {};
+  for (const [id, team] of Object.entries(season.playerTeams)) if (keep.has(id)) playerTeams[id] = team;
+  return { ...season, playerSeasons, playerTeams };
 }

@@ -1,13 +1,13 @@
-import type { GameSide, PlayerDirectory, PlayerLine } from '@fantasy-dash/core';
+import type { GameSide, PlayerDirectory, PlayerId, PlayerLine } from '@fantasy-dash/core';
 import { fmtPts } from '../../lib/format';
 import { playerName, playerPos, playerTeam, statLine } from '../../lib/players';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 
-interface Props { sides: [GameSide, GameSide]; slots: string[]; players: PlayerDirectory }
+interface Props { sides: [GameSide, GameSide]; slots: string[]; players: PlayerDirectory; seasonTeams: Record<PlayerId, string> }
 
-function PlayerCell({ line, players, align, showPos = false }: {
-  line: PlayerLine | null; players: PlayerDirectory; align: 'left' | 'right'; showPos?: boolean;
+function PlayerCell({ line, players, seasonTeams, align, showPos = false }: {
+  line: PlayerLine | null; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; align: 'left' | 'right'; showPos?: boolean;
 }) {
   if (!line) return <div className={`text-sm text-muted ${align === 'right' ? 'sm:text-right' : ''}`}>Empty</div>;
   const pos = playerPos(players, line.playerId);
@@ -17,7 +17,7 @@ function PlayerCell({ line, players, align, showPos = false }: {
       {showPos && <PosPill pos={pos} />}
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">
-          {playerName(players, line.playerId)} <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId)}</span>
+          {playerName(players, line.playerId)} <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId, seasonTeams)}</span>
         </div>
         <div className="truncate text-xs text-muted">{statLine(pos, line.stats) || '-'}</div>
       </div>
@@ -26,7 +26,7 @@ function PlayerCell({ line, players, align, showPos = false }: {
   );
 }
 
-export default function LineupTable({ sides, slots, players }: Props) {
+export default function LineupTable({ sides, slots, players, seasonTeams }: Props) {
   const [a, b] = sides;
   return (
     <div className="card overflow-hidden">
@@ -34,11 +34,11 @@ export default function LineupTable({ sides, slots, players }: Props) {
         {slots.map((slot, i) => (
           <div key={`${slot}-${i}`} className="grid grid-cols-[3rem_1fr] sm:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-2 px-5 py-2.5">
             <div className="min-w-0 col-start-2 sm:col-auto">
-              <PlayerCell line={a.starters[i]?.player ?? null} players={players} align="left" />
+              <PlayerCell seasonTeams={seasonTeams} line={a.starters[i]?.player ?? null} players={players} align="left" />
             </div>
             <span className="order-first row-span-2 flex self-center sm:order-none sm:row-span-1 sm:w-14 sm:justify-center"><PosPill pos={slot} /></span>
             <div className="min-w-0 col-start-2 sm:col-auto border-t border-line pt-2 sm:border-0 sm:pt-0">
-              <PlayerCell line={b.starters[i]?.player ?? null} players={players} align="right" />
+              <PlayerCell seasonTeams={seasonTeams} line={b.starters[i]?.player ?? null} players={players} align="right" />
             </div>
           </div>
         ))}
@@ -51,8 +51,8 @@ export default function LineupTable({ sides, slots, players }: Props) {
       <details className="border-t border-line px-5 py-2.5">
         <summary className="section-label cursor-pointer hover:text-ink">Bench</summary>
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2">{a.bench.map((l) => <PlayerCell key={l.playerId} line={l} players={players} align="left" showPos />)}</div>
-          <div className="space-y-2">{b.bench.map((l) => <PlayerCell key={l.playerId} line={l} players={players} align="right" showPos />)}</div>
+          <div className="space-y-2">{a.bench.map((l) => <PlayerCell seasonTeams={seasonTeams} key={l.playerId} line={l} players={players} align="left" showPos />)}</div>
+          <div className="space-y-2">{b.bench.map((l) => <PlayerCell seasonTeams={seasonTeams} key={l.playerId} line={l} players={players} align="right" showPos />)}</div>
         </div>
       </details>
     </div>

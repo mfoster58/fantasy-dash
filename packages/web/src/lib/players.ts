@@ -6,8 +6,9 @@ export function playerName(players: PlayerDirectory, id: PlayerId): string {
 export function playerPos(players: PlayerDirectory, id: PlayerId): string {
   return players[id]?.position ?? '?';
 }
-export function playerTeam(players: PlayerDirectory, id: PlayerId): string {
-  return players[id]?.team ?? '';
+/** NFL team abbreviation: the season's own record of the player's team when given, else today's team from the directory. */
+export function playerTeam(players: PlayerDirectory, id: PlayerId, seasonTeams?: Record<PlayerId, string>): string {
+  return seasonTeams?.[id] ?? players[id]?.team ?? '';
 }
 /** Sleeper CDN image for a player: a headshot thumbnail, or the team logo for a defense. */
 export function headshotUrl(players: PlayerDirectory, id: PlayerId): string {

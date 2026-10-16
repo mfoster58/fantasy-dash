@@ -1,5 +1,5 @@
 import type { PlayerDirectory, PlayerId, PlayerInfo, Season } from './types';
-import type { SleeperPlayer } from './sleeper/types';
+import type { SleeperPlayer, SleeperWeekStat } from './sleeper/types';
 
 export function toPlayerDirectory(raw: Record<string, SleeperPlayer>): PlayerDirectory {
   const dir: PlayerDirectory = {};
@@ -19,6 +19,13 @@ export function toPlayerDirectory(raw: Record<string, SleeperPlayer>): PlayerDir
     dir[id] = info;
   }
   return dir;
+}
+
+/** player -> NFL team for one week, from the weekly stat rows (rows without a team are skipped). */
+export function weekTeams(rows: SleeperWeekStat[]): Record<PlayerId, string> {
+  const out: Record<PlayerId, string> = {};
+  for (const r of rows) if (r.team) out[r.player_id] = r.team;
+  return out;
 }
 
 export function trimPlayers(dir: PlayerDirectory, keep: Set<PlayerId>): PlayerDirectory {

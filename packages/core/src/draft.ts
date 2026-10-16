@@ -120,8 +120,10 @@ export interface DraftValueInput {
   players: PlayerDirectory;
   /** scored weeks in which the player had gp >= 1 */
   gamesPlayed: Record<PlayerId, number>;
-  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
+  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 */
   teamGames: Record<string, number>;
+  /** NFL team each player last suited up for this season; the directory's (current) team is the fallback */
+  playerTeams: Record<PlayerId, string>;
   lastScoredWeek: number;
   /** scale points for teams that have had their bye; only meaningful while the season is in progress */
   byeAdjust: boolean;
@@ -166,8 +168,9 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
   const valued = (pos: string | null): pos is string => pos !== null && BASELINE_RANKS[pos] !== undefined;
   const rawPts = (id: PlayerId) => input.seasonPoints[id] ?? 0;
   const maxTeamGames = Math.max(0, ...Object.values(input.teamGames));
+  const teamOf = (id: PlayerId): string | null => input.playerTeams[id] ?? input.players[id]?.team ?? null;
   const byeFactor = (id: PlayerId): number => {
-    const team = input.players[id]?.team ?? null;
+    const team = teamOf(id);
     const games = team ? input.teamGames[team] ?? 0 : 0;
     return input.byeAdjust && games > 0 && maxTeamGames > games ? maxTeamGames / games : 1;
   };
@@ -221,7 +224,7 @@ export function computeDraftValues(picks: DraftPick[], input: DraftValueInput): 
     const pos = posOf(p.playerId);
     const seasonPoints = round2(rawPts(p.playerId));
     const gamesPlayed = input.gamesPlayed[p.playerId] ?? 0;
-    const team = input.players[p.playerId]?.team ?? null;
+    const team = teamOf(p.playerId);
     const teamGames = team ? input.teamGames[team] ?? 0 : 0;
     const traded = tradedTo.get(p.playerId);
     const common = {

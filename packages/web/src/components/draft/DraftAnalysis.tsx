@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { Draft, DraftPick, History, HistoryDraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, DraftPick, History, HistoryDraftPick, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
 import { fmtSigned } from '../../lib/format';
 import { POSITION_FILTERS, byPosition, leagueExtremes, letterGrade, managerDraftSummaries, type PositionFilter } from '../../lib/draft';
@@ -10,7 +10,7 @@ import PickList, { type PickRow } from './PickList';
 export const signClass = (n: number | null, fallback = 'text-muted') => (n === null || n === 0 ? fallback : n > 0 ? 'text-win' : 'text-loss');
 
 interface Props {
-  draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean;
+  draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; inSeason: boolean;
   selected: UserId; onSelect: (userId: UserId) => void; history: History;
 }
 
@@ -27,7 +27,7 @@ export function CardHeader({ label, title, aside }: { label: string; title: stri
   );
 }
 
-export default function DraftAnalysis({ draft, managers, players, inSeason, selected, onSelect, history }: Props) {
+export default function DraftAnalysis({ draft, managers, players, seasonTeams, inSeason, selected, onSelect, history }: Props) {
   const summaries = managerDraftSummaries(draft);
   const teams = draft.slotOrder.length;
   const [pos, setPos] = useState<PositionFilter>(null);
@@ -75,7 +75,7 @@ export default function DraftAnalysis({ draft, managers, players, inSeason, sele
             })}
           </ol>
         </div>
-        <TeamDraft draft={draft} managers={managers} players={players} userId={selected} onSelect={onSelect} inSeason={inSeason} />
+        <TeamDraft draft={draft} managers={managers} players={players} seasonTeams={seasonTeams} userId={selected} onSelect={onSelect} inSeason={inSeason} />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="section-label">Best and worst picks</div>

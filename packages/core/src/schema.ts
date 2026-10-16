@@ -149,6 +149,7 @@ export const SeasonSchema = z.object({
   draft: Draft.nullable(),
   transactions: z.array(Transaction),
   playerSeasons: z.record(PlayerSeasonLine),
+  playerTeams: z.record(z.string()),
 });
 
 export const PlayerDirectorySchema = z.record(z.object({

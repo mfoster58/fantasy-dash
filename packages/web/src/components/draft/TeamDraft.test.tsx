@@ -23,7 +23,7 @@ const draft: Draft = {
 
 describe('TeamDraft', () => {
   it('lists the selected manager\'s picks round by round with totals', () => {
-    render(<TeamDraft draft={draft} managers={managers} players={players} userId="a" onSelect={() => {}} inSeason={false} />);
+    render(<TeamDraft seasonTeams={{}} draft={draft} managers={managers} players={players} userId="a" onSelect={() => {}} inSeason={false} />);
     const panel = screen.getByTestId('team-draft');
     expect(panel).toHaveTextContent('alice');
     expect(panel).toHaveTextContent('1 of 2');
@@ -42,7 +42,7 @@ describe('TeamDraft', () => {
 
   it('cycles managers with the arrows', () => {
     const onSelect = vi.fn();
-    render(<TeamDraft draft={draft} managers={managers} players={players} userId="a" onSelect={onSelect} inSeason={true} />);
+    render(<TeamDraft seasonTeams={{}} draft={draft} managers={managers} players={players} userId="a" onSelect={onSelect} inSeason={true} />);
     fireEvent.click(screen.getByRole('button', { name: 'Next manager' }));
     expect(onSelect).toHaveBeenCalledWith('b');
     fireEvent.click(screen.getByRole('button', { name: 'Previous manager' }));

@@ -193,6 +193,8 @@ export interface Season {
   draft: Draft | null;
   transactions: Transaction[];
   playerSeasons: Record<PlayerId, PlayerSeasonLine>;
+  /** NFL team each player last suited up for in this season (the directory only knows today's team) */
+  playerTeams: Record<PlayerId, string>;
 }
 
 export interface H2HGame {
