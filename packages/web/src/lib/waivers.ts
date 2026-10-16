@@ -21,13 +21,18 @@ export function waiverClaims(seasons: SeasonTransactions[], lines: PlayerLine[])
     const sorted = [...transactions].sort((a, b) => a.created - b.created || (a.id < b.id ? -1 : 1));
     const scoredWeeks = new Set(lines.filter((l) => l.year === year).map((l) => l.week));
     const yearLines = lines.filter((l) => l.year === year && l.started);
+    // where the manager's previous claim of the same player ended: a re-add's window starts after it, so no start is counted twice
+    const windowEnd = new Map<string, number>();
     for (const tx of sorted) {
       if (!(tx.type === 'waiver' && tx.bid !== null) && tx.type !== 'free_agent') continue;
       for (const add of tx.adds) {
         const drop = sorted.find((o) => o.created > tx.created && o.drops.some((d) => d.playerId === add.playerId && d.userId === add.userId));
         const end = drop ? drop.week : Infinity;
+        const key = `${add.userId}|${add.playerId}`;
+        const start = Math.max(tx.week, (windowEnd.get(key) ?? -Infinity) + 1);
+        windowEnd.set(key, end);
         if (![...scoredWeeks].some((w) => w >= tx.week && w <= end)) continue;
-        const mine = yearLines.filter((l) => l.playerId === add.playerId && l.userId === add.userId && l.week >= tx.week && l.week <= end).sort((a, b) => a.week - b.week);
+        const mine = yearLines.filter((l) => l.playerId === add.playerId && l.userId === add.userId && l.week >= start && l.week <= end).sort((a, b) => a.week - b.week);
         out.push({ year, week: tx.week, playerId: add.playerId, userId: add.userId, bid: tx.type === 'waiver' ? tx.bid : null, points: round2(mine.reduce((s, l) => s + l.points, 0)), starts: mine.length, lines: mine });
       }
     }

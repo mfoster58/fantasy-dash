@@ -176,6 +176,22 @@ describe('Board', () => {
     expect(within(third).getByText('98.00')).not.toHaveClass('text-gold');
   });
 
+  it('crowns nobody when the tie at the top is more than three rows or the whole board', () => {
+    const tied = (n: number, total: number) => Array.from({ length: total }, (_, i) => row(i, i < n ? { value: 100, valueLabel: '100.00' } : {}));
+    wrapB({ rows: tied(4, 8) });
+    expect(screen.queryByTitle('League record')).toBeNull();
+    expect(screen.getAllByRole('listitem')[0].textContent).toMatch(/^1/);
+    cleanup();
+    wrapB({ rows: tied(3, 8) });
+    expect(screen.getAllByTitle('League record')).toHaveLength(3);
+    cleanup();
+    wrapB({ rows: tied(2, 2) }); // everyone is tied: no record to show
+    expect(screen.queryByTitle('League record')).toBeNull();
+    cleanup();
+    wrapB({ rows: [row(0)] }); // a lone row is the record
+    expect(screen.getAllByTitle('League record')).toHaveLength(1);
+  });
+
   it('shows the player a manager row names, headshot and name, after the manager', () => {
     const mdef: BoardDef = { ...def, tab: 'managers', sub: 'mdraft' };
     wrapB({ def: mdef, rows: [{ key: 'a', playerId: null, player: 'q1', value: 30, valueLabel: '+30.0', meta: '2024', detail: 'Rd 9, pick 81', userId: 'a', to: '/draft/2024?team=a' }] });

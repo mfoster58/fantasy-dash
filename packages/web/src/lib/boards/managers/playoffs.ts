@@ -9,8 +9,8 @@ const decided = (games: TeamGame[]) => matchups(games).filter((g) => g.result !=
 const over = (ctx: BoardContext) => (g: TeamGame) => `over ${managerName(ctx, g.opponentId)}, ${score(g)}`;
 const toilet = (a: CareerAgg) => a.games.filter((g) => g.tag === 'Toilet Bowl');
 const toiletWon = (a: CareerAgg) => `${toilet(a).filter((g) => g.result === 'W').length} won`;
-/** seasons with any consolation-bracket game: round 1, the Toilet Bowl or the seventh-place game */
-const consolationYears = (a: CareerAgg) => [...new Set(a.games.filter((g) => g.tag === 'Cons-R1' || g.tag === 'Toilet Bowl' || g.tag === 'Cons-7th').map((g) => g.year))];
+/** seasons with a game on the path to the Toilet Bowl: round 1 or the bowl itself; the seventh-place game is a placement game */
+const consolationYears = (a: CareerAgg) => [...new Set(a.games.filter((g) => g.consolation).map((g) => g.year))];
 
 export const mpHigh = (ctx: BoardContext): BoardRow[] => gameRows(ctx, post(ctx), (g) => g.points, fmtPts);
 export const mpLow = (ctx: BoardContext): BoardRow[] => gameRows(ctx, post(ctx), (g) => g.points, fmtPts, 'asc');

@@ -32,11 +32,14 @@ export function managerRecords(ctx: BoardContext, userId: UserId, maxRank = 3): 
     for (const def of boardsFor('managers', sub.id)) {
       const rows = def.compute(ctx);
       const idx = rows.findIndex((r) => r.playerId === null && r.userId === userId);
-      if (idx < 0 || idx >= maxRank) continue;
+      if (idx < 0) continue;
       const r = rows[idx];
+      // tied rows share a rank, as the Records page crowns them
+      const rank = rows.findIndex((o) => o.value === r.value) + 1;
+      if (rank > maxRank) continue;
       // the Records page shows a row's player beside the manager; here the name leads the detail instead
       const detail = r.player ? [playerName(ctx.players, r.player), r.detail].filter(Boolean).join(' · ') : r.detail;
-      out.push({ sub: sub.id, subTitle: sub.title, boardId: def.id, title: def.title, rank: idx + 1, valueLabel: r.valueLabel, meta: r.meta, detail });
+      out.push({ sub: sub.id, subTitle: sub.title, boardId: def.id, title: def.title, rank, valueLabel: r.valueLabel, meta: r.meta, detail });
     }
   }
   return out;

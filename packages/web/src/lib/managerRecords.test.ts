@@ -31,6 +31,12 @@ describe('managerRecords', () => {
     expect(managerRecords(picked, 'a').find((r) => r.boardId === 'mdSteal')).toMatchObject({ rank: 1, detail: 'Quincy One · Rd 1, pick 1 · QB1 → QB1 · 29.0 PPG' });
   });
 
+  it('shares a rank between tied rows, as the Records page crowns them', () => {
+    // both managers have 1 season: mSeasons ties at 1, so each is rank 1
+    expect(managerRecords(ctx, 'b').find((r) => r.boardId === 'mSeasons')).toMatchObject({ rank: 1 });
+    expect(managerRecords(ctx, 'a').find((r) => r.boardId === 'mSeasons')).toMatchObject({ rank: 1 });
+  });
+
   it('honours maxRank', () => {
     expect(managerRecords(ctx, 'b', 1).every((r) => r.rank === 1)).toBe(true);
   });

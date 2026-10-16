@@ -26,12 +26,12 @@ export const TOP_MODES: readonly BoardMode[] = [
 ];
 
 /**
- * Consecutive league weeks ranked in the top N started scorers at the player's position (the mode id, 1 by default);
- * ties share a rank. A week outside the top N, started or not, ends the run. The player's bye weeks are skipped.
+ * Consecutive league weeks ranked in the top N scorers at the player's position among every rostered player, started or
+ * benched (the mode id, 1 by default); ties share a rank. A week outside the top N ends the run. The player's bye weeks are skipped.
  */
 export const posTopRun = (ctx: BoardContext, _direction?: Direction, mode?: string): BoardRow[] => {
   const topN = Number(mode ?? TOP_MODES[0].id);
-  const lines = realStarts(ctx);
+  const lines = ctx.lines.filter((l) => !l.bye);
   const has = new Map<PlayerId, Set<number>>();
   const topLines = new Map<PlayerId, PlayerLine[]>();
   const byWeekPos = new Map<string, PlayerLine[]>();

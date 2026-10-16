@@ -63,6 +63,21 @@ describe('player streaks', () => {
     expect(def.modeSelect).toBe(true);
   });
 
+  it('posTopRun ranks among every rostered player at the position, benched ones included', () => {
+    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1 });
+    const two = { ...players, r2: rb('r2') };
+    // r2 is benched both weeks but outscores the started r1 in week 1
+    const s = season(2024, [
+      week(1, [game(2024, 1, 1, side('a', 20, [line('r1', 20)], [line('r2', 25)]), side('b', 10, [line('w1', 10)]))]),
+      week(2, [game(2024, 2, 1, side('a', 20, [line('r1', 20)], [line('r2', 5)]), side('b', 10, [line('w1', 10)]))]),
+    ]);
+    const c = { ...ctx, players: two, lines: flattenLines([s], two) };
+    const by = (rows: ReturnType<typeof posTopRun>) => Object.fromEntries(rows.map((r) => [r.playerId, r.value]));
+    expect(by(posTopRun(c))).toEqual({ r1: 1, r2: 1, w1: 2 });
+    expect(by(posTopRun(c, 'desc', '3'))).toEqual({ r1: 2, r2: 2, w1: 2 });
+    expect(posTopRun(c).find((r) => r.playerId === 'r2')).toMatchObject({ userId: 'a', meta: '2024 Wk 1 – 2024 Wk 1' });
+  });
+
   it('run15 and posTopRun skip a player\'s bye week instead of breaking on it', () => {
     // q1 (KC) is started on his bye in week 2 with no stats; t1 (KC) is benched on it. Nobody else is a QB or TE.
     const byeSeason = season(2024, [

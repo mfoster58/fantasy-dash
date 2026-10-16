@@ -27,6 +27,8 @@ describe('manager playoff boards', () => {
     expect(mpConsolationApps(ctx)).toEqual([]);
     const twice = { ...toilet, teamGames: [...toilet.teamGames, { ...toilet.teamGames[0], gameId: '2024-8-1', week: 8, tag: 'Cons-R1' as const, postseason: false, consolation: true }] };
     expect(mpConsolationApps(twice)).toEqual([expect.objectContaining({ userId: 'a', value: 1, detail: '2024' })]); // two games, one season
+    const seventh = { ...ctx, teamGames: [...ctx.teamGames, { ...ctx.teamGames[0], gameId: '2024-9-2', week: 9, tag: 'Cons-7th' as const, postseason: false, consolation: false }] };
+    expect(mpConsolationApps(seventh)).toEqual([]); // a placement game is not a consolation appearance
   });
   it('is registered in order, with the best non-champion board moved over from Seasons', () => {
     expect(boardsFor('managers', 'mplayoffs').map((b) => b.id)).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'msNoTitle', 'mpFinalsLost', 'mpConsolationApps', 'mpToiletApps', 'mpToiletWins']);

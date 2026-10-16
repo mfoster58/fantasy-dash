@@ -28,6 +28,19 @@ describe('waiverClaims', () => {
     // the started lines inside the window travel with the claim
     expect(claims[0].lines.map((l) => [l.week, l.points])).toEqual([[2, 20], [3, 15]]);
   });
+  it('never hands the same start to two claims by the same manager: a re-add starts after the earlier window ends', () => {
+    // a adds w1 before week 2, drops him in week 3 (that start is still a's first claim) and re-adds him the same week
+    const claims = waiverClaims([{ year: 2025, transactions: [
+      t({ id: 'c1', week: 2, created: 2, type: 'free_agent', adds: [{ playerId: 'w1', userId: 'a' }], bid: null }),
+      t({ id: 'd1', week: 3, created: 4, type: 'free_agent', drops: [{ playerId: 'w1', userId: 'a' }], bid: null }),
+      t({ id: 'c2', week: 3, created: 5, adds: [{ playerId: 'w1', userId: 'a' }], bid: 3 }),
+    ] }], lines);
+    expect(bare(claims)).toEqual([
+      { year: 2025, week: 2, playerId: 'w1', userId: 'a', bid: null, points: 35, starts: 2 },
+      { year: 2025, week: 3, playerId: 'w1', userId: 'a', bid: 3, points: 0, starts: 0 }, // week 4 is b's roster
+    ]);
+  });
+
   it('drops a claim whose window holds no scored week', () => {
     // week 5 is not scored in the fixture (claims processed after the last scored week)
     const claims = waiverClaims([{ year: 2025, transactions: [t({ id: 'c9', week: 5, created: 9, adds: [{ playerId: 'q1', userId: 'a' }], bid: 40 })] }], lines);

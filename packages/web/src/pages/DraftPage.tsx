@@ -16,7 +16,8 @@ export default function DraftPage() {
   const [mode, setMode] = useState<BoardMode>('value');
   const [highlight, setHighlight] = useState<UserId | null>(team);
   const [selected, setSelected] = useState<UserId | null>(team);
-  useEffect(() => { if (team) { setHighlight(team); setSelected(team); } }, [team, season.year]);
+  // a new year or a new team param resets the selection, so a manager from last year's board is never left highlighted
+  useEffect(() => { setHighlight(team); setSelected(team); }, [team, season.year]);
   const years = history.seasons.map((s) => s.year);
   const inSeason = season.status === 'in_season';
   if (!season.draft) return <p className="text-sm text-muted">No draft recorded for {season.year}.</p>;

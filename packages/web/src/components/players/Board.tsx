@@ -32,6 +32,7 @@ interface Props {
 }
 
 const PREVIEW = 5;
+const MAX_CROWNS = 3;
 const RECORD_ROW = 'bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]';
 
 function Toggle<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
@@ -71,8 +72,9 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
   const header = (activeMode?.valueHeader ?? def.valueHeader) + (activeMode2?.valueHeader ?? '');
   const [over, under] = def.directionLabels ?? ['Over', 'Under'];
   const directions: { id: Direction; label: string }[] = [{ id: 'desc', label: over }, { id: 'asc', label: under }];
-  // the record: the top row's value, shared by every row tied with it
-  const recordValue = rows[0]?.value;
+  // the record: the top row and any row tied with it, unless the tie is more than three deep or the whole board (then nobody stands out)
+  const tiedAtTop = rows.filter((r) => r.value === rows[0]?.value).length;
+  const recordValue = tiedAtTop <= MAX_CROWNS && (tiedAtTop < rows.length || rows.length === 1) ? rows[0]?.value : undefined;
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
