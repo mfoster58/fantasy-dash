@@ -158,7 +158,7 @@ describe('careerProfile', () => {
     expect(c.lineup).toMatchObject({ weeks: 2, started: 215, possible: 235, benchLeft: 20 });
     expect(c.lineup.efficiency).toBeCloseTo(215 / 235, 4);
     expect(c.lineup.best?.week).toBe(1);    // 120 of 130 beats 95 of 105
-    expect(c.lineup.worst?.week).toBe(2);
+    expect(c.lineup.worst?.benchPoints).toBe(10);   // every fixture game leaves 10 on the bench; the first one is kept
   });
 
   it('has no draft desk without a draft', () => {
@@ -191,11 +191,11 @@ export const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 't
 const rankOf = (mine: number, all: number[], better: (a: number, b: number) => boolean) => 1 + all.filter((v) => better(v, mine)).length;
 const involves = (t: Transaction, userId: UserId) => t.adds.some((m) => m.userId === userId) || t.drops.some((m) => m.userId === userId);
 
-/** `1st` / `2nd` / `3rd` / `Last` from honors for a complete season, else the ordinal regular-season rank; `—` before the season ends. */
+/** `1st` / `2nd` / `3rd` / `Last` from honors for a complete season, else `#rank` (regular season); `—` before the season ends. */
 export function finishLabel(season: Season, userId: UserId, rank: number | undefined): string {
   if (season.status !== 'complete' || rank === undefined) return '—';
   const h = season.honors;
-  return h.champion === userId ? '1st' : h.runnerUp === userId ? '2nd' : h.third === userId ? '3rd' : h.lastPlace === userId ? 'Last' : ordinal(rank);
+  return h.champion === userId ? '1st' : h.runnerUp === userId ? '2nd' : h.third === userId ? '3rd' : h.lastPlace === userId ? 'Last' : `#${rank}`;
 }
 
 export interface WeekLine {
@@ -503,6 +503,8 @@ export interface CareerProfile {
 }
 
 const FINISH_ORDER = ['1st', '2nd', '3rd'];
+/** podium first, then seeds by number, Last at the end */
+const finishKey = (f: string) => (FINISH_ORDER.includes(f) ? FINISH_ORDER.indexOf(f) : f === 'Last' ? 1000 : 10 + (parseInt(f.replace('#', ''), 10) || 999));
 
 /** Everything one manager's career page shows. */
 export function careerProfile(seasons: Season[], history: History, userId: UserId, players: PlayerDirectory): CareerProfile {
@@ -553,7 +555,7 @@ export function careerProfile(seasons: Season[], history: History, userId: UserI
   const record: WLT = { w: rows.reduce((t, r) => t + r.w, 0), l: rows.reduce((t, r) => t + r.l, 0), t: rows.reduce((t, r) => t + r.t, 0) };
   const played = record.w + record.l + record.t;
   const finishes = lines.map((l) => l.finish).filter((f) => f !== '—');
-  const bestFinish = finishes.sort((a, b) => (FINISH_ORDER.indexOf(a) === -1 ? 99 : FINISH_ORDER.indexOf(a)) - (FINISH_ORDER.indexOf(b) === -1 ? 99 : FINISH_ORDER.indexOf(b)) || (a === 'Last' ? 1 : 0) - (b === 'Last' ? 1 : 0) || parseInt(a) - parseInt(b))[0] ?? '—';
+  const bestFinish = finishes.sort((a, b) => finishKey(a) - finishKey(b))[0] ?? '—';
 
   const m = history.managers[userId];
   return {
@@ -736,8 +738,8 @@ describe('RosterBreakdown', () => {
     render(<RosterBreakdown positions={groups} neverStarted={[pp('w1', 'WR', 0, 0, 9)]} players={players} seasonTeams={{ q1: 'NYG' }} weeksPlayed={4} />);
     expect(screen.getByTestId('share-QB')).toHaveTextContent('QB 60%');
     expect(screen.getByTestId('share-QB').style.width).toBe('60%');
-    expect(screen.getByText('QB 1')).toBeInTheDocument();
-    expect(screen.getByText('RB 3')).toBeInTheDocument();
+    expect(screen.getByTestId('rank-QB')).toHaveTextContent('QB 1');
+    expect(screen.getByTestId('rank-RB')).toHaveTextContent('RB 3');
     const qb = screen.getByTestId('group-QB');
     expect(within(qb).getByText('Quincy One')).toBeInTheDocument();
     expect(within(qb).getByText('NYG')).toBeInTheDocument();
@@ -817,7 +819,7 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
           <Avatar avatar={avatar} name={name} size={84} />
           <div className="min-w-0">
             <div className="section-label flex flex-wrap items-center gap-x-2">{eyebrow}</div>
-            <h1 className="mt-1 truncate text-[26px] font-semibold leading-tight tracking-tight sm:text-[30px]" title={title}>{title}</h1>
+            <h1 className="mt-1 line-clamp-2 text-[26px] font-semibold leading-tight tracking-tight sm:text-[30px]" title={title}>{title}</h1>
             {subtitle && <div className="mt-0.5 text-sm text-muted">{subtitle}</div>}
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">{badges.map((b, i) => <span key={i}>{b}</span>)}</div>
           </div>
@@ -845,12 +847,13 @@ import { fmtPpg } from '../../lib/format';
 
 export interface ShapePoint { label: string; mine: number; league: number }
 
-interface Props { label: string; points: ShapePoint[]; mineCaption: string; leagueCaption: string }
+interface Props { label: string; points: ShapePoint[]; mineCaption: string; leagueCaption: string; /** twice as wide for a wide column */ wide?: boolean }
 
-const W = 320, H = 110, PAD = 10;
+const H = 110, PAD = 10;
 
 /** Small line chart: the team's points per period (accent, dotted) against the league average (dashed). */
-export default function SeasonShape({ label, points, mineCaption, leagueCaption }: Props) {
+export default function SeasonShape({ label, points, mineCaption, leagueCaption, wide = false }: Props) {
+  const W = wide ? 720 : 320;
   const values = points.flatMap((p) => [p.mine, p.league]);
   const min = Math.min(...values, Infinity), max = Math.max(...values, -Infinity);
   const span = max - min || 1;
@@ -1048,7 +1051,7 @@ export default function RosterBreakdown({ positions, neverStarted, players, seas
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {positions.map((g) => (
-            <span key={g.pos} className="num rounded border border-line px-1.5 py-0.5 text-[11px]" title={`${fmtPts(g.started)} started points at ${g.pos}, rank ${g.rank} in the league`}>
+            <span key={g.pos} data-testid={`rank-${g.pos}`} className="num rounded border border-line px-1.5 py-0.5 text-[11px]" title={`${fmtPts(g.started)} started points at ${g.pos}, rank ${g.rank} in the league`}>
               <span className="font-semibold" style={{ color: posColor(g.pos) }}>{g.pos}</span> {g.rank}
             </span>
           ))}
@@ -1453,14 +1456,14 @@ export default function FranchisePlayers({ players, franchise }: { players: Play
     <section className="card">
       <CardHeader label="Longest tenures, biggest production" title="Franchise players" />
       {franchise.length === 0 ? <p className="px-4 py-3 text-xs text-muted">Nobody rostered yet.</p> : (
-        <ol className="grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-3">
+        <ol className="grid gap-px bg-line sm:grid-cols-2">
           {franchise.map((f, i) => (
             <li key={f.playerId} className="flex items-center gap-3 bg-surface px-4 py-3">
               <span className="num w-4 text-xs text-muted">{i + 1}</span>
               <Headshot players={players} id={f.playerId} size={36} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5"><PosPill pos={f.position} /><span className="truncate text-sm font-medium">{playerName(players, f.playerId)}</span></span>
-                <span className="num block text-xs text-muted">{f.from === f.to ? f.from : `${f.from}–${f.to}`} · {f.seasons} season{f.seasons === 1 ? '' : 's'} · {f.starts}/{f.weeks} started</span>
+                <span className="num block text-xs leading-snug text-muted">{f.from === f.to ? f.from : `${f.from}–${f.to}`} · {f.seasons} season{f.seasons === 1 ? '' : 's'} · {f.starts}/{f.weeks} started</span>
               </span>
               <span className="text-right"><span className="num block font-semibold">{fmtPts(f.started)}</span><span className="num block text-[10px] text-muted">hi {fmtPpg(f.high)}</span></span>
             </li>
@@ -1622,7 +1625,7 @@ export default function TeamPage() {
       <TeamsTabs teamsTo={`/teams/${season.year}`} />
       <ProfileHeader
         avatar={p.avatar} name={p.displayName}
-        eyebrow={<><span className="num">{season.year} season</span><SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} /><Link to={`/teams/${season.year}`} className="text-accent normal-case tracking-normal hover:underline">All teams</Link></>}
+        eyebrow={<><SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} /><Link to={`/teams/${season.year}`} className="text-accent normal-case tracking-normal hover:underline">All teams</Link></>}
         title={p.teamName}
         subtitle={<Link to={`/managers/${userId}`} className="hover:text-accent">{p.displayName} · manager page →</Link>}
         badges={[
@@ -1634,7 +1637,7 @@ export default function TeamPage() {
           { label: 'Record', value: p.row ? fmtRecord(p.row) : '—' },
           { label: 'Pts for', value: p.row ? fmtPpg(p.row.pf) : '—' },
           { label: 'Pts against', value: p.row ? fmtPpg(p.row.pa) : '—' },
-          { label: 'Finish', value: p.finish, sub: p.finishNote },
+          { label: 'Finish', value: p.finish, sub: p.finishNote === 'Regular-season rank' ? 'regular season' : p.finishNote },
           { label: 'Draft slot', value: p.draftSlot === null ? '—' : String(p.draftSlot) },
           { label: 'FAAB spent', value: `$${p.faab}` },
         ]}
@@ -1751,7 +1754,7 @@ export default function ManagerPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
           <SeasonsTable seasons={c.seasons} userId={userId} />
-          <SeasonShape label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
+          <SeasonShape wide label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
           <LineupDeskCard desk={c.lineup} />
           {c.draft && <DraftDeskCard desk={c.draft} players={players} />}
           <FranchisePlayers players={players} franchise={c.franchise} />

@@ -20,7 +20,7 @@ The site has standings, scores, draft and records, but no place that is *about o
 
 Computed by `lib/teamProfile.ts` `seasonProfile(season, userId, players)`.
 
-**Header card**: avatar (72px), eyebrow `2026 season · All teams`, team name (display name when no team name), handle, badge line `Scoring 2nd of 10 · Points allowed 5th most · Vs. everyone 40–15` (all-play from the standings row). Six tiles: Record, Pts for, Pts against, Finish, Draft slot, FAAB spent. Finish: `1st` / `2nd` / `3rd` / `Last` from honors for complete seasons, else the ordinal regular-season rank; `—` in season. FAAB = sum of `bid` over the manager's completed waiver claims. Footer strip: `Longest win streak N · Left on the bench X · Y% of the best lineup` (over every played game, playoffs included).
+**Header card**: avatar (72px), eyebrow `2026 season · All teams`, team name (display name when no team name), handle, badge line `Scoring 2nd of 10 · Points allowed 5th most · Vs. everyone 40–15` (all-play from the standings row). Six tiles: Record, Pts for, Pts against, Finish, Draft slot, FAAB spent. Finish: `1st` / `2nd` / `3rd` / `Last` from honors for complete seasons, else `#rank` with a "regular season" note so a seed is never mistaken for a title; `—` in season. FAAB = sum of `bid` over the manager's completed waiver claims. Footer strip: `Longest win streak N · Left on the bench X · Y% of the best lineup` (over every played game, playoffs included).
 
 **Left column** (1/3 on `lg`):
 - **Season shape** — SVG line of points per played week (accent, dots with tooltips) and a dashed league-average line; captions `138.3 a week` / `121.6 league average`.
@@ -47,7 +47,7 @@ Computed by `lib/teamProfile.ts` `careerProfile(seasons, history, userId)` plus 
 
 **Draft success**: average grade (mean of per-season draft rank → letter), value per draft, best draft (year, grade, value), the steal (best pick by value), the one that hurt (worst), per-season grade chips linking to draft boards. Hidden when no graded draft.
 
-**Franchise players**: top six players by weeks rostered then points started for this manager: headshot, position pill, name, `2023–2025 · 3 seasons`, `40/49 started`, points started, high. Kickers and defenses included.
+**Franchise players**: top six players by weeks rostered then points started for this manager, in two columns: headshot, position pill, name, `2023–2025 · 3 seasons`, `40/49 started`, points started, high. Kickers and defenses included.
 
 ## Data and helpers
 
