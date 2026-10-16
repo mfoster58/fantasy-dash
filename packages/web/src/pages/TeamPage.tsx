@@ -55,7 +55,7 @@ export default function TeamPage() {
           { label: 'Record', value: p.row ? fmtRecord(p.row) : '—' },
           { label: 'Pts for', value: p.row ? fmtPpg(p.row.pf) : '—' },
           { label: 'Pts against', value: p.row ? fmtPpg(p.row.pa) : '—' },
-          { label: 'Finish', value: p.finish.icon ? <span className="inline-flex items-center gap-1.5"><FinishIcon kind={p.finish.icon} className="text-[0.9em]" />{p.finish.label}</span> : p.finish.label, sub: p.finish.note ?? (inSeason ? 'season in progress' : null), tone: p.finish.place === 1 ? 'gold' : p.finish.place === p.teams ? 'loss' : null },
+          { label: 'Finish', value: p.finish.icon ? <span className="inline-flex items-center gap-1.5"><FinishIcon kind={p.finish.icon} />{p.finish.label}</span> : p.finish.label, sub: p.finish.note ?? (inSeason ? 'season in progress' : null), tone: p.finish.place === 1 ? 'gold' : p.finish.place === p.teams ? 'loss' : null },
           { label: 'Playoff seed', value: p.seed === null ? '—' : `#${p.seed}`, sub: p.seed === null ? null : complete ? (p.madePlayoffs ? 'made the playoffs' : `missed · top ${p.playoffSpots} play`) : (p.madePlayoffs ? `in the top ${p.playoffSpots}` : `outside the top ${p.playoffSpots}`), tone: p.seed === null ? null : p.madePlayoffs ? 'win' : 'loss' },
           { label: 'All-play', value: ap ? `${ap.w}–${ap.l}${ap.t ? `–${ap.t}` : ''}` : '—', sub: ap ? `${fmtWinPct(ap.pct)} vs everyone` : null },
         ]}

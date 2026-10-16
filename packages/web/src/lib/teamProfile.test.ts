@@ -1,5 +1,5 @@
-import type { BracketGame, History, Season, Transaction } from '@fantasy-dash/core';
-import { bestStarts, careerProfile, fieldedAs, finalPlacement, finishOf, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
+import type { BracketGame, DraftPick, History, Season, Transaction } from '@fantasy-dash/core';
+import { bestStarts, careerProfile, draftDesk, fieldedAs, finalPlacement, finishOf, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
 import { flattenLines } from './playerLines';
 import { bracketGame, game, line, players, season, side, standing, week } from '../test/playerFixtures';
 
@@ -175,7 +175,7 @@ describe('careerProfile', () => {
 
   it('summarises each season and the honors won', () => {
     expect(c.seasons).toHaveLength(1);
-    expect(c.seasons[0]).toMatchObject({ year: 2025, teamName: 'Team Alice', finish: '2nd', runnerUp: true, champion: false, ppw: 107.5, moves: 2 });
+    expect(c.seasons[0]).toMatchObject({ year: 2025, teamName: 'Team Alice', finish: '2nd', finishIcon: 'runnerUp', runnerUp: true, champion: false, ppw: 107.5, moves: 2 });
     expect(c.honors).toEqual({ champion: [], runnerUp: [2025], third: [], pointsTitle: [], lastPlace: [] });
     expect(c.longestWinStreak).toBe(1);
     expect(c.bestFinish).toBe('2nd');
@@ -196,5 +196,35 @@ describe('careerProfile', () => {
   it('has no draft desk without a draft', () => {
     expect(c.draft).toBeNull();
     expect(c.franchise.map((f) => f.playerId)).toEqual(['q1', 'r1', 'w1']);
+  });
+});
+
+describe('draftDesk', () => {
+  const pick = (userId: string, playerId: string, pickNo: number, value: number | null): DraftPick => ({
+    round: Math.ceil(pickNo / 2), pickNo, slot: ((pickNo - 1) % 2) + 1, userId, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: true,
+    pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value, tradedTo: null,
+  });
+  const drafted = (year: number, picks: DraftPick[]): Season => {
+    const s = build();
+    s.year = year;
+    s.draft = { draftId: `d${year}`, type: 'snake', rounds: 2, slotOrder: ['a', 'b'], picks, expectedCurve: null, baselines: {} };
+    return s;
+  };
+
+  it('lists one row per graded draft, newest first, with that year\'s highest and lowest valued pick', () => {
+    const desk = draftDesk([
+      drafted(2024, [pick('a', 'q1', 1, 30), pick('b', 't1', 2, 5), pick('a', 'r1', 4, -12), pick('b', 'w1', 3, 8)]),
+      drafted(2025, [pick('a', 'q1', 1, -20), pick('b', 't1', 2, 40), pick('a', 'r1', 4, 6), pick('b', 'w1', 3, 1)]),
+    ], 'a')!;
+    expect(desk.drafts).toBe(2);
+    expect(desk.seasons.map((s) => [s.year, s.grade, s.value, s.steal?.playerId, s.bust?.playerId])).toEqual([[2025, 'B-', -14, 'r1', 'q1'], [2024, 'A+', 18, 'q1', 'r1']]);
+    expect(desk.seasons[1].steal?.teams).toBe(2);
+    expect(desk.valuePerDraft).toBe(2);     // (18 − 14) / 2
+    expect(desk).not.toHaveProperty('career');
+  });
+
+  it('skips drafts where none of the manager\'s picks is valued, and is null with none at all', () => {
+    expect(draftDesk([drafted(2025, [pick('a', 'q1', 1, null), pick('b', 't1', 2, 3)])], 'a')).toBeNull();
+    expect(draftDesk([build()], 'a')).toBeNull();
   });
 });

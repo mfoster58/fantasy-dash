@@ -23,10 +23,28 @@ describe('SeasonShape', () => {
     expect(screen.getByText('L')).toBeInTheDocument();
   });
 
+  it('writes each period\'s finish above its dot with the trophy or toilet, under the given title', () => {
+    render(<SeasonShape wide title="PPG history" label="Season by season" mineCaption="110.0 a week" leagueCaption="league average" points={[
+      { label: '2023', mine: 110, league: 100, finish: { label: '4th', icon: null } },
+      { label: '2024', mine: 120, league: 100, finish: { label: '1st', icon: 'champion' } },
+      { label: '2025', mine: 90, league: 100, finish: { label: '10th', icon: 'toilet' } },
+      { label: '2026', mine: 105, league: 100 },
+    ]} />);
+    expect(screen.getByText('PPG history')).toBeInTheDocument();
+    expect(screen.getAllByTestId('finish-label')).toHaveLength(3);
+    expect(screen.getByText('4th')).toBeInTheDocument();
+    expect(screen.getByTestId('glyph-champion')).toBeInTheDocument();
+    expect(screen.getByTestId('glyph-toilet')).toBeInTheDocument();
+    expect(screen.queryByTestId('glyph-runnerUp')).toBeNull();
+    // the plot keeps room above the dots for the labels
+    expect(screen.getByRole('img').getAttribute('viewBox')).toBe('0 0 720 155');
+  });
+
   it('keeps accent dots and no band when points carry no result', () => {
     render(<SeasonShape wide label="Season by season" mineCaption="110.0 a week" leagueCaption="league average" points={[{ label: '2024', mine: 110, league: 100 }, { label: '2025', mine: 120, league: 100 }]} />);
     const dots = screen.getByRole('img').querySelectorAll('circle');
     expect([...dots].map((d) => d.getAttribute('fill'))).toEqual(['var(--accent)', 'var(--accent)']);
     expect(screen.queryByTestId('playoff-line')).toBeNull();
+    expect(screen.getByText('Season shape')).toBeInTheDocument();
   });
 });

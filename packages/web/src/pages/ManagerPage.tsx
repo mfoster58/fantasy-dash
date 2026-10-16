@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useLoaderData, useParams } from 'react-router';
+import { Link, useLoaderData, useNavigate, useParams } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import { TrophyIcon } from '../components/Icons';
 import DraftDeskCard from '../components/teams/DraftDeskCard';
@@ -20,6 +20,7 @@ import { careerProfile, ordinal } from '../lib/teamProfile';
 export default function ManagerPage() {
   const seasons = useLoaderData() as Season[];
   const { userId = '' } = useParams();
+  const navigate = useNavigate();
   const c = useMemo(() => careerProfile(seasons, history, userId, players), [seasons, userId]);
   const records = useMemo(() => managerRecords(allTimeContext(seasons, players, history.managers), userId), [seasons, userId]);
   if (!history.managers[userId]) return <section className="space-y-4"><TeamsTabs teamsTo={`/teams/${currentSeason.year}`} /><p className="text-sm text-muted">No such manager.</p></section>;
@@ -31,7 +32,12 @@ export default function ManagerPage() {
         avatar={c.avatar} name={c.name}
         eyebrow={<><span>Manager</span>{c.allTime && <span className="num normal-case tracking-normal text-muted">all-time rank {ordinal(c.allTime.rank)} of {c.managers}</span>}</>}
         title={c.name}
-        subtitle={latest && <Link to={`/teams/${latest.year}/${userId}`} className="hover:text-accent">{latest.teamName} · {latest.year} team page →</Link>}
+        subtitle={<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <select aria-label="Manager" value={userId} onChange={(e) => navigate(`/managers/${e.target.value}`)} className="rounded border border-line bg-surface px-2 py-0.5 text-sm text-ink">
+            {history.allTime.map((r) => <option key={r.userId} value={r.userId}>{history.managers[r.userId]?.displayName ?? r.userId}</option>)}
+          </select>
+          {latest && <Link to={`/teams/${latest.year}/${userId}`} className="hover:text-accent">{latest.teamName} · {latest.year} team page →</Link>}
+        </span>}
         badges={[
           <span className="num">Seasons <b className="text-ink">{c.seasons.length}</b> · {c.seasons.length ? `${c.seasons[c.seasons.length - 1].year}–${c.seasons[0].year}` : ''}</span>,
           c.titles > 0 ? <span className="inline-flex items-center gap-1 text-gold"><TrophyIcon /> {c.titles} title{c.titles === 1 ? '' : 's'}</span> : null,
@@ -51,14 +57,14 @@ export default function ManagerPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
           <SeasonsTable seasons={c.seasons} userId={userId} />
-          <SeasonShape wide label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
+          <SeasonShape wide title="PPG history" label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw, finish: s.finish === '—' ? undefined : { label: s.finish, icon: s.finishIcon } }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
           <LineupDeskCard desk={c.lineup} />
           {c.draft && <DraftDeskCard desk={c.draft} players={players} />}
           <FranchisePlayers players={players} franchise={c.franchise} />
+          <Rivals rivalries={c.rivalries} managers={history.managers} userId={userId} />
         </div>
         <div className="space-y-4">
           <LeagueRecords records={records} />
-          <Rivals rivalries={c.rivalries} managers={history.managers} userId={userId} />
         </div>
       </div>
     </section>
