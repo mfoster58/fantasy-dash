@@ -146,6 +146,8 @@ export const KICKING_DEF = new Set(['K', 'DEF']);
 export const skillOnly = (ls: PlayerLine[]) => ls.filter((l) => !KICKING_DEF.has(l.position));
 export const matchesPos = (position: string, pos: PosFilter) =>
   pos === 'All' ? true : pos === 'FLEX' ? ['RB', 'WR', 'TE'].includes(position) : position === pos;
+/** whether the player's directory position passes the board's position filter */
+export const posOk = (ctx: BoardContext, playerId: string): boolean => matchesPos(ctx.players[playerId]?.position ?? '?', ctx.pos);
 
 const tieId = (x: { playerId?: string | null; userId?: string | null }) => x.playerId ?? x.userId ?? '';
 /** Sort by value (desc by default), then secondary desc, newest (year, week) desc, subject id asc, then cap at MAX_ROWS. */

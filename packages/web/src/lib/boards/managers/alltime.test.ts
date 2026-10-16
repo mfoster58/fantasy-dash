@@ -10,7 +10,7 @@ const pick = (rows: ReturnType<typeof mCareerWins>, id: string) => rows.find((r)
 
 describe('manager all-time boards', () => {
   it('counts regular-season wins and shows the record', () => {
-    expect(mCareerWins(ctx).map((r) => [r.userId, r.value, r.detail, r.meta])).toEqual([['a', 1, '1-1-1', '2024–2025 · 2 seasons'], ['b', 1, '1-1-1', '2024–2025 · 2 seasons']]);
+    expect(mCareerWins(ctx).map((r) => [r.userId, r.value, r.detail, r.meta])).toEqual([['a', 1, '1-1-1', '2024–2025'], ['b', 1, '1-1-1', '2024–2025']]);
   });
   it('rates win % with ties as half, only for managers with a complete season', () => {
     expect(pick(mWinPct(ctx), 'a')).toMatchObject({ valueLabel: '.500' });
@@ -23,18 +23,19 @@ describe('manager all-time boards', () => {
     expect(pick(mCareerPpg(ctx), 'a')).toMatchObject({ value: 90, valueLabel: '90.0' });
   });
   it('counts honors, berths and playoff wins', () => {
-    expect(mTitles(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 1 })]);
+    // honours list the years underneath rather than a season count
+    expect(mTitles(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 1, detail: '2024' })]);
     expect(mFinals(ctx).map((r) => [r.userId, r.value])).toEqual([['a', 1], ['b', 1]]);
-    expect(mBerths(ctx).map((r) => [r.userId, r.value])).toEqual([['a', 1], ['b', 1]]);
+    expect(mBerths(ctx).map((r) => [r.userId, r.value, r.detail])).toEqual([['a', 1, '2024'], ['b', 1, '2024']]);
     expect(mPlayoffWins(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 1 })]);
-    expect(mBerthsNoTitle(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1 })]);
-    expect(mLastPlaces(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1 })]);
+    expect(mBerthsNoTitle(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1, detail: '2024' })]);
+    expect(mLastPlaces(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1, detail: '2024' })]);
     expect(mSeasons(ctx).map((r) => r.value)).toEqual([2, 2]);
     expect(mWeeklyHighs(ctx)).toEqual([]); // fixture standings carry 0 highs
   });
   it('rates lineup efficiency over every game played, playoffs included', () => {
     // a: 420 of 460 = 91.3%; b: 330 of 370 = 89.2%
-    expect(mEfficiency(ctx).map((r) => [r.userId, r.valueLabel])).toEqual([['a', '91.3%'], ['b', '89.2%']]);
+    expect(mEfficiency(ctx).map((r) => [r.userId, r.valueLabel, r.detail])).toEqual([['a', '91.3%', '4 games'], ['b', '89.2%', '4 games']]);
     expect(mWorstEfficiency(ctx)[0].userId).toBe('b');
   });
   it('is registered in order', () => {

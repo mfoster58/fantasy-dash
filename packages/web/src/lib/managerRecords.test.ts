@@ -26,6 +26,11 @@ describe('managerRecords', () => {
     expect(managerRecords(ctx, 'b').find((r) => r.boardId === 'mCareerPoints')).toMatchObject({ rank: 2 });
   });
 
+  it('prefixes the detail with the player a row names, so the profile still says who', () => {
+    const picked = { ...ctx, playerSeasons: { 2024: { q1: { points: 58, games: 2, posRank: 1 } } }, drafts: { 2024: { draftId: 'D', type: 'snake' as const, rounds: 1, slotOrder: ['a', 'b'], picks: [{ round: 1, pickNo: 1, slot: 1, userId: 'a', playerId: 'q1', isKeeper: false, posDraftRank: 1, seasonPoints: 58, gamesPlayed: 2, ppg: 29, healthy: true, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value: 12, tradedTo: null }], expectedCurve: null, baselines: {} } } };
+    expect(managerRecords(picked, 'a').find((r) => r.boardId === 'mdSteal')).toMatchObject({ rank: 1, detail: 'Quincy One · Rd 1, pick 1 · QB1 → QB1 · 29.0 PPG' });
+  });
+
   it('honours maxRank', () => {
     expect(managerRecords(ctx, 'b', 1).every((r) => r.rank === 1)).toBe(true);
   });

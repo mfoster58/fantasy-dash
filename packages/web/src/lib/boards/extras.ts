@@ -4,11 +4,10 @@ import type { PlayerLine } from '../playerLines';
 import { longestStartRun } from '../ironman';
 import { waiverClaims, type WaiverClaim } from '../waivers';
 import type { BoardContext, BoardRow, Direction, DraftValue } from './shared';
-import { KICKING_DEF, careerBoard, fmt1, groupBy, inYear, intLabel, matchesPos, metaOf, momentBoard, plural, rank, round1, skillOnly, started, sum, toneOf } from './shared';
+import { KICKING_DEF, careerBoard, fmt1, groupBy, inYear, intLabel, metaOf, momentBoard, plural, posOk, rank, round1, skillOnly, started, sum, toneOf } from './shared';
 
 const txInScope = (ctx: BoardContext): { year: number; tx: Transaction }[] =>
   ctx.transactions.filter((s) => inYear(ctx, s.year)).flatMap((s) => s.transactions.map((tx) => ({ year: s.year, tx })));
-const posOk = (ctx: BoardContext, playerId: string) => matchesPos(ctx.players[playerId]?.position ?? '?', ctx.pos);
 const seasonsMeta = (ctx: BoardContext, years: Set<number>) => (ctx.year === null ? plural(years.size, 'season') : String(ctx.year));
 
 export const benchBlunder = (ctx: BoardContext): BoardRow[] => momentBoard(ctx.lines.filter((l) => !l.started), (l) => l.points, fmtPts);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { boardsFor } from '../../playerBoards';
 import { mctx } from './shared.test';
-import { mpBlowout, mpClosest, mpFinalsLost, mpHigh, mpLow, mpLowSeed, mpToiletApps, mpToiletWins } from './playoffs';
+import { mpBlowout, mpClosest, mpConsolationApps, mpFinalsLost, mpHigh, mpLow, mpLowSeed, mpToiletApps, mpToiletWins } from './playoffs';
 
 // the only championship-bracket game: 2024 wk3 Final, a 150–60 b. a is the 2024 champion as the 1 seed; b runner-up.
 const ctx = mctx();
@@ -23,7 +23,12 @@ describe('manager playoff boards', () => {
     expect(mpToiletApps(toilet)).toEqual([expect.objectContaining({ userId: 'a', value: 1, detail: '1 won' })]);
     expect(mpToiletWins(toilet)).toEqual([expect.objectContaining({ userId: 'a', value: 1 })]);
   });
-  it('is registered in order', () => {
-    expect(boardsFor('managers', 'mplayoffs').map((b) => b.id)).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'mpFinalsLost', 'mpToiletApps', 'mpToiletWins']);
+  it('counts seasons with a consolation-bracket game, listing the years', () => {
+    expect(mpConsolationApps(ctx)).toEqual([]);
+    const twice = { ...toilet, teamGames: [...toilet.teamGames, { ...toilet.teamGames[0], gameId: '2024-8-1', week: 8, tag: 'Cons-R1' as const, postseason: false, consolation: true }] };
+    expect(mpConsolationApps(twice)).toEqual([expect.objectContaining({ userId: 'a', value: 1, detail: '2024' })]); // two games, one season
+  });
+  it('is registered in order, with the best non-champion board moved over from Seasons', () => {
+    expect(boardsFor('managers', 'mplayoffs').map((b) => b.id)).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'msNoTitle', 'mpFinalsLost', 'mpConsolationApps', 'mpToiletApps', 'mpToiletWins']);
   });
 });

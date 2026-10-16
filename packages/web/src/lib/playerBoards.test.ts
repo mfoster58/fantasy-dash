@@ -259,12 +259,12 @@ describe('BOARDS registry by tab and sub-tab', () => {
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);
     expect(ids('managers', 'malltime')).toEqual(['mCareerWins', 'mWinPct', 'mWorstWinPct', 'mCareerPoints', 'mCareerPpg', 'mPointsAgainst', 'mTitles', 'mFinals', 'mBerths', 'mPlayoffWins', 'mBerthsNoTitle', 'mLastPlaces', 'mSeasons', 'mEfficiency', 'mWorstEfficiency', 'mWeeklyHighs']);
-    expect(ids('managers', 'mseasons')).toEqual(['msPoints', 'msFewest', 'msPpg', 'msAgainst', 'msRecord', 'msWorstRecord', 'msDiff', 'msAllPlay', 'msWorstAllPlay', 'msLucky', 'msUnlucky', 'msNoTitle', 'msEfficiency', 'msWorstEfficiency', 'msBench']);
+    expect(ids('managers', 'mseasons')).toEqual(['msPoints', 'msFewest', 'msPpg', 'msAgainst', 'msRecord', 'msWorstRecord', 'msDiff', 'msAllPlay', 'msWorstAllPlay', 'msLucky', 'msUnlucky', 'msEfficiency', 'msWorstEfficiency', 'msBench']);
     expect(ids('managers', 'mgames')).toEqual(['mgHigh', 'mgLow', 'mgLossHigh', 'mgWinLow', 'mgBlowout', 'mgClosest', 'mgCombinedHigh', 'mgCombinedLow', 'mgPerfect', 'mgBench']);
     expect(ids('managers', 'mstreaks')).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mDrought', 'mRun100', 'mHighRun']);
-    expect(ids('managers', 'mplayoffs')).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'mpFinalsLost', 'mpToiletApps', 'mpToiletWins']);
+    expect(ids('managers', 'mplayoffs')).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'msNoTitle', 'mpFinalsLost', 'mpConsolationApps', 'mpToiletApps', 'mpToiletWins']);
     expect(ids('managers', 'mdraft')).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdFirstRound']);
-    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabSeason', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtQuickCut']);
+    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
   });
   it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
