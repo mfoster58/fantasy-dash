@@ -32,9 +32,9 @@ describe('managerRecords', () => {
   });
 
   it('shares a rank between tied rows, as the Records page crowns them', () => {
-    // both managers have 1 season: mSeasons ties at 1, so each is rank 1
-    expect(managerRecords(ctx, 'b').find((r) => r.boardId === 'mSeasons')).toMatchObject({ rank: 1 });
-    expect(managerRecords(ctx, 'a').find((r) => r.boardId === 'mSeasons')).toMatchObject({ rank: 1 });
+    // champion and runner-up each played 1 Final: mFinals ties at 1, so each is rank 1
+    expect(managerRecords(ctx, 'b').find((r) => r.boardId === 'mFinals')).toMatchObject({ rank: 1 });
+    expect(managerRecords(ctx, 'a').find((r) => r.boardId === 'mFinals')).toMatchObject({ rank: 1 });
   });
 
   it('honours maxRank', () => {

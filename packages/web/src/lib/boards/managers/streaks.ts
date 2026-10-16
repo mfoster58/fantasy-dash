@@ -49,9 +49,3 @@ export const mHighRun = (ctx: BoardContext): BoardRow[] => runRows(ctx, (a) => l
 export const mPlayoffStreak = (ctx: BoardContext): BoardRow[] => runRows(ctx, (a) => longestSeasonRun(a.seasons, (s) => s.playoffBerth, latestComplete(ctx)), seasonSpan);
 
 /** Complete seasons since the manager's last title (or since their first season). */
-export const mDrought = (ctx: BoardContext): BoardRow[] => runRows(ctx, (a) => {
-  const sorted = a.seasons.filter((s) => s.complete).sort((x, y) => x.year - y.year);
-  const lastTitle = sorted.map((s) => s.champion).lastIndexOf(true);
-  const since = sorted.slice(lastTitle + 1);
-  return since.length ? { length: since.length, from: { year: since[0].year, week: 0 }, to: { year: since[since.length - 1].year, week: 0 }, active: since[since.length - 1].year === latestComplete(ctx) } : null;
-}, seasonSpan, 'and counting');

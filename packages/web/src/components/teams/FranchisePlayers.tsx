@@ -7,16 +7,24 @@ import { fmtPpg, fmtPts } from '../../lib/format';
 import { playerName } from '../../lib/players';
 import type { FranchisePlayer } from '../../lib/teamProfile';
 
-const PREVIEW = 6;
+const TOP = 10;
+const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'K', 'DEF'] as const;
+type Pos = (typeof POSITIONS)[number];
 
-/** Longest tenures, biggest production: the players this manager kept around and started most; six shown, the rest behind a button. */
+/** The ten players who scored most while started for this manager, filtered by position. */
 export default function FranchisePlayers({ players, franchise }: { players: PlayerDirectory; franchise: FranchisePlayer[] }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? franchise : franchise.slice(0, PREVIEW);
+  const [pos, setPos] = useState<Pos>('All');
+  const shown = (pos === 'All' ? franchise : franchise.filter((f) => f.position === pos)).slice(0, TOP);
   return (
     <section className="card">
-      <CardHeader title="Franchise players" />
-      {franchise.length === 0 ? <p className="px-4 py-3 text-xs text-muted">Nobody rostered yet.</p> : (
+      <CardHeader title="Franchise players" aside={
+        <span className="flex rounded-full bg-surface-2 p-0.5" role="group" aria-label="Position">
+          {POSITIONS.map((p) => (
+            <button key={p} type="button" aria-pressed={pos === p} onClick={() => setPos(p)} className={`rounded-full px-2 py-0.5 text-xs ${pos === p ? 'bg-ink text-bg' : 'text-muted hover:text-ink'}`}>{p}</button>
+          ))}
+        </span>
+      } />
+      {shown.length === 0 ? <p className="px-4 py-3 text-xs text-muted">Nobody rostered yet.</p> : (
         <ol className="grid gap-px bg-line sm:grid-cols-2">
           {shown.map((f, i) => (
             <li key={f.playerId} className="flex items-center gap-3 bg-surface px-4 py-3">
@@ -31,10 +39,6 @@ export default function FranchisePlayers({ players, franchise }: { players: Play
           ))}
         </ol>
       )}
-      <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2 text-xs text-muted">
-        <span>Ranked on weeks rostered and points scored while started.</span>
-        {franchise.length > PREVIEW && <button type="button" onClick={() => setAll((v) => !v)} className="shrink-0 hover:text-ink">{all ? 'Show fewer' : `Show ${franchise.length - PREVIEW} more`}</button>}
-      </div>
     </section>
   );
 }

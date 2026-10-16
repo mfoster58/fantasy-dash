@@ -27,7 +27,7 @@ export default function LeagueRecords({ records }: Props) {
                     <span className={`num w-5 text-center text-xs ${r.rank === 1 ? 'font-bold text-gold' : 'text-muted'}`}>{r.rank === 1 ? <CrownIcon title="League record" /> : r.rank}</span>
                     <span className="min-w-0 flex-1">
                       <span className={`block truncate ${r.rank === 1 ? 'font-medium' : ''}`}>{r.title}</span>
-                      <span className="block truncate text-xs text-muted">{r.meta}{r.detail ? ` · ${r.detail}` : ''}</span>
+                      <span className="block truncate text-xs text-muted">{[r.meta, r.detail].filter(Boolean).join(' · ')}</span>
                     </span>
                     <span className={`num font-semibold ${r.rank === 1 ? 'text-gold' : ''}`}>{r.valueLabel}</span>
                   </Link>

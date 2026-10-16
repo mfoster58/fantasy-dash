@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { boardsFor } from '../../playerBoards';
 import { mctx } from './shared.test';
-import { mBerths, mBerthsNoTitle, mCareerPoints, mCareerPpg, mCareerWins, mEfficiency, mFinals, mLastPlaces, mPlayoffWins, mPointsAgainst, mSeasons, mTitles, mWeeklyHighs, mWinPct, mWorstEfficiency, mWorstWinPct } from './alltime';
+import { game, season, side, standing, week } from '../../../test/playerFixtures';
+import { managerSeasonsOf, teamGamesOf } from '../../managerGames';
+import { mBerths, mBerthsNoTitle, mCareerPoints, mCareerPpg, mCareerWins, mEfficiency, mFinals, mLastPlaces, mPlayoffWins, mLuckyWins, mPointsAgainst, mTitles, mUnluckyLosses, mWeeklyHighs, mWinPct, mWorstEfficiency, mWorstWinPct, weekMedians } from './alltime';
 
 // fixture recap (shared.test): 2024 complete — a 1-0-1 (pf 200, pa 170), champion, b runner-up and last place; Final a 150–60.
 // 2025 in progress — b 1-0 (100), a 0-1 (70). Games: a 120/80/150/70 with ceilings +10; b 90/80/60/100.
@@ -30,7 +32,6 @@ describe('manager all-time boards', () => {
     expect(mPlayoffWins(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 1 })]);
     expect(mBerthsNoTitle(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1, detail: '2024' })]);
     expect(mLastPlaces(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 1, detail: '2024' })]);
-    expect(mSeasons(ctx).map((r) => r.value)).toEqual([2, 2]);
     expect(mWeeklyHighs(ctx)).toEqual([]); // fixture standings carry 0 highs
   });
   it('rates lineup efficiency over every game played, playoffs included', () => {
@@ -39,6 +40,19 @@ describe('manager all-time boards', () => {
     expect(mWorstEfficiency(ctx)[0].userId).toBe('b');
   });
   it('is registered in order', () => {
-    expect(boardsFor('managers', 'malltime').map((b) => b.id)).toEqual(['mCareerWins', 'mWinPct', 'mWorstWinPct', 'mCareerPoints', 'mCareerPpg', 'mPointsAgainst', 'mTitles', 'mFinals', 'mBerths', 'mPlayoffWins', 'mBerthsNoTitle', 'mLastPlaces', 'mSeasons', 'mEfficiency', 'mWorstEfficiency', 'mWeeklyHighs']);
+    expect(boardsFor('managers', 'malltime').map((b) => b.id)).toEqual(['mCareerWins', 'mWinPct', 'mWorstWinPct', 'mCareerPoints', 'mCareerPpg', 'mPointsAgainst', 'mTitles', 'mFinals', 'mBerths', 'mPlayoffWins', 'mBerthsNoTitle', 'mLastPlaces', 'mEfficiency', 'mWorstEfficiency', 'mWeeklyHighs', 'mLuckyWins', 'mUnluckyLosses']);
+  });
+
+  it('counts wins under and losses over the week\'s league median score', () => {
+    // scores 90, 100, 110, 120: median 105; a wins at 100 (lucky), d loses at 110 (unlucky)
+    const s = season(2024, [week(1, [game(2024, 1, 1, side('a', 100, []), side('b', 90, [])), game(2024, 1, 2, side('c', 120, []), side('d', 110, []))])]);
+    s.standings = [standing('c', 1, 1, 0, 0, 120, 110), standing('a', 2, 1, 0, 0, 100, 90), standing('d', 3, 0, 1, 0, 110, 120), standing('b', 4, 0, 1, 0, 90, 100)];
+    const teamGames = teamGamesOf([s]);
+    const c = { ...mctx(), teamGames, managerSeasons: managerSeasonsOf([s], teamGames) };
+    expect(weekMedians(teamGames).get('2024-1')).toBe(105);
+    expect(mLuckyWins(c)).toEqual([expect.objectContaining({ userId: 'a', value: 1, detail: 'of 1 win' })]);
+    expect(mUnluckyLosses(c)).toEqual([expect.objectContaining({ userId: 'd', value: 1, detail: 'of 1 loss' })]);
+    expect(mUnluckyLosses({ ...c, teamGames: [...teamGames, ...teamGames.map((g) => ({ ...g, week: 2, gameId: `${g.gameId}-2` }))] })[0].detail).toBe('of 2 losses');
+    expect(mLuckyWins(ctx)).toEqual([]);   // two teams a week: the winner is never under the median
   });
 });

@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { Link, useLoaderData, useNavigate, useParams } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
-import { TrophyIcon } from '../components/Icons';
+import AllTimeTeam from '../components/teams/AllTimeTeam';
 import DraftDeskCard from '../components/teams/DraftDeskCard';
 import FranchisePlayers from '../components/teams/FranchisePlayers';
 import LeagueRecords from '../components/teams/LeagueRecords';
-import LineupDeskCard from '../components/teams/LineupDeskCard';
+import EfficiencyCard from '../components/teams/EfficiencyCard';
 import ProfileHeader from '../components/teams/ProfileHeader';
 import Rivals from '../components/teams/Rivals';
 import SeasonShape from '../components/teams/SeasonShape';
@@ -24,7 +24,6 @@ export default function ManagerPage() {
   const c = useMemo(() => careerProfile(seasons, history, userId, players), [seasons, userId]);
   const records = useMemo(() => managerRecords(allTimeContext(seasons, players, history.managers), userId), [seasons, userId]);
   if (!history.managers[userId]) return <section className="space-y-4"><TeamsTabs teamsTo={`/teams/${currentSeason.year}`} /><p className="text-sm text-muted">No such manager.</p></section>;
-  const latest = c.seasons[0];
   return (
     <section className="space-y-4">
       <TeamsTabs teamsTo={`/teams/${currentSeason.year}`} />
@@ -36,31 +35,25 @@ export default function ManagerPage() {
           <select aria-label="Manager" value={userId} onChange={(e) => navigate(`/managers/${e.target.value}`)} className="rounded border border-line bg-surface px-2 py-0.5 text-sm text-ink">
             {history.allTime.map((r) => <option key={r.userId} value={r.userId}>{history.managers[r.userId]?.displayName ?? r.userId}</option>)}
           </select>
-          {latest && <Link to={`/teams/${latest.year}/${userId}`} className="hover:text-accent">{latest.teamName} · {latest.year} team page →</Link>}
         </span>}
-        badges={[
-          <span className="num">Seasons <b className="text-ink">{c.seasons.length}</b> · {c.seasons.length ? `${c.seasons[c.seasons.length - 1].year}–${c.seasons[0].year}` : ''}</span>,
-          c.titles > 0 ? <span className="inline-flex items-center gap-1 text-gold"><TrophyIcon /> {c.titles} title{c.titles === 1 ? '' : 's'}</span> : null,
-          <span>Longest win streak <b className="num text-ink">{c.longestWinStreak}</b></span>,
-          <span>Week highs <b className="num text-ink">{c.weekHighs}</b></span>,
-        ].filter(Boolean)}
         tiles={[
           { label: 'Record', value: fmtRecord(c.record) },
           { label: 'Win %', value: fmtWinPct(c.winPct) },
           { label: 'Points for', value: fmtPpg(c.pf) },
-          { label: 'Playoffs', value: `${c.playoffApps}/${c.seasons.length}` },
-          { label: 'Best finish', value: c.bestFinish },
+          { label: 'Playoffs', value: <span className="whitespace-nowrap">{c.playoffApps} <span className="text-sm font-normal text-muted">out of</span> {c.completeSeasons}</span> },
+          { label: 'Weekly highs', value: String(c.weekHighs) },
           { label: 'Titles', value: String(c.titles) },
         ]}
-        chips={<><span className="section-label text-[10px]">Fielded as</span>{c.fieldedAs.map((f) => <span key={`${f.teamName}-${f.from}`} className="rounded-full border border-line px-2.5 py-0.5"><span className="font-medium">{f.teamName}</span> <span className="num text-muted">{f.from === f.to ? f.from : `${f.from}–${f.to}`}</span></span>)}</>}
+        chips={<><span className="section-label text-[10px]">Team history</span>{c.fieldedAs.map((f) => <Link key={`${f.teamName}-${f.from}`} to={`/teams/${f.to}/${userId}`} className="rounded-full border border-line px-3 py-1 text-sm hover:border-accent hover:text-accent"><span className="font-semibold">{f.teamName}</span> <span className="num text-muted">{f.from === f.to ? f.from : `${f.from}–${f.to}`}</span></Link>)}</>}
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
           <SeasonsTable seasons={c.seasons} userId={userId} />
           <SeasonShape wide title="PPG history" label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw, finish: s.finish === '—' ? undefined : { label: s.finish, icon: s.finishIcon } }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
-          <LineupDeskCard desk={c.lineup} />
+          <EfficiencyCard desk={c.lineup} />
           {c.draft && <DraftDeskCard desk={c.draft} players={players} />}
           <FranchisePlayers players={players} franchise={c.franchise} />
+          <AllTimeTeam team={c.allTimeTeam} players={players} userId={userId} />
           <Rivals rivalries={c.rivalries} managers={history.managers} userId={userId} />
         </div>
         <div className="space-y-4">

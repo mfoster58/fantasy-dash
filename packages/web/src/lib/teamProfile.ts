@@ -1,6 +1,7 @@
 import type { BracketGame, DraftPick, History, PlayerDirectory, PlayerId, PlayoffTag, Season, SeasonStatus, StandingRow, Transaction, UserId, Week, WLT } from '@fantasy-dash/core';
 import { teamGamesOf, type TeamGame } from './managerGames';
 import { letterGrade, managerDraftSummaries } from './draft';
+import { allTimeTeam, type AllTimeTeam } from './allTimeTeam';
 import { flattenLines, type PlayerLine } from './playerLines';
 import { waiverClaims } from './waivers';
 import type { FinishKind } from '../components/Icons';
@@ -325,8 +326,8 @@ export interface FranchisePlayer {
   high: number;
 }
 
-/** Longest tenures, biggest production: ranked on weeks rostered, then points started. */
-export function franchisePlayers(lines: PlayerLine[], userId: UserId, n = 6): FranchisePlayer[] {
+/** Everyone who has been on the roster, most points while started first, then starts, then weeks rostered. */
+export function franchisePlayers(lines: PlayerLine[], userId: UserId, n = Infinity): FranchisePlayer[] {
   const acc = new Map<PlayerId, FranchisePlayer & { weekKeys: Set<string>; years: Set<number> }>();
   for (const l of lines) {
     if (l.userId !== userId) continue;
@@ -337,7 +338,7 @@ export function franchisePlayers(lines: PlayerLine[], userId: UserId, n = 6): Fr
   }
   return [...acc.values()]
     .map(({ weekKeys, years, ...f }) => ({ ...f, weeks: weekKeys.size, seasons: years.size, started: round2(f.started), high: round2(f.high) }))
-    .sort((a, b) => b.weeks - a.weeks || b.started - a.started || (a.playerId < b.playerId ? -1 : 1))
+    .sort((a, b) => b.started - a.started || b.starts - a.starts || b.weeks - a.weeks || (a.playerId < b.playerId ? -1 : 1))
     .slice(0, n);
 }
 
@@ -423,7 +424,8 @@ export interface CareerProfile {
   userId: UserId; name: string; avatar: string | null;
   allTime: History['allTime'][number] | undefined; managers: number;
   record: WLT; winPct: number; pf: number; pa: number;
-  playoffApps: number; titles: number; bestFinish: string;
+  /** complete seasons only, and the berths within them */
+  completeSeasons: number; playoffApps: number; titles: number; bestFinish: string;
   fieldedAs: FieldedAs[];
   seasons: CareerSeasonLine[];
   honors: Record<'champion' | 'runnerUp' | 'third' | 'pointsTitle' | 'lastPlace', number[]>;
@@ -431,6 +433,7 @@ export interface CareerProfile {
   lineup: LineupDesk;
   draft: DraftDesk | null;
   franchise: FranchisePlayer[];
+  allTimeTeam: AllTimeTeam;
   longestWinStreak: number;
   weekHighs: number;
 }
@@ -441,6 +444,7 @@ const finishKey = (f: string) => parseInt(f, 10) || 999;
 /** Everything one manager's career page shows. */
 export function careerProfile(seasons: Season[], history: History, userId: UserId, players: PlayerDirectory): CareerProfile {
   const games = teamGamesOf(seasons).filter((g) => g.userId === userId);
+  const playerLines = flattenLines(seasons, players);
   const mine = seasons.filter((s) => s.standings.some((r) => r.userId === userId)).sort((a, b) => b.year - a.year);
   const lines: CareerSeasonLine[] = mine.map((s) => {
     const row = s.standings.find((r) => r.userId === userId);
@@ -496,14 +500,15 @@ export function careerProfile(seasons: Season[], history: History, userId: UserI
     allTime: history.allTime.find((r) => r.userId === userId), managers: history.allTime.length,
     record, winPct: played ? (record.w + record.t / 2) / played : 0,
     pf: round2(rows.reduce((t, r) => t + r.pf, 0)), pa: round2(rows.reduce((t, r) => t + r.pa, 0)),
-    playoffApps: lines.filter((l) => l.playoffBerth).length, titles: honors.champion.length, bestFinish,
+    completeSeasons: lines.filter((l) => l.status === 'complete').length, playoffApps: lines.filter((l) => l.status === 'complete' && l.playoffBerth).length, titles: honors.champion.length, bestFinish,
     fieldedAs: fieldedAs(seasons, userId),
     seasons: lines,
     honors,
     rivalries,
     lineup: lineupDesk(games),
     draft: draftDesk(seasons, userId),
-    franchise: franchisePlayers(flattenLines(seasons, players), userId, 12),
+    franchise: franchisePlayers(playerLines, userId),
+    allTimeTeam: allTimeTeam(playerLines, userId, seasons),
     longestWinStreak: longestWinStreak(games),
     weekHighs: games.filter((g) => g.weekHigh).length,
   };
