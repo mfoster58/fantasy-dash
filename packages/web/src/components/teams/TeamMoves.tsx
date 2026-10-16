@@ -12,15 +12,21 @@ interface Props { moves: Transaction[]; bestPickup: SeasonProfile['bestPickup'];
 type Filter = 'all' | 'waiver' | 'free_agent' | 'trade';
 const FILTERS: { id: Filter; label: string }[] = [{ id: 'all', label: 'All' }, { id: 'waiver', label: 'Waivers' }, { id: 'free_agent', label: 'Free agents' }, { id: 'trade', label: 'Trades' }];
 const TYPE_LABEL: Record<Transaction['type'], string> = { waiver: 'Waiver', free_agent: 'Free agent', trade: 'Trade', commissioner: 'Commish' };
+/** date groups shown before "see more" */
+const RECENT_DAYS = 5;
 const dateOf = (ms: number) => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-/** The manager's season transaction log with type filters and the best pickup. */
+/** The manager's season transaction log: the last few days of moves with type filters, the best pickup, and the rest behind "see more". */
 export default function TeamMoves({ moves, bestPickup, players, seasonTeams, managers, userId }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
+  const [expanded, setExpanded] = useState(false);
   const count = (f: Filter) => (f === 'all' ? moves.length : moves.filter((m) => m.type === f).length);
   const shown = moves.filter((m) => filter === 'all' || m.type === filter);
   const byDate = new Map<string, Transaction[]>();
   for (const m of shown) byDate.set(dateOf(m.created), [...(byDate.get(dateOf(m.created)) ?? []), m]);
+  const days = [...byDate.entries()];
+  const visible = expanded ? days : days.slice(0, RECENT_DAYS);
+  const hidden = days.slice(visible.length).reduce((t, [, list]) => t + list.length, 0);
   const player = (id: PlayerId, sign: '+' | '−') => (
     <span key={`${sign}${id}`} className="flex items-center gap-1.5 text-sm">
       <span className={`num w-3 text-center ${sign === '+' ? 'text-win' : 'text-loss'}`}>{sign}</span>
@@ -42,7 +48,7 @@ export default function TeamMoves({ moves, bestPickup, players, seasonTeams, man
         ))}
       </div>
       {shown.length === 0 && <p className="px-4 pb-3 text-xs text-muted">No moves yet.</p>}
-      {[...byDate.entries()].map(([date, list]) => (
+      {visible.map(([date, list]) => (
         <div key={date}>
           <div className="section-label border-y border-line bg-surface-2 px-4 py-1 text-[10px]">{date}</div>
           <ul className="divide-y divide-line">
@@ -66,6 +72,11 @@ export default function TeamMoves({ moves, bestPickup, players, seasonTeams, man
           </ul>
         </div>
       ))}
+      {(hidden > 0 || expanded) && days.length > RECENT_DAYS && (
+        <button type="button" onClick={() => setExpanded((v) => !v)} className="block w-full border-t border-line px-4 py-2 text-left text-xs text-accent hover:bg-surface-2">
+          {expanded ? 'Show recent only' : `See ${hidden} more move${hidden === 1 ? '' : 's'} →`}
+        </button>
+      )}
     </section>
   );
 }

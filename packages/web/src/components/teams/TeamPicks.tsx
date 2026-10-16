@@ -34,7 +34,7 @@ export default function TeamPicks({ picks, teams, grade, value, year, players, s
           </li>
         ))}
       </ul>
-      <Link to={`/draft/${year}`} className="block border-t border-line px-4 py-2 text-xs text-accent hover:bg-surface-2">These picks on the {year} draft board →</Link>
+      <Link to={`/draft/${year}`} className="block border-t border-line px-4 py-2 text-xs text-accent hover:bg-surface-2">See full draft board →</Link>
     </section>
   );
 }

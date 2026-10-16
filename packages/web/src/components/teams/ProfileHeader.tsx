@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import Avatar from '../Avatar';
 
-export interface Tile { label: string; value: string; sub?: string | null }
+export interface Tile { label: string; value: string; sub?: string | null; /** colours the value */ tone?: 'win' | 'loss' | 'gold' | null }
+
+const TONE = { win: 'text-win', loss: 'text-loss', gold: 'text-gold' } as const;
 
 interface Props {
   avatar: string | null; name: string;
@@ -32,7 +34,7 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
           {tiles.map((t) => (
             <div key={t.label} className="min-w-[5.5rem] rounded-lg border border-line px-3 py-2 text-center">
               <dt className="section-label text-[10px]">{t.label}</dt>
-              <dd className="num mt-0.5 text-xl font-semibold leading-tight">{t.value}</dd>
+              <dd className={`num mt-0.5 text-xl font-semibold leading-tight ${t.tone ? TONE[t.tone] : ''}`}>{t.value}</dd>
               {t.sub && <dd className="truncate text-[10px] text-muted">{t.sub}</dd>}
             </div>
           ))}

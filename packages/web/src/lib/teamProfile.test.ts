@@ -1,7 +1,7 @@
-import type { History, Season, Transaction } from '@fantasy-dash/core';
-import { careerProfile, fieldedAs, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
+import type { BracketGame, History, Season, Transaction } from '@fantasy-dash/core';
+import { careerProfile, fieldedAs, finalPlacement, finishOf, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
 import { flattenLines } from './playerLines';
-import { game, line, players, season, side, standing, week } from '../test/playerFixtures';
+import { bracketGame, game, line, players, season, side, standing, week } from '../test/playerFixtures';
 
 // Two weeks, two games each: alice beats bob then loses to cara; dan is the fourth team.
 const g = (yr: number, wk: number, id: number, a: [string, number], b: [string, number], aStarters = [line('q1', 20), line('r1', 10)], aBench = [line('w1', 7)]) =>
@@ -13,7 +13,7 @@ function build(): Season {
   const s = season(2025, [
     week(1, [g(2025, 1, 1, ['a', 120], ['b', 90]), g(2025, 1, 2, ['c', 100], ['d', 80])]),
     week(2, [g(2025, 2, 1, ['a', 95], ['c', 130]), g(2025, 2, 2, ['b', 70], ['d', 110])]),
-    week(3, []),
+    { ...week(3, [g(2025, 3, 1, ['d', 0], ['a', 0])]), played: false },
   ]);
   s.standings = [standing('c', 1, 2, 0, 0, 230, 175), standing('a', 2, 1, 1, 0, 215, 220), standing('d', 3, 1, 1, 0, 190, 170), standing('b', 4, 0, 2, 0, 160, 230)];
   s.managers = { a: { userId: 'a', displayName: 'alice', teamName: 'Team Alice', avatar: null, rosterId: 1 } };
@@ -29,9 +29,12 @@ describe('seasonProfile', () => {
     expect(p.row?.rank).toBe(2);
     expect(p.teams).toBe(4);
     expect(p.scoringRank).toBe(2);           // 215 behind cara's 230
-    expect(p.pointsAllowedRank).toBe(2);     // 220 allowed, bob allowed 230
-    expect(p.finish).toBe('—');              // in season
-    expect(seasonProfile({ ...build(), status: 'complete' }, 'd', players).finish).toBe('#3');   // no podium: seed
+    expect(p.pointsAllowedRank).toBe(3);     // 220 allowed; dan 170 and cara 175 allowed fewer
+    expect(p.efficiencyRank).toBe(2);        // fixture efficiency is pf / (pf + 20), so it follows pf
+    expect(p.finish).toEqual({ place: null, label: '—', icon: null, note: null });   // in season
+    expect(p.seed).toBe(2);
+    expect(p.playoffSpots).toBe(2);
+    expect(p.madePlayoffs).toBe(true);       // in season: inside the top 2
     expect(p.teamName).toBe('Team Alice');
   });
 
@@ -42,9 +45,16 @@ describe('seasonProfile', () => {
     ]);
     expect(p.ppw).toBe(107.5);
     expect(p.leagueAvgPpw).toBe(99.4);
-    expect(p.longestWinStreak).toBe(1);
-    expect(p.benchLeft).toBe(20);            // fixture ceiling is points + 10 per game
     expect(p.weeksPlayed).toBe(2);
+  });
+
+  it('lists upcoming games after the played ones and byes in playoff weeks', () => {
+    expect(p.schedule.map((e) => e.kind)).toEqual(['played', 'played', 'upcoming']);
+    expect(p.schedule[2]).toMatchObject({ kind: 'upcoming', week: 3, opponentId: 'd', matchupId: 1, projected: 100, oppProjected: 100 });
+    // alice sits out the first playoff week but plays the next one: a bye
+    const s = build();
+    s.weeks = [...s.weeks.slice(0, 2), week(3, [g(2025, 3, 1, ['c', 100], ['d', 80])], true), week(4, [g(2025, 4, 1, ['a', 100], ['c', 80])], true)];
+    expect(seasonProfile(s, 'a', players).schedule.map((e) => [e.kind, e.week])).toEqual([['played', 1], ['played', 2], ['bye', 3], ['played', 4]]);
   });
 
   it('splits points by position with league share and rank', () => {
@@ -63,6 +73,40 @@ describe('seasonProfile', () => {
     expect(p.moves.map((t) => t.id)).toEqual(['t1', 't2']);
     expect(p.faab).toBe(12);
     expect(p.bestPickup).toMatchObject({ playerId: 'r1', starts: 2, points: 20, bid: null });
+  });
+});
+
+describe('finalPlacement', () => {
+  const placed = (home: string, away: string, tag: BracketGame['tag'], placement: number | null, bracket: BracketGame['bracket'], advanced: string): BracketGame =>
+    ({ ...bracketGame(home, away, tag, 3), placement, bracket, advanced, homePoints: 1, awayPoints: 2 });
+  const s = build();
+  s.status = 'complete';
+  s.standings = [standing('c', 1, 2, 0, 0, 230, 175), standing('a', 2, 1, 1, 0, 215, 220), standing('d', 3, 1, 1, 0, 190, 170), standing('b', 4, 0, 2, 0, 160, 230), standing('e', 5, 0, 2, 0, 150, 240), standing('f', 6, 0, 2, 0, 140, 250)];
+  s.brackets = {
+    winners: [placed('c', 'a', 'Final', 1, 'winners', 'a'), placed('d', 'b', '3rd', 3, 'winners', 'd')],
+    consolation: [placed('e', 'f', 'Toilet Bowl', 1, 'consolation', 'e')],
+  };
+
+  it('reads places off the placement games: the Final, the 3rd-place game and the Toilet Bowl', () => {
+    expect([...finalPlacement(s).entries()]).toEqual([['a', 1], ['c', 2], ['d', 3], ['b', 4], ['e', 6], ['f', 5]]);
+  });
+
+  it('fills the open places by seed for anyone the brackets never placed', () => {
+    const t = { ...s, brackets: { winners: [placed('c', 'a', 'Final', 1, 'winners', 'a')], consolation: [] } };
+    expect([...finalPlacement(t).entries()]).toEqual([['a', 1], ['c', 2], ['d', 3], ['b', 4], ['e', 5], ['f', 6]]);
+  });
+
+  it('is empty while the season is in progress', () => {
+    expect(finalPlacement({ ...s, status: 'in_season' }).size).toBe(0);
+  });
+
+  it('labels the podium and the toilet bowl with icons', () => {
+    expect(finishOf(s, 'a')).toEqual({ place: 1, label: '1st', icon: '🏆', note: 'Champion' });
+    expect(finishOf(s, 'c')).toEqual({ place: 2, label: '2nd', icon: '🥈', note: 'Runner-up' });
+    expect(finishOf(s, 'd')).toEqual({ place: 3, label: '3rd', icon: '🥉', note: 'Third place' });
+    expect(finishOf(s, 'b')).toEqual({ place: 4, label: '4th', icon: null, note: 'of 6' });
+    expect(finishOf(s, 'e')).toEqual({ place: 6, label: '6th', icon: '🚽', note: 'Toilet bowl' });
+    expect(finishOf({ ...s, status: 'in_season' }, 'a')).toEqual({ place: null, label: '—', icon: null, note: null });
   });
 });
 
@@ -96,6 +140,7 @@ describe('careerProfile', () => {
   const s = build();
   s.status = 'complete';
   s.honors = { champion: 'c', runnerUp: 'a', third: null, pointsTitle: 'c', lastPlace: 'b' };
+  s.brackets = { winners: [{ ...bracketGame('c', 'a', 'Final', 3), placement: 1, advanced: 'c', homePoints: 2, awayPoints: 1 }], consolation: [] };
   const history = {
     seasons: [], managers: { a: { displayName: 'alice', avatar: null, seasons: [2025] } },
     h2h: {

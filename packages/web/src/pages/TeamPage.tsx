@@ -9,7 +9,7 @@ import TeamMoves from '../components/teams/TeamMoves';
 import TeamPicks from '../components/teams/TeamPicks';
 import TeamsTabs from '../components/teams/TeamsTabs';
 import { history, players } from '../data/load';
-import { fmtPct, fmtPpg, fmtPts, fmtRecord } from '../lib/format';
+import { fmtPct, fmtPpg, fmtPts, fmtRecord, fmtWinPct } from '../lib/format';
 import { ordinal, seasonProfile } from '../lib/teamProfile';
 
 /** One manager's season: header, shape, schedule, picks, roster breakdown and moves. */
@@ -29,6 +29,7 @@ export default function TeamPage() {
   const p = seasonProfile(season, userId, players);
   const inSeason = season.status === 'in_season';
   const ap = p.row?.allPlay;
+  const complete = season.status === 'complete';
   return (
     <section className="space-y-4">
       <TeamsTabs teamsTo={`/teams/${season.year}`} />
@@ -38,28 +39,24 @@ export default function TeamPage() {
         title={p.teamName}
         subtitle={<Link to={`/managers/${userId}`} className="hover:text-accent">{p.displayName} · manager page →</Link>}
         badges={[
-          <>Scoring <b className="text-ink">{ordinal(p.scoringRank)}</b> of {p.teams}</>,
-          <>Points allowed <b className="text-ink">{ordinal(p.pointsAllowedRank)} most</b></>,
-          ap ? <>Vs. everyone <b className="num text-ink">{ap.w}–{ap.l}{ap.t ? `–${ap.t}` : ''}</b></> : null,
+          <span title="Points for, ranked in the league">PF <b className="text-ink">{ordinal(p.scoringRank)}</b></span>,
+          <span title="Points against, ranked from fewest allowed">PA <b className="text-ink">{ordinal(p.pointsAllowedRank)}</b></span>,
+          <span title="Lineup efficiency: points scored as a share of the best possible lineup, ranked in the league">EFF <b className="num text-ink">{fmtPct(p.efficiency, 0)}</b> · {ordinal(p.efficiencyRank)}</span>,
+          inSeason ? <span>Through week {season.lastScoredWeek}</span> : null,
         ].filter(Boolean)}
         tiles={[
           { label: 'Record', value: p.row ? fmtRecord(p.row) : '—' },
           { label: 'Pts for', value: p.row ? fmtPpg(p.row.pf) : '—' },
           { label: 'Pts against', value: p.row ? fmtPpg(p.row.pa) : '—' },
-          { label: 'Finish', value: p.finish, sub: p.finishNote === 'Regular-season rank' ? 'regular season' : p.finishNote },
-          { label: 'Draft slot', value: p.draftSlot === null ? '—' : String(p.draftSlot) },
-          { label: 'FAAB spent', value: `$${p.faab}` },
+          { label: 'Finish', value: p.finish.icon ? `${p.finish.icon} ${p.finish.label}` : p.finish.label, sub: p.finish.note ?? (inSeason ? 'season in progress' : null), tone: p.finish.place === 1 ? 'gold' : p.finish.place === p.teams ? 'loss' : null },
+          { label: 'Playoff seed', value: p.seed === null ? '—' : `#${p.seed}`, sub: p.seed === null ? null : complete ? (p.madePlayoffs ? 'made the playoffs' : `missed · top ${p.playoffSpots} play`) : (p.madePlayoffs ? `in the top ${p.playoffSpots}` : `outside the top ${p.playoffSpots}`), tone: p.seed === null ? null : p.madePlayoffs ? 'win' : 'loss' },
+          { label: 'All-play', value: ap ? `${ap.w}–${ap.l}${ap.t ? `–${ap.t}` : ''}` : '—', sub: ap ? `${fmtWinPct(ap.pct)} vs everyone` : null },
         ]}
-        strip={<>
-          <span>Longest win streak <b className="num text-ink">{p.longestWinStreak}</b></span>
-          <span>Left on the bench <b className="num text-ink">{fmtPpg(p.benchLeft)}</b> · <span className="num">{fmtPct(p.efficiency, 0)}</span> of the best lineup</span>
-          {inSeason && <span>Through week {season.lastScoredWeek}</span>}
-        </>}
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
-          <SeasonShape label="Week by week" points={p.weeks.map((w) => ({ label: `Week ${w.week}`, mine: w.points, league: w.leagueAvg }))} mineCaption={`${fmtPpg(p.ppw)} a week`} leagueCaption={`${fmtPpg(p.leagueAvgPpw)} league average`} />
-          <Schedule weeks={p.weeks} managers={season.managers} year={season.year} />
+          <SeasonShape label="Week by week" points={p.weeks.map((w) => ({ label: `Week ${w.week}`, mine: w.points, league: w.leagueAvg, result: w.result, playoff: w.isPlayoff }))} mineCaption={`${fmtPpg(p.ppw)} a week`} leagueCaption={`${fmtPpg(p.leagueAvgPpw)} league average`} />
+          <Schedule entries={p.schedule} managers={season.managers} year={season.year} />
           {season.draft && p.picks.length > 0 && <TeamPicks picks={p.picks} teams={season.draft.slotOrder.length} grade={p.grade} value={p.draftValue} year={season.year} players={players} seasonTeams={season.playerTeams} />}
         </div>
         <div className="space-y-4">

@@ -1,4 +1,4 @@
-import type { DraftPick, History, PlayerDirectory, PlayerId, PlayoffTag, Season, SeasonStatus, StandingRow, Transaction, UserId, WLT } from '@fantasy-dash/core';
+import type { BracketGame, DraftPick, History, PlayerDirectory, PlayerId, PlayoffTag, Season, SeasonStatus, StandingRow, Transaction, UserId, WLT } from '@fantasy-dash/core';
 import { teamGamesOf, type TeamGame } from './managerGames';
 import { letterGrade, managerDraftSummaries } from './draft';
 import { flattenLines, type PlayerLine } from './playerLines';
@@ -13,11 +13,46 @@ export const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 't
 const rankOf = (mine: number, all: number[], better: (a: number, b: number) => boolean) => 1 + all.filter((v) => better(v, mine)).length;
 const involves = (t: Transaction, userId: UserId) => t.adds.some((m) => m.userId === userId) || t.drops.some((m) => m.userId === userId);
 
-/** `1st` / `2nd` / `3rd` / `Last` from honors for a complete season, else `#rank` (regular season); `—` before the season ends. */
-export function finishLabel(season: Season, userId: UserId, rank: number | undefined): string {
-  if (season.status !== 'complete' || rank === undefined) return '—';
-  const h = season.honors;
-  return h.champion === userId ? '1st' : h.runnerUp === userId ? '2nd' : h.third === userId ? '3rd' : h.lastPlace === userId ? 'Last' : `#${rank}`;
+/**
+ * Every team's final place in a complete season, read off the placement games: the Final decides 1st and 2nd, the
+ * 3rd- and 5th-place games the next pairs, the Toilet Bowl last and second-last, the 7th-place game the pair above.
+ * Anyone the brackets never placed fills the open places by seed. Empty while the season is in progress.
+ */
+export function finalPlacement(season: Season): Map<UserId, number> {
+  const out = new Map<UserId, number>();
+  if (season.status !== 'complete') return out;
+  const n = season.standings.length;
+  const place = (g: BracketGame, winner: number, loser: number) => {
+    if (!g.advanced || !g.home || !g.away) return;
+    out.set(g.advanced, winner);
+    out.set(g.advanced === g.home ? g.away : g.home, loser);
+  };
+  for (const g of season.brackets.winners) if (g.placement !== null) place(g, g.placement, g.placement + 1);
+  for (const g of season.brackets.consolation) if (g.placement !== null) place(g, n + 1 - g.placement, n - g.placement);
+  const taken = new Set(out.values());
+  const open = Array.from({ length: n }, (_, i) => i + 1).filter((p) => !taken.has(p));
+  for (const r of [...season.standings].sort((a, b) => a.rank - b.rank)) if (!out.has(r.userId)) out.set(r.userId, open.shift() ?? r.rank);
+  return out;
+}
+
+export interface Finish {
+  /** null before the season ends */
+  place: number | null;
+  /** `1st` … `10th`, or `—` */
+  label: string;
+  /** 🏆 🥈 🥉 for the podium, 🚽 for the toilet bowl loser */
+  icon: string | null;
+  note: string | null;
+}
+
+/** Where the manager finished once the playoffs are done; pass a precomputed placement when labelling every team. */
+export function finishOf(season: Season, userId: UserId, placement = finalPlacement(season)): Finish {
+  const place = placement.get(userId);
+  if (place === undefined) return { place: null, label: '—', icon: null, note: null };
+  const teams = season.standings.length;
+  const [icon, note] = place === 1 ? ['🏆', 'Champion'] : place === 2 ? ['🥈', 'Runner-up'] : place === 3 ? ['🥉', 'Third place']
+    : place === teams ? ['🚽', 'Toilet bowl'] : [null, `of ${teams}`];
+  return { place, label: ordinal(place), icon, note };
 }
 
 export interface WeekLine {
@@ -27,6 +62,11 @@ export interface WeekLine {
   leagueAvg: number;
   high: boolean; low: boolean;
 }
+
+export type ScheduleEntry =
+  | ({ kind: 'played' } & WeekLine)
+  | { kind: 'upcoming'; week: number; tag: PlayoffTag | null; isPlayoff: boolean; matchupId: number; opponentId: UserId; projected: number; oppProjected: number }
+  | { kind: 'bye'; week: number };
 
 export interface PositionPlayer {
   playerId: PlayerId; position: string;
@@ -56,17 +96,23 @@ export interface SeasonProfile {
   year: number; userId: UserId; status: SeasonStatus; row: StandingRow | undefined; teams: number;
   teamName: string; displayName: string; avatar: string | null;
   scoringRank: number;
-  /** 1 = most points allowed */
+  /** 1 = fewest points allowed */
   pointsAllowedRank: number;
-  finish: string; finishNote: string | null;
-  draftSlot: number | null;
+  /** rank of regular-season lineup efficiency */
+  efficiencyRank: number;
+  finish: Finish;
+  /** regular-season rank: the playoff seed once the season is complete, the current one before */
+  seed: number | null;
+  playoffSpots: number;
+  /** in the winners bracket for a complete season; inside the top `playoffSpots` before */
+  madePlayoffs: boolean;
   faab: number;
-  longestWinStreak: number;
-  /** points the best lineup would have added, over every played game */
-  benchLeft: number;
   /** points / ceiling over every played game */
   efficiency: number;
+  /** played games, in week order */
   weeks: WeekLine[];
+  /** played games, upcoming matchups and playoff byes, in week order */
+  schedule: ScheduleEntry[];
   weeksPlayed: number;
   /** points per week, and the league's */
   ppw: number; leagueAvgPpw: number;
@@ -107,6 +153,18 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
   if (weeks.length > 0) {
     const max = Math.max(...weeks.map((w) => w.points)), min = Math.min(...weeks.map((w) => w.points));
     for (const w of weeks) { w.high = w.points === max; w.low = w.points === min && max !== min; }
+  }
+  const schedule: ScheduleEntry[] = [];
+  for (const wk of season.weeks) {
+    const game = wk.games.find((g) => g.sides.some((s) => s.userId === userId));
+    if (wk.played) {
+      const line = weeks.find((w) => w.week === wk.week);
+      if (line) schedule.push({ kind: 'played', ...line });
+      else if (wk.isPlayoff && season.weeks.some((later) => later.week > wk.week && later.games.some((g) => g.sides.some((s) => s.userId === userId)))) schedule.push({ kind: 'bye', week: wk.week });
+    } else if (game) {
+      const me = game.sides.find((s) => s.userId === userId)!, opp = game.sides.find((s) => s.userId !== userId)!;
+      schedule.push({ kind: 'upcoming', week: wk.week, tag: game.tag, isPlayoff: wk.isPlayoff, matchupId: game.matchupId, opponentId: opp.userId, projected: me.projected, oppProjected: opp.projected });
+    }
   }
   const allSides = played.flatMap((w) => w.games.flatMap((g) => g.sides));
   const ppw = weeks.length ? round1(weeks.reduce((t, w) => t + w.points, 0) / weeks.length) : 0;
@@ -167,23 +225,21 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
   const claims = waiverClaims([{ year: season.year, transactions: season.transactions }], flattenLines([season], players)).filter((c) => c.userId === userId && c.starts > 0);
   const best = claims.sort((a, b) => b.points - a.points || a.week - b.week)[0];
 
-  const h = season.honors;
-  const finishNote = season.status !== 'complete' ? null
-    : h.champion === userId ? 'Champion' : h.runnerUp === userId ? 'Runner-up' : h.third === userId ? 'Third place' : h.lastPlace === userId ? 'Toilet bowl' : 'Regular-season rank';
   const ceilingTotal = games.reduce((t, g) => t + g.ceiling, 0);
-  const slot = draft ? draft.slotOrder.indexOf(userId) : -1;
+  const inBracket = season.brackets.winners.some((b) => b.home === userId || b.away === userId);
   return {
     year: season.year, userId, status: season.status, row, teams: rows.length,
     teamName: manager?.teamName ?? manager?.displayName ?? userId, displayName: manager?.displayName ?? userId, avatar: manager?.avatar ?? null,
     scoringRank: row ? rankOf(row.pf, rows.map((r) => r.pf), (a, b) => a > b) : rows.length,
-    pointsAllowedRank: row ? rankOf(row.pa, rows.map((r) => r.pa), (a, b) => a > b) : rows.length,
-    finish: finishLabel(season, userId, row?.rank), finishNote,
-    draftSlot: slot >= 0 ? slot + 1 : null,
+    pointsAllowedRank: row ? rankOf(row.pa, rows.map((r) => r.pa), (a, b) => a < b) : rows.length,
+    efficiencyRank: row ? rankOf(row.efficiency, rows.map((r) => r.efficiency), (a, b) => a > b) : rows.length,
+    finish: finishOf(season, userId),
+    seed: row?.rank ?? null,
+    playoffSpots: season.playoffTeams,
+    madePlayoffs: season.status === 'complete' ? inBracket : row !== undefined && row.rank <= season.playoffTeams,
     faab,
-    longestWinStreak: longestWinStreak(games),
-    benchLeft: round1(games.reduce((t, g) => t + g.benchPoints, 0)),
     efficiency: ceilingTotal > 0 ? games.reduce((t, g) => t + g.points, 0) / ceilingTotal : 0,
-    weeks, weeksPlayed: weeks.length, ppw, leagueAvgPpw,
+    weeks, schedule, weeksPlayed: weeks.length, ppw, leagueAvgPpw,
     positions, neverStarted,
     picks,
     grade: graded ? letterGrade(draftIdx + 1, summaries.length) : null,
@@ -324,9 +380,8 @@ export interface CareerProfile {
   weekHighs: number;
 }
 
-const FINISH_ORDER = ['1st', '2nd', '3rd'];
-/** podium first, then seeds by number, Last at the end */
-const finishKey = (f: string) => (FINISH_ORDER.includes(f) ? FINISH_ORDER.indexOf(f) : f === 'Last' ? 1000 : 10 + (parseInt(f.replace('#', ''), 10) || 999));
+/** `1st` before `2nd` before `10th`; `—` last */
+const finishKey = (f: string) => parseInt(f, 10) || 999;
 
 /** Everything one manager's career page shows. */
 export function careerProfile(seasons: Season[], history: History, userId: UserId, players: PlayerDirectory): CareerProfile {
@@ -342,7 +397,7 @@ export function careerProfile(seasons: Season[], history: History, userId: UserI
     const graded = idx >= 0 && summaries[idx].valued > 0;
     const m = s.managers[userId];
     return {
-      year: s.year, status: s.status, row, teamName: m?.teamName ?? m?.displayName ?? userId, finish: finishLabel(s, userId, row?.rank),
+      year: s.year, status: s.status, row, teamName: m?.teamName ?? m?.displayName ?? userId, finish: finishOf(s, userId).label,
       champion: h.champion === userId, runnerUp: h.runnerUp === userId, third: h.third === userId, pointsTitle: h.pointsTitle === userId, lastPlace: h.lastPlace === userId,
       playoffBerth: s.brackets.winners.some((b) => b.home === userId || b.away === userId),
       ppw: my.length ? round1(my.reduce((t, g) => t + g.points, 0) / my.length) : 0,
