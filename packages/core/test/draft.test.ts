@@ -3,7 +3,7 @@ import { buildDraft, computeDraftValues, tradesFromTransactions, capital, earned
 import type { DraftPick, PlayerDirectory } from '../src/types';
 import type { SleeperDraft, SleeperDraftPick, SleeperTransaction } from '../src/sleeper/types';
 
-const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, lastScoredWeek: 0, byeAdjust: false, trades: [] };
+const noValue: DraftValueInput = { seasonPoints: {}, players: {}, gamesPlayed: {}, teamGames: {}, playerTeams: {}, lastScoredWeek: 0, byeAdjust: false, trades: [] };
 const rosterToUser = { 1: 'ua', 2: 'ub', 3: 'uc' };
 const draft: SleeperDraft = {
   draft_id: 'D1', type: 'snake', status: 'complete',
@@ -56,6 +56,7 @@ describe('computeDraftValues', () => {
     seasonPoints, players,
     gamesPlayed: { rbA: 5, qbA: 4, rbB: 5, def1: 5 },
     teamGames: { DET: 5, KC: 5, SF: 4 },
+    playerTeams: {},
     lastScoredWeek: 5, byeAdjust: true,
     trades: [
       { playerId: 'rbB', toUserId: 'u9', week: 2, created: 200 },
@@ -162,6 +163,14 @@ describe('computeDraftValues', () => {
     expect(by.qbA).toMatchObject({ gamesPlayed: 4, ppg: 100, healthy: false });    // KC played 5, qbA 4
     expect(by.rbY).toMatchObject({ gamesPlayed: 0, ppg: null, healthy: false });   // no games
     expect(by.rbB.healthy).toBe(false);                                            // no team
+  });
+
+  it("uses the season's team for healthy and bye checks before the directory's current team", () => {
+    const { picks: moved } = computeDraftValues(drafted, { ...input, playerTeams: { rbB: 'SF', rbA: 'SF' } });
+    const byMoved = Object.fromEntries(moved.map((p) => [p.playerId, p]));
+    expect(byMoved.rbB.healthy).toBe(true);    // SF played 4, rbB 5: the season team gives a team where the directory had none
+    expect(byMoved.rbA.healthy).toBe(true);    // directory says DET (5 games); season says SF (4) — still healthy at 5
+    expect(byMoved.rbA.pointsOverBaseline).toBeGreaterThan(by.rbA.pointsOverBaseline!); // SF is a bye team, so rbA's points get scaled up
   });
 
   it('scales points for teams that have had their bye before ranking', () => {

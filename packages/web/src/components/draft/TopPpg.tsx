@@ -1,4 +1,4 @@
-import type { Draft, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 import { fmtPpg } from '../../lib/format';
@@ -6,9 +6,9 @@ import { playerName, playerPos, playerTeam } from '../../lib/players';
 import { pickLabel, topHealthyPpg } from '../../lib/draft';
 import { CardHeader } from './DraftAnalysis';
 
-interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; inSeason: boolean }
+interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; inSeason: boolean }
 
-export default function TopPpg({ draft, managers, players, inSeason }: Props) {
+export default function TopPpg({ draft, managers, players, seasonTeams, inSeason }: Props) {
   const rows = topHealthyPpg(draft, 10);
   return (
     <div className="card">
@@ -23,7 +23,7 @@ export default function TopPpg({ draft, managers, players, inSeason }: Props) {
                 <Headshot players={players} id={p.playerId} size={26} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5"><span className="truncate font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /></span>
-                  <span className="block truncate text-xs text-muted">{managers[p.userId]?.displayName} · {playerTeam(players, p.playerId)} · {p.gamesPlayed} games</span>
+                  <span className="block truncate text-xs text-muted">{managers[p.userId]?.displayName} · {playerTeam(players, p.playerId, seasonTeams)} · {p.gamesPlayed} games</span>
                 </span>
                 <span className="num text-base font-semibold">{p.ppg === null ? '—' : fmtPpg(p.ppg)}</span>
               </li>

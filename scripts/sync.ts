@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds, trimPlayerSeasons,
+  SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds, trimPlayerSeasons, weekTeams,
   SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2,
   type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type SleeperTransaction, type StatMap,
 } from '@fantasy-dash/core';
@@ -14,7 +14,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_DIR = path.join(ROOT, 'data');
 const dryRun = process.argv.includes('--dry-run');
 const log = (msg: string) => console.log(`[sync] ${msg}`);
-// The directory holds each player's CURRENT team, so a few traded players can appear on a bye week; a real game has 36+ (bye-week stragglers reach ~21).
+// Team games are credited from each week's stat rows (the team the player suited up for that week); a real game has 36+ players
+// with gp >= 1. The threshold guards the fallback to the directory's current team, where bye-week stragglers reach ~21.
 const TEAM_GAME_MIN_PLAYERS = 25;
 
 async function walkLeagueChain(client: SleeperClient, startId: string): Promise<SleeperLeague[]> {
@@ -77,28 +78,33 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
   const playerSeasonPoints: Record<string, number> = {};
   const playerGames: Record<string, number> = {};
   const teamGames: Record<string, number> = {};
+  const playerTeams: Record<string, string> = {};
   const transactions: SleeperTransaction[] = [];
   for (let week = 1; week <= maxWeek; week++) {
     const weekMatchups = (await client.getMatchups(id, week)) ?? [];
     matchups[week] = weekMatchups;
     const rostered = new Set(weekMatchups.flatMap((m) => m.players ?? []));
-    const [proj, st, tx] = await Promise.all([
+    const [proj, st, tx, weekRows] = await Promise.all([
       client.getProjections(league.season, week),
       client.getStats(league.season, week),
       client.getTransactions(id, week),
+      client.getWeekStats(league.season, week),
     ]);
     if (week <= lastScoredLeg) {
       if (!proj) log(`WARNING: ${season} week ${week}: projections response was missing`);
       if (!st) log(`WARNING: ${season} week ${week}: stats response was missing`);
+      if (!weekRows) log(`WARNING: ${season} week ${week}: weekly team rows were missing; falling back to current teams`);
     }
     if (st && week <= lastScoredLeg) {
+      const teams = weekTeams(weekRows ?? []);
+      Object.assign(playerTeams, teams);   // later weeks win, so a traded player ends on the team he finished with
       const playersPerTeam = new Map<string, number>();
       for (const [pid, line] of Object.entries(st)) {
         const pts = scoreStats(line, league.scoring_settings);
         if (pts !== 0) playerSeasonPoints[pid] = round2((playerSeasonPoints[pid] ?? 0) + pts);
         if ((line.gp ?? 0) >= 1) {
           playerGames[pid] = (playerGames[pid] ?? 0) + 1;
-          const team = players[pid]?.team;
+          const team = teams[pid] ?? players[pid]?.team;
           if (team) playersPerTeam.set(team, (playersPerTeam.get(team) ?? 0) + 1);
         }
       }
@@ -122,9 +128,9 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     players,
     draft,
     playerSeasonPoints,
-    playerGames, teamGames, transactions,
+    playerGames, teamGames, playerTeams, transactions,
   };
-  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, ${transactions.length} transactions`);
+  log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, teams for ${Object.keys(playerTeams).length}, ${transactions.length} transactions`);
   const built = buildSeason(input, leagueConfig.managerNames);
   assertSeasonComplete(built, league);
   return built;

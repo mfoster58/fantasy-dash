@@ -40,6 +40,7 @@ export default function ScoresPage() {
                   played={wk.played}
                   managers={season.managers}
                   players={players}
+                  seasonTeams={season.playerTeams}
                   to={`/scores/${season.year}/${wk.week}/${g.matchupId}`}
                 />
               ))}

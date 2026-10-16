@@ -28,7 +28,7 @@ const draft: Draft = {
 
 describe('DraftBoard', () => {
   it('lays picks out by round and slot with position labels and a detailed tooltip', () => {
-    render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{}} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells).toHaveLength(4);
     expect(cells[0]).toHaveTextContent('Player One');
@@ -44,8 +44,16 @@ describe('DraftBoard', () => {
     expect(cells[1].getAttribute('title')).toContain('Keeper');
   });
 
+  it("shows the team the player was on that season rather than today's team", () => {
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{ p2: 'NYG' }} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    const cells = screen.getAllByTestId('draft-cell');
+    expect(cells[1]).toHaveTextContent('NYG');
+    expect(cells[1]).not.toHaveTextContent('DAL');
+    expect(cells[1]).toHaveAttribute('title', expect.stringContaining('· NYG'));
+  });
+
   it('marks keepers with a lock and traded players with a yellow ring and the new owner\'s name', () => {
-    render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{}} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells[1].querySelector('[aria-label="Keeper"]')).not.toBeNull();
     expect(cells[1]).not.toHaveTextContent(/keeper/i);
@@ -60,7 +68,7 @@ describe('DraftBoard', () => {
   });
 
   it('colors value mode on a red-yellow-green scale and shows the total value', () => {
-    render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{}} mode="value" highlight={null} onHighlight={() => {}} inSeason={true} />);
     const cells = screen.getAllByTestId('draft-cell');
     expect(cells[0].style.background).toMatch(/(#2f9e5f|rgb\(47, 158, 95\)) 11%/);
     expect(cells[0].style.background).toContain('transparent');
@@ -75,7 +83,7 @@ describe('DraftBoard', () => {
   });
 
   it('shows a letter grade, total and rank under each column', () => {
-    render(<DraftBoard draft={draft} managers={managers} players={players} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{}} mode="position" highlight={null} onHighlight={() => {}} inSeason={false} />);
     const row = screen.getByTestId('grade-row');
     const cells = row.querySelectorAll('button');
     expect(cells).toHaveLength(2);
@@ -87,7 +95,7 @@ describe('DraftBoard', () => {
 
   it('highlights one manager\'s picks when the column header is clicked', () => {
     const onHighlight = vi.fn();
-    render(<DraftBoard draft={draft} managers={managers} players={players} mode="value" highlight="a" onHighlight={onHighlight} inSeason={false} />);
+    render(<DraftBoard draft={draft} managers={managers} players={players} seasonTeams={{}} mode="value" highlight="a" onHighlight={onHighlight} inSeason={false} />);
     fireEvent.click(screen.getByRole('button', { name: /alice/ }));
     expect(onHighlight).toHaveBeenCalledWith(null);
     const cells = screen.getAllByTestId('draft-cell');

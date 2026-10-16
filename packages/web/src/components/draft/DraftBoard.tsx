@@ -1,4 +1,4 @@
-import type { Draft, DraftPick, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, DraftPick, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam, posColor } from '../../lib/players';
 import { letterGrade, managerDraftSummaries, posLabel, valueColor } from '../../lib/draft';
@@ -7,14 +7,16 @@ export type BoardMode = 'position' | 'value';
 
 interface Props {
   draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory;
+  /** that season's player -> team map */
+  seasonTeams: Record<PlayerId, string>;
   mode: BoardMode; highlight: UserId | null; onHighlight: (userId: UserId | null) => void; inSeason: boolean;
 }
 
-function cellTitle(p: DraftPick, players: PlayerDirectory, managers: Record<UserId, Manager>, inSeason: boolean): string {
+function cellTitle(p: DraftPick, players: PlayerDirectory, seasonTeams: Record<PlayerId, string>, managers: Record<UserId, Manager>, inSeason: boolean): string {
   const pos = playerPos(players, p.playerId);
   const suffix = inSeason ? ' to date' : '';
   const lines = [
-    `${playerName(players, p.playerId)} · ${pos} · ${playerTeam(players, p.playerId)}`,
+    `${playerName(players, p.playerId)} · ${pos} · ${playerTeam(players, p.playerId, seasonTeams)}`,
     `Pick ${p.pickNo} (round ${p.round})`,
     `Season points${suffix}: ${fmtPts(p.seasonPoints)}`,
   ];
@@ -42,7 +44,7 @@ const SwapIcon = () => (
 );
 
 
-export default function DraftBoard({ draft, managers, players, mode, highlight, onHighlight, inSeason }: Props) {
+export default function DraftBoard({ draft, managers, players, seasonTeams, mode, highlight, onHighlight, inSeason }: Props) {
   const slots = draft.slotOrder.length;
   const cols = `3rem repeat(${slots}, minmax(0, 1fr))`;
   const bySlot = new Map<string, DraftPick>();
@@ -93,7 +95,7 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                   key={slot}
                   data-testid="draft-cell"
                   data-highlight={isHl ? 'true' : 'false'}
-                  title={cellTitle(p, players, managers, inSeason)}
+                  title={cellTitle(p, players, seasonTeams, managers, inSeason)}
                   style={{ background }}
                   onClick={clickColumn}
                   className={`relative flex h-14 cursor-pointer flex-col justify-center border-l border-line px-2 text-xs transition-opacity ${dim ? 'opacity-35' : ''} ${ring}`}
@@ -109,7 +111,7 @@ export default function DraftBoard({ draft, managers, players, mode, highlight, 
                     <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
                     {p.tradedTo
                       ? <span className="truncate font-medium text-warn" title={`Traded to ${managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId} in week ${p.tradedTo.week}`}>{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
-                      : <span>{playerTeam(players, p.playerId)}</span>}
+                      : <span>{playerTeam(players, p.playerId, seasonTeams)}</span>}
                     {mode === 'value' && p.value !== null && <span className="num ml-auto shrink-0 font-semibold text-ink">{fmtSigned(p.value, 0)}</span>}
                   </div>
                 </div>

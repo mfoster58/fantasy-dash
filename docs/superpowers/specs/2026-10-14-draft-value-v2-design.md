@@ -73,7 +73,11 @@ Historical anchors: McCaffrey 2023 (pick 2) +45, Mostert 2023 (pick 143) +147, E
 
 ### Games played, PPG, healthy
 
-The sync records `gamesPlayed` per player (count of scored weeks whose stat line has `gp ≥ 1`) and `teamGames` per NFL team (count of scored weeks in which at least 25 players on that team have `gp ≥ 1`, team taken from the player directory; the threshold keeps players who have since changed teams from crediting their current team with a game on its bye week). Each pick carries `gamesPlayed`, `ppg = seasonPoints / gamesPlayed` (null when 0 games) and `healthy = gamesPlayed > 0 && gamesPlayed >= teamGames[team]` (false when the player has no team).
+The sync records `gamesPlayed` per player (count of scored weeks whose stat line has `gp ≥ 1`) and `teamGames` per NFL team (count of scored weeks in which at least 25 players on that team have `gp ≥ 1`). The team comes from that week's row in `api.sleeper.com/stats/nfl/{season}/{week}?season_type=regular` (`SleeperClient.getWeekStats`), which lists the team the player suited up for that week; the directory's current team is only the fallback when the rows are missing, and the threshold keeps that fallback from crediting a bye-week team. Each pick carries `gamesPlayed`, `ppg = seasonPoints / gamesPlayed` (null when 0 games) and `healthy = gamesPlayed > 0 && gamesPlayed >= teamGames[team]` (false when the player has no team).
+
+### Season teams (added 2026-10-15)
+
+`Season.playerTeams: Record<PlayerId, string>` is the NFL team each player last suited up for in that season (later weeks overwrite earlier ones, so a midseason trade ends on the new team; trimmed to the kept player ids like `playerSeasons`). The draft math (`DraftValueInput.playerTeams`) and every team label in the UI (board cells and tooltips, team panel, round-one list, box score lineups, score card top performers) read `playerTeam(players, id, season.playerTeams)`, falling back to the directory's current team only when the season has no record. So Saquon is NYG on the 2023 pages and PHI on 2024+.
 
 ### Trades
 
@@ -106,6 +110,8 @@ interface DraftPick {
 
 ### Board
 
+The board opens in value mode (2026-10-15; it opened in position mode before); the Position / Value toggle is unchanged.
+
 - **Value mode colors**: a red → yellow → green diverging scale on `value`. Yellow at 0, full red at ≤ −60, full green at ≥ +60, linear in between, mixed in OKLCH, laid over transparent at 45% (was ±120 and 30%; the user wanted a more drastic gradient with more visible green). Stops: red `#d64545`, yellow `#e6c229`, green `#2f9e5f`. Cells in value mode use dark text (`#1a1a1a`) for contrast on both themes. Null value cells are transparent. Position mode is unchanged.
 - **Cell content**: in value mode the trailing number is the total `value` (signed, 0 decimals).
 - **Tooltip** lines: name · pos · team; `Pick N (round R)`; `Season points[ to date]: X`; `Redraft position[ today]: P (drafted WRk)`; `Earned pick: E (drafted N)` or `Earned pick: off the board`; `Points over baseline: ±B`; `PPG: x.x over G games`; `Keeper` if keeper; `Traded to NAME in week W` if traded.
@@ -126,7 +132,7 @@ interface DraftPick {
 
 ## Sync and data
 
-Sync adds the games/team/trade collection (one extra request per week per season for transactions). Regenerate `data/` for all four seasons and commit it, as today.
+Sync adds the games/team/trade collection (two extra requests per week per season: transactions and the weekly team rows). Regenerate `data/` for all four seasons and commit it, as today.
 
 ## Testing
 

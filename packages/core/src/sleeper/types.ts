@@ -67,6 +67,13 @@ export interface SleeperPlayer {
 /** player_id -> stat line. Used for both /stats and /projections. */
 export type StatMap = Record<string, Record<string, number>>;
 
+/** One row of api.sleeper.com/stats/nfl/{season}/{week}: the team is the one the player suited up for THAT week. */
+export interface SleeperWeekStat {
+  player_id: string;
+  team: string | null;
+  stats?: Record<string, number> | null;
+}
+
 export interface SleeperDraft {
   draft_id: string;
   type: string;

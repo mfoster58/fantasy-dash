@@ -33,12 +33,15 @@ describe('season playerSeasons', () => {
   it('are built from the raw input, validate, and trim to a kept set', () => {
     const input = miniInput();
     input.playerGames = { q1: 3, q3: 3 };
+    input.playerTeams = { q1: 'KC', q3: 'DET', r1: 'SF' };
     const season = buildSeason(input);
+    expect(season.playerTeams).toEqual({ q1: 'KC', q3: 'DET', r1: 'SF' });
     expect(season.playerSeasons.q3).toEqual({ points: 90, games: 3, posRank: 1 });
     expect(season.playerSeasons.q1).toEqual({ points: 80, games: 3, posRank: 2 });
     expect(season.playerSeasons.r1).toBeUndefined(); // no games recorded
     expect(() => SeasonSchema.parse(season)).not.toThrow();
     const trimmed = trimPlayerSeasons(season, new Set(['q1']));
+    expect(trimmed.playerTeams).toEqual({ q1: 'KC' });
     expect(Object.keys(trimmed.playerSeasons)).toEqual(['q1']);
     expect(trimmed.playerSeasons.q1.posRank).toBe(2); // rank was computed before the trim
   });

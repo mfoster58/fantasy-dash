@@ -1,4 +1,4 @@
-import type { Draft, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
@@ -7,7 +7,7 @@ import { playerName, playerPos, playerTeam } from '../../lib/players';
 import { letterGrade, managerDraftSummaries, pickLabel } from '../../lib/draft';
 
 interface Props {
-  draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory;
+  draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>;
   userId: UserId; onSelect: (userId: UserId) => void; inSeason: boolean;
 }
 
@@ -16,7 +16,7 @@ const signClass = (n: number | null) => (n === null || n === 0 ? 'text-muted' : 
 const STANDOUT = 40;
 
 /** One manager's draft, round by round. Cycles with the board's column headers, the grade list, or the arrows here. */
-export default function TeamDraft({ draft, managers, players, userId, onSelect, inSeason }: Props) {
+export default function TeamDraft({ draft, managers, players, seasonTeams, userId, onSelect, inSeason }: Props) {
   const order = draft.slotOrder;
   const teams = order.length;
   const idx = Math.max(0, order.indexOf(userId));
@@ -73,7 +73,7 @@ export default function TeamDraft({ draft, managers, players, userId, onSelect, 
                   {p.isKeeper && <span className="rounded bg-surface-2 px-1 text-[9px] font-semibold uppercase tracking-wide text-muted">kept</span>}
                 </span>
                 <span className="block truncate text-xs text-muted">
-                  {playerTeam(players, p.playerId)}{p.redraftPos !== null ? ` · redraft ${p.redraftPos}` : ''}{owner ? ` · traded to ${owner}` : ''}
+                  {playerTeam(players, p.playerId, seasonTeams)}{p.redraftPos !== null ? ` · redraft ${p.redraftPos}` : ''}{owner ? ` · traded to ${owner}` : ''}
                 </span>
               </span>
               <span className="num text-right text-xs text-muted">{fmtPts(p.seasonPoints)}</span>

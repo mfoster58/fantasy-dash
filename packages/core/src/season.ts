@@ -30,8 +30,10 @@ export interface RawSeasonInput {
   playerSeasonPoints: Record<PlayerId, number>;
   /** scored weeks in which the player had gp >= 1 */
   playerGames: Record<PlayerId, number>;
-  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from the current directory) */
+  /** scored weeks in which at least 25 players on the NFL team had gp >= 1 (team from that week's stat rows) */
   teamGames: Record<string, number>;
+  /** NFL team each player last suited up for this season, from the weekly stat rows */
+  playerTeams: Record<PlayerId, string>;
   /** every transaction for weeks 1..maxWeek, any status; builders filter */
   transactions: SleeperTransaction[];
   draft: { draft: SleeperDraft; picks: SleeperDraftPick[] } | null;
@@ -158,6 +160,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
         players,
         gamesPlayed: input.playerGames,
         teamGames: input.teamGames,
+        playerTeams: input.playerTeams,
         lastScoredWeek,
         byeAdjust: status === 'in_season',
         trades: tradesFromTransactions(input.transactions, rosterToUser),
@@ -183,6 +186,7 @@ export function buildSeason(input: RawSeasonInput, nameOverrides: Record<UserId,
     draft,
     transactions: transactionsOf(input.transactions, rosterToUser),
     playerSeasons: playerSeasonsOf(input.playerSeasonPoints, input.playerGames, players),
+    playerTeams: input.playerTeams,
   };
 }
 

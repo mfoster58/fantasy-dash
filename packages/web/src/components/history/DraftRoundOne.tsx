@@ -1,13 +1,13 @@
-import type { Draft, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import type { Draft, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import { Link } from 'react-router';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam } from '../../lib/players';
 
-interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; year: number }
+interface Props { draft: Draft; managers: Record<UserId, Manager>; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; year: number }
 
-export default function DraftRoundOne({ draft, managers, players, year }: Props) {
+export default function DraftRoundOne({ draft, managers, players, seasonTeams, year }: Props) {
   const picks = draft.picks.filter((p) => p.round === 1).sort((a, b) => a.pickNo - b.pickNo);
   return (
     <div className="card">
@@ -28,7 +28,7 @@ export default function DraftRoundOne({ draft, managers, players, year }: Props)
               </span>
               <span className="flex items-center gap-2">
                 <PosPill pos={pos} />
-                <span className="w-8 text-xs text-muted">{playerTeam(players, p.playerId)}</span>
+                <span className="w-8 text-xs text-muted">{playerTeam(players, p.playerId, seasonTeams)}</span>
                 <span className={`num w-10 text-right text-xs ${p.value === null ? 'text-muted' : p.value > 0 ? 'text-win' : p.value < 0 ? 'text-loss' : 'text-muted'}`}>{p.value === null ? '—' : fmtSigned(p.value, 0)}</span>
               </span>
             </li>
