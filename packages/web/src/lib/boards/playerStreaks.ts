@@ -23,14 +23,23 @@ export const drought = (ctx: BoardContext): BoardRow[] => lineRunBoard(skillOnly
 export const posTopRun = (ctx: BoardContext): BoardRow[] => {
   const lines = started(ctx);
   const has = new Map<PlayerId, Set<number>>();
+  const topLines = new Map<PlayerId, PlayerLine[]>();
   const byWeekPos = new Map<string, PlayerLine[]>();
   for (const l of lines) { const k = `${weekKey(l)}|${l.position}`; const arr = byWeekPos.get(k) ?? []; arr.push(l); byWeekPos.set(k, arr); }
   for (const ls of byWeekPos.values()) {
     const top = Math.max(...ls.map((l) => l.points));
-    for (const l of ls) if (l.points === top) { const set = has.get(l.playerId) ?? new Set<number>(); set.add(weekKey(l)); has.set(l.playerId, set); }
+    for (const l of ls) {
+      if (l.points !== top) continue;
+      const set = has.get(l.playerId) ?? new Set<number>(); set.add(weekKey(l)); has.set(l.playerId, set);
+      const mine = topLines.get(l.playerId) ?? []; mine.push(l); topLines.set(l.playerId, mine);
+    }
   }
   const runs: Map<PlayerId, StartRun> = longestWeekRun(weeksOf(ctx.lines), has);
   const mayBeActive = ctx.year === null || ctx.year === ctx.currentYear;
   const items = [...runs.entries()].map(([playerId, r]) => ({ playerId, r, value: r.length, latestYear: r.to.year, latestWeek: r.to.week }));
-  return rank(items).map((i) => ({ key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: span(i.r), detail: mayBeActive && i.r.active ? 'active' : null, userId: null, to: null }));
+  return rank(items).map((i) => {
+    const inRun = (topLines.get(i.playerId) ?? []).filter((l) => weekKey(l) >= weekKey(i.r.from) && weekKey(l) <= weekKey(i.r.to));
+    const managers = managersOf(inRun);
+    return { key: i.playerId, playerId: i.playerId, value: i.value, valueLabel: String(i.value), meta: span(i.r), detail: mayBeActive && i.r.active ? 'active' : null, userId: soleManager(managers) ?? managers[0]?.userId ?? null, to: null, managers };
+  });
 };

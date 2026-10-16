@@ -37,13 +37,18 @@ describe('manager transaction boards', () => {
     expect(mtBiggestBid(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 30, valueLabel: '$30', detail: 'Quincy One', meta: '2024 · Wk 2' })]);
   });
   it('prices points per FAAB dollar over claims with at least $25 spent', () => {
-    expect(mtCheap(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 0.5, valueLabel: '$0.5/pt', detail: '$30 · 60.00 pts' })]);
+    expect(mtCheap(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 0.5, valueLabel: '$0.50/pt', detail: '$30 · 60.00 pts' })]);
+    const pennies = { ...ctx, transactions: [{ year: 2024, transactions: [tx('w3', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 31)] }] };
+    expect(mtCheap(pennies)[0]).toMatchObject({ value: 0.52, valueLabel: '$0.52/pt' }); // two decimals, so near-equal rates still rank by value
     expect(mtCostly(ctx)).toHaveLength(1);
     expect(mtCheap({ ...ctx, transactions: [{ year: 2024, transactions: [tx('w2', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 20)] }] })).toEqual([]);
   });
   it('finds the best pickup and the quickest cut', () => {
     expect(mtBestPickup(ctx).slice(0, 2).map((r) => [r.userId, r.value, r.detail])).toEqual([['a', 60, 'Quincy One · $30 · 2 starts'], ['b', 25, 'Ricky One · FA · 3 starts']]); // the 2025 add of t1 trails with 0 points
     expect(mtQuickCut(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 3, valueLabel: '3.0 days', detail: 'Ricky One', meta: '2024 · Wk 1' })]);
+    // trading the player away a day after the add is not a cut; the drop two days later still is
+    const traded = { ...ctx, transactions: [{ year: 2024, transactions: [...transactions[0].transactions, tx('t9', 'trade', 1, 1 * DAY, [mv('q1', 'b')], [mv('r1', 'b')])] }] };
+    expect(mtQuickCut(traded)[0]).toMatchObject({ userId: 'b', value: 3 });
   });
   it('is registered in order', () => {
     expect(boardsFor('managers', 'mtransactions').map((b) => b.id)).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabSeason', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtQuickCut']);

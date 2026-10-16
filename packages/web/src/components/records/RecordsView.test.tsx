@@ -95,6 +95,13 @@ describe('RecordsView', () => {
     expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
   });
 
+  it('leaves the sub-tab alone when the already selected tab is clicked again', () => {
+    mount('/records?sub=moments');
+    fireEvent.click(tab(/Players/));
+    expect(loc()).toContain('sub=moments');
+    expect(region('Moments')).toBeInTheDocument();
+  });
+
   it('keeps a board toggle across a tab switch because panels stay mounted', () => {
     mount('/records?sub=alltime');
     fireEvent.click(within(region('Most career points started')).getByRole('button', { name: 'PPG' }));

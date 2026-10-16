@@ -41,7 +41,7 @@ describe('player streaks', () => {
   });
   it('posTopRun counts consecutive league weeks as the top started scorer at the position', () => {
     const rows = posTopRun(ctx);
-    expect(rows.find((r) => r.playerId === 'w1')).toMatchObject({ value: 3, meta: '2024 Wk 1 – 2024 Wk 3', detail: 'active' });
+    expect(rows.find((r) => r.playerId === 'w1')).toMatchObject({ value: 3, meta: '2024 Wk 1 – 2024 Wk 3', detail: 'active', userId: 'b', managers: [{ userId: 'b', weeks: 3 }] });
     expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 3 }); // the only started RB each week, so top at RB even with 0 points in week 3
   });
   it('is registered under the right sub-tabs', () => {

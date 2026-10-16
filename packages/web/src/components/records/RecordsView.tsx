@@ -29,7 +29,7 @@ export default function RecordsView({ seasons, players, managers, years, current
   const tab: Tab = TABS.find((t) => t.id === params.get('tab'))?.id ?? 'players';
   const subs = subTabsOf(tab);
   const sub = subs.find((s) => s.id === params.get('sub'))?.id ?? subs[0].id;
-  const setTab = (id: Tab) => update((next) => { if (id === 'players') next.delete('tab'); else next.set('tab', id); next.delete('sub'); });
+  const setTab = (id: Tab) => { if (id === tab) return; update((next) => { if (id === 'players') next.delete('tab'); else next.set('tab', id); next.delete('sub'); }); };
   const setSub = (id: string) => update((next) => { if (id === subs[0].id) next.delete('sub'); else next.set('sub', id); });
 
   const allLines = useMemo(() => flattenLines(seasons, players), [seasons, players]);

@@ -123,8 +123,8 @@ export const BOARDS: BoardDef[] = [
   { id: 'msLucky', tab: 'managers', sub: 'mseasons', title: 'Luckiest season', definition: 'Actual wins minus the wins the all-play record implies over the same games: the schedule gave them this many extra wins. At least 3 games.', valueHeader: 'Wins', compute: ms.msLucky },
   { id: 'msUnlucky', tab: 'managers', sub: 'mseasons', title: 'Unluckiest season', definition: 'Actual wins minus the wins the all-play record implies, most negative first. At least 3 games.', valueHeader: 'Wins', compute: ms.msUnlucky },
   { id: 'msNoTitle', tab: 'managers', sub: 'mseasons', title: 'Best team without the title', definition: 'Best all-play win percentage among seasons whose manager did not win the championship. Complete seasons only.', valueHeader: 'All-play', compute: ms.msNoTitle },
-  { id: 'msEfficiency', tab: 'managers', sub: 'mseasons', title: 'Best lineup efficiency', definition: 'Points started divided by the best possible lineup, over every game that season, playoffs included.', valueHeader: 'Eff', compute: ms.msEfficiency },
-  { id: 'msWorstEfficiency', tab: 'managers', sub: 'mseasons', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game that season.', valueHeader: 'Eff', compute: ms.msWorstEfficiency },
+  { id: 'msEfficiency', tab: 'managers', sub: 'mseasons', title: 'Best lineup efficiency', definition: 'Points started divided by the best possible lineup, over every game that season, playoffs included. At least 3 games.', valueHeader: 'Eff', compute: ms.msEfficiency },
+  { id: 'msWorstEfficiency', tab: 'managers', sub: 'mseasons', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game that season. At least 3 games.', valueHeader: 'Eff', compute: ms.msWorstEfficiency },
   { id: 'msBench', tab: 'managers', sub: 'mseasons', title: 'Most points left on the bench', definition: 'Points the best possible lineup would have added, summed over every game that season.', valueHeader: 'Pts', compute: ms.msBench },
   // Managers → Games
   { id: 'mgHigh', tab: 'managers', sub: 'mgames', title: 'Highest score', definition: 'Most points by a team in one game, playoffs included.', valueHeader: 'Pts', compute: mg.mgHigh },
@@ -171,7 +171,7 @@ export const BOARDS: BoardDef[] = [
   { id: 'mtCheap', tab: 'managers', sub: 'mtransactions', title: 'Cheapest points', definition: 'FAAB dollars per point the claimed players scored while started for the manager, lowest first. At least $25 spent.', valueHeader: '$/pt', compute: mt.mtCheap },
   { id: 'mtCostly', tab: 'managers', sub: 'mtransactions', title: 'Costliest points', definition: 'FAAB dollars per point the claimed players scored while started for the manager, highest first. At least $25 spent. A claim that never scored counts as one point.', valueHeader: '$/pt', compute: mt.mtCostly },
   { id: 'mtBestPickup', tab: 'managers', sub: 'mtransactions', title: 'Best waiver pickup', definition: 'Most points a single add returned while started for the manager, from the pickup until that manager dropped him. FAAB bid underneath, or FA for a free-agent add.', valueHeader: 'Pts', compute: mt.mtBestPickup },
-  { id: 'mtQuickCut', tab: 'managers', sub: 'mtransactions', title: 'Quickest cut', definition: 'Fewest days between picking a player up and dropping him again.', valueHeader: 'Days', compute: mt.mtQuickCut },
+  { id: 'mtQuickCut', tab: 'managers', sub: 'mtransactions', title: 'Quickest cut', definition: 'Fewest days between picking a player up and dropping him again. Trading him away is not a cut.', valueHeader: 'Days', compute: mt.mtQuickCut },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);

@@ -38,10 +38,13 @@ describe('manager season boards', () => {
     expect(msNoTitle(deep).map((r) => r.userId)).toEqual(['c']);
     expect(msNoTitle(mctx(2025))).toEqual([]); // nobody is champion yet, so nobody is a non-champion either
   });
-  it('rates season lineup efficiency and bench points over every game that season', () => {
-    // a 2024: 350 of 380 = 92.1%, bench 30; b 2024: 230 of 260 = 88.5%
-    expect(msEfficiency(ctx).map((r) => [r.userId, r.valueLabel])).toEqual([['a', '92.1%'], ['b', '88.5%']]);
-    expect(msWorstEfficiency(ctx)[0].userId).toBe('b');
+  it('rates season lineup efficiency over every game that season, with the 3-game minimum, and bench points without one', () => {
+    // a 2024: 350 of 380 = 92.1%, bench 30; b 2024: 230 of 260 = 88.5%; both have only 2 regular-season games
+    expect(msEfficiency(ctx)).toEqual([]);
+    const three = { ...ctx, managerSeasons: ctx.managerSeasons.map((ms) => ({ ...ms, games: 3 })) };
+    expect(msEfficiency(three).map((r) => [r.userId, r.valueLabel])).toEqual([['a', '92.1%'], ['b', '88.5%']]);
+    expect(msWorstEfficiency(three)[0].userId).toBe('b');
+    expect(msWorstEfficiency(ctx)).toEqual([]);
     expect(msBench(ctx).map((r) => [r.userId, r.value])).toEqual([['a', 30], ['b', 30]]);
   });
   it('is registered in order', () => {

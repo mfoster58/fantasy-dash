@@ -34,6 +34,6 @@ export const msLucky = (ctx: BoardContext): BoardRow[] => withTone(seasonRows(ct
 export const msUnlucky = (ctx: BoardContext): BoardRow[] => withTone(seasonRows(ctx, rated(luck), (v) => fmtSigned(v, 1), (ms) => `${recordOf(ms)} · ${allPlayDetail(ms)}`, 'asc'));
 export const msNoTitle = (ctx: BoardContext): BoardRow[] =>
   seasonRows(ctx, rated((ms) => ms.row.allPlay.pct), fmtWinPct, (ms) => `${recordOf(ms)} · ${allPlayDetail(ms)}`, 'desc', seasonScope(ctx).filter((ms) => ms.complete && !ms.champion));
-export const msEfficiency = (ctx: BoardContext): BoardRow[] => seasonRows(ctx, efficiency(ctx), fmtPct, efficiencyDetail(ctx));
-export const msWorstEfficiency = (ctx: BoardContext): BoardRow[] => seasonRows(ctx, efficiency(ctx), fmtPct, efficiencyDetail(ctx), 'asc');
+export const msEfficiency = (ctx: BoardContext): BoardRow[] => seasonRows(ctx, rated(efficiency(ctx)), fmtPct, efficiencyDetail(ctx));
+export const msWorstEfficiency = (ctx: BoardContext): BoardRow[] => seasonRows(ctx, rated(efficiency(ctx)), fmtPct, efficiencyDetail(ctx), 'asc');
 export const msBench = (ctx: BoardContext): BoardRow[] => seasonRows(ctx, (ms) => ms.benchPoints || null, fmtPts, efficiencyDetail(ctx));

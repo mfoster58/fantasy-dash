@@ -3,7 +3,7 @@ import { fmtPts } from '../../format';
 import { playerName } from '../../players';
 import { waiverClaims, type WaiverClaim } from '../../waivers';
 import type { BoardContext, BoardRow } from '../shared';
-import { inYear, plural, rank, round1 } from '../shared';
+import { inYear, plural, rank, round1, round2 } from '../shared';
 import { seasonRows } from './shared';
 
 const DAY = 86_400_000;
@@ -69,8 +69,8 @@ function perPoint(ctx: BoardContext, direction: 'asc' | 'desc'): BoardRow[] {
     t.spent += c.bid; t.points += c.points; t.years.add(c.year); t.latest = Math.max(t.latest, c.year * 100 + c.week);
     by.set(c.userId, t);
   }
-  const items = [...by.entries()].filter(([, t]) => t.spent >= MIN_SPEND).map(([userId, t]) => ({ userId, t, value: round1(t.spent / Math.max(t.points, 1)), latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
-  return rank(items, direction).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: `$${i.value.toFixed(1)}/pt`, meta: scopeMeta(ctx, i.t.years), detail: `$${i.t.spent} · ${fmtPts(round1(i.t.points))} pts`, userId: i.userId, to: null }));
+  const items = [...by.entries()].filter(([, t]) => t.spent >= MIN_SPEND).map(([userId, t]) => ({ userId, t, value: round2(t.spent / Math.max(t.points, 1)), latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
+  return rank(items, direction).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: `$${i.value.toFixed(2)}/pt`, meta: scopeMeta(ctx, i.t.years), detail: `$${i.t.spent} · ${fmtPts(round1(i.t.points))} pts`, userId: i.userId, to: null }));
 }
 export const mtCheap = (ctx: BoardContext): BoardRow[] => perPoint(ctx, 'asc');
 export const mtCostly = (ctx: BoardContext): BoardRow[] => perPoint(ctx, 'desc');
@@ -85,7 +85,7 @@ export const mtQuickCut = (ctx: BoardContext): BoardRow[] => {
     for (const tx of sorted) {
       if (!isPickup(tx)) continue;
       for (const add of tx.adds) {
-        const drop = sorted.find((o) => o.created > tx.created && o.drops.some((d) => d.playerId === add.playerId && d.userId === add.userId));
+        const drop = sorted.find((o) => o.type !== 'trade' && o.created > tx.created && o.drops.some((d) => d.playerId === add.playerId && d.userId === add.userId));
         if (!drop) continue;
         items.push({ userId: add.userId, playerId: add.playerId, value: round1((drop.created - tx.created) / DAY), year: s.year, week: tx.week, latestYear: s.year, latestWeek: tx.week, key: `${tx.id}-${add.playerId}` });
       }
