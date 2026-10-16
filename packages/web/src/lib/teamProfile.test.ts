@@ -1,0 +1,133 @@
+import type { History, Season, Transaction } from '@fantasy-dash/core';
+import { careerProfile, fieldedAs, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
+import { flattenLines } from './playerLines';
+import { game, line, players, season, side, standing, week } from '../test/playerFixtures';
+
+// Two weeks, two games each: alice beats bob then loses to cara; dan is the fourth team.
+const g = (yr: number, wk: number, id: number, a: [string, number], b: [string, number], aStarters = [line('q1', 20), line('r1', 10)], aBench = [line('w1', 7)]) =>
+  game(yr, wk, id, side(a[0], a[1], aStarters, aBench), side(b[0], b[1], [line('t1', 12)]));
+const tx = (id: string, type: Transaction['type'], week: number, created: number, adds: string[], drops: string[], bid: number | null = null): Transaction =>
+  ({ id, type, week, created, adds: adds.map((p) => ({ playerId: p, userId: 'a' })), drops: drops.map((p) => ({ playerId: p, userId: 'a' })), bid });
+
+function build(): Season {
+  const s = season(2025, [
+    week(1, [g(2025, 1, 1, ['a', 120], ['b', 90]), g(2025, 1, 2, ['c', 100], ['d', 80])]),
+    week(2, [g(2025, 2, 1, ['a', 95], ['c', 130]), g(2025, 2, 2, ['b', 70], ['d', 110])]),
+    week(3, []),
+  ]);
+  s.standings = [standing('c', 1, 2, 0, 0, 230, 175), standing('a', 2, 1, 1, 0, 215, 220), standing('d', 3, 1, 1, 0, 190, 170), standing('b', 4, 0, 2, 0, 160, 230)];
+  s.managers = { a: { userId: 'a', displayName: 'alice', teamName: 'Team Alice', avatar: null, rosterId: 1 } };
+  s.status = 'in_season';
+  s.transactions = [tx('t1', 'waiver', 2, 200, ['w1'], ['k1'], 12), tx('t2', 'free_agent', 1, 100, ['r1'], [])];
+  return s;
+}
+
+describe('seasonProfile', () => {
+  const p = seasonProfile(build(), 'a', players);
+
+  it('ranks scoring and points allowed and reads the standings row', () => {
+    expect(p.row?.rank).toBe(2);
+    expect(p.teams).toBe(4);
+    expect(p.scoringRank).toBe(2);           // 215 behind cara's 230
+    expect(p.pointsAllowedRank).toBe(2);     // 220 allowed, bob allowed 230
+    expect(p.finish).toBe('—');              // in season
+    expect(seasonProfile({ ...build(), status: 'complete' }, 'd', players).finish).toBe('#3');   // no podium: seed
+    expect(p.teamName).toBe('Team Alice');
+  });
+
+  it('builds the schedule with league averages and high/low flags', () => {
+    expect(p.weeks.map((w) => [w.week, w.opponentId, w.points, w.oppPoints, w.result, w.leagueAvg, w.high, w.low])).toEqual([
+      [1, 'b', 120, 90, 'W', 97.5, true, false],
+      [2, 'c', 95, 130, 'L', 101.3, false, true],
+    ]);
+    expect(p.ppw).toBe(107.5);
+    expect(p.leagueAvgPpw).toBe(99.4);
+    expect(p.longestWinStreak).toBe(1);
+    expect(p.benchLeft).toBe(20);            // fixture ceiling is points + 10 per game
+    expect(p.weeksPlayed).toBe(2);
+  });
+
+  it('splits points by position with league share and rank', () => {
+    const qb = p.positions.find((x) => x.pos === 'QB')!;
+    expect(qb.started).toBe(40);
+    expect(qb.rank).toBe(1);
+    expect(qb.players[0]).toMatchObject({ playerId: 'q1', starts: 2, started: 40, high: 20, bench: 0 });
+    const wr = p.positions.find((x) => x.pos === 'WR')!;
+    expect(wr.started).toBe(0);
+    expect(wr.players).toEqual([]);
+    expect(p.neverStarted.map((x) => [x.playerId, x.bench])).toEqual([['w1', 14]]);
+    expect(qb.share).toBeCloseTo(40 / 60, 5);
+  });
+
+  it("collects the manager's moves, FAAB and best pickup", () => {
+    expect(p.moves.map((t) => t.id)).toEqual(['t1', 't2']);
+    expect(p.faab).toBe(12);
+    expect(p.bestPickup).toMatchObject({ playerId: 'r1', starts: 2, points: 20, bid: null });
+  });
+});
+
+describe('longestWinStreak', () => {
+  it('counts consecutive wins in week order', () => {
+    const mk = (week: number, result: 'W' | 'L') => ({ year: 2025, week, result } as Parameters<typeof longestWinStreak>[0][number]);
+    expect(longestWinStreak([mk(3, 'W'), mk(1, 'W'), mk(2, 'W'), mk(4, 'L'), mk(5, 'W')])).toBe(3);
+    expect(longestWinStreak([])).toBe(0);
+  });
+});
+
+describe('fieldedAs', () => {
+  it('groups contiguous seasons under the same team name, newest first', () => {
+    const mk = (year: number, teamName: string | null): Season => ({ ...build(), year, managers: { a: { userId: 'a', displayName: 'alice', teamName, avatar: null, rosterId: 1 } } });
+    expect(fieldedAs([mk(2023, 'Old'), mk(2024, 'Old'), mk(2025, 'New'), mk(2026, null)], 'a')).toEqual([
+      { teamName: 'alice', from: 2026, to: 2026 }, { teamName: 'New', from: 2025, to: 2025 }, { teamName: 'Old', from: 2023, to: 2024 },
+    ]);
+  });
+});
+
+describe('franchisePlayers', () => {
+  it('ranks by weeks rostered then points started', () => {
+    const lines = flattenLines([build()], players);
+    const top = franchisePlayers(lines, 'a', 6);
+    expect(top.map((f) => [f.playerId, f.weeks, f.starts, f.started])).toEqual([['q1', 2, 2, 40], ['r1', 2, 2, 20], ['w1', 2, 0, 0]]);
+    expect(top[0]).toMatchObject({ from: 2025, to: 2025, seasons: 1, high: 20, position: 'QB' });
+  });
+});
+
+describe('careerProfile', () => {
+  const s = build();
+  s.status = 'complete';
+  s.honors = { champion: 'c', runnerUp: 'a', third: null, pointsTitle: 'c', lastPlace: 'b' };
+  const history = {
+    seasons: [], managers: { a: { displayName: 'alice', avatar: null, seasons: [2025] } },
+    h2h: {
+      'a|b': { a: 'a', b: 'b', aWins: 1, bWins: 0, ties: 0, streak: { holder: 'a', length: 1 }, totalPoints: { a: 120, b: 90 }, biggestWin: null, closest: null, avgMargin: 30, games: [{ gameId: '2025-1-1', year: 2025, week: 1, tag: null, aPoints: 120, bPoints: 90 }] },
+      'a|c': { a: 'a', b: 'c', aWins: 0, bWins: 1, ties: 0, streak: { holder: 'c', length: 1 }, totalPoints: { a: 95, b: 130 }, biggestWin: null, closest: null, avgMargin: 35, games: [{ gameId: '2025-2-1', year: 2025, week: 2, tag: null, aPoints: 95, bPoints: 130 }] },
+    },
+    allTime: [{ userId: 'a', rank: 2, titles: 0, playoffApps: 1 }], topDraftValues: [], worstDraftValues: [],
+  } as unknown as History;
+  const c = careerProfile([s], history, 'a', players);
+
+  it('summarises each season and the honors won', () => {
+    expect(c.seasons).toHaveLength(1);
+    expect(c.seasons[0]).toMatchObject({ year: 2025, teamName: 'Team Alice', finish: '2nd', runnerUp: true, champion: false, ppw: 107.5, moves: 2 });
+    expect(c.honors).toEqual({ champion: [], runnerUp: [2025], third: [], pointsTitle: [], lastPlace: [] });
+    expect(c.longestWinStreak).toBe(1);
+    expect(c.bestFinish).toBe('2nd');
+    expect(c.record).toEqual({ w: 1, l: 1, t: 0 });
+  });
+
+  it('lists rivalries from the manager\'s point of view with the current streak, winners first', () => {
+    expect(c.rivalries.map((r) => [r.opponentId, r.w, r.l, r.streak, r.winPct])).toEqual([['b', 1, 0, 1, 1], ['c', 0, 1, -1, 0]]);
+  });
+
+  it('fills the lineup desk from every game', () => {
+    expect(c.lineup).toMatchObject({ weeks: 2, started: 215, possible: 235, benchLeft: 20 });
+    expect(c.lineup.efficiency).toBeCloseTo(215 / 235, 4);
+    expect(c.lineup.best?.week).toBe(1);    // 120 of 130 beats 95 of 105
+    expect(c.lineup.worst?.benchPoints).toBe(10);   // every fixture game leaves 10 on the bench; the first one is kept
+  });
+
+  it('has no draft desk without a draft', () => {
+    expect(c.draft).toBeNull();
+    expect(c.franchise.map((f) => f.playerId)).toEqual(['q1', 'r1', 'w1']);
+  });
+});
