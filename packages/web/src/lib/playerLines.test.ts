@@ -18,7 +18,7 @@ describe('flattenLines', () => {
       playerId: 'q1', userId: 'a', year: 2025, week: 1, gameId: '2025-1-1', matchupId: 1, tag: null, started: true,
       points: 30, yards: 310, touchdowns: 2, receptions: 0, played: true, postseason: false, consolation: false, position: 'QB',
       targets: 0, carries: 0, passAttempts: 0, rushYards: 10, recYards: 0, passYards: 300, rushTd: 0, recTd: 0, passTd: 2,
-      result: 'W',
+      result: 'W', bye: false,
     });
     const r1 = lines.find((l) => l.playerId === 'r1')!;
     expect(r1).toMatchObject({ started: false, yards: 120, touchdowns: 1, receptions: 4, played: true });
@@ -64,6 +64,27 @@ describe('flattenLines', () => {
     ])], players);
     expect(placement.filter((l) => l.tag === 'QF').every((l) => l.postseason)).toBe(true);
     expect(placement.filter((l) => l.tag !== 'QF').every((l) => !l.postseason && !l.consolation)).toBe(true);
+  });
+
+  it('flags a bye when no rostered player from the NFL team recorded a stat that week', () => {
+    // q1 and t1 are both KC: week 1 neither has a stat → bye; week 2 t1 played, so q1's idle week is not a bye
+    const byes = flattenLines([season(2025, [
+      week(1, [game(2025, 1, 1, side('a', 5, [line('r1', 5)], [line('q1', 0, {})]), side('b', 1, [line('w1', 1)], [line('t1', 0, {})]))]),
+      week(2, [game(2025, 2, 1, side('a', 5, [line('r1', 5)], [line('q1', 0, {})]), side('b', 3, [line('t1', 3)]))]),
+    ])], players);
+    const at = (id: string, week: number) => byes.find((l) => l.playerId === id && l.week === week)!;
+    expect(at('q1', 1).bye).toBe(true);
+    expect(at('t1', 1).bye).toBe(true);
+    expect(at('r1', 1).bye).toBe(false);
+    expect(at('q1', 2).bye).toBe(false);
+    // a started bye player is still on a bye; a line with stats never is
+    const startedBye = flattenLines([season(2025, [week(1, [game(2025, 1, 1, side('a', 0, [line('q1', 0, {})]), side('b', 1, [line('w1', 1)]))])])], players);
+    expect(startedBye.find((l) => l.playerId === 'q1')!.bye).toBe(true);
+    // the season's team map wins over the directory: q1 moved to MIA, where w1 played
+    const moved = { ...season(2025, [week(1, [game(2025, 1, 1, side('a', 0, [line('q1', 0, {})]), side('b', 1, [line('w1', 1)]))])]), playerTeams: { q1: 'MIA' } };
+    expect(flattenLines([moved], players).find((l) => l.playerId === 'q1')!.bye).toBe(false);
+    // an unknown team is never a bye
+    expect(flattenLines([season(2025, [week(1, [game(2025, 1, 1, side('a', 0, [line('ghost', 0, {})]), side('b', 1, [line('w1', 1)]))])])], players).find((l) => l.playerId === 'ghost')!.bye).toBe(false);
   });
 
   it('skips weeks that have not been played', () => {

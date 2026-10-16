@@ -39,6 +39,8 @@ export interface PlayerLine {
   passTd: number;
   /** the roster's result that week */
   result: 'W' | 'L' | 'T';
+  /** no rostered player from the player's NFL team recorded a stat that league week: an inferred bye, started or not */
+  bye: boolean;
 }
 
 /** games on the path to the title; the third- and fifth-place games are placement games and count as neither */
@@ -51,8 +53,15 @@ const n = (stats: Record<string, number>, key: string) => stats[key] ?? 0;
 export function flattenLines(seasons: Season[], players: PlayerDirectory): PlayerLine[] {
   const out: PlayerLine[] = [];
   for (const s of seasons) {
+    const teamOf = (id: PlayerId): string | null => s.playerTeams[id] ?? players[id]?.team ?? null;
     for (const wk of s.weeks) {
       if (!wk.played) continue;
+      // NFL teams with a rostered player who recorded a stat this week; a team absent from the set is on a bye
+      const activeTeams = new Set<string>();
+      for (const g of wk.games) for (const sideOf of g.sides) {
+        for (const e of sideOf.starters) if (e.player && Object.keys(e.player.stats ?? {}).length > 0) { const t = teamOf(e.player.playerId); if (t) activeTeams.add(t); }
+        for (const b of sideOf.bench) if (Object.keys(b.stats ?? {}).length > 0) { const t = teamOf(b.playerId); if (t) activeTeams.add(t); }
+      }
       for (const g of wk.games) {
         const postseason = g.tag !== null && POSTSEASON_TAGS.has(g.tag);
         const consolation = g.tag !== null && CONSOLATION_TAGS.has(g.tag);
@@ -61,6 +70,7 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
           const result: PlayerLine['result'] = sideOf.points > other.points ? 'W' : sideOf.points < other.points ? 'L' : 'T';
           const push = (p: CoreLine, started: boolean) => {
             const st = p.stats ?? {};
+            const team = teamOf(p.playerId);
             out.push({
               playerId: p.playerId, userId: sideOf.userId, year: s.year, week: wk.week, gameId: g.id, matchupId: g.matchupId,
               tag: g.tag, started, points: p.points,
@@ -75,6 +85,7 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
               consolation,
               position: players[p.playerId]?.position ?? '?',
               result,
+              bye: team !== null && !activeTeams.has(team),
             });
           };
           for (const e of sideOf.starters) if (e.player) push(e.player, true);

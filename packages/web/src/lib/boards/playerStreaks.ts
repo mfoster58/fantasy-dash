@@ -1,5 +1,5 @@
 import type { PlayerId } from '@fantasy-dash/core';
-import { longestWeekRun, weekKey, weeksOf, type StartRun } from '../ironman';
+import { byeWeeksOf, longestWeekRun, weekKey, weeksOf, type StartRun } from '../ironman';
 import type { PlayerLine } from '../playerLines';
 import { longestLineRun } from '../runs';
 import type { BoardContext, BoardRow } from './shared';
@@ -15,13 +15,15 @@ function lineRunBoard(lines: PlayerLine[], pred: (l: PlayerLine) => boolean): Bo
   });
 }
 
-export const run15 = (ctx: BoardContext): BoardRow[] => lineRunBoard(started(ctx), (l) => l.points >= 15);
-export const run20 = (ctx: BoardContext): BoardRow[] => lineRunBoard(started(ctx), (l) => l.points >= 20);
+/** started lines that were not a bye: a start on a bye week is invisible to a run, neither extending nor breaking it */
+const realStarts = (ctx: BoardContext) => started(ctx).filter((l) => !l.bye);
+export const run15 = (ctx: BoardContext): BoardRow[] => lineRunBoard(realStarts(ctx), (l) => l.points >= 15);
+export const run20 = (ctx: BoardContext): BoardRow[] => lineRunBoard(realStarts(ctx), (l) => l.points >= 20);
 export const drought = (ctx: BoardContext): BoardRow[] => lineRunBoard(skillOnly(started(ctx)).filter((l) => l.played), (l) => l.points < 5);
 
-/** Consecutive league weeks as the top started scorer at the player's position; a week not on top, started or not, ends the run. */
+/** Consecutive league weeks as the top started scorer at the player's position; a week not on top, started or not, ends the run. The player's bye weeks are skipped. */
 export const posTopRun = (ctx: BoardContext): BoardRow[] => {
-  const lines = started(ctx);
+  const lines = realStarts(ctx);
   const has = new Map<PlayerId, Set<number>>();
   const topLines = new Map<PlayerId, PlayerLine[]>();
   const byWeekPos = new Map<string, PlayerLine[]>();
@@ -34,7 +36,7 @@ export const posTopRun = (ctx: BoardContext): BoardRow[] => {
       const mine = topLines.get(l.playerId) ?? []; mine.push(l); topLines.set(l.playerId, mine);
     }
   }
-  const runs: Map<PlayerId, StartRun> = longestWeekRun(weeksOf(ctx.lines), has);
+  const runs: Map<PlayerId, StartRun> = longestWeekRun(weeksOf(ctx.lines), has, byeWeeksOf(ctx.lines));
   const mayBeActive = ctx.year === null || ctx.year === ctx.currentYear;
   const items = [...runs.entries()].map(([playerId, r]) => ({ playerId, r, value: r.length, latestYear: r.to.year, latestWeek: r.to.week }));
   return rank(items).map((i) => {

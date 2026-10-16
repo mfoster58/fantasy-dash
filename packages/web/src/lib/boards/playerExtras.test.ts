@@ -42,8 +42,21 @@ describe('player streaks', () => {
   it('posTopRun counts consecutive league weeks as the top started scorer at the position', () => {
     const rows = posTopRun(ctx);
     expect(rows.find((r) => r.playerId === 'w1')).toMatchObject({ value: 3, meta: '2024 Wk 1 – 2024 Wk 3', detail: 'active', userId: 'b', managers: [{ userId: 'b', weeks: 3 }] });
-    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 3 }); // the only started RB each week, so top at RB even with 0 points in week 3
+    expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 2 }); // the only started RB each week; week 3 has no stat from any SF player, so it is an inferred bye and skipped
   });
+  it('run15 and posTopRun skip a player\'s bye week instead of breaking on it', () => {
+    // q1 (KC) is started on his bye in week 2 with no stats; t1 (KC) is benched on it. Nobody else is a QB or TE.
+    const byeSeason = season(2024, [
+      week(1, [game(2024, 1, 1, side('a', 50, [line('q1', 30), line('t1', 10)]), side('b', 25, [line('w1', 15)]))]),
+      week(2, [game(2024, 2, 1, side('a', 0, [line('q1', 0, {})], [line('t1', 0, {})]), side('b', 21, [line('w1', 16)]))]),
+      week(3, [game(2024, 3, 1, side('a', 32, [line('q1', 22), line('t1', 10)]), side('b', 45, [line('w1', 14)]))]),
+    ]);
+    const c = { ...ctx, lines: flattenLines([byeSeason], players) };
+    expect(run15(c).find((r) => r.playerId === 'q1')).toMatchObject({ value: 2, meta: '2024 Wk 1 – 2024 Wk 3' });
+    expect(posTopRun(c).find((r) => r.playerId === 'q1')).toMatchObject({ value: 2, meta: '2024 Wk 1 – 2024 Wk 3' });
+    expect(posTopRun(c).find((r) => r.playerId === 't1')).toMatchObject({ value: 2, meta: '2024 Wk 1 – 2024 Wk 3' }); // benched on the bye: skipped, not broken
+  });
+
   it('is registered under the right sub-tabs', () => {
     expect(boardsFor('players', 'moments').map((b) => b.id)).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin']);
     expect(boardsFor('players', 'streaks').map((b) => b.id)).toEqual(['ironman', 'run15', 'run20', 'drought', 'posTopRun']);
