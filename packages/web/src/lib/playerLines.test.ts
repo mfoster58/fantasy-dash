@@ -49,13 +49,21 @@ describe('flattenLines', () => {
       week(3, [game(2025, 3, 1, side('a', 1, [line('q1', 1)]), side('b', 0, [line('r1', 0)]), 'Cons-R1')], true),
       week(4, [game(2025, 4, 1, side('a', 1, [line('w1', 1)]), side('b', 0, [line('t1', 0)]), 'Cons-7th')], true),
     ])], players);
-    expect(cons.every((l) => l.consolation)).toBe(true);
+    // the path to the Toilet Bowl: round 1 counts, the seventh-place game is a placement game
+    expect(cons.filter((l) => l.week === 3).every((l) => l.consolation)).toBe(true);
+    expect(cons.filter((l) => l.week === 4).every((l) => !l.consolation)).toBe(true);
     expect(cons.every((l) => !l.postseason)).toBe(true);
   });
 
-  it('flags championship-bracket games as postseason and consolation games as not', () => {
+  it('flags games on the path to the title as postseason; placement games and consolation games are not', () => {
     expect(lines.find((l) => l.week === 3 && l.playerId === 'q1')!.postseason).toBe(true);
     expect(lines.find((l) => l.week === 4 && l.playerId === 't1')!.postseason).toBe(false);
+    const placement = flattenLines([season(2025, [
+      week(3, [game(2025, 3, 1, side('a', 1, [line('q1', 1)]), side('b', 0, [line('r1', 0)]), 'QF'), game(2025, 3, 2, side('c', 1, [line('w1', 1)]), side('d', 0, [line('t1', 0)]), '5th')], true),
+      week(4, [game(2025, 4, 1, side('a', 1, [line('q1', 1)]), side('b', 0, [line('r1', 0)]), '3rd')], true),
+    ])], players);
+    expect(placement.filter((l) => l.tag === 'QF').every((l) => l.postseason)).toBe(true);
+    expect(placement.filter((l) => l.tag !== 'QF').every((l) => !l.postseason && !l.consolation)).toBe(true);
   });
 
   it('skips weeks that have not been played', () => {

@@ -230,9 +230,9 @@ describe('toilet bowl and exclusions', () => {
     week(4, [game(2023, 4, 2, side('c', 7, [line('r1', 7)]), side('d', 2, [line('w1', 2)]), 'Cons-7th')], true),
   ]);
   const c = { ...ctx, lines: flattenLines([cons, ...seasons], players) };
-  it('toilet bowl starts count consolation games only', () => {
-    // ties at 1 break by newest week (wk 4 before wk 3), then playerId asc
-    expect(postToiletBowl(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 2, '25.00 pts'], ['k1', 1, '1.00 pts'], ['r1', 1, '7.00 pts'], ['w1', 1, '2.00 pts'], ['KC', 1, '10.00 pts']]);
+  it('toilet bowl starts count round 1 and the Toilet Bowl, not the seventh-place game', () => {
+    // ties at 1 break by newest week (wk 4 before wk 3), then playerId asc; r1 and w1 only played the 7th-place game
+    expect(postToiletBowl(c).map((r) => [r.playerId, r.value, r.detail])).toEqual([['q1', 2, '25.00 pts'], ['k1', 1, '1.00 pts'], ['KC', 1, '10.00 pts']]);
     expect(postPoints(c).some((r) => r.playerId === 'KC')).toBe(false);
   });
   it('last place rosters count seasons on the last-place roster in the toilet bowl, bench included', () => {

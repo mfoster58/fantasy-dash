@@ -22,9 +22,9 @@ export interface PlayerLine {
   receptions: number;
   /** true when the line carries any recorded stat; the per-week games-played flag is not persisted */
   played: boolean;
-  /** championship bracket only */
+  /** a quarterfinal, semifinal or the Final */
   postseason: boolean;
-  /** consolation bracket: Cons-R1, Toilet Bowl, Cons-7th */
+  /** consolation round 1 or the Toilet Bowl */
   consolation: boolean;
   /** from the player directory; '?' when unknown */
   position: string;
@@ -41,8 +41,10 @@ export interface PlayerLine {
   result: 'W' | 'L' | 'T';
 }
 
-export const POSTSEASON_TAGS: ReadonlySet<string> = new Set(['QF', 'SF', 'Final', '3rd', '5th']);
-export const CONSOLATION_TAGS: ReadonlySet<string> = new Set(['Cons-R1', 'Toilet Bowl', 'Cons-7th']);
+/** games on the path to the title; the third- and fifth-place games are placement games and count as neither */
+export const POSTSEASON_TAGS: ReadonlySet<string> = new Set(['QF', 'SF', 'Final']);
+/** games on the path to the Toilet Bowl; the seventh-place game is a placement game */
+export const CONSOLATION_TAGS: ReadonlySet<string> = new Set(['Cons-R1', 'Toilet Bowl']);
 
 const n = (stats: Record<string, number>, key: string) => stats[key] ?? 0;
 
