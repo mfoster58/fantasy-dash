@@ -18,6 +18,8 @@ export interface BoardRow {
   detail: string | null;
   userId: UserId | null;
   to: string | null;
+  /** a manager row's player (a draft pick, a waiver claim), shown after the manager */
+  player?: PlayerId;
   /** colours the value: win = green, loss = red */
   tone?: 'win' | 'loss';
   /** every manager behind an aggregate row, most weeks first; more than one renders as a count with a tooltip */
@@ -73,6 +75,10 @@ export interface BoardDef {
   directionLabels?: [string, string];
   /** offers a mode toggle; `compute` receives the chosen mode id */
   modes?: readonly BoardMode[];
+  /** render `modes` as a dropdown instead of a row of pills */
+  modeSelect?: boolean;
+  /** a manager board whose rows name a player: offers the per-board position dropdown, which the board applies to that player's position (player boards always offer it) */
+  positions?: boolean;
   /** second, independent toggle; its valueHeaders are suffixes appended to the first header */
   modes2?: readonly BoardMode[];
   /** empty-state copy when the mode's own threshold, not the position filter, is the usual reason for no rows */
@@ -140,6 +146,8 @@ export const KICKING_DEF = new Set(['K', 'DEF']);
 export const skillOnly = (ls: PlayerLine[]) => ls.filter((l) => !KICKING_DEF.has(l.position));
 export const matchesPos = (position: string, pos: PosFilter) =>
   pos === 'All' ? true : pos === 'FLEX' ? ['RB', 'WR', 'TE'].includes(position) : position === pos;
+/** whether the player's directory position passes the board's position filter */
+export const posOk = (ctx: BoardContext, playerId: string): boolean => matchesPos(ctx.players[playerId]?.position ?? '?', ctx.pos);
 
 const tieId = (x: { playerId?: string | null; userId?: string | null }) => x.playerId ?? x.userId ?? '';
 /** Sort by value (desc by default), then secondary desc, newest (year, week) desc, subject id asc, then cap at MAX_ROWS. */

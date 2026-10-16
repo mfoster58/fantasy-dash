@@ -5,5 +5,5 @@ import { currentSeason, history, players } from '../data/load';
 
 export default function RecordsPage() {
   const seasons = useLoaderData() as Season[];
-  return <RecordsView seasons={seasons} players={players} managers={history.managers} years={history.seasons.map((s) => s.year)} currentYear={currentSeason.year} lastScoredWeek={currentSeason.lastScoredWeek} />;
+  return <RecordsView seasons={seasons} players={players} managers={history.managers} years={history.seasons.map((s) => s.year)} currentYear={currentSeason.year} />;
 }

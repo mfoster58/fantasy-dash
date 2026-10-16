@@ -42,7 +42,7 @@ describe('Board', () => {
     wrapB({ rows: [row(0, { userId: 'a', to: '/scores/2025/1/3', detail: '3 starts' }), row(1)] });
     expect(screen.getByText('Most points in a week.')).toBeInTheDocument();
     const first = screen.getAllByRole('listitem')[0];
-    expect(first.textContent).toMatch(/^1QBQuincy One/);
+    expect(first.textContent).toMatch(/^League recordQBQuincy One/);
     expect(within(first).getByText('100.00')).toBeInTheDocument();
     expect(within(first).getByText('3 starts')).toBeInTheDocument();
     expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
@@ -105,6 +105,18 @@ describe('Board', () => {
     expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
   });
 
+  it('renders the modes as a dropdown when the definition asks for one', () => {
+    const onMode = vi.fn();
+    const modes = [{ id: '1', label: 'Top scorer', valueHeader: 'Weeks' }, { id: '3', label: 'Top 3', valueHeader: 'Weeks' }, { id: '5', label: 'Top 5', valueHeader: 'Weeks' }];
+    wrapB({ def: { ...def, modes, modeSelect: true }, rows: [row(0)], mode: '3', onMode });
+    const select = screen.getByRole('combobox', { name: 'View' });
+    expect(select).toHaveValue('3');
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Top scorer', 'Top 3', 'Top 5']);
+    expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
+    fireEvent.change(select, { target: { value: '5' } });
+    expect(onMode).toHaveBeenCalledWith('5');
+  });
+
   it('shows the empty copy it is given, else the position copy', () => {
     wrapB({ empty: 'No players with 3 games yet.' });
     expect(screen.getByText('No players with 3 games yet.')).toBeInTheDocument();
@@ -124,7 +136,8 @@ describe('Board', () => {
     fireEvent.click(within(group).getByRole('button', { name: 'Total' }));
     expect(onMode2).toHaveBeenCalledWith('total');
     const [first, second, third] = screen.getAllByRole('listitem');
-    expect(within(first).getByText('100.00')).toHaveClass('text-win');
+    expect(within(first).getByText('100.00')).toHaveClass('text-gold'); // the record row is gold whatever its tone
+    expect(within(first).getByText('100.00')).not.toHaveClass('text-win');
     expect(within(second).getByText('99.00')).toHaveClass('text-loss');
     expect(within(third).getByText('98.00')).not.toHaveClass('text-win');
   });
@@ -142,12 +155,63 @@ describe('Board', () => {
     ];
     wrapB({ def: mdef, rows });
     const [first, second] = screen.getAllByRole('listitem');
-    expect(first.textContent).toMatch(/^1alice/);
+    expect(first.textContent).toMatch(/^League recordalice/);
     expect(within(first).getAllByRole('link')).toHaveLength(1);
     expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
     expect(within(first).queryByText('QB')).toBeNull();
     expect(within(first).getByText('30-12')).toBeInTheDocument();
     expect(within(second).getByRole('link', { name: /2025 · Wk 16 · Championship/ })).toHaveAttribute('href', '/scores/2025/16/3');
+  });
+
+  it('crowns the record holder and anyone tied with it, in gold', () => {
+    wrapB({ rows: [row(0), row(1, { value: 100, valueLabel: '100.00' }), row(2)] });
+    const [first, second, third] = screen.getAllByRole('listitem');
+    expect(within(first).getByTitle('League record')).toBeInTheDocument();
+    expect(within(second).getByTitle('League record')).toBeInTheDocument();
+    expect(within(third).queryByTitle('League record')).toBeNull();
+    expect(third.textContent).toMatch(/^3/);
+    expect(first).toHaveAttribute('data-rank', '1');
+    expect(third).toHaveAttribute('data-rank', '3');
+    expect(within(first).getAllByText('100.00')[0]).toHaveClass('text-gold');
+    expect(within(third).getByText('98.00')).not.toHaveClass('text-gold');
+  });
+
+  it('crowns nobody when the tie at the top is more than three rows or the whole board', () => {
+    const tied = (n: number, total: number) => Array.from({ length: total }, (_, i) => row(i, i < n ? { value: 100, valueLabel: '100.00' } : {}));
+    wrapB({ rows: tied(4, 8) });
+    expect(screen.queryByTitle('League record')).toBeNull();
+    expect(screen.getAllByRole('listitem')[0].textContent).toMatch(/^1/);
+    cleanup();
+    wrapB({ rows: tied(3, 8) });
+    expect(screen.getAllByTitle('League record')).toHaveLength(3);
+    cleanup();
+    wrapB({ rows: tied(2, 2) }); // everyone is tied: no record to show
+    expect(screen.queryByTitle('League record')).toBeNull();
+    cleanup();
+    wrapB({ rows: [row(0)] }); // a lone row is the record
+    expect(screen.getAllByTitle('League record')).toHaveLength(1);
+  });
+
+  it('shows the player a manager row names, headshot and name, after the manager', () => {
+    const mdef: BoardDef = { ...def, tab: 'managers', sub: 'mdraft' };
+    wrapB({ def: mdef, rows: [{ key: 'a', playerId: null, player: 'q1', value: 30, valueLabel: '+30.0', meta: '2024', detail: 'Rd 9, pick 81', userId: 'a', to: '/draft/2024?team=a' }] });
+    const first = screen.getAllByRole('listitem')[0];
+    expect(first.textContent).toMatch(/alice.*Quincy One.*2024.*Rd 9, pick 81/);
+    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).getByRole('link', { name: '2024' })).toHaveAttribute('href', '/draft/2024?team=a');
+  });
+
+  it('offers a position dropdown when the section controls one', () => {
+    const onPosition = vi.fn();
+    wrapB({ rows: [row(0)], position: 'RB', onPosition });
+    const select = screen.getByRole('combobox', { name: 'Position' });
+    expect(select).toHaveValue('RB');
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['All', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF']);
+    fireEvent.change(select, { target: { value: 'TE' } });
+    expect(onPosition).toHaveBeenCalledWith('TE');
+    cleanup();
+    wrapB({ rows: [row(0)] });
+    expect(screen.queryByRole('combobox', { name: 'Position' })).toBeNull();
   });
 
   it('uses a neutral empty copy on the managers tab', () => {

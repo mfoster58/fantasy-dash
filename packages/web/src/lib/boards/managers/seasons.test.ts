@@ -19,7 +19,8 @@ describe('manager season boards', () => {
   it('needs 3 games for rate boards', () => {
     expect(msPpg(ctx)).toEqual([]);
     expect(msPpg(deep)).toEqual([expect.objectContaining({ userId: 'c', value: 120, valueLabel: '120.0' })]);
-    expect(msRecord(deep)).toEqual([expect.objectContaining({ userId: 'c', valueLabel: '.750', detail: '3-1 · 480.00 pts' })]);
+    expect(msRecord(deep)).toEqual([expect.objectContaining({ userId: 'c', value: 0.75, valueLabel: '3-1', detail: '.750 · 480.00 pts' })]);
+    expect(msWorstRecord(deep)[0]).toMatchObject({ valueLabel: '3-1' });
     expect(msWorstRecord(deep)[0].userId).toBe('c');
   });
   it('shows the differential signed with a tone', () => {
@@ -42,12 +43,12 @@ describe('manager season boards', () => {
     // a 2024: 350 of 380 = 92.1%, bench 30; b 2024: 230 of 260 = 88.5%; both have only 2 regular-season games
     expect(msEfficiency(ctx)).toEqual([]);
     const three = { ...ctx, managerSeasons: ctx.managerSeasons.map((ms) => ({ ...ms, games: 3 })) };
-    expect(msEfficiency(three).map((r) => [r.userId, r.valueLabel])).toEqual([['a', '92.1%'], ['b', '88.5%']]);
+    expect(msEfficiency(three).map((r) => [r.userId, r.valueLabel, r.detail])).toEqual([['a', '92.1%', '1-0-1'], ['b', '88.5%', '0-1-1']]);
     expect(msWorstEfficiency(three)[0].userId).toBe('b');
     expect(msWorstEfficiency(ctx)).toEqual([]);
     expect(msBench(ctx).map((r) => [r.userId, r.value])).toEqual([['a', 30], ['b', 30]]);
   });
   it('is registered in order', () => {
-    expect(boardsFor('managers', 'mseasons').map((b) => b.id)).toEqual(['msPoints', 'msFewest', 'msPpg', 'msAgainst', 'msRecord', 'msWorstRecord', 'msDiff', 'msAllPlay', 'msWorstAllPlay', 'msLucky', 'msUnlucky', 'msNoTitle', 'msEfficiency', 'msWorstEfficiency', 'msBench']);
+    expect(boardsFor('managers', 'mseasons').map((b) => b.id)).toEqual(['msPoints', 'msFewest', 'msPpg', 'msAgainst', 'msRecord', 'msWorstRecord', 'msDiff', 'msAllPlay', 'msWorstAllPlay', 'msLucky', 'msUnlucky', 'msEfficiency', 'msWorstEfficiency', 'msBench']);
   });
 });

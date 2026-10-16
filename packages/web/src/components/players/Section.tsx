@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardContext, BoardDef, Direction } from '../../lib/playerBoards';
-import type { PosFilter } from '../../lib/playerLines';
+import { filterLines, type PlayerLine, type PosFilter } from '../../lib/playerLines';
 import SeasonPicker from '../SeasonPicker';
 import Board from './Board';
 import PositionFilter from './PositionFilter';
@@ -13,6 +13,8 @@ interface Props {
   boards: BoardDef[];
   /** lines already narrowed to this section's position */
   ctx: BoardContext;
+  /** the same lines before the position filter, for a board whose own dropdown overrides it; defaults to ctx.lines */
+  allLines?: PlayerLine[];
   players: PlayerDirectory;
   managers: History['managers'];
   pos?: PosFilter;
@@ -22,7 +24,7 @@ interface Props {
   seasonPicker?: { years: number[]; value: number | 'all'; onChange: (v: number | 'all') => void; allTime?: boolean };
   /** when set, shown in place of the boards */
   emptyMessage?: string | null;
-  /** another tab is chosen: stay mounted, so toggles and expand state survive, but out of view */
+  /** another tab is chosen: stay mounted, so toggles and expand state survive, but out of view and without computing any board */
   hidden?: boolean;
 }
 
@@ -45,11 +47,14 @@ function useGridColumns(): boolean {
 }
 
 /** One titled block of boards with its own position filter, optional season picker, and expand state shared per grid row. */
-export default function Section({ id, title, note, boards, ctx, players, managers, pos, onPos, columns, seasonPicker, emptyMessage, hidden = false }: Props) {
+export default function Section({ id, title, note, boards, ctx, allLines, players, managers, pos, onPos, columns, seasonPicker, emptyMessage, hidden = false }: Props) {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [directions, setDirections] = useState<Record<string, Direction>>({});
   const [modes, setModes] = useState<Record<string, string>>({});
   const [modes2, setModes2] = useState<Record<string, string>>({});
+  // per-board position overrides; the section's own filter changing clears them
+  const [boardPos, setBoardPos] = useState<Record<string, PosFilter>>({});
+  useEffect(() => { setBoardPos({}); }, [pos]);
   const perRow = useGridColumns() ? columns : 1;
   // row indexes mean different boards once the column count changes, so start collapsed again
   useEffect(() => { setExpandedRows({}); }, [perRow]);
@@ -66,18 +71,22 @@ export default function Section({ id, title, note, boards, ctx, players, manager
       </div>
       {emptyMessage ? (
         <p className="card p-4 text-sm text-muted">{emptyMessage}</p>
-      ) : (
+      ) : hidden ? null : (
         <div className={`grid gap-4 ${columns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
           {boards.map((b, i) => {
             const row = Math.floor(i / perRow);
             const direction = directions[b.id] ?? 'desc';
             const mode = modes[b.id] ?? b.modes?.[0]?.id;
             const mode2 = modes2[b.id] ?? b.modes2?.[0]?.id;
+            // player boards always take a position of their own; a manager board only when it names players, and then it keeps every line
+            const offersPos = b.tab === 'players' || b.positions === true;
+            const override = boardPos[b.id];
+            const bctx: BoardContext = override === undefined ? ctx : { ...ctx, pos: override, lines: b.tab === 'players' ? filterLines(allLines ?? ctx.lines, override) : ctx.lines };
             return (
               <Board
                 key={b.id}
                 def={b}
-                rows={b.compute(ctx, direction, mode, mode2)}
+                rows={b.compute(bctx, direction, mode, mode2)}
                 players={players}
                 managers={managers}
                 expanded={expandedRows[row] ?? false}
@@ -88,7 +97,9 @@ export default function Section({ id, title, note, boards, ctx, players, manager
                 onMode={b.modes ? (m) => setModes((s) => ({ ...s, [b.id]: m })) : undefined}
                 mode2={mode2}
                 onMode2={b.modes2 ? (m) => setModes2((s) => ({ ...s, [b.id]: m })) : undefined}
-                empty={b.empty?.(ctx, mode, mode2)}
+                position={override ?? pos ?? 'All'}
+                onPosition={offersPos ? (p) => setBoardPos((s) => ({ ...s, [b.id]: p })) : undefined}
+                empty={b.empty?.(bctx, mode, mode2)}
               />
             );
           })}

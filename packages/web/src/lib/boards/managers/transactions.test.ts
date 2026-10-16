@@ -4,7 +4,7 @@ import { flattenLines } from '../../playerLines';
 import { players } from '../../../test/playerFixtures';
 import { boardsFor } from '../../playerBoards';
 import { mctx, seasons } from './shared.test';
-import { mtAdds, mtBestPickup, mtBiggestBid, mtBusiest, mtCheap, mtCostly, mtDrops, mtFaabCareer, mtFaabSeason, mtQuickCut, mtTrades } from './transactions';
+import { mtAdds, mtBestPickup, mtBestStart, mtBiggestBid, mtBusiest, mtCheap, mtCostly, mtDrops, mtFaabCareer, mtTrades, mtWaiverPoints, mtWaiverStarts } from './transactions';
 
 const DAY = 86_400_000;
 const mv = (playerId: string, userId: string): TransactionMove => ({ playerId, userId });
@@ -31,10 +31,10 @@ describe('manager transaction boards', () => {
   it('ranks the busiest manager-seasons under the in-progress rule', () => {
     expect(mtBusiest(ctx).map((r) => [r.userId, r.meta, r.value, r.detail])).toEqual([['b', '2024', 3, '1 add · 1 drop · 1 trade'], ['a', '2024', 2, '1 add · 0 drops · 1 trade']]);
   });
-  it('sums FAAB by season and career and finds the biggest bid', () => {
-    expect(mtFaabSeason(ctx)).toEqual([expect.objectContaining({ userId: 'a', meta: '2024', value: 30, valueLabel: '$30' })]);
+  it('sums FAAB over the career and finds the biggest bid, naming its player', () => {
     expect(mtFaabCareer(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 30, valueLabel: '$30' })]);
-    expect(mtBiggestBid(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 30, valueLabel: '$30', detail: 'Quincy One', meta: '2024 · Wk 2' })]);
+    expect(mtBiggestBid(ctx)).toEqual([expect.objectContaining({ userId: 'a', player: 'q1', value: 30, valueLabel: '$30', detail: null, meta: '2024 · Wk 2' })]);
+    expect(mtBiggestBid({ ...ctx, pos: 'RB' })).toEqual([]);
   });
   it('prices points per FAAB dollar over claims with at least $25 spent', () => {
     expect(mtCheap(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 0.5, valueLabel: '$0.50/pt', detail: '$30 · 60.00 pts' })]);
@@ -43,14 +43,25 @@ describe('manager transaction boards', () => {
     expect(mtCostly(ctx)).toHaveLength(1);
     expect(mtCheap({ ...ctx, transactions: [{ year: 2024, transactions: [tx('w2', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 20)] }] })).toEqual([]);
   });
-  it('finds the best pickup and the quickest cut', () => {
-    expect(mtBestPickup(ctx).slice(0, 2).map((r) => [r.userId, r.value, r.detail])).toEqual([['a', 60, 'Quincy One · $30 · 2 starts'], ['b', 25, 'Ricky One · FA · 3 starts']]); // the 2025 add of t1 trails with 0 points
-    expect(mtQuickCut(ctx)).toEqual([expect.objectContaining({ userId: 'b', value: 3, valueLabel: '3.0 days', detail: 'Ricky One', meta: '2024 · Wk 1' })]);
-    // trading the player away a day after the add is not a cut; the drop two days later still is
-    const traded = { ...ctx, transactions: [{ year: 2024, transactions: [...transactions[0].transactions, tx('t9', 'trade', 1, 1 * DAY, [mv('q1', 'b')], [mv('r1', 'b')])] }] };
-    expect(mtQuickCut(traded)[0]).toMatchObject({ userId: 'b', value: 3 });
+  it('finds the best pickup, naming its player, and narrows by that player\'s position', () => {
+    expect(mtBestPickup(ctx).slice(0, 2).map((r) => [r.userId, r.player, r.value, r.detail])).toEqual([['a', 'q1', 60, '$30 · 2 starts'], ['b', 'r1', 25, 'FA · 3 starts']]); // the 2025 add of t1 trails with 0 points
+    expect(mtBestPickup({ ...ctx, pos: 'RB' }).map((r) => r.player)).toEqual(['r1']);
   });
-  it('is registered in order', () => {
-    expect(boardsFor('managers', 'mtransactions').map((b) => b.id)).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabSeason', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtQuickCut']);
+  it('finds the best single start by a pickup while on the claimer\'s roster, linking to the box score', () => {
+    // a's q1: started weeks 2 (10) and 3 (50, the Final); b's r1: 10, 10, 5 (the newer 10 wins the tie)
+    const rows = mtBestStart(ctx);
+    expect(rows[0]).toMatchObject({ userId: 'a', player: 'q1', value: 50, meta: '2024 · Wk 3 · Championship', detail: '$30', to: '/scores/2024/3/1' });
+    expect(rows.find((r) => r.userId === 'b')).toMatchObject({ player: 'r1', value: 10, meta: '2024 · Wk 2', detail: 'FA', to: '/scores/2024/2/1' });
+    expect(rows).toHaveLength(5);
+    expect(mtBestStart({ ...ctx, pos: 'QB' }).map((r) => r.player)).toEqual(['q1', 'q1']); // one row per start
+  });
+  it('totals pickup starts and pickup points per manager', () => {
+    expect(mtWaiverStarts(ctx).map((r) => [r.userId, r.value, r.detail])).toEqual([['b', 3, '25.00 pts'], ['a', 2, '60.00 pts']]);
+    expect(mtWaiverPoints(ctx).map((r) => [r.userId, r.value, r.valueLabel, r.detail])).toEqual([['a', 60, '60.00', '2 starts'], ['b', 25, '25.00', '3 starts']]);
+    expect(mtWaiverPoints({ ...ctx, ...mctx(2025), transactions })).toEqual([]); // t1 never scored for b
+  });
+  it('is registered in order, the player boards offering a position dropdown', () => {
+    expect(boardsFor('managers', 'mtransactions').map((b) => b.id)).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
+    expect(boardsFor('managers', 'mtransactions').filter((b) => b.positions).map((b) => b.id)).toEqual(['mtBiggestBid', 'mtBestPickup', 'mtBestStart']);
   });
 });

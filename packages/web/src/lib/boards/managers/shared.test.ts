@@ -30,10 +30,11 @@ describe('manager board helpers', () => {
   it('careerRows aggregates every season and game per manager, drops nulls, and labels the span', () => {
     const rows = careerRows(mctx(), (a) => a.games.filter((g) => g.result === 'W').length || null, String, (a) => `${a.seasons.length} seasons`);
     expect(rows.map((r) => [r.playerId, r.userId, r.value, r.meta, r.detail])).toEqual([
-      [null, 'a', 2, '2024–2025 · 2 seasons', '2 seasons'],
-      [null, 'b', 1, '2024–2025 · 2 seasons', '2 seasons'],
+      [null, 'a', 2, '2024–2025', '2 seasons'],
+      [null, 'b', 1, '2024–2025', '2 seasons'],
     ]);
-    expect(careerMeta([2025])).toBe('2025 · 1 season');
+    expect(careerMeta([2025])).toBe('2025');
+    expect(careerMeta([2025, 2023, 2025])).toBe('2023–2025');
   });
   it('seasonScope keeps complete seasons under All-time and the chosen year otherwise', () => {
     expect(seasonScope(mctx()).map((m) => m.year)).toEqual([2024, 2024]);

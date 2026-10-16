@@ -13,8 +13,9 @@ export interface TeamGame {
   projected: number;
   result: 'W' | 'L' | 'T';
   isPlayoff: boolean;
-  /** championship bracket */
+  /** a quarterfinal, semifinal or the Final */
   postseason: boolean;
+  /** consolation round 1 or the Toilet Bowl */
   consolation: boolean;
   /** the manager had the week's top score (regular season only, as the data records it) */
   weekHigh: boolean;

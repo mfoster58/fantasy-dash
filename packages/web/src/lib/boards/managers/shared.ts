@@ -2,7 +2,7 @@ import type { UserId } from '@fantasy-dash/core';
 import { fmtRecord, fmtTag } from '../../format';
 import type { ManagerSeason, TeamGame } from '../../managerGames';
 import type { BoardContext, BoardRow, Direction } from '../shared';
-import { plural, rank } from '../shared';
+import { rank } from '../shared';
 
 export const managerName = (ctx: BoardContext, id: UserId): string => ctx.managers[id]?.displayName ?? id;
 /** "2024 · Wk 5 · Championship" */
@@ -10,12 +10,13 @@ export const whenGame = (g: TeamGame): string => `${g.year} · Wk ${g.week}${g.t
 export const gameLink = (g: TeamGame): string => `/scores/${g.year}/${g.week}/${g.matchupId}`;
 export const score = (g: TeamGame): string => `${g.points.toFixed(2)}–${g.oppPoints.toFixed(2)}`;
 export const vs = (ctx: BoardContext, g: TeamGame): string => `vs ${managerName(ctx, g.opponentId)}, ${score(g)}`;
-/** "2023–2026 · 4 seasons" or "2025 · 1 season" */
+/** "2023–2026" or "2025": the span of a career */
 export function careerMeta(years: number[]): string {
   const ys = [...new Set(years)].sort((a, b) => a - b);
-  const span = ys.length > 1 ? `${ys[0]}–${ys[ys.length - 1]}` : String(ys[0] ?? '');
-  return `${span} · ${plural(ys.length, 'season')}`;
+  return ys.length > 1 ? `${ys[0]}–${ys[ys.length - 1]}` : String(ys[0] ?? '');
 }
+/** "2023, 2025": every distinct year, in order */
+export const yearsList = (years: number[]): string => [...new Set(years)].sort((a, b) => a - b).join(', ');
 export const recordOf = (ms: ManagerSeason): string => fmtRecord({ w: ms.row.w, l: ms.row.l, t: ms.row.t });
 /** whole-season rows: complete seasons under All-time, the chosen year's seasons otherwise */
 export const seasonScope = (ctx: BoardContext): ManagerSeason[] => ctx.managerSeasons.filter((ms) => ctx.year !== null || ms.complete);
@@ -47,12 +48,12 @@ export function careerRows(ctx: BoardContext, value: (a: CareerAgg) => number | 
   return rank(items, direction).map((i) => ({ ...row(i.userId, i.value, label(i.value), careerMeta(i.a.seasons.map((s) => s.year)), detail(i.a), null), key: i.userId }));
 }
 
-/** One row per manager-season in `scope` (the in-progress rule by default), linking to that season's standings. */
-export function seasonRows(ctx: BoardContext, value: (ms: ManagerSeason) => number | null, label: (v: number) => string, detail: (ms: ManagerSeason) => string | null, direction: Direction = 'desc', scope: ManagerSeason[] = seasonScope(ctx), secondary?: (ms: ManagerSeason) => number): BoardRow[] {
+/** One row per manager-season in `scope` (the in-progress rule by default), linking to that season's standings. `label` may read the season itself. */
+export function seasonRows(ctx: BoardContext, value: (ms: ManagerSeason) => number | null, label: (v: number, ms: ManagerSeason) => string, detail: (ms: ManagerSeason) => string | null, direction: Direction = 'desc', scope: ManagerSeason[] = seasonScope(ctx), secondary?: (ms: ManagerSeason) => number): BoardRow[] {
   const items = scope
     .map((ms) => ({ ms, userId: ms.userId, value: value(ms), secondary: secondary?.(ms), latestYear: ms.year, latestWeek: 0 }))
     .filter((i): i is typeof i & { value: number } => i.value !== null);
-  return rank(items, direction).map((i) => ({ ...row(i.userId, i.value, label(i.value), String(i.ms.year), detail(i.ms), `/standings/${i.ms.year}`), key: `${i.ms.year}-${i.userId}` }));
+  return rank(items, direction).map((i) => ({ ...row(i.userId, i.value, label(i.value, i.ms), String(i.ms.year), detail(i.ms), `/standings/${i.ms.year}`), key: `${i.ms.year}-${i.userId}` }));
 }
 
 /** One row per team game, linking to the box score. */
