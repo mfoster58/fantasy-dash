@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { CrownIcon } from '../Icons';
 import { CardHeader } from '../draft/DraftAnalysis';
 import type { ManagerRecord } from '../../lib/managerRecords';
 
@@ -23,7 +24,7 @@ export default function LeagueRecords({ records }: Props) {
                 <li key={r.boardId}>
                   <Link to={`/records?tab=managers&sub=${r.sub}`} data-rank={r.rank}
                     className={`flex items-center gap-3 px-4 py-1.5 text-sm hover:bg-surface-2 ${r.rank === 1 ? 'bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]' : ''}`}>
-                    <span className={`num w-5 text-center text-xs ${r.rank === 1 ? 'font-bold text-gold' : 'text-muted'}`}>{r.rank === 1 ? '♛' : r.rank}</span>
+                    <span className={`num w-5 text-center text-xs ${r.rank === 1 ? 'font-bold text-gold' : 'text-muted'}`}>{r.rank === 1 ? <CrownIcon title="League record" /> : r.rank}</span>
                     <span className="min-w-0 flex-1">
                       <span className={`block truncate ${r.rank === 1 ? 'font-medium' : ''}`}>{r.title}</span>
                       <span className="block truncate text-xs text-muted">{r.meta}{r.detail ? ` · ${r.detail}` : ''}</span>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Avatar from '../Avatar';
 
-export interface Tile { label: string; value: string; sub?: string | null; /** colours the value */ tone?: 'win' | 'loss' | 'gold' | null }
+export interface Tile { label: string; value: ReactNode; sub?: string | null; /** colours the value */ tone?: 'win' | 'loss' | 'gold' | null }
 
 const TONE = { win: 'text-win', loss: 'text-loss', gold: 'text-gold' } as const;
 

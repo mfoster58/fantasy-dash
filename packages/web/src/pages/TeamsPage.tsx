@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useNavigate } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import Avatar from '../components/Avatar';
+import { FinishIcon } from '../components/Icons';
 import SeasonPicker from '../components/SeasonPicker';
 import TeamsTabs from '../components/teams/TeamsTabs';
 import { history } from '../data/load';
@@ -31,7 +32,7 @@ export default function TeamsPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{m?.teamName ?? m?.displayName ?? r.userId}</span>
                   <span className="block truncate text-xs text-muted">{m?.displayName}</span>
-                  <span className="num mt-1 block text-xs text-muted">{fmtRecord(r)} · {fmtPts(r.pf)} pts{finish.place !== null ? ` · ${finish.icon ? `${finish.icon} ` : ''}${finish.label}` : ''}</span>
+                  <span className="num mt-1 block text-xs text-muted">{fmtRecord(r)} · {fmtPts(r.pf)} pts{finish.place !== null && <> · <span className="inline-flex items-center gap-1 whitespace-nowrap">{finish.icon && <FinishIcon kind={finish.icon} />}{finish.label}</span></>}</span>
                 </span>
                 <span className="num text-lg font-semibold text-muted">#{r.rank}</span>
               </Link>

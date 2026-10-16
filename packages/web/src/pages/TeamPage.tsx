@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useNavigate, useParams } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import SeasonPicker from '../components/SeasonPicker';
+import { FinishIcon } from '../components/Icons';
 import ProfileHeader from '../components/teams/ProfileHeader';
 import RosterBreakdown from '../components/teams/RosterBreakdown';
 import Schedule from '../components/teams/Schedule';
@@ -38,7 +39,12 @@ export default function TeamPage() {
         avatar={p.avatar} name={p.displayName}
         eyebrow={<><SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} /><Link to={`/teams/${season.year}`} className="text-accent normal-case tracking-normal hover:underline">All teams</Link></>}
         title={p.teamName}
-        subtitle={<Link to={`/managers/${userId}`} className="hover:text-accent">{p.displayName} · manager page →</Link>}
+        subtitle={<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <select aria-label="Manager" value={userId} onChange={(e) => navigate(`/teams/${season.year}/${e.target.value}`)} className="rounded border border-line bg-surface px-2 py-0.5 text-sm text-ink">
+            {season.standings.map((r) => <option key={r.userId} value={r.userId}>{season.managers[r.userId]?.displayName ?? r.userId}</option>)}
+          </select>
+          <Link to={`/managers/${userId}`} className="hover:text-accent">manager page →</Link>
+        </span>}
         badges={[
           <span title="Points for, ranked in the league">PF <b className="text-ink">{ordinal(p.scoringRank)}</b></span>,
           <span title="Points against, ranked from fewest allowed">PA <b className="text-ink">{ordinal(p.pointsAllowedRank)}</b></span>,
@@ -49,7 +55,7 @@ export default function TeamPage() {
           { label: 'Record', value: p.row ? fmtRecord(p.row) : '—' },
           { label: 'Pts for', value: p.row ? fmtPpg(p.row.pf) : '—' },
           { label: 'Pts against', value: p.row ? fmtPpg(p.row.pa) : '—' },
-          { label: 'Finish', value: p.finish.icon ? `${p.finish.icon} ${p.finish.label}` : p.finish.label, sub: p.finish.note ?? (inSeason ? 'season in progress' : null), tone: p.finish.place === 1 ? 'gold' : p.finish.place === p.teams ? 'loss' : null },
+          { label: 'Finish', value: p.finish.icon ? <span className="inline-flex items-center gap-1.5"><FinishIcon kind={p.finish.icon} className="text-[0.9em]" />{p.finish.label}</span> : p.finish.label, sub: p.finish.note ?? (inSeason ? 'season in progress' : null), tone: p.finish.place === 1 ? 'gold' : p.finish.place === p.teams ? 'loss' : null },
           { label: 'Playoff seed', value: p.seed === null ? '—' : `#${p.seed}`, sub: p.seed === null ? null : complete ? (p.madePlayoffs ? 'made the playoffs' : `missed · top ${p.playoffSpots} play`) : (p.madePlayoffs ? `in the top ${p.playoffSpots}` : `outside the top ${p.playoffSpots}`), tone: p.seed === null ? null : p.madePlayoffs ? 'win' : 'loss' },
           { label: 'All-play', value: ap ? `${ap.w}–${ap.l}${ap.t ? `–${ap.t}` : ''}` : '—', sub: ap ? `${fmtWinPct(ap.pct)} vs everyone` : null },
         ]}

@@ -7,7 +7,7 @@ export interface ShapePoint {
   mine: number | null; league: number;
   /** colours the dot green / red / grey; accent when absent */
   result?: 'W' | 'L' | 'T';
-  /** shades the chart from the first playoff point on */
+  /** a dashed divider sits before the first playoff point */
   playoff?: boolean;
 }
 
@@ -16,7 +16,7 @@ interface Props { label: string; points: ShapePoint[]; mineCaption: string; leag
 const H = 110, PAD = 10;
 const DOT: Record<'W' | 'L' | 'T', string> = { W: 'var(--win)', L: 'var(--loss)', T: 'var(--muted)' };
 
-/** Small line chart: the team's points per period against the league average (dashed), dots coloured by result and the playoff weeks shaded. */
+/** Small line chart: the team's points per period against the league average (dashed), dots coloured by result and a dashed line where the playoffs start. */
 export default function SeasonShape({ label, points, mineCaption, leagueCaption, wide = false }: Props) {
   const W = wide ? 720 : 320;
   const values = points.flatMap((p) => (p.mine === null ? [p.league] : [p.mine, p.league]));
@@ -46,11 +46,7 @@ export default function SeasonShape({ label, points, mineCaption, leagueCaption,
         <>
           <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="Points by week against the league average">
             {bandX !== null && (
-              <g data-testid="playoff-band">
-                <rect x={bandX} y={0} width={W - bandX} height={H} fill="var(--accent)" opacity="0.08" />
-                <line x1={bandX} x2={bandX} y1={0} y2={H} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity="0.8" />
-                <text x={W - 6} y={10} textAnchor="end" fontSize="7.5" fontWeight="600" letterSpacing="0.08em" fill="var(--accent)" style={{ textTransform: 'uppercase' }}>Playoffs</text>
-              </g>
+              <line data-testid="playoff-line" x1={bandX} x2={bandX} y1={0} y2={H} stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity="0.8"><title>Playoffs</title></line>
             )}
             <path d={path((p) => p.league)} fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.7" />
             <path d={path((p) => p.mine)} fill="none" stroke="var(--accent)" strokeWidth="2" />
