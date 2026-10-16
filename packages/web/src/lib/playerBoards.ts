@@ -8,11 +8,13 @@ import * as pm from './boards/playerMoments';
 import * as ps from './boards/playerStreaks';
 import * as ma from './boards/managers/alltime';
 import * as ms from './boards/managers/seasons';
+import * as mg from './boards/managers/games';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
 export * from './boards/managers/alltime';
 export * from './boards/managers/seasons';
+export * from './boards/managers/games';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -116,6 +118,17 @@ export const BOARDS: BoardDef[] = [
   { id: 'msEfficiency', tab: 'managers', sub: 'mseasons', title: 'Best lineup efficiency', definition: 'Points started divided by the best possible lineup, over every game that season, playoffs included.', valueHeader: 'Eff', compute: ms.msEfficiency },
   { id: 'msWorstEfficiency', tab: 'managers', sub: 'mseasons', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game that season.', valueHeader: 'Eff', compute: ms.msWorstEfficiency },
   { id: 'msBench', tab: 'managers', sub: 'mseasons', title: 'Most points left on the bench', definition: 'Points the best possible lineup would have added, summed over every game that season.', valueHeader: 'Pts', compute: ms.msBench },
+  // Managers → Games
+  { id: 'mgHigh', tab: 'managers', sub: 'mgames', title: 'Highest score', definition: 'Most points by a team in one game, playoffs included.', valueHeader: 'Pts', compute: mg.mgHigh },
+  { id: 'mgLow', tab: 'managers', sub: 'mgames', title: 'Lowest score', definition: 'Fewest points by a team in one game, playoffs included.', valueHeader: 'Pts', compute: mg.mgLow },
+  { id: 'mgLossHigh', tab: 'managers', sub: 'mgames', title: 'Best score in a loss', definition: 'Most points by a team that lost that game.', valueHeader: 'Pts', compute: mg.mgLossHigh },
+  { id: 'mgWinLow', tab: 'managers', sub: 'mgames', title: 'Worst score in a win', definition: 'Fewest points by a team that won that game.', valueHeader: 'Pts', compute: mg.mgWinLow },
+  { id: 'mgBlowout', tab: 'managers', sub: 'mgames', title: 'Biggest blowout', definition: 'Largest margin of victory, one row per game, the winner named.', valueHeader: 'Margin', compute: mg.mgBlowout },
+  { id: 'mgClosest', tab: 'managers', sub: 'mgames', title: 'Closest game', definition: 'Smallest margin of victory, one row per game, the winner named. Ties are not games anyone won.', valueHeader: 'Margin', compute: mg.mgClosest },
+  { id: 'mgCombinedHigh', tab: 'managers', sub: 'mgames', title: 'Highest-scoring game', definition: 'Most combined points in one game, the higher scorer named.', valueHeader: 'Pts', compute: mg.mgCombinedHigh },
+  { id: 'mgCombinedLow', tab: 'managers', sub: 'mgames', title: 'Lowest-scoring game', definition: 'Fewest combined points in one game, the higher scorer named.', valueHeader: 'Pts', compute: mg.mgCombinedLow },
+  { id: 'mgPerfect', tab: 'managers', sub: 'mgames', title: 'Best-set lineup', definition: 'Games in which the lineup started was the best possible one, most points first.', valueHeader: 'Pts', compute: mg.mgPerfect },
+  { id: 'mgBench', tab: 'managers', sub: 'mgames', title: 'Most points left on the bench', definition: 'Points the best possible lineup would have added in one game.', valueHeader: 'Pts', compute: mg.mgBench },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
