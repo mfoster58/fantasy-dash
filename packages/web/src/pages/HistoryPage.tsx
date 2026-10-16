@@ -1,9 +1,7 @@
 import { Link } from 'react-router';
 import type { UserId } from '@fantasy-dash/core';
 import Avatar from '../components/Avatar';
-import StreaksCard from '../components/history/StreaksCard';
 import { history } from '../data/load';
-import { longestStreaks } from '../lib/streaks';
 
 function Who({ id }: { id: UserId | null }) {
   if (!id) return <span className="text-muted">—</span>;
@@ -18,8 +16,6 @@ function Who({ id }: { id: UserId | null }) {
 
 export default function HistoryPage() {
   const seasons = [...history.seasons].reverse();
-  const wins = longestStreaks(history.h2h, 'W');
-  const losses = longestStreaks(history.h2h, 'L');
   return (
     <section className="space-y-4">
       <header><h1 className="text-[22px] font-semibold">League History</h1></header>
@@ -52,11 +48,7 @@ export default function HistoryPage() {
           </tbody>
         </table>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <StreaksCard title="Longest win streaks" streaks={wins} managers={history.managers} />
-        <StreaksCard title="Longest losing streaks" streaks={losses} managers={history.managers} />
-      </div>
-      <p className="text-xs text-muted">Every played game counts, playoffs included. A streak carries across seasons and ends on a tie.</p>
+      <p className="text-xs text-muted">Win and loss streaks, and every other manager record, live under <Link to="/records?tab=managers" className="text-accent hover:underline">Records → Managers</Link>.</p>
     </section>
   );
 }

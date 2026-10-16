@@ -9,12 +9,14 @@ import * as ps from './boards/playerStreaks';
 import * as ma from './boards/managers/alltime';
 import * as ms from './boards/managers/seasons';
 import * as mg from './boards/managers/games';
+import * as mst from './boards/managers/streaks';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
 export * from './boards/managers/alltime';
 export * from './boards/managers/seasons';
 export * from './boards/managers/games';
+export * from './boards/managers/streaks';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -129,6 +131,13 @@ export const BOARDS: BoardDef[] = [
   { id: 'mgCombinedLow', tab: 'managers', sub: 'mgames', title: 'Lowest-scoring game', definition: 'Fewest combined points in one game, the higher scorer named.', valueHeader: 'Pts', compute: mg.mgCombinedLow },
   { id: 'mgPerfect', tab: 'managers', sub: 'mgames', title: 'Best-set lineup', definition: 'Games in which the lineup started was the best possible one, most points first.', valueHeader: 'Pts', compute: mg.mgPerfect },
   { id: 'mgBench', tab: 'managers', sub: 'mgames', title: 'Most points left on the bench', definition: 'Points the best possible lineup would have added in one game.', valueHeader: 'Pts', compute: mg.mgBench },
+  // Managers → Streaks
+  { id: 'mWinStreak', tab: 'managers', sub: 'mstreaks', title: 'Longest winning streak', definition: 'Consecutive wins, every game counted, carried across seasons. A tie ends the run.', valueHeader: 'Wins', compute: mst.mWinStreak },
+  { id: 'mLoseStreak', tab: 'managers', sub: 'mstreaks', title: 'Longest losing streak', definition: 'Consecutive losses, every game counted, carried across seasons. A tie ends the run.', valueHeader: 'Losses', compute: mst.mLoseStreak },
+  { id: 'mPlayoffStreak', tab: 'managers', sub: 'mstreaks', title: 'Longest playoff streak', definition: 'Consecutive complete seasons in the championship bracket.', valueHeader: 'Seasons', compute: mst.mPlayoffStreak },
+  { id: 'mDrought', tab: 'managers', sub: 'mstreaks', title: 'Longest title drought', definition: 'Complete seasons since the manager last won the championship, or since they joined. The current season does not count until it ends.', valueHeader: 'Seasons', compute: mst.mDrought },
+  { id: 'mRun100', tab: 'managers', sub: 'mstreaks', title: 'Longest run of 100-point games', definition: 'Consecutive games scoring 100 or more, every game counted, carried across seasons.', valueHeader: 'Games', compute: mst.mRun100 },
+  { id: 'mHighRun', tab: 'managers', sub: 'mstreaks', title: 'Most consecutive weeks as high scorer', definition: 'Consecutive regular-season weeks with the top score in the league.', valueHeader: 'Weeks', compute: mst.mHighRun },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
