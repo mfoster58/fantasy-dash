@@ -1,5 +1,5 @@
 import type { BracketGame, History, Season, Transaction } from '@fantasy-dash/core';
-import { careerProfile, fieldedAs, finalPlacement, finishOf, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
+import { bestStarts, careerProfile, fieldedAs, finalPlacement, finishOf, franchisePlayers, longestWinStreak, seasonProfile } from './teamProfile';
 import { flattenLines } from './playerLines';
 import { bracketGame, game, line, players, season, side, standing, week } from '../test/playerFixtures';
 
@@ -54,7 +54,16 @@ describe('seasonProfile', () => {
     // alice sits out the first playoff week but plays the next one: a bye
     const s = build();
     s.weeks = [...s.weeks.slice(0, 2), week(3, [g(2025, 3, 1, ['c', 100], ['d', 80])], true), week(4, [g(2025, 4, 1, ['a', 100], ['c', 80])], true)];
-    expect(seasonProfile(s, 'a', players).schedule.map((e) => [e.kind, e.week])).toEqual([['played', 1], ['played', 2], ['bye', 3], ['played', 4]]);
+    const sched = seasonProfile(s, 'a', players).schedule;
+    expect(sched.map((e) => [e.kind, e.week])).toEqual([['played', 1], ['played', 2], ['bye', 3], ['played', 4]]);
+    expect(sched[2]).toMatchObject({ kind: 'bye', leagueAvg: 90 });
+  });
+
+  it('ranks the best single-week starts and the best by waiver or free-agent pickups', () => {
+    // r1 was a free-agent add in week 1 and started both weeks; q1 was never picked up
+    expect(p.bestStarts.map((s) => [s.playerId, s.week, s.points, s.waiver])).toEqual([['q1', 1, 20, false], ['q1', 2, 20, false], ['r1', 1, 10, true], ['r1', 2, 10, true]]);
+    expect(p.bestWaiverStarts.map((s) => [s.playerId, s.week])).toEqual([['r1', 1], ['r1', 2]]);
+    expect(p.bestStarts[0]).toMatchObject({ opponentId: 'b', matchupId: 1, tag: null });
   });
 
   it('splits points by position with league share and rank', () => {
@@ -107,6 +116,18 @@ describe('finalPlacement', () => {
     expect(finishOf(s, 'b')).toEqual({ place: 4, label: '4th', icon: null, note: 'of 6' });
     expect(finishOf(s, 'e')).toEqual({ place: 6, label: '6th', icon: '🚽', note: 'Toilet bowl' });
     expect(finishOf({ ...s, status: 'in_season' }, 'a')).toEqual({ place: null, label: '—', icon: null, note: null });
+  });
+});
+
+describe('bestStarts', () => {
+  it('stops counting a pickup once the manager drops the player again', () => {
+    const s = build();
+    s.transactions = [
+      { id: 'add', type: 'waiver', week: 1, created: 100, adds: [{ playerId: 'r1', userId: 'a' }], drops: [], bid: 5 },
+      { id: 'drop', type: 'free_agent', week: 1, created: 200, adds: [], drops: [{ playerId: 'r1', userId: 'a' }], bid: null },
+    ];
+    expect(bestStarts(s, 'a').waiver.map((x) => x.week)).toEqual([1]);
+    expect(bestStarts(s, 'a', 1).all).toHaveLength(1);
   });
 });
 

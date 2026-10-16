@@ -1,4 +1,4 @@
-import type { BracketGame, DraftPick, History, PlayerDirectory, PlayerId, PlayoffTag, Season, SeasonStatus, StandingRow, Transaction, UserId, WLT } from '@fantasy-dash/core';
+import type { BracketGame, DraftPick, History, PlayerDirectory, PlayerId, PlayoffTag, Season, SeasonStatus, StandingRow, Transaction, UserId, Week, WLT } from '@fantasy-dash/core';
 import { teamGamesOf, type TeamGame } from './managerGames';
 import { letterGrade, managerDraftSummaries } from './draft';
 import { flattenLines, type PlayerLine } from './playerLines';
@@ -66,7 +66,51 @@ export interface WeekLine {
 export type ScheduleEntry =
   | ({ kind: 'played' } & WeekLine)
   | { kind: 'upcoming'; week: number; tag: PlayoffTag | null; isPlayoff: boolean; matchupId: number; opponentId: UserId; projected: number; oppProjected: number }
-  | { kind: 'bye'; week: number };
+  | { kind: 'bye'; week: number; leagueAvg: number };
+
+export interface BestStart {
+  playerId: PlayerId; week: number; matchupId: number; opponentId: UserId; tag: PlayoffTag | null; points: number;
+  /** started inside a waiver or free-agent pickup window */
+  waiver: boolean;
+}
+
+/** mean score of every team that week */
+const leagueAvgOf = (wk: Week) => {
+  const all = wk.games.flatMap((x) => x.sides.map((s) => s.points));
+  return round1(all.reduce((t, p) => t + p, 0) / Math.max(1, all.length));
+};
+
+/**
+ * The manager's highest-scoring single-week starts, and the best of them by players picked up off waivers or
+ * free agency: a start counts as a pickup start from the add's week until the manager next drops the player.
+ */
+export function bestStarts(season: Season, userId: UserId, n = 5): { all: BestStart[]; waiver: BestStart[] } {
+  const sorted = [...season.transactions].sort((a, b) => a.created - b.created || (a.id < b.id ? -1 : 1));
+  const windows: { playerId: PlayerId; from: number; to: number }[] = [];
+  for (const tx of sorted) {
+    if (tx.type !== 'waiver' && tx.type !== 'free_agent') continue;
+    for (const add of tx.adds) {
+      if (add.userId !== userId) continue;
+      const drop = sorted.find((o) => o.created > tx.created && o.drops.some((d) => d.playerId === add.playerId && d.userId === userId));
+      windows.push({ playerId: add.playerId, from: tx.week, to: drop ? drop.week : Infinity });
+    }
+  }
+  const starts: BestStart[] = [];
+  for (const wk of season.weeks) {
+    if (!wk.played) continue;
+    for (const g of wk.games) {
+      const me = g.sides.find((s) => s.userId === userId), opp = g.sides.find((s) => s.userId !== userId);
+      if (!me || !opp) continue;
+      for (const e of me.starters) {
+        if (!e.player) continue;
+        const id = e.player.playerId;
+        starts.push({ playerId: id, week: wk.week, matchupId: g.matchupId, opponentId: opp.userId, tag: g.tag, points: e.player.points, waiver: windows.some((w) => w.playerId === id && wk.week >= w.from && wk.week <= w.to) });
+      }
+    }
+  }
+  starts.sort((a, b) => b.points - a.points || a.week - b.week || (a.playerId < b.playerId ? -1 : 1));
+  return { all: starts.slice(0, n), waiver: starts.filter((s) => s.waiver).slice(0, n) };
+}
 
 export interface PositionPlayer {
   playerId: PlayerId; position: string;
@@ -120,6 +164,8 @@ export interface SeasonProfile {
   neverStarted: PositionPlayer[];
   picks: DraftPick[]; grade: string | null; draftValue: number | null; draftRank: number | null;
   moves: Transaction[];
+  bestStarts: BestStart[];
+  bestWaiverStarts: BestStart[];
   bestPickup: { playerId: PlayerId; points: number; starts: number; week: number; bid: number | null } | null;
 }
 
@@ -141,15 +187,11 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
   const games = teamGamesOf([season]).filter((g) => g.userId === userId);
   const played = season.weeks.filter((w) => w.played);
 
-  const weeks: WeekLine[] = games.map((g) => {
-    const wk = season.weeks[g.week - 1];
-    const all = wk.games.flatMap((x) => x.sides.map((s) => s.points));
-    return {
-      week: g.week, tag: g.tag, isPlayoff: g.isPlayoff, matchupId: g.matchupId, opponentId: g.opponentId,
-      points: g.points, oppPoints: g.oppPoints, result: g.result, leagueAvg: round1(all.reduce((t, p) => t + p, 0) / Math.max(1, all.length)),
-      high: false, low: false,
-    };
-  }).sort((a, b) => a.week - b.week);
+  const weeks: WeekLine[] = games.map((g) => ({
+    week: g.week, tag: g.tag, isPlayoff: g.isPlayoff, matchupId: g.matchupId, opponentId: g.opponentId,
+    points: g.points, oppPoints: g.oppPoints, result: g.result, leagueAvg: leagueAvgOf(season.weeks[g.week - 1]),
+    high: false, low: false,
+  })).sort((a, b) => a.week - b.week);
   if (weeks.length > 0) {
     const max = Math.max(...weeks.map((w) => w.points)), min = Math.min(...weeks.map((w) => w.points));
     for (const w of weeks) { w.high = w.points === max; w.low = w.points === min && max !== min; }
@@ -160,7 +202,7 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
     if (wk.played) {
       const line = weeks.find((w) => w.week === wk.week);
       if (line) schedule.push({ kind: 'played', ...line });
-      else if (wk.isPlayoff && season.weeks.some((later) => later.week > wk.week && later.games.some((g) => g.sides.some((s) => s.userId === userId)))) schedule.push({ kind: 'bye', week: wk.week });
+      else if (wk.isPlayoff && season.weeks.some((later) => later.week > wk.week && later.games.some((g) => g.sides.some((s) => s.userId === userId)))) schedule.push({ kind: 'bye', week: wk.week, leagueAvg: leagueAvgOf(wk) });
     } else if (game) {
       const me = game.sides.find((s) => s.userId === userId)!, opp = game.sides.find((s) => s.userId !== userId)!;
       schedule.push({ kind: 'upcoming', week: wk.week, tag: game.tag, isPlayoff: wk.isPlayoff, matchupId: game.matchupId, opponentId: opp.userId, projected: me.projected, oppProjected: opp.projected });
@@ -227,6 +269,7 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
 
   const ceilingTotal = games.reduce((t, g) => t + g.ceiling, 0);
   const inBracket = season.brackets.winners.some((b) => b.home === userId || b.away === userId);
+  const top = bestStarts(season, userId);
   return {
     year: season.year, userId, status: season.status, row, teams: rows.length,
     teamName: manager?.teamName ?? manager?.displayName ?? userId, displayName: manager?.displayName ?? userId, avatar: manager?.avatar ?? null,
@@ -246,6 +289,7 @@ export function seasonProfile(season: Season, userId: UserId, players: PlayerDir
     draftValue: graded ? summaries[draftIdx].totalValue : null,
     draftRank: graded ? draftIdx + 1 : null,
     moves,
+    bestStarts: top.all, bestWaiverStarts: top.waiver,
     bestPickup: best ? { playerId: best.playerId, points: best.points, starts: best.starts, week: best.week, bid: best.bid } : null,
   };
 }
