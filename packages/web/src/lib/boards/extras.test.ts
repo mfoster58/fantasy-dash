@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
 import { emptyManagerCtx, game, line, players, season, side, week } from '../../test/playerFixtures';
 import type { Draft, Season, Transaction } from '@fantasy-dash/core';
-import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, fodder, waiverHeroes, waiverVillains, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
+import { BOARDS, benchWarmers, championsOf, lastPlacesOf, loyalty, ironman, fodder, waiverHeroes, waiverFlops, draftValue, draftValuesOf, mrIrrelevant, breakout, fallOff, type BoardContext } from '../playerBoards';
 
 const seasons = [
   season(2024, [
@@ -55,7 +55,7 @@ describe('ironman', () => {
 describe('registry', () => {
   it('files the former Extras boards under All-time, Moments and Streaks', () => {
     const sub = (id: string) => BOARDS.find((b) => b.id === id)!.sub;
-    for (const id of ['boomStarts', 'dudStarts', 'benchWarmers', 'journeyman', 'loyalty', 'fodder', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant']) expect(sub(id)).toBe('alltime');
+    for (const id of ['boomStarts', 'dudStarts', 'benchWarmers', 'journeyman', 'loyalty', 'fodder', 'waiverHeroes', 'waiverFlops', 'draftValue', 'mrIrrelevant']) expect(sub(id)).toBe('alltime');
     for (const id of ['benchBlunder', 'breakout', 'fallOff']) expect(sub(id)).toBe('moments');
     expect(sub('ironman')).toBe('streaks');
   });
@@ -89,18 +89,23 @@ describe('fodder', () => {
 describe('waiver heroes and villains', () => {
   // w1 claimed by b for $30 in 2024 wk2: b started w1 in 2024 wk1 only (before the claim) → 0 starts.
   // q1 claimed by b for $9 in 2025 wk1: b started q1 wk1 35, wk2 18; benched wk3 → 53 pts, 2 starts.
-  it('heroes rank started points per claim; villains rank dollars per point for claims of $10 or more', () => {
+  it('heroes rank started points per claim; flops are bids whose player returned under 10 started points, biggest bid first', () => {
     expect(waiverHeroes(txCtx).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['q1', 53, '2025 · Wk 1', '$9 · 2 starts', 'b'], ['w1', 0, '2024 · Wk 2', '$30 · 0 starts', 'b']]);
-    expect(waiverVillains(txCtx).map((r) => [r.playerId, r.value, r.valueLabel, r.detail])).toEqual([['w1', 30, '$30.0/pt', '$30 · 0.00 pts · 0 starts']]);
+    expect(waiverFlops(txCtx).map((r) => [r.playerId, r.value, r.valueLabel, r.detail, r.userId])).toEqual([['w1', 30, '$30', '0.00 pts · 0 starts', 'b']]);
   });
-  it('heroes count free-agent adds as FA and $0 claims as $0; villains ignore both', () => {
+  it('flops never include a claim still on the roster in a season that is not complete', () => {
+    const open: BoardContext = { ...txCtx, transactions: txCtx.transactions.map((s) => ({ ...s, complete: false })) };
+    expect(waiverFlops(open)).toEqual([]); // b never dropped w1 in 2024
+    expect(waiverHeroes(open).map((r) => r.playerId)).toEqual(['q1', 'w1']); // heroes still count him
+  });
+  it('heroes count free-agent adds as FA and $0 claims as $0; flops ignore both', () => {
     // b adds r1 off the street in 2025 wk3 and starts him for 22; a claims w1 for $0 in 2025 wk3 and starts him for 4
     const fa: BoardContext = { ...ctx, transactions: [{ year: 2025, transactions: [
       t({ id: 'g', type: 'free_agent', week: 3, created: 1, adds: [{ playerId: 'r1', userId: 'b' }] }),
       t({ id: 'h', type: 'waiver', week: 3, created: 2, adds: [{ playerId: 'w1', userId: 'a' }], bid: 0 }),
     ] }] };
     expect(waiverHeroes(fa).map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId])).toEqual([['r1', 22, '2025 · Wk 3', 'FA · 1 start', 'b'], ['w1', 4, '2025 · Wk 3', '$0 · 1 start', 'a']]);
-    expect(waiverVillains(fa)).toEqual([]);
+    expect(waiverFlops(fa)).toEqual([]);
   });
 });
 

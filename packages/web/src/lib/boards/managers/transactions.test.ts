@@ -4,7 +4,7 @@ import { flattenLines } from '../../playerLines';
 import { players } from '../../../test/playerFixtures';
 import { boardsFor } from '../../playerBoards';
 import { mctx, seasons } from './shared.test';
-import { mtAdds, mtBestPickup, mtBestStart, mtBiggestBid, mtBusiest, mtCheap, mtCostly, mtDrops, mtFaabCareer, mtTrades, mtWaiverPoints, mtWaiverStarts } from './transactions';
+import { mtAdds, mtBestPickup, mtBestStart, mtBiggestBid, mtBusiest, mtDrops, mtFaabCareer, mtFaabValue, mtFaabWasted, mtTrades, mtWaiverPoints, mtWaiverStarts } from './transactions';
 
 const DAY = 86_400_000;
 const mv = (playerId: string, userId: string): TransactionMove => ({ playerId, userId });
@@ -36,12 +36,22 @@ describe('manager transaction boards', () => {
     expect(mtBiggestBid(ctx)).toEqual([expect.objectContaining({ userId: 'a', player: 'q1', value: 30, valueLabel: '$30', detail: null, meta: '2024 · Wk 2' })]);
     expect(mtBiggestBid({ ...ctx, pos: 'RB' })).toEqual([]);
   });
-  it('prices points per FAAB dollar over claims with at least $25 spent', () => {
-    expect(mtCheap(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 0.5, valueLabel: '$0.50/pt', detail: '$30 · 60.00 pts' })]);
-    const pennies = { ...ctx, transactions: [{ year: 2024, transactions: [tx('w3', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 31)] }] };
-    expect(mtCheap(pennies)[0]).toMatchObject({ value: 0.52, valueLabel: '$0.52/pt' }); // two decimals, so near-equal rates still rank by value
-    expect(mtCostly(ctx)).toHaveLength(1);
-    expect(mtCheap({ ...ctx, transactions: [{ year: 2024, transactions: [tx('w2', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 20)] }] })).toEqual([]);
+  it('sums the FAAB a manager bid on flops, claims that returned under 10 started points once their stint was over', () => {
+    // a also claims w1 for $20 before week 2 and never starts him; the season is complete, so that bid is a flop
+    const flops = { ...ctx, transactions: [{ year: 2024, transactions: [...transactions[0].transactions, tx('w9', 'waiver', 2, 11 * DAY, [mv('w1', 'a')], [], 20)] }] };
+    expect(mtFaabWasted(flops)).toEqual([expect.objectContaining({ userId: 'a', value: 20, valueLabel: '$20', detail: 'of $50 spent · 1 flop', meta: '1 season' })]);
+    expect(mtFaabWasted(ctx)).toEqual([]); // q1 returned 60: no flops
+    // an open claim in a season still in progress is not judged yet
+    const open = { ...flops, transactions: flops.transactions.map((s) => ({ ...s, complete: false })) };
+    expect(mtFaabWasted(open)).toEqual([]);
+  });
+  it('rates FAAB value as the share of judged dollars that went on claims returning 10+ points, at least $25 judged', () => {
+    const flops = { ...ctx, transactions: [{ year: 2024, transactions: [...transactions[0].transactions, tx('w9', 'waiver', 2, 11 * DAY, [mv('w1', 'a')], [], 20)] }] };
+    expect(mtFaabValue(flops)).toEqual([expect.objectContaining({ userId: 'a', value: 60, valueLabel: '60%', detail: '$30 of $50 · 1 of 2 claims hit' })]);
+    expect(mtFaabValue(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 100, valueLabel: '100%', detail: '$30 of $30 · 1 of 1 claims hit' })]);
+    const open = { ...flops, transactions: flops.transactions.map((s) => ({ ...s, complete: false })) };
+    expect(mtFaabValue(open)).toEqual([]); // neither claim was dropped, so nothing is judged yet
+    expect(mtFaabValue({ ...ctx, transactions: [{ year: 2024, transactions: [tx('w2', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 20)] }] })).toEqual([]); // under $25
   });
   it('finds the best pickup, naming its player, and narrows by that player\'s position', () => {
     expect(mtBestPickup(ctx).slice(0, 2).map((r) => [r.userId, r.player, r.value, r.detail])).toEqual([['a', 'q1', 60, '$30 · 2 starts'], ['b', 'r1', 25, 'FA · 3 starts']]); // the 2025 add of t1 trails with 0 points
@@ -61,7 +71,7 @@ describe('manager transaction boards', () => {
     expect(mtWaiverPoints({ ...ctx, ...mctx(2025), transactions })).toEqual([]); // t1 never scored for b
   });
   it('is registered in order, the player boards offering a position dropdown', () => {
-    expect(boardsFor('managers', 'mtransactions').map((b) => b.id)).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
+    expect(boardsFor('managers', 'mtransactions').map((b) => b.id)).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtFaabValue', 'mtFaabWasted', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
     expect(boardsFor('managers', 'mtransactions').filter((b) => b.positions).map((b) => b.id)).toEqual(['mtBiggestBid', 'mtBestPickup', 'mtBestStart']);
   });
 });

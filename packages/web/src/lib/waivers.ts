@@ -2,8 +2,18 @@ import type { PlayerId, UserId } from '@fantasy-dash/core';
 import type { PlayerLine } from './playerLines';
 import type { SeasonTransactions } from './boards/shared';
 
-/** `bid` is null for a free-agent add; `lines` are the claimer's started lines inside the window, in week order. */
-export interface WaiverClaim { year: number; week: number; playerId: PlayerId; userId: UserId; bid: number | null; points: number; starts: number; lines: PlayerLine[] }
+/**
+ * `bid` is null for a free-agent add; `lines` are the claimer's started lines inside the window, in week order.
+ * `open` is true while the player is still on the claimer's roster in a season that is not complete: the pickup is not judged yet.
+ */
+export interface WaiverClaim { year: number; week: number; playerId: PlayerId; userId: UserId; bid: number | null; points: number; starts: number; lines: PlayerLine[]; open: boolean }
+
+/** started points under which a judged bid is a flop; at or above it the bid hit */
+export const FLOP_POINTS = 10;
+/** a bid of real money whose stint is over, so it can be called a hit or a flop */
+export const judged = (c: WaiverClaim): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid > 0 && !c.open;
+export const isFlop = (c: WaiverClaim): c is WaiverClaim & { bid: number } => judged(c) && c.points < FLOP_POINTS;
+export const isHit = (c: WaiverClaim): boolean => judged(c) && c.points >= FLOP_POINTS;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -17,7 +27,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  */
 export function waiverClaims(seasons: SeasonTransactions[], lines: PlayerLine[]): WaiverClaim[] {
   const out: WaiverClaim[] = [];
-  for (const { year, transactions } of seasons) {
+  for (const { year, transactions, complete = true } of seasons) {
     const sorted = [...transactions].sort((a, b) => a.created - b.created || (a.id < b.id ? -1 : 1));
     const scoredWeeks = new Set(lines.filter((l) => l.year === year).map((l) => l.week));
     const yearLines = lines.filter((l) => l.year === year && l.started);
@@ -33,7 +43,7 @@ export function waiverClaims(seasons: SeasonTransactions[], lines: PlayerLine[])
         windowEnd.set(key, end);
         if (![...scoredWeeks].some((w) => w >= tx.week && w <= end)) continue;
         const mine = yearLines.filter((l) => l.playerId === add.playerId && l.userId === add.userId && l.week >= start && l.week <= end).sort((a, b) => a.week - b.week);
-        out.push({ year, week: tx.week, playerId: add.playerId, userId: add.userId, bid: tx.type === 'waiver' ? tx.bid : null, points: round2(mine.reduce((s, l) => s + l.points, 0)), starts: mine.length, lines: mine });
+        out.push({ year, week: tx.week, playerId: add.playerId, userId: add.userId, bid: tx.type === 'waiver' ? tx.bid : null, points: round2(mine.reduce((s, l) => s + l.points, 0)), starts: mine.length, lines: mine, open: !drop && !complete });
       }
     }
   }

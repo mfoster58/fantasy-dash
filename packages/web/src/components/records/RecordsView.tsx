@@ -37,7 +37,7 @@ export default function RecordsView({ seasons, players, managers, years, current
   const lastPlaces = useMemo(() => lastPlacesOf(seasons), [seasons]);
   const picks = useMemo(() => draftValuesOf(seasons), [seasons]);
   const xfp = useMemo(() => fitXfp(allLines), [allLines]);
-  const transactions = useMemo(() => seasons.map((s) => ({ year: s.year, transactions: s.transactions })), [seasons]);
+  const transactions = useMemo(() => seasons.map((s) => ({ year: s.year, transactions: s.transactions, complete: s.status === 'complete' })), [seasons]);
   const playerSeasons = useMemo(() => Object.fromEntries(seasons.map((s) => [s.year, s.playerSeasons])), [seasons]);
   const drafts = useMemo(() => Object.fromEntries(seasons.map((s) => [s.year, s.draft])), [seasons]);
   const allTeamGames = useMemo(() => teamGamesOf(seasons), [seasons]);
@@ -52,7 +52,7 @@ export default function RecordsView({ seasons, players, managers, years, current
     const lines = filterLines(seasonLines, pos);
     const teamGames = allTeamGames.filter((g) => year === null || g.year === year);
     const managerSeasons = allManagerSeasons.filter((m) => year === null || m.year === year);
-    const ctx: BoardContext = { lines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
+    const ctx: BoardContext = { lines, allLines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
     const note = s.note ?? (year === null ? 'Every season' : `${year} season`);
     const empty = s.id === 'leaders' && year !== null && !allLines.some((l) => l.year === year) ? 'Season has not started.' : null;
     return (

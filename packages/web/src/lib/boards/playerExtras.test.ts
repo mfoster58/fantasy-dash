@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { flattenLines } from '../playerLines';
 import { emptyManagerCtx, game, line, players, season, side, week } from '../../test/playerFixtures';
 import { BOARDS, boardsFor, championsOf, lastPlacesOf, type BoardContext } from '../playerBoards';
-import { bestStartInLoss, worstStartInWin, topScorerWeeks } from './playerMoments';
+import { bestStartInLoss, revengeGames, worstStartInWin, topScorerWeeks } from './playerMoments';
 import { drought, posTopRun, run15, run20 } from './playerStreaks';
 
 // a beats b in weeks 1-2 and loses week 3; q1 (a) tops the league in weeks 1 and 2, t1 (b) in week 3. r1 duds in week 2 (played) and sits out week 3 (no stats).
@@ -22,6 +22,28 @@ describe('player moments', () => {
   it('worstStartInWin ranks played skill starters on the winning side, lowest first', () => {
     expect(worstStartInWin(ctx)[0]).toMatchObject({ playerId: 'r1', value: 2, meta: '2024 · Wk 2' });
     expect(worstStartInWin(ctx).some((r) => r.value === 0)).toBe(false); // the unplayed week-3 line is out
+  });
+  it('revengeGames ranks started scores against a manager who had the player in an earlier week, reading ownership from every line', () => {
+    // b benches w1 in 2023; a starts him against b twice in 2024 and once against c, who never had him
+    const history = [
+      season(2023, [week(1, [game(2023, 1, 1, side('b', 10, [line('t1', 10)], [line('w1', 3)]), side('a', 20, [line('q1', 20)]))])]),
+      season(2024, [
+        week(1, [game(2024, 1, 1, side('a', 25, [line('w1', 25)]), side('b', 5, [line('t1', 5)]))]),
+        week(2, [game(2024, 2, 1, side('a', 12, [line('w1', 12)]), side('b', 9, [line('t1', 9)]))]),
+        week(3, [game(2024, 3, 1, side('a', 30, [line('w1', 30)]), side('c', 9, [line('r1', 9)]))]),
+      ]),
+    ];
+    const all = flattenLines(history, players);
+    const bob = { ...emptyManagerCtx, managers: { b: { displayName: 'bob', avatar: null, seasons: [2023, 2024] } } };
+    const rows = revengeGames({ ...ctx, ...bob, lines: all.filter((l) => l.year === 2024), allLines: all, year: 2024 });
+    expect(rows.map((r) => [r.playerId, r.value, r.meta, r.detail, r.userId, r.to])).toEqual([
+      ['w1', 25, '2024 · Wk 1', 'vs bob · his manager in 2023', 'a', '/scores/2024/1/1'],
+      ['w1', 12, '2024 · Wk 2', 'vs bob · his manager in 2023', 'a', '/scores/2024/2/1'],
+    ]);
+    // without the full history only the lines in scope are known, and nobody had w1 before 2024
+    expect(revengeGames({ ...ctx, ...bob, lines: all.filter((l) => l.year === 2024), year: 2024 })).toEqual([]);
+    // a bench score is not revenge, and the same manager starting his own former player is not either
+    expect(revengeGames({ ...ctx, ...bob, lines: all, allLines: all }).map((r) => r.value)).toEqual([25, 12]);
   });
   it('topScorerWeeks counts weeks as the league\'s top starter, ties shared', () => {
     const rows = topScorerWeeks(ctx);
@@ -92,7 +114,7 @@ describe('player streaks', () => {
   });
 
   it('is registered under the right sub-tabs', () => {
-    expect(boardsFor('players', 'moments').map((b) => b.id)).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin']);
+    expect(boardsFor('players', 'moments').map((b) => b.id)).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin', 'revengeGames']);
     expect(boardsFor('players', 'streaks').map((b) => b.id)).toEqual(['ironman', 'run15', 'run20', 'drought', 'posTopRun']);
     expect(boardsFor('players', 'alltime').at(-1)!.id).toBe('topScorerWeeks');
     expect(BOARDS.find((b) => b.id === 'worstStartInWin')!.definition).toMatch(/won/);
