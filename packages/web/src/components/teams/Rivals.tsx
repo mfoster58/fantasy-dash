@@ -14,7 +14,7 @@ const toneClass = { win: 'text-win', loss: 'text-loss', even: 'text-muted' };
 export default function Rivals({ rivalries, managers, userId }: Props) {
   return (
     <section className="card">
-      <CardHeader label="Who they own, who owns them" title="Rivals" aside={`${rivalries.length} opponents`} />
+      <CardHeader title="Rivals" aside={`${rivalries.length} opponents`} />
       <ul className="divide-y divide-line">
         {rivalries.map((r) => {
           const m = managers[r.opponentId];

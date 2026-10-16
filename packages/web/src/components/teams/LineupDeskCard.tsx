@@ -21,7 +21,7 @@ function Moment({ label, game, value, note }: { label: string; game: TeamGame | 
 export default function LineupDeskCard({ desk }: { desk: LineupDesk }) {
   return (
     <section className="card p-4">
-      <CardHeader label="Lineup desk" title="Lineup success" aside={`${desk.weeks} weeks`} />
+      <CardHeader title="Lineup success" aside={`${desk.weeks} weeks`} />
       <div className="mt-3 flex items-baseline gap-3">
         <span className="num text-3xl font-semibold">{fmtPct(desk.efficiency)}</span>
         <span className="text-xs text-muted">efficiency · <span className="num">{fmtPts(desk.started)}</span> started of <span className="num">{fmtPts(desk.possible)}</span> · <span className="num">{fmtPts(desk.benchLeft)}</span> left on the bench</span>

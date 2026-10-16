@@ -15,11 +15,11 @@ interface Props {
 }
 
 /** Card header in the style "small label / bold title". */
-export function CardHeader({ label, title, aside }: { label: string; title: string; aside?: ReactNode }) {
+export function CardHeader({ label, title, aside }: { label?: string; title: string; aside?: ReactNode }) {
   return (
     <div className="flex items-end justify-between gap-3 border-b border-line px-4 pb-2 pt-3">
       <div>
-        <div className="section-label">{label}</div>
+        {label && <div className="section-label">{label}</div>}
         <div className="text-sm font-semibold uppercase tracking-wide">{title}</div>
       </div>
       {aside && <div className="text-xs text-muted">{aside}</div>}

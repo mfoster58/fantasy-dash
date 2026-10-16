@@ -5,42 +5,50 @@ import { CardHeader, signClass } from '../draft/DraftAnalysis';
 import { fmtSigned } from '../../lib/format';
 import { pickLabel } from '../../lib/draft';
 import { playerName } from '../../lib/players';
-import type { DraftDesk } from '../../lib/teamProfile';
+import type { DeskPick, DraftDesk } from '../../lib/teamProfile';
 
-function Pick({ label, pick, players }: { label: string; pick: DraftDesk['steal']; players: PlayerDirectory }) {
-  if (!pick) return null;
+function Pick({ pick, players }: { pick: DeskPick | null; players: PlayerDirectory }) {
+  if (!pick) return <span className="text-xs text-muted">—</span>;
   return (
-    <Link to={`/draft/${pick.year}`} className="flex items-center gap-3 rounded-md border border-line px-3 py-2 hover:bg-surface-2">
-      <Headshot players={players} id={pick.playerId} size={32} />
+    <span className="flex min-w-0 items-center gap-2">
+      <Headshot players={players} id={pick.playerId} size={26} />
       <span className="min-w-0 flex-1">
-        <span className="section-label block text-[10px]">{label} <span className="num normal-case tracking-normal text-muted">{pick.year} · {pickLabel(pick, pick.teams)}</span></span>
-        <span className="block truncate font-medium">{playerName(players, pick.playerId)}</span>
+        <span className="block truncate text-sm font-medium leading-tight">{playerName(players, pick.playerId)}</span>
+        <span className="num block text-[10px] leading-tight text-muted">pick {pickLabel(pick, pick.teams)}</span>
       </span>
-      <span className={`num text-lg font-semibold ${signClass(pick.value)}`}>{pick.value === null ? '—' : fmtSigned(pick.value, 0)}</span>
-    </Link>
+      <span className={`num text-sm font-semibold ${signClass(pick.value)}`}>{pick.value === null ? '—' : fmtSigned(pick.value, 0)}</span>
+    </span>
   );
 }
 
-/** Career draft grades and values, the steal and the one that hurt. */
+/** Career draft grade and value per draft, then one row per year: grade, value, biggest steal and biggest bust. */
 export default function DraftDeskCard({ desk, players }: { desk: DraftDesk; players: PlayerDirectory }) {
   return (
-    <section className="card p-4">
-      <CardHeader label="Draft desk" title="Draft success" aside={`${desk.drafts} draft${desk.drafts === 1 ? '' : 's'}`} />
-      <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="rounded bg-ink px-2.5 py-1 text-xl font-bold text-bg">{desk.avgGrade}</span>
-        <span className="text-xs text-muted">average grade · value per draft <span className={`num font-semibold ${signClass(desk.valuePerDraft)}`}>{fmtSigned(desk.valuePerDraft, 0)}</span> · career <span className={`num font-semibold ${signClass(desk.career)}`}>{fmtSigned(desk.career, 0)}</span></span>
+    <section className="card overflow-hidden">
+      <CardHeader title="Draft success" aside={`${desk.drafts} draft${desk.drafts === 1 ? '' : 's'}`} />
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
+        <span className="flex items-baseline gap-2"><span className="rounded bg-ink px-2.5 py-1 text-xl font-bold text-bg">{desk.avgGrade}</span><span className="text-xs text-muted">average grade</span></span>
+        <span className="flex items-baseline gap-2"><span className={`num text-2xl font-bold ${signClass(desk.valuePerDraft)}`}>{fmtSigned(desk.valuePerDraft, 0)}</span><span className="text-xs text-muted">value per draft</span></span>
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {desk.seasons.map((s) => (
-          <Link key={s.year} to={`/draft/${s.year}`} className={`num rounded border px-2 py-0.5 text-xs hover:bg-surface-2 ${desk.best?.year === s.year ? 'border-accent' : 'border-line'}`} title={`${s.year}: ${s.grade}, ${fmtSigned(s.value, 0)}`}>
-            {s.year} <span className="font-semibold">{s.grade}</span> <span className={signClass(s.value)}>{fmtSigned(s.value, 0)}</span>
-          </Link>
-        ))}
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Pick label="The steal" pick={desk.steal} players={players} />
-        <Pick label="The one that hurt" pick={desk.hurt} players={players} />
-      </div>
+      <table className="w-full border-t border-line text-sm">
+        <thead className="section-label text-[10px]">
+          <tr className="border-b border-line">
+            <th className="px-4 py-1.5 text-left font-medium">Year</th><th className="py-1.5 text-left font-medium">Grade</th><th className="py-1.5 text-right font-medium">Value</th>
+            <th className="py-1.5 pl-4 text-left font-medium">Biggest steal</th><th className="py-1.5 pl-4 pr-4 text-left font-medium">Biggest bust</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {desk.seasons.map((s) => (
+            <tr key={s.year} className="hover:bg-surface-2" data-testid={`draft-${s.year}`}>
+              <td className="num px-4 py-2 font-semibold"><Link to={`/draft/${s.year}`} className="hover:text-accent">{s.year}</Link></td>
+              <td className="py-2"><span className="rounded bg-ink px-1.5 py-0.5 text-xs font-bold text-bg">{s.grade}</span></td>
+              <td className={`num py-2 text-right font-semibold ${signClass(s.value)}`}>{fmtSigned(s.value, 0)}</td>
+              <td className="py-2 pl-4"><Pick pick={s.steal} players={players} /></td>
+              <td className="py-2 pl-4 pr-4"><Pick pick={s.bust} players={players} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }

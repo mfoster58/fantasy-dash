@@ -1,12 +1,13 @@
 import { Link } from 'react-router';
 import { CardHeader } from '../draft/DraftAnalysis';
-import { TrophyIcon } from '../Icons';
+import { FinishIcon } from '../Icons';
 import { fmtPts, fmtRecord } from '../../lib/format';
 import type { CareerSeasonLine } from '../../lib/teamProfile';
 
 interface Props { seasons: CareerSeasonLine[]; userId: string }
 
-const honor = (s: CareerSeasonLine) => s.champion ? <><TrophyIcon /> Champion</> : s.runnerUp ? 'Runner-up' : s.third ? 'Third' : s.lastPlace ? 'Last place' : s.playoffBerth ? 'Playoffs' : null;
+const honorText = (s: CareerSeasonLine) => s.champion ? 'Champion' : s.runnerUp ? 'Runner-up' : s.third ? 'Third' : s.lastPlace ? 'Last place' : s.playoffBerth ? 'Playoffs' : null;
+const honor = (s: CareerSeasonLine) => { const t = honorText(s); return t && s.finishIcon ? <><FinishIcon kind={s.finishIcon} size="1.2em" /> {t}</> : t; };
 
 /** One row per season, newest first, each opening that season's team page. */
 export default function SeasonsTable({ seasons, userId }: Props) {

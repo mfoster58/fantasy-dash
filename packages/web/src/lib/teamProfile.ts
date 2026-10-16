@@ -362,45 +362,51 @@ export function lineupDesk(games: TeamGame[]): LineupDesk {
   };
 }
 
-export interface DraftSeason { year: number; grade: string; value: number; rank: number; teams: number }
+/** a pick tagged with the draft's team count, for `pickLabel` */
+export type DeskPick = DraftPick & { teams: number };
+export interface DraftYear {
+  year: number; grade: string; value: number; rank: number; teams: number;
+  /** highest-value pick that year */
+  steal: DeskPick | null;
+  /** lowest-value pick that year */
+  bust: DeskPick | null;
+}
 export interface DraftDesk {
-  drafts: number; avgGrade: string; valuePerDraft: number; career: number;
-  best: DraftSeason | null;
-  steal: (DraftPick & { year: number; teams: number }) | null;
-  hurt: (DraftPick & { year: number; teams: number }) | null;
-  seasons: DraftSeason[];
+  drafts: number; avgGrade: string; valuePerDraft: number;
+  /** newest first */
+  seasons: DraftYear[];
 }
 
-/** Career draft summary over every graded draft; null when none is graded. */
+/** Career draft summary over every graded draft, one row per year with its steal and bust; null when none is graded. */
 export function draftDesk(seasons: Season[], userId: UserId): DraftDesk | null {
-  const lines: DraftSeason[] = [];
-  let steal: DraftDesk['steal'] = null, hurt: DraftDesk['hurt'] = null;
+  const lines: DraftYear[] = [];
   for (const s of seasons) {
     if (!s.draft) continue;
     const summaries = managerDraftSummaries(s.draft);
     const idx = summaries.findIndex((x) => x.userId === userId);
     if (idx < 0 || summaries[idx].valued === 0) continue;
-    lines.push({ year: s.year, grade: letterGrade(idx + 1, summaries.length), value: summaries[idx].totalValue, rank: idx + 1, teams: summaries.length });
+    const teams = s.draft.slotOrder.length;
+    let steal: DeskPick | null = null, bust: DeskPick | null = null;
     for (const p of s.draft.picks) {
       if (p.userId !== userId || p.value === null) continue;
-      const tagged = { ...p, year: s.year, teams: s.draft.slotOrder.length };
-      if (!steal || p.value > steal.value!) steal = tagged;
-      if (!hurt || p.value < hurt.value!) hurt = tagged;
+      if (!steal || p.value > steal.value!) steal = { ...p, teams };
+      if (!bust || p.value < bust.value!) bust = { ...p, teams };
     }
+    lines.push({ year: s.year, grade: letterGrade(idx + 1, summaries.length), value: summaries[idx].totalValue, rank: idx + 1, teams: summaries.length, steal, bust });
   }
   if (lines.length === 0) return null;
-  const career = round1(lines.reduce((t, l) => t + l.value, 0));
+  const career = lines.reduce((t, l) => t + l.value, 0);
   const meanRank = lines.reduce((t, l) => t + l.rank, 0) / lines.length;
   const meanTeams = lines.reduce((t, l) => t + l.teams, 0) / lines.length;
   return {
-    drafts: lines.length, avgGrade: letterGrade(Math.round(meanRank), Math.round(meanTeams)), valuePerDraft: round1(career / lines.length), career,
-    best: [...lines].sort((a, b) => b.value - a.value)[0] ?? null, steal, hurt, seasons: lines,
+    drafts: lines.length, avgGrade: letterGrade(Math.round(meanRank), Math.round(meanTeams)), valuePerDraft: round1(career / lines.length),
+    seasons: lines.sort((a, b) => b.year - a.year),
   };
 }
 
 export interface CareerSeasonLine {
   year: number; status: SeasonStatus; row: StandingRow | undefined; teamName: string;
-  finish: string; champion: boolean; runnerUp: boolean; third: boolean; pointsTitle: boolean; lastPlace: boolean; playoffBerth: boolean;
+  finish: string; finishIcon: FinishKind | null; champion: boolean; runnerUp: boolean; third: boolean; pointsTitle: boolean; lastPlace: boolean; playoffBerth: boolean;
   ppw: number; leagueAvgPpw: number;
   grade: string | null; draftValue: number | null;
   moves: number;
@@ -445,8 +451,9 @@ export function careerProfile(seasons: Season[], history: History, userId: UserI
     const idx = summaries.findIndex((x) => x.userId === userId);
     const graded = idx >= 0 && summaries[idx].valued > 0;
     const m = s.managers[userId];
+    const fin = finishOf(s, userId);
     return {
-      year: s.year, status: s.status, row, teamName: m?.teamName ?? m?.displayName ?? userId, finish: finishOf(s, userId).label,
+      year: s.year, status: s.status, row, teamName: m?.teamName ?? m?.displayName ?? userId, finish: fin.label, finishIcon: fin.icon,
       champion: h.champion === userId, runnerUp: h.runnerUp === userId, third: h.third === userId, pointsTitle: h.pointsTitle === userId, lastPlace: h.lastPlace === userId,
       playoffBerth: s.brackets.winners.some((b) => b.home === userId || b.away === userId),
       ppw: my.length ? round1(my.reduce((t, g) => t + g.points, 0) / my.length) : 0,
@@ -496,7 +503,7 @@ export function careerProfile(seasons: Season[], history: History, userId: UserI
     rivalries,
     lineup: lineupDesk(games),
     draft: draftDesk(seasons, userId),
-    franchise: franchisePlayers(flattenLines(seasons, players), userId, 6),
+    franchise: franchisePlayers(flattenLines(seasons, players), userId, 12),
     longestWinStreak: longestWinStreak(games),
     weekHighs: games.filter((g) => g.weekHigh).length,
   };
