@@ -69,7 +69,7 @@ export const fodder = (ctx: BoardContext): BoardRow[] => {
   for (const { tx } of scoped) if (tx.type !== 'trade') for (const a of tx.adds) pickups.set(a.playerId, (pickups.get(a.playerId) ?? 0) + 1);
   const skill = (playerId: string) => !KICKING_DEF.has(ctx.players[playerId]?.position ?? '');
   const rows = countBoard(ctx, scoped.flatMap(({ year, tx }) => tx.drops.filter((d) => skill(d.playerId)).map((d) => ({ playerId: d.playerId, year, created: tx.created }))));
-  return rows.map((r) => ({ ...r, detail: `picked up ${plural(pickups.get(r.playerId) ?? 0, 'time')}` }));
+  return rows.map((r) => ({ ...r, detail: `picked up ${plural(pickups.get(r.playerId ?? '') ?? 0, 'time')}` }));
 };
 
 const claims = (ctx: BoardContext): WaiverClaim[] => waiverClaims(ctx.transactions.filter((s) => inYear(ctx, s.year)), ctx.lines).filter((c) => posOk(ctx, c.playerId));
