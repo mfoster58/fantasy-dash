@@ -1,4 +1,5 @@
-import type { Game, GameSide, PlayerDirectory, PlayerLine as CoreLine, Season, Week } from '@fantasy-dash/core';
+import type { BracketGame, Game, GameSide, PlayerDirectory, PlayerLine as CoreLine, PlayoffTag, Season, StandingRow, Week } from '@fantasy-dash/core';
+import type { BoardContext } from '../lib/boards/shared';
 
 export const players: PlayerDirectory = {
   q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
@@ -23,6 +24,14 @@ export const game = (year: number, week: number, matchupId: number, a: GameSide,
 });
 
 export const week = (n: number, games: Game[], isPlayoff = false): Week => ({ week: n, isPlayoff, played: games.length > 0, games, highScore: null });
+
+export const standing = (userId: string, rank: number, w: number, l: number, t: number, pf: number, pa: number): StandingRow => {
+  const games = w + l + t;
+  return { userId, rank, w, l, t, winPct: games ? (w + t / 2) / games : 0, pf, pa, ppg: games ? pf / games : 0, maxPoints: pf + 20, efficiency: pf / (pf + 20), streak: '-', allPlay: { w: w * 2, l: l * 2, t, pct: games ? (w * 2 + t / 2) / (games * 2) : 0 }, weeklyHighs: 0 };
+};
+export const bracketGame = (home: string, away: string, tag: PlayoffTag, week: number): BracketGame => ({ bracket: 'winners', round: 1, matchNo: 1, placement: null, week, tag, home, away, homePoints: null, awayPoints: null, advanced: null, gameId: null });
+/** the manager-side context fields, empty, for player-board tests */
+export const emptyManagerCtx: Pick<BoardContext, 'teamGames' | 'managerSeasons' | 'managers'> = { teamGames: [], managerSeasons: [], managers: {} };
 
 export const season = (year: number, weeks: Week[], champion: string | null = null, lastScoredWeek = weeks.length): Season => ({
   year, leagueId: 'L', status: 'complete', lastScoredWeek, playoffWeekStart: 3, playoffTeams: 2,

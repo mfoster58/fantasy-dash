@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { flattenLines } from './playerLines';
-import { game, line, players, season, side, week } from '../test/playerFixtures';
+import { emptyManagerCtx, game, line, players, season, side, week } from '../test/playerFixtures';
 import {
   BOARDS, bestSeason, bestWeek, benchBlunder, careerPoints, championshipRosters, championsOf, weeksStarted,
   boomStarts, dudStarts, journeyman, leadPoints, leadTouchdowns, leadYards, postPoints, postReceptions, postStarts, postTouchdowns, postYards,
   draftValue, leadFpoe, leadPassTd, leadPassYards, leadRecTd, leadRecYards, leadRushTd, leadRushYards, leadXfp, postToiletBowl,
-  lastPlaceRosters, lastPlacesOf, leadTouches, minGames, bestPlayoffStarts, worstToiletStarts, draftValuesOf,
+  lastPlaceRosters, lastPlacesOf, leadTouches, minGames, bestPlayoffStarts, worstToiletStarts, draftValuesOf, boardsFor,
   type BoardContext,
 } from './playerBoards';
+import { subTabsOf } from './boards/tabs';
 import type { XfpModel } from './xfp';
 
 // Two seasons, managers a and b. q1 is the star QB, r1 a steady RB, w1 a benched boom, t1 unplayed often.
@@ -22,7 +23,7 @@ const s2025 = season(2025, [
   week(3, [game(2025, 3, 1, side('b', 22, [line('r1', 22)], [line('q1', 50)]), side('a', 4, [line('w1', 4)]), 'Final')], true),
 ], 'b');
 const seasons = [s2024, s2025];
-const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {} };
+const ctx: BoardContext = { lines: flattenLines(seasons, players), players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {}, ...emptyManagerCtx };
 
 describe('championsOf and lastPlacesOf', () => {
   it('map year to champion and to last place', () => {
@@ -247,23 +248,37 @@ describe('toilet bowl and exclusions', () => {
   });
 });
 
-describe('BOARDS registry v2 order', () => {
-  const ids = (s: string) => BOARDS.filter((b) => b.section === s).map((b) => b.id);
-  it('lays out leaders in grid order, touches in place of PPG, last place beside the toilet bowl', () => {
-    expect(ids('leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
-    expect(ids('career')).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
-    expect(ids('postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'championshipRosters', 'postToiletBowl', 'worstToiletStarts', 'lastPlaceRosters']);
-    expect(ids('extras').slice(0, 7)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman']);
-    expect(BOARDS.find((b) => b.id === 'leadFpoe')!.sortable).toBe(true);
+describe('BOARDS registry by tab and sub-tab', () => {
+  const ids = (tab: 'players' | 'managers', sub: string) => boardsFor(tab, sub).map((b) => b.id);
+  it('lays every player board under its sub-tab in display order', () => {
+    expect(ids('players', 'leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
+    expect(ids('players', 'alltime')).toEqual(['careerPoints', 'weeksStarted', 'bestSeason', 'championshipRosters', 'lastPlaceRosters', 'loyalty', 'journeyman', 'benchWarmers', 'fodder', 'boomStarts', 'dudStarts', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'topScorerWeeks']);
+    expect(ids('players', 'moments')).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin']);
+    expect(ids('players', 'streaks')).toEqual(['ironman', 'run15', 'run20', 'drought', 'posTopRun']);
+    expect(ids('players', 'postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'postChampionshipRosters', 'postToiletBowl', 'worstToiletStarts', 'postLastPlaceRosters']);
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);
+    expect(ids('managers', 'malltime')).toEqual(['mCareerWins', 'mWinPct', 'mWorstWinPct', 'mCareerPoints', 'mCareerPpg', 'mPointsAgainst', 'mTitles', 'mFinals', 'mBerths', 'mPlayoffWins', 'mBerthsNoTitle', 'mLastPlaces', 'mSeasons', 'mEfficiency', 'mWorstEfficiency', 'mWeeklyHighs']);
+    expect(ids('managers', 'mseasons')).toEqual(['msPoints', 'msFewest', 'msPpg', 'msAgainst', 'msRecord', 'msWorstRecord', 'msDiff', 'msAllPlay', 'msWorstAllPlay', 'msLucky', 'msUnlucky', 'msNoTitle', 'msEfficiency', 'msWorstEfficiency', 'msBench']);
+    expect(ids('managers', 'mgames')).toEqual(['mgHigh', 'mgLow', 'mgLossHigh', 'mgWinLow', 'mgBlowout', 'mgClosest', 'mgCombinedHigh', 'mgCombinedLow', 'mgPerfect', 'mgBench']);
+    expect(ids('managers', 'mstreaks')).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mDrought', 'mRun100', 'mHighRun']);
+    expect(ids('managers', 'mplayoffs')).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'mpFinalsLost', 'mpToiletApps', 'mpToiletWins']);
+    expect(ids('managers', 'mdraft')).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdFirstRound']);
+    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabSeason', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtQuickCut']);
   });
   it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);
     for (const id of ['leadPoints', 'careerPoints', 'postPoints']) expect(modes(id)).toEqual([['total', 'Total', 'Pts'], ['ppg', 'PPG', 'PPG']]);
     expect(modes('leadTouches')).toEqual([['both', 'Both', 'Touches'], ['rec', 'Rec', 'Rec'], ['car', 'Car', 'Car']]);
-    expect(BOARDS.find((b) => b.id === 'draftValue')!.title).toBe('Draft value');
-    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'bestSeason', 'careerPoints', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
+    expect(BOARDS.filter((b) => b.modes).map((b) => b.id)).toEqual(['leadPoints', 'leadYards', 'leadTouches', 'leadXfp', 'careerPoints', 'bestSeason', 'postPoints', 'bestPlayoffStarts', 'worstToiletStarts']);
+  });
+  it('names the sub-tabs of each tab in order', () => {
+    expect(subTabsOf('players').map((s) => [s.id, s.title, s.picker, s.positions])).toEqual([
+      ['alltime', 'All-time', 'all', true], ['moments', 'Moments', 'all', true], ['streaks', 'Streaks', null, true], ['postseason', 'Postseason', null, true], ['leaders', 'Leaders', 'current', true],
+    ]);
+    expect(subTabsOf('managers').map((s) => [s.id, s.title, s.picker, s.positions])).toEqual([
+      ['malltime', 'All-time', null, false], ['mseasons', 'Seasons', 'all', false], ['mgames', 'Games', 'all', false], ['mstreaks', 'Streaks', null, false], ['mplayoffs', 'Playoffs', null, false], ['mdraft', 'Draft', 'all', false], ['mtransactions', 'Transactions', 'all', false],
+    ]);
   });
 });
 

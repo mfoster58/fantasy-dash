@@ -7,9 +7,8 @@ export const links: { to: string; label: string }[] = [
   { to: '/scores', label: 'Scores' },
   { to: '/standings', label: 'Standings' },
   { to: '/h2h', label: 'Head to Head' },
-  { to: '/all-time', label: 'All-Time' },
+  { to: '/records', label: 'Records' },
   { to: '/history', label: 'History' },
-  { to: '/players', label: 'Player stats' },
   { to: '/draft', label: 'Draft' },
 ];
 

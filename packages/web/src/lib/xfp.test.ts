@@ -4,7 +4,7 @@ import { fitXfp, MIN_FIT_LINES } from './xfp';
 
 const base: PlayerLine = {
   playerId: 'p', userId: 'a', year: 2025, week: 1, gameId: '2025-1-1', matchupId: 1, tag: null, started: true,
-  points: 0, yards: 0, touchdowns: 0, receptions: 0, played: true, postseason: false, consolation: false, position: 'RB',
+  points: 0, yards: 0, touchdowns: 0, receptions: 0, played: true, postseason: false, consolation: false, position: 'RB', result: 'W',
   targets: 0, carries: 0, passAttempts: 0, rushYards: 0, recYards: 0, passYards: 0, rushTd: 0, recTd: 0, passTd: 0,
 };
 const rb = (i: number): PlayerLine => {

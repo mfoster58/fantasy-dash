@@ -9,7 +9,7 @@ const players: PlayerDirectory = {
   q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
 };
 const managers: History['managers'] = { a: { displayName: 'alice', avatar: 'av', seasons: [2025] } };
-const def: BoardDef = { id: 'x', section: 'career', title: 'Best week by a starter', definition: 'Most points in a week.', valueHeader: 'Pts', compute: () => [] };
+const def: BoardDef = { id: 'x', tab: 'players', sub: 'alltime', title: 'Best week by a starter', definition: 'Most points in a week.', valueHeader: 'Pts', compute: () => [] };
 const row = (i: number, extra: Partial<BoardRow> = {}): BoardRow => ({
   key: `k${i}`, playerId: i === 0 ? 'q1' : `p${i}`, value: 100 - i, valueLabel: `${100 - i}.00`, meta: '2025 · Wk 1', detail: null, userId: null, to: null, ...extra,
 });
@@ -134,6 +134,27 @@ describe('Board', () => {
     expect(screen.getByRole('button', { name: '\u2212' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('button', { name: 'Over' })).toBeNull();
   });
+  it('renders a manager row with an avatar and name link, no position pill and no second manager link', () => {
+    const mdef: BoardDef = { ...def, tab: 'managers', sub: 'malltime' };
+    const rows: BoardRow[] = [
+      { key: 'a', playerId: null, value: 42, valueLabel: '42', meta: '2023–2025 · 3 seasons', detail: '30-12', userId: 'a', to: null },
+      { key: 'g', playerId: null, value: 180.4, valueLabel: '180.40', meta: '2025 · Wk 16 · Championship', detail: 'vs bob, 180.40–80.00', userId: 'a', to: '/scores/2025/16/3' },
+    ];
+    wrapB({ def: mdef, rows });
+    const [first, second] = screen.getAllByRole('listitem');
+    expect(first.textContent).toMatch(/^1alice/);
+    expect(within(first).getAllByRole('link')).toHaveLength(1);
+    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).queryByText('QB')).toBeNull();
+    expect(within(first).getByText('30-12')).toBeInTheDocument();
+    expect(within(second).getByRole('link', { name: /2025 · Wk 16 · Championship/ })).toHaveAttribute('href', '/scores/2025/16/3');
+  });
+
+  it('uses a neutral empty copy on the managers tab', () => {
+    wrapB({ def: { ...def, tab: 'managers', sub: 'malltime' } });
+    expect(screen.getByText('Nothing recorded yet.')).toBeInTheDocument();
+  });
+
   it('offers an Over/Under toggle only for sortable boards', () => {
     const onDirection = vi.fn();
     wrapB({ def: { ...def, sortable: true }, rows: [row(0)], direction: 'desc', onDirection });

@@ -15,8 +15,9 @@ interface Props {
   ctx: BoardContext;
   players: PlayerDirectory;
   managers: History['managers'];
-  pos: PosFilter;
-  onPos: (p: PosFilter) => void;
+  pos?: PosFilter;
+  /** absent: no position filter (the managers side) */
+  onPos?: (p: PosFilter) => void;
   columns: 2 | 3;
   seasonPicker?: { years: number[]; value: number | 'all'; onChange: (v: number | 'all') => void; allTime?: boolean };
   /** when set, shown in place of the boards */
@@ -60,7 +61,7 @@ export default function Section({ id, title, note, boards, ctx, players, manager
         <span className="text-xs text-muted">{note}</span>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PositionFilter value={pos} onChange={onPos} />
+        {onPos && <PositionFilter value={pos ?? 'All'} onChange={onPos} />}
         {seasonPicker && <SeasonPicker years={seasonPicker.years} value={seasonPicker.value} onChange={seasonPicker.onChange} allTime={seasonPicker.allTime} />}
       </div>
       {emptyMessage ? (

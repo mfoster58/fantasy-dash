@@ -71,7 +71,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         </div>
       </header>
       {rows.length === 0 ? (
-        <p className="px-3 py-4 text-sm text-muted">{empty ?? 'No players at this position.'}</p>
+        <p className="px-3 py-4 text-sm text-muted">{empty ?? (def.tab === 'managers' ? 'Nothing recorded yet.' : 'No players at this position.')}</p>
       ) : (
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {
@@ -82,11 +82,17 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
             return (
               <li key={r.key} className="flex items-center gap-3 px-3 py-2">
                 <span className="num w-4 shrink-0 text-right text-xs text-muted">{i + 1}</span>
-                <Headshot players={players} id={r.playerId} size={28} />
+                {r.playerId !== null ? <Headshot players={players} id={r.playerId} size={28} /> : <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId ?? '?'} size={28} />}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
-                    <PosPill pos={playerPos(players, r.playerId)} />
-                    <span className="truncate text-sm font-medium">{playerName(players, r.playerId)}</span>
+                    {r.playerId !== null ? (
+                      <>
+                        <PosPill pos={playerPos(players, r.playerId)} />
+                        <span className="truncate text-sm font-medium">{playerName(players, r.playerId)}</span>
+                      </>
+                    ) : (
+                      <Link to={`/h2h?a=${r.userId}`} className="truncate text-sm font-medium hover:text-accent">{m?.displayName ?? r.userId}</Link>
+                    )}
                   </span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                     {metaNode}
@@ -110,7 +116,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                           </Link>
                         ))}
                       </>
-                    ) : r.userId && (
+                    ) : r.playerId !== null && r.userId && (
                       <>
                         <span aria-hidden>·</span>
                         <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-1 hover:text-accent">

@@ -1,14 +1,16 @@
-import type { Draft, PlayerDirectory, PlayerId, PlayerSeasonLine, Season, Transaction, UserId } from '@fantasy-dash/core';
+import type { Draft, History, PlayerDirectory, PlayerId, PlayerSeasonLine, Season, Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtTag } from '../format';
+import type { ManagerSeason, TeamGame } from '../managerGames';
 import type { PlayerLine, PosFilter } from '../playerLines';
 import type { XfpModel } from '../xfp';
 
-export type Section = 'leaders' | 'career' | 'postseason' | 'extras';
+export type Tab = 'players' | 'managers';
 export type Direction = 'desc' | 'asc';
 
 export interface BoardRow {
   key: string;
-  playerId: PlayerId;
+  /** null for a manager row, whose subject is `userId` */
+  playerId: PlayerId | null;
   value: number;
   valueLabel: string;
   /** "2025 · Wk 7" for a single game; "3 seasons" for an all-time career row; "2025" when a season is chosen; the years list for a postseason row */
@@ -44,6 +46,10 @@ export interface BoardContext {
   transactions: SeasonTransactions[];
   playerSeasons: Record<number, Record<PlayerId, PlayerSeasonLine>>;
   drafts: Record<number, Draft | null>;
+  /** manager side, already narrowed to the section's season like `lines` */
+  teamGames: TeamGame[];
+  managerSeasons: ManagerSeason[];
+  managers: History['managers'];
 }
 
 /** One way of reading a board; the first mode is the default. */
@@ -55,7 +61,9 @@ export interface BoardMode {
 
 export interface BoardDef {
   id: string;
-  section: Section;
+  tab: Tab;
+  /** sub-tab id, see boards/tabs.ts */
+  sub: string;
   title: string;
   definition: string;
   valueHeader: string;
@@ -133,11 +141,12 @@ export const skillOnly = (ls: PlayerLine[]) => ls.filter((l) => !KICKING_DEF.has
 export const matchesPos = (position: string, pos: PosFilter) =>
   pos === 'All' ? true : pos === 'FLEX' ? ['RB', 'WR', 'TE'].includes(position) : position === pos;
 
-/** Sort by value (desc by default), then secondary desc, newest (year, week) desc, playerId asc, then cap at MAX_ROWS. */
-export function rank<T extends { value: number; latestYear: number; latestWeek: number; playerId: string; secondary?: number }>(items: T[], direction: Direction = 'desc'): T[] {
+const tieId = (x: { playerId?: string | null; userId?: string | null }) => x.playerId ?? x.userId ?? '';
+/** Sort by value (desc by default), then secondary desc, newest (year, week) desc, subject id asc, then cap at MAX_ROWS. */
+export function rank<T extends { value: number; latestYear: number; latestWeek: number; playerId?: string | null; userId?: string | null; secondary?: number }>(items: T[], direction: Direction = 'desc'): T[] {
   const sign = direction === 'asc' ? -1 : 1;
   return [...items]
-    .sort((x, y) => sign * (y.value - x.value) || (y.secondary ?? 0) - (x.secondary ?? 0) || y.latestYear - x.latestYear || y.latestWeek - x.latestWeek || (x.playerId < y.playerId ? -1 : x.playerId > y.playerId ? 1 : 0))
+    .sort((x, y) => sign * (y.value - x.value) || (y.secondary ?? 0) - (x.secondary ?? 0) || y.latestYear - x.latestYear || y.latestWeek - x.latestWeek || (tieId(x) < tieId(y) ? -1 : tieId(x) > tieId(y) ? 1 : 0))
     .slice(0, MAX_ROWS);
 }
 
