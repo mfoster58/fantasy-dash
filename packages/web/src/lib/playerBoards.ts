@@ -4,12 +4,16 @@ import * as career from './boards/career';
 import * as extras from './boards/extras';
 import * as leaders from './boards/leaders';
 import * as post from './boards/postseason';
+import * as pm from './boards/playerMoments';
+import * as ps from './boards/playerStreaks';
 
 export * from './boards/shared';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
 export * from './boards/extras';
+export * from './boards/playerMoments';
+export * from './boards/playerStreaks';
 
 const { bestWeek, bestSeason, careerPoints, weeksStarted } = career;
 const { boomStarts, dudStarts, journeyman, draftValue, benchBlunder, benchWarmers, loyalty, ironman, fodder, waiverHeroes, waiverVillains, mrIrrelevant, breakout, fallOff, pairEmpty } = extras;
@@ -49,13 +53,20 @@ export const BOARDS: BoardDef[] = [
   { id: 'waiverVillains', tab: 'players', sub: 'alltime', title: 'Waiver villains', definition: 'FAAB dollars per started point for claims of $10 or more, worst first. A claim that never started counts as one point.', valueHeader: '$/pt', compute: waiverVillains },
   { id: 'draftValue', tab: 'players', sub: 'alltime', title: 'Draft value', definition: "Draft value from the draft board for the chosen season; under All-time, each player's best single season, or worst under −. The current season's value moves weekly.", valueHeader: 'Value', sortable: true, directionLabels: ['+', '−'], compute: draftValue },
   { id: 'mrIrrelevant', tab: 'players', sub: 'alltime', title: 'Mr. Irrelevant', definition: 'The last quarterback, running back, receiver or tight end taken in each draft, and what he went on to score that season, with his positional finish. With a position chosen, the last pick at that position instead.', valueHeader: 'Pts', compute: mrIrrelevant },
+  { id: 'topScorerWeeks', tab: 'players', sub: 'alltime', title: 'Most weeks as top scorer', definition: 'Weeks the player was the highest-scoring starter in the league, or at the chosen position. Ties share the week.', valueHeader: 'Weeks', compute: pm.topScorerWeeks },
   // Players → Moments
   { id: 'bestWeek', tab: 'players', sub: 'moments', title: 'Best week by a starter', definition: 'Most points by a player in one week while in a starting lineup.', valueHeader: 'Pts', compute: bestWeek },
   { id: 'benchBlunder', tab: 'players', sub: 'moments', title: 'Biggest bench blunder', definition: 'Most points by a player left on the bench in one week.', valueHeader: 'Pts', compute: benchBlunder },
   { id: 'breakout', tab: 'players', sub: 'moments', title: 'Biggest breakout', definition: 'Largest rise in points per game between two consecutive seasons with at least 10 games in each, league scoring, every NFL game counted. QB, RB, WR and TE.', valueHeader: 'PPG', empty: pairEmpty, compute: breakout },
   { id: 'fallOff', tab: 'players', sub: 'moments', title: 'Biggest fall-off', definition: 'Largest drop in points per game between two consecutive seasons with at least 10 games in each, league scoring, every NFL game counted. QB, RB, WR and TE.', valueHeader: 'PPG', empty: pairEmpty, compute: fallOff },
+  { id: 'bestStartInLoss', tab: 'players', sub: 'moments', title: 'Biggest start in a loss', definition: 'Most points by a starter whose team lost that week.', valueHeader: 'Pts', compute: pm.bestStartInLoss },
+  { id: 'worstStartInWin', tab: 'players', sub: 'moments', title: 'Lowest start in a win', definition: 'Fewest points by a starter who played on a team that won that week. Kickers and defenses excluded.', valueHeader: 'Pts', compute: pm.worstStartInWin },
   // Players → Streaks
   { id: 'ironman', tab: 'players', sub: 'streaks', title: 'Ironman', definition: 'Longest run of consecutive league weeks in a starting lineup, any manager, carrying across seasons. Kickers and defenses excluded.', valueHeader: 'Weeks', compute: ironman },
+  { id: 'run15', tab: 'players', sub: 'streaks', title: 'Longest run of 15+ point starts', definition: 'Consecutive starts scoring 15 or more, any manager. A start under 15 ends the run; weeks on a bench or off a roster do not.', valueHeader: 'Starts', compute: ps.run15 },
+  { id: 'run20', tab: 'players', sub: 'streaks', title: 'Longest run of 20+ point starts', definition: 'Consecutive starts scoring 20 or more, any manager. A start under 20 ends the run; weeks on a bench or off a roster do not.', valueHeader: 'Starts', compute: ps.run20 },
+  { id: 'drought', tab: 'players', sub: 'streaks', title: 'Longest scoring drought', definition: 'Consecutive played starts under 5 points, any manager. Kickers and defenses excluded.', valueHeader: 'Starts', compute: ps.drought },
+  { id: 'posTopRun', tab: 'players', sub: 'streaks', title: 'Most consecutive weeks as top at position', definition: "Consecutive league weeks as the highest-scoring starter at the player's position. A week not on top, started or not, ends the run.", valueHeader: 'Weeks', compute: ps.posTopRun },
   // Players → Postseason
   { id: 'postPoints', tab: 'players', sub: 'postseason', title: 'Most postseason points started', definition: `Points while started in championship-bracket games. PPG averages over played starts, at least ${MIN_POST_GAMES} games.`, valueHeader: 'Pts', modes: pointsModes(), empty: (_ctx, mode) => (mode === 'ppg' ? minGamesCopy(MIN_POST_GAMES) : undefined), compute: postPoints },
   { id: 'postStarts', tab: 'players', sub: 'postseason', title: 'Most postseason starts', definition: 'Starts in championship-bracket games.', valueHeader: 'Starts', compute: postStarts },

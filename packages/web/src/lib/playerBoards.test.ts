@@ -252,9 +252,9 @@ describe('BOARDS registry by tab and sub-tab', () => {
   const ids = (tab: 'players' | 'managers', sub: string) => boardsFor(tab, sub).map((b) => b.id);
   it('lays every player board under its sub-tab in display order', () => {
     expect(ids('players', 'leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
-    expect(ids('players', 'alltime')).toEqual(['careerPoints', 'weeksStarted', 'bestSeason', 'championshipRosters', 'lastPlaceRosters', 'loyalty', 'journeyman', 'benchWarmers', 'fodder', 'boomStarts', 'dudStarts', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant']);
-    expect(ids('players', 'moments')).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff']);
-    expect(ids('players', 'streaks')).toEqual(['ironman']);
+    expect(ids('players', 'alltime')).toEqual(['careerPoints', 'weeksStarted', 'bestSeason', 'championshipRosters', 'lastPlaceRosters', 'loyalty', 'journeyman', 'benchWarmers', 'fodder', 'boomStarts', 'dudStarts', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'topScorerWeeks']);
+    expect(ids('players', 'moments')).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin']);
+    expect(ids('players', 'streaks')).toEqual(['ironman', 'run15', 'run20', 'drought', 'posTopRun']);
     expect(ids('players', 'postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'postChampionshipRosters', 'postToiletBowl', 'worstToiletStarts', 'postLastPlaceRosters']);
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
     for (const b of BOARDS) expect(b.definition.length).toBeGreaterThan(10);

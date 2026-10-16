@@ -37,6 +37,8 @@ export interface PlayerLine {
   rushTd: number;
   recTd: number;
   passTd: number;
+  /** the roster's result that week */
+  result: 'W' | 'L' | 'T';
 }
 
 export const POSTSEASON_TAGS: ReadonlySet<string> = new Set(['QF', 'SF', 'Final', '3rd', '5th']);
@@ -53,6 +55,8 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
         const postseason = g.tag !== null && POSTSEASON_TAGS.has(g.tag);
         const consolation = g.tag !== null && CONSOLATION_TAGS.has(g.tag);
         for (const sideOf of g.sides) {
+          const other = g.sides[0] === sideOf ? g.sides[1] : g.sides[0];
+          const result: PlayerLine['result'] = sideOf.points > other.points ? 'W' : sideOf.points < other.points ? 'L' : 'T';
           const push = (p: CoreLine, started: boolean) => {
             const st = p.stats ?? {};
             out.push({
@@ -68,6 +72,7 @@ export function flattenLines(seasons: Season[], players: PlayerDirectory): Playe
               postseason,
               consolation,
               position: players[p.playerId]?.position ?? '?',
+              result,
             });
           };
           for (const e of sideOf.starters) if (e.player) push(e.player, true);

@@ -18,6 +18,7 @@ describe('flattenLines', () => {
       playerId: 'q1', userId: 'a', year: 2025, week: 1, gameId: '2025-1-1', matchupId: 1, tag: null, started: true,
       points: 30, yards: 310, touchdowns: 2, receptions: 0, played: true, postseason: false, consolation: false, position: 'QB',
       targets: 0, carries: 0, passAttempts: 0, rushYards: 10, recYards: 0, passYards: 300, rushTd: 0, recTd: 0, passTd: 2,
+      result: 'W',
     });
     const r1 = lines.find((l) => l.playerId === 'r1')!;
     expect(r1).toMatchObject({ started: false, yards: 120, touchdowns: 1, receptions: 4, played: true });

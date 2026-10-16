@@ -42,7 +42,7 @@ describe('RecordsView', () => {
     expect(tabs('Tabs').getAllByRole('tab').map((t) => t.textContent)).toEqual(['Players', 'Managers']);
     expect(tabs('Sections').getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())).toEqual(['All-time', 'Moments', 'Streaks', 'Postseason', 'Leaders']);
     expect(sub(/^All-time/)).toHaveAttribute('aria-selected', 'true');
-    expect(sub(/^All-time/)).toHaveTextContent('15');
+    expect(sub(/^All-time/)).toHaveTextContent('16');
     expect(region('All-time')).toBeInTheDocument();
     expect(within(region('All-time')).getByText('Most career points started')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Moments' })).toBeNull();
