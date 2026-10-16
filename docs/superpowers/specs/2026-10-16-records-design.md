@@ -22,13 +22,7 @@ Out of scope: Chases (fastest-to-milestone boards) on either tab, the Statistics
 
 ### Rows
 
-`BoardRow.playerId` becomes `subject`:
-
-```ts
-type Subject = { kind: 'player'; playerId: PlayerId } | { kind: 'manager'; userId: UserId };
-```
-
-Other fields stay: `key`, `value`, `valueLabel`, `meta`, `detail`, `userId` (the linked manager for player rows; null on manager rows), `to`, `tone`, `managers`. `Board` renders a player subject as headshot, position pill and name (as today) and a manager subject as avatar and display name linking to `/h2h?a=<userId>`. Rank, value, meta and detail render the same for both.
+`BoardRow.playerId` becomes `PlayerId | null`. A manager row has `playerId: null` and its manager in `userId`. Other fields stay: `key`, `value`, `valueLabel`, `meta`, `detail`, `userId` (the linked manager for player rows), `to`, `tone`, `managers`. `Board` renders a player row as headshot, position pill and name (as today) and a manager row as avatar and display name linking to `/h2h?a=<userId>`. Rank, value, meta and detail render the same for both.
 
 ### Definitions
 

@@ -9,11 +9,11 @@ const managers: History['managers'] = { a: { displayName: 'alice', avatar: null,
 const rows = (n: number, prefix: string): BoardRow[] => Array.from({ length: n }, (_, i) => ({
   key: `${prefix}${i}`, playerId: i === 0 ? 'q1' : `${prefix}${i}`, value: n - i, valueLabel: String(n - i), meta: '2025', detail: null, userId: null, to: null,
 }));
-const big: BoardDef = { id: 'big', section: 'extras', title: 'Big board', definition: 'Eight rows.', valueHeader: 'N', compute: () => rows(8, 'b') };
-const small: BoardDef = { id: 'small', section: 'extras', title: 'Small board', definition: 'Two rows.', valueHeader: 'N', compute: () => rows(2, 's') };
-const sortable: BoardDef = { id: 'sortable', section: 'extras', title: 'Sortable board', definition: 'Direction aware.', valueHeader: 'N', sortable: true,
+const big: BoardDef = { id: 'big', tab: 'players', sub: 'alltime', title: 'Big board', definition: 'Eight rows.', valueHeader: 'N', compute: () => rows(8, 'b') };
+const small: BoardDef = { id: 'small', tab: 'players', sub: 'alltime', title: 'Small board', definition: 'Two rows.', valueHeader: 'N', compute: () => rows(2, 's') };
+const sortable: BoardDef = { id: 'sortable', tab: 'players', sub: 'alltime', title: 'Sortable board', definition: 'Direction aware.', valueHeader: 'N', sortable: true,
   compute: (_ctx, direction) => (direction === 'asc' ? rows(6, 'u') : rows(6, 'o')) };
-const moded: BoardDef = { id: 'moded', section: 'extras', title: 'Moded board', definition: 'Two readings.', valueHeader: 'Pts',
+const moded: BoardDef = { id: 'moded', tab: 'players', sub: 'alltime', title: 'Moded board', definition: 'Two readings.', valueHeader: 'Pts',
   modes: [{ id: 'total', label: 'Total', valueHeader: 'Pts' }, { id: 'ppg', label: 'PPG', valueHeader: 'PPG' }],
   compute: (_ctx, _direction, mode) => (mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
 const ctx: BoardContext = { lines: [], players, champions: {}, lastPlaces: {}, year: null, currentYear: 2025, pos: 'All', picks: [], xfp: null, transactions: [], playerSeasons: {}, drafts: {} };

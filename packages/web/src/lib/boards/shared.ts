@@ -3,7 +3,7 @@ import { fmtPpg, fmtPts, fmtTag } from '../format';
 import type { PlayerLine, PosFilter } from '../playerLines';
 import type { XfpModel } from '../xfp';
 
-export type Section = 'leaders' | 'career' | 'postseason' | 'extras';
+export type Tab = 'players' | 'managers';
 export type Direction = 'desc' | 'asc';
 
 export interface BoardRow {
@@ -55,7 +55,9 @@ export interface BoardMode {
 
 export interface BoardDef {
   id: string;
-  section: Section;
+  tab: Tab;
+  /** sub-tab id, see boards/tabs.ts */
+  sub: string;
   title: string;
   definition: string;
   valueHeader: string;

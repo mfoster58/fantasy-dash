@@ -53,9 +53,11 @@ describe('ironman', () => {
 });
 
 describe('registry', () => {
-  it('lays out Extras in grid order', () => {
-    expect(BOARDS.filter((b) => b.section === 'extras').map((b) => b.id)).toEqual(['boomStarts', 'dudStarts', 'benchBlunder', 'benchWarmers', 'journeyman', 'loyalty', 'ironman', 'fodder', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'breakout', 'fallOff']);
-    expect(BOARDS.filter((b) => b.section === 'career').map((b) => b.id)).toEqual(['bestWeek', 'bestSeason', 'careerPoints', 'weeksStarted']);
+  it('files the former Extras boards under All-time, Moments and Streaks', () => {
+    const sub = (id: string) => BOARDS.find((b) => b.id === id)!.sub;
+    for (const id of ['boomStarts', 'dudStarts', 'benchWarmers', 'journeyman', 'loyalty', 'fodder', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant']) expect(sub(id)).toBe('alltime');
+    for (const id of ['benchBlunder', 'breakout', 'fallOff']) expect(sub(id)).toBe('moments');
+    expect(sub('ironman')).toBe('streaks');
   });
 });
 

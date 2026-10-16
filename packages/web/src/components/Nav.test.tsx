@@ -27,8 +27,10 @@ describe('Nav', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('links to the player stats tab', () => {
+  it('links to Records and no longer to Player stats or All-Time', () => {
     render(<MemoryRouter><Nav /></MemoryRouter>);
-    expect(screen.getAllByRole('link', { name: 'Player stats' })[0]).toHaveAttribute('href', '/players');
+    expect(screen.getAllByRole('link', { name: 'Records' })[0]).toHaveAttribute('href', '/records');
+    expect(screen.queryByRole('link', { name: 'Player stats' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'All-Time' })).toBeNull();
   });
 });
