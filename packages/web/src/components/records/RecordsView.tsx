@@ -48,7 +48,8 @@ export default function RecordsView({ seasons, players, managers, years, current
     const fallback: SeasonPick = s.picker === 'current' ? currentYear : 'all';
     const pick: SeasonPick = s.picker ? pickOf(`${s.id}Season`, fallback) : 'all';
     const year = pick === 'all' ? null : pick;
-    const lines = filterLines(allLines, pos).filter((l) => year === null || l.year === year);
+    const seasonLines = allLines.filter((l) => year === null || l.year === year);
+    const lines = filterLines(seasonLines, pos);
     const teamGames = allTeamGames.filter((g) => year === null || g.year === year);
     const managerSeasons = allManagerSeasons.filter((m) => year === null || m.year === year);
     const ctx: BoardContext = { lines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
@@ -62,6 +63,7 @@ export default function RecordsView({ seasons, players, managers, years, current
         note={note}
         boards={boardsFor(s.tab, s.id)}
         ctx={ctx}
+        allLines={seasonLines}
         players={players}
         managers={managers}
         pos={pos}

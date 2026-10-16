@@ -18,6 +18,8 @@ export interface BoardRow {
   detail: string | null;
   userId: UserId | null;
   to: string | null;
+  /** a manager row's player (a draft pick, a waiver claim), shown after the manager */
+  player?: PlayerId;
   /** colours the value: win = green, loss = red */
   tone?: 'win' | 'loss';
   /** every manager behind an aggregate row, most weeks first; more than one renders as a count with a tooltip */
@@ -75,6 +77,8 @@ export interface BoardDef {
   modes?: readonly BoardMode[];
   /** render `modes` as a dropdown instead of a row of pills */
   modeSelect?: boolean;
+  /** a manager board whose rows name a player: offers the per-board position dropdown, which the board applies to that player's position (player boards always offer it) */
+  positions?: boolean;
   /** second, independent toggle; its valueHeaders are suffixes appended to the first header */
   modes2?: readonly BoardMode[];
   /** empty-state copy when the mode's own threshold, not the position filter, is the usual reason for no rows */

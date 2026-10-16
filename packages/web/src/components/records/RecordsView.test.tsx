@@ -78,14 +78,14 @@ describe('RecordsView', () => {
     fireEvent.click(within(region('All-time')).getByRole('button', { name: 'RB' }));
     expect(loc()).toContain('alltime=RB');
     expect(firstRow('Most career points started')).toHaveTextContent('Ricky One');
-    fireEvent.change(within(region('All-time')).getByRole('combobox'), { target: { value: '2024' } });
+    fireEvent.change(within(region('All-time')).getByRole('combobox', { name: 'Season' }), { target: { value: '2024' } });
     expect(loc()).toContain('alltimeSeason=2024');
     fireEvent.click(sub(/^Leaders/));
-    expect(within(region('Leaders')).getByRole('combobox')).toHaveValue('2025'); // leaders default to the current season
+    expect(within(region('Leaders')).getByRole('combobox', { name: 'Season' })).toHaveValue('2025'); // leaders default to the current season
     expect(firstRow('Most points')).toHaveTextContent('Quincy One');
     fireEvent.click(sub(/^All-time/));
     expect(within(region('All-time')).getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(region('All-time')).getByRole('combobox')).toHaveValue('2024');
+    expect(within(region('All-time')).getByRole('combobox', { name: 'Season' })).toHaveValue('2024');
   });
 
   it('falls back for junk params and shows the not-started message on Leaders only', () => {

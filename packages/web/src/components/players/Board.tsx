@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
+import { POS_FILTERS, type PosFilter } from '../../lib/playerLines';
 import { playerName, playerPos } from '../../lib/players';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
+import { CrownIcon } from '../Icons';
 import PosPill from '../PosPill';
 
 interface Props {
@@ -22,11 +24,15 @@ interface Props {
   onMode?: (m: string) => void;
   mode2?: string;
   onMode2?: (m: string) => void;
+  /** this board's own position; the dropdown shows only when the section controls it */
+  position?: PosFilter;
+  onPosition?: (p: PosFilter) => void;
   /** empty-state copy from the definition; falls back to the position copy */
   empty?: string;
 }
 
 const PREVIEW = 5;
+const RECORD_ROW = 'bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]';
 
 function Toggle<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
@@ -55,7 +61,7 @@ export function Select<T extends string>({ label, options, value, onChange }: { 
   );
 }
 
-export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, empty }: Props) {
+export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, position, onPosition, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
   const [openManagers, setOpenManagers] = useState<Record<string, boolean>>({});
@@ -65,6 +71,8 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
   const header = (activeMode?.valueHeader ?? def.valueHeader) + (activeMode2?.valueHeader ?? '');
   const [over, under] = def.directionLabels ?? ['Over', 'Under'];
   const directions: { id: Direction; label: string }[] = [{ id: 'desc', label: over }, { id: 'asc', label: under }];
+  // the record: the top row's value, shared by every row tied with it
+  const recordValue = rows[0]?.value;
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
       <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
@@ -74,6 +82,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="section-label">{header}</span>
+          {onPosition && <Select label="Position" options={POS_FILTERS.map((p) => ({ id: p, label: p }))} value={position ?? 'All'} onChange={onPosition} />}
           {def.sortable && onDirection && <Toggle label="Direction" options={directions} value={direction} onChange={onDirection} />}
           {def.modes && activeMode && onMode && (def.modeSelect
             ? <Select label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />
@@ -87,22 +96,31 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         <ol className="divide-y divide-line">
           {shown.map((r, i) => {
             const m = r.userId ? managers[r.userId] : undefined;
+            const record = r.value === recordValue;
             const metaNode = r.to
               ? <Link to={r.to} className="num hover:text-accent">{r.meta}</Link>
               : <span className="num">{r.meta}</span>;
             return (
-              <li key={r.key} className="flex items-center gap-3 px-3 py-2">
-                <span className="num w-4 shrink-0 text-right text-xs text-muted">{i + 1}</span>
+              <li key={r.key} data-rank={i + 1} className={`flex items-center gap-3 px-3 py-2 ${record ? RECORD_ROW : ''}`}>
+                <span className={`num w-4 shrink-0 text-right text-xs ${record ? 'font-bold text-gold' : 'text-muted'}`}>{record ? <CrownIcon title="League record" /> : i + 1}</span>
                 {r.playerId !== null ? <Headshot players={players} id={r.playerId} size={28} /> : <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId ?? '?'} size={28} />}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     {r.playerId !== null ? (
                       <>
                         <PosPill pos={playerPos(players, r.playerId)} />
-                        <span className="truncate text-sm font-medium">{playerName(players, r.playerId)}</span>
+                        <span className={`truncate text-sm ${record ? 'font-semibold' : 'font-medium'}`}>{playerName(players, r.playerId)}</span>
                       </>
                     ) : (
-                      <Link to={`/h2h?a=${r.userId}`} className="truncate text-sm font-medium hover:text-accent">{m?.displayName ?? r.userId}</Link>
+                      <>
+                        <Link to={`/h2h?a=${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
+                        {r.player && (
+                          <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+                            <Headshot players={players} id={r.player} size={20} />
+                            <span className="truncate">{playerName(players, r.player)}</span>
+                          </span>
+                        )}
+                      </>
                     )}
                   </span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
@@ -138,7 +156,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     )}
                   </span>
                 </span>
-                <span className={`num shrink-0 text-base font-semibold ${r.tone === 'win' ? 'text-win' : r.tone === 'loss' ? 'text-loss' : ''}`}>{r.valueLabel}</span>
+                <span className={`num shrink-0 text-base font-semibold ${record ? 'text-gold' : r.tone === 'win' ? 'text-win' : r.tone === 'loss' ? 'text-loss' : ''}`}>{r.valueLabel}</span>
               </li>
             );
           })}
