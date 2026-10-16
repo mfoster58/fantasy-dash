@@ -42,10 +42,12 @@ export default function HeadToHead({ series, year, week, left, right }: Props) {
   const recent = prior.slice(0, 3);
 
   return (
-    <section className="card p-5" aria-labelledby="h2h-title">
+    <section className="card relative p-5 transition-colors hover:border-accent" aria-labelledby="h2h-title">
+      {/* Covers the card so the whole thing opens the series; the meeting rows sit above it with their own links. */}
+      <Link to={`/h2h?a=${left.userId}&b=${right.userId}`} aria-label="Full series →" className="absolute inset-0 rounded-xl" />
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 id="h2h-title" className="section-label">Head to head</h2>
-        <Link to={`/h2h?a=${left.userId}&b=${right.userId}`} className="text-xs text-accent hover:underline">Full series →</Link>
+        <span className="text-xs text-accent" aria-hidden="true">Full series →</span>
       </div>
       <div className="mx-auto max-w-2xl">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
@@ -74,7 +76,7 @@ export default function HeadToHead({ series, year, week, left, right }: Props) {
                 <li key={g.gameId}>
                   <Link
                     to={`/scores/${g.year}/${g.week}/${matchupOf(g.gameId)}`}
-                    className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 rounded-md px-2 py-1.5 text-sm hover:bg-surface-2"
+                    className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 rounded-md px-2 py-1.5 text-sm hover:bg-surface-2"
                   >
                     <span className={`truncate text-xs ${g.tag ? 'font-semibold text-accent' : 'text-muted'}`}>
                       {g.year} · {g.tag ? fmtTag(g.tag) : `Wk ${g.week}`}

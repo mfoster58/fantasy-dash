@@ -38,7 +38,9 @@ describe('HeadToHead', () => {
 
   it('lists at most three prior meetings, newest first, as links', () => {
     wrap(series);
-    expect(screen.getByRole('link', { name: 'Full series →' })).toHaveAttribute('href', `/h2h?a=${bob.userId}&b=${alice.userId}`);
+    const seriesLink = screen.getByRole('link', { name: 'Full series →' });
+    expect(seriesLink).toHaveAttribute('href', `/h2h?a=${bob.userId}&b=${alice.userId}`);
+    expect(seriesLink.className).toContain('inset-0');   // the whole card is the link
     const links = screen.getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/scores/'));
     expect(links).toHaveLength(3);
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/scores/2025/4/5', '/scores/2024/15/1', '/scores/2024/2/4']);
