@@ -21,7 +21,7 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false }: {
         </div>
         <div className="truncate text-xs text-muted">{statLine(pos, line.stats) || '-'}</div>
       </div>
-      <div className="num shrink-0 text-right text-sm">{fmtPts(line.points)}</div>
+      <div className="num shrink-0 text-right text-xl font-semibold leading-none sm:text-[22px]">{fmtPts(line.points)}</div>
     </div>
   );
 }
@@ -42,7 +42,7 @@ export default function LineupTable({ sides, slots, players, seasonTeams }: Prop
             </div>
           </div>
         ))}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-surface-2 px-5 py-2.5 text-sm font-semibold">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-surface-2 px-5 py-2.5 text-xl font-semibold sm:text-[22px]">
           <span className="num">{fmtPts(a.points)}</span>
           <span className="section-label w-14 text-center">Total</span>
           <span className="num text-right">{fmtPts(b.points)}</span>
