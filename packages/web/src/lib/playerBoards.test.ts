@@ -264,6 +264,7 @@ describe('BOARDS registry by tab and sub-tab', () => {
     expect(ids('managers', 'mstreaks')).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mDrought', 'mRun100', 'mHighRun']);
     expect(ids('managers', 'mplayoffs')).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'mpFinalsLost', 'mpToiletApps', 'mpToiletWins']);
     expect(ids('managers', 'mdraft')).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdFirstRound']);
+    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabSeason', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtQuickCut']);
   });
   it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);

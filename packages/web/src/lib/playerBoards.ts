@@ -12,6 +12,7 @@ import * as mg from './boards/managers/games';
 import * as mst from './boards/managers/streaks';
 import * as mp from './boards/managers/playoffs';
 import * as md from './boards/managers/draft';
+import * as mt from './boards/managers/transactions';
 
 export * from './boards/shared';
 export * from './boards/managers/shared';
@@ -21,6 +22,7 @@ export * from './boards/managers/games';
 export * from './boards/managers/streaks';
 export * from './boards/managers/playoffs';
 export * from './boards/managers/draft';
+export * from './boards/managers/transactions';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -158,6 +160,18 @@ export const BOARDS: BoardDef[] = [
   { id: 'mdBust', tab: 'managers', sub: 'mdraft', title: 'Biggest bust', definition: 'The single pick with the least draft value.', valueHeader: 'Value', compute: md.mdBust },
   { id: 'mdLate', tab: 'managers', sub: 'mdraft', title: 'Most value from late rounds', definition: 'Sum of pick values from round 9 on in one draft.', valueHeader: 'Value', compute: md.mdLate },
   { id: 'mdFirstRound', tab: 'managers', sub: 'mdraft', title: 'Best first-round record', definition: "Average value of a manager's first-round picks across complete seasons, at least two.", valueHeader: 'Avg', empty: md.firstRoundEmpty, compute: md.mdFirstRound },
+  // Managers → Transactions
+  { id: 'mtAdds', tab: 'managers', sub: 'mtransactions', title: 'Most adds', definition: 'Waiver claims, free-agent adds and commissioner adds, every season in scope.', valueHeader: 'Adds', compute: mt.mtAdds },
+  { id: 'mtDrops', tab: 'managers', sub: 'mtransactions', title: 'Most drops', definition: 'Players dropped outside a trade, every season in scope.', valueHeader: 'Drops', compute: mt.mtDrops },
+  { id: 'mtTrades', tab: 'managers', sub: 'mtransactions', title: 'Most trades', definition: 'Completed trades the manager was part of.', valueHeader: 'Trades', compute: mt.mtTrades },
+  { id: 'mtBusiest', tab: 'managers', sub: 'mtransactions', title: 'Busiest season', definition: 'Adds plus drops plus trades in one season. Under All-time, complete seasons only.', valueHeader: 'Moves', compute: mt.mtBusiest },
+  { id: 'mtFaabSeason', tab: 'managers', sub: 'mtransactions', title: 'Most FAAB spent, season', definition: 'Winning waiver bids summed over one season. Under All-time, complete seasons only.', valueHeader: '$', compute: mt.mtFaabSeason },
+  { id: 'mtFaabCareer', tab: 'managers', sub: 'mtransactions', title: 'Most FAAB spent, career', definition: 'Winning waiver bids summed over every season in scope.', valueHeader: '$', compute: mt.mtFaabCareer },
+  { id: 'mtBiggestBid', tab: 'managers', sub: 'mtransactions', title: 'Biggest winning bid', definition: 'The largest single waiver bid that won its player.', valueHeader: '$', compute: mt.mtBiggestBid },
+  { id: 'mtCheap', tab: 'managers', sub: 'mtransactions', title: 'Cheapest points', definition: 'FAAB dollars per point the claimed players scored while started for the manager, lowest first. At least $25 spent.', valueHeader: '$/pt', compute: mt.mtCheap },
+  { id: 'mtCostly', tab: 'managers', sub: 'mtransactions', title: 'Costliest points', definition: 'FAAB dollars per point the claimed players scored while started for the manager, highest first. At least $25 spent. A claim that never scored counts as one point.', valueHeader: '$/pt', compute: mt.mtCostly },
+  { id: 'mtBestPickup', tab: 'managers', sub: 'mtransactions', title: 'Best waiver pickup', definition: 'Most points a single add returned while started for the manager, from the pickup until that manager dropped him. FAAB bid underneath, or FA for a free-agent add.', valueHeader: 'Pts', compute: mt.mtBestPickup },
+  { id: 'mtQuickCut', tab: 'managers', sub: 'mtransactions', title: 'Quickest cut', definition: 'Fewest days between picking a player up and dropping him again.', valueHeader: 'Days', compute: mt.mtQuickCut },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
