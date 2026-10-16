@@ -10,6 +10,13 @@ describe('routes', () => {
       expect(child(path)?.element).toBeUndefined();
     }
   });
+  it('serves the teams and managers pages with every season loaded', () => {
+    for (const path of ['teams/:season', 'teams/:season/:userId', 'managers', 'managers/:userId']) {
+      expect(child(path)?.element, path).toBeTruthy();
+      expect(child(path)?.loader, path).toBeTypeOf('function');
+    }
+    expect(child('teams')?.loader).toBeTypeOf('function');
+  });
   it('serves records with every season loaded', () => {
     expect(child('records')?.element).toBeTruthy();
     expect(child('records')?.loader).toBeTypeOf('function');

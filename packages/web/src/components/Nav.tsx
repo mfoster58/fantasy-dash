@@ -6,6 +6,7 @@ import ThemeToggle from './ThemeToggle';
 export const links: { to: string; label: string }[] = [
   { to: '/scores', label: 'Scores' },
   { to: '/standings', label: 'Standings' },
+  { to: '/teams', label: 'Teams' },
   { to: '/h2h', label: 'Head to Head' },
   { to: '/records', label: 'Records' },
   { to: '/history', label: 'History' },

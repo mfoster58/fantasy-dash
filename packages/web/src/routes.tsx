@@ -10,12 +10,24 @@ import SeasonReviewPage from './pages/SeasonReviewPage';
 import DraftPage from './pages/DraftPage';
 import GradingPage from './pages/GradingPage';
 import RecordsPage from './pages/RecordsPage';
-import { currentSeason, loadAllSeasons, loadSeason } from './data/load';
+import TeamsPage from './pages/TeamsPage';
+import TeamPage from './pages/TeamPage';
+import ManagersPage from './pages/ManagersPage';
+import ManagerPage from './pages/ManagerPage';
+import { currentSeason, history, loadAllSeasons, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
   const year = Number(params.season);
   if (!Number.isInteger(year)) throw new Response('Bad season', { status: 400 });
   return loadSeason(year);
+}
+
+/** Every season plus the one in the URL; 404 for a season the league never played. */
+export async function teamsLoader({ params }: LoaderFunctionArgs) {
+  const year = Number(params.season);
+  if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
+  const seasons = await loadAllSeasons();
+  return { seasons, season: seasons.find((s) => s.year === year)! };
 }
 
 function Layout() {
@@ -51,6 +63,11 @@ export const routes: RouteObject[] = [
       { path: 'scores/:season/:week/:matchupId', loader: seasonLoader, element: <BoxScorePage /> },
       { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
       { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
+      { path: 'teams', loader: () => redirect(`/teams/${currentSeason.year}`) },
+      { path: 'teams/:season', loader: teamsLoader, element: <TeamsPage /> },
+      { path: 'teams/:season/:userId', loader: teamsLoader, element: <TeamPage /> },
+      { path: 'managers', loader: () => loadAllSeasons(), element: <ManagersPage /> },
+      { path: 'managers/:userId', loader: () => loadAllSeasons(), element: <ManagerPage /> },
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
       { path: 'records', loader: () => loadAllSeasons(), element: <RecordsPage /> },
