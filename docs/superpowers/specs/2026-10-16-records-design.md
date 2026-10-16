@@ -154,6 +154,6 @@ No position filter. Values use `fmtPts` for points, `fmtWinPct` for percentages,
 
 ## Migration
 
-- Delete: `pages/PlayersPage.tsx`, `pages/AllTimePage.tsx`, `components/players/PlayersView.tsx` and its test, `components/AllTimeRecords.tsx` and test, `components/history/StreaksCard.tsx` and test, and `lib/allTimeRecords.ts` and `lib/streaks.ts` if the manager boards absorb them (the plan decides; otherwise the boards call them).
+- Deleted: `pages/PlayersPage.tsx`, `pages/AllTimePage.tsx`, `components/players/PlayersView.tsx` and its test, `components/AllTimeRecords.tsx` and test, `components/history/StreaksCard.tsx` and test, `lib/allTimeRecords.ts` and test, `lib/streaks.ts` and test (the manager Games and Streaks boards replaced them). Routes moved to `src/routes.tsx` so they can be tested without creating a browser router.
 - Keep: `components/AllTimeTable.tsx` and `lib/records.ts` (used by the season review) for project 2.
 - The earlier specs (player stats v1–v3) describe the retired page; this spec supersedes their page structure but not their board definitions.
