@@ -10,7 +10,7 @@ const managers: Record<string, Manager> = {
   d: { userId: 'd', displayName: 'dan', teamName: null, avatar: null, rosterId: 4 },
 };
 const side = (userId: string, points: number, projected: number, efficiency = 1): GameSide => ({
-  userId, points, projected, ceiling: points, efficiency, starters: [], bench: [], optimalSwaps: [], recordBefore: { w: 0, l: 0, t: 0 }, seasonPpg: 100,
+  userId, points, projected, ceiling: Math.round((points / efficiency) * 100) / 100, efficiency, starters: [], bench: [], optimalSwaps: [], recordBefore: { w: 0, l: 0, t: 0 }, seasonPpg: 100,
 });
 const game = (matchupId: number, x: GameSide, y: GameSide): Game => ({ id: `2025-3-${matchupId}`, matchupId, week: 3, tag: null, sides: [x, y], winner: null, margin: 0 });
 const g1 = game(1, side('a', 120, 100, 0.9), side('b', 90, 110));
@@ -45,7 +45,14 @@ describe('WeekScores', () => {
     expect(screen.getAllByTestId('efficiency').map((e) => e.textContent)).toEqual(['100%', '90%', '100%', '100%']);
     expect(screen.queryByText(/of the other/)).toBeNull();
     expect(screen.queryByText(/^#\d/)).toBeNull();
-    expect(screen.getByText('Week 3 · scores and efficiency')).toBeInTheDocument();
+    expect(screen.getByText('Week 3 · score out of lineup max')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ranked' })).toBeInTheDocument();
+    // alice scored 120 of a 133.33 ceiling: her track is the week's second widest (cara's 150 is the max) and 90% filled
+    expect(screen.getAllByTestId('ceiling').map((e) => e.textContent)).toEqual(['150.00', '133.33', '90.00', '90.00']);
+    const tracks = screen.getAllByTestId('track');
+    expect(tracks[0].style.width).toBe('100%');
+    expect(parseFloat(tracks[1].style.width)).toBeCloseTo((133.33 / 150) * 100, 1);
+    expect(parseFloat((tracks[1].firstChild as HTMLElement).style.width)).toBeCloseTo(90, 0);
   });
 
   it('calls out the week high score', () => {
