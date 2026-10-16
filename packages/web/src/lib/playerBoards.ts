@@ -6,8 +6,11 @@ import * as leaders from './boards/leaders';
 import * as post from './boards/postseason';
 import * as pm from './boards/playerMoments';
 import * as ps from './boards/playerStreaks';
+import * as ma from './boards/managers/alltime';
 
 export * from './boards/shared';
+export * from './boards/managers/shared';
+export * from './boards/managers/alltime';
 export * from './boards/leaders';
 export * from './boards/career';
 export * from './boards/postseason';
@@ -78,6 +81,23 @@ export const BOARDS: BoardDef[] = [
   { id: 'postToiletBowl', tab: 'players', sub: 'postseason', title: 'Most toilet bowl starts', definition: 'Starts in consolation games: the first round, the toilet bowl and the 7th place game.', valueHeader: 'Starts', compute: postToiletBowl },
   { id: 'worstToiletStarts', tab: 'players', sub: 'postseason', title: 'Worst toilet bowl starts', definition: 'Fewest points by a starter who played in one consolation game. Toilet Bowl narrows to the last-place game.', valueHeader: 'Pts', modes: CONSOLATION_MODES, compute: worstToiletStarts },
   { id: 'postLastPlaceRosters', tab: 'players', sub: 'postseason', ...lastPlaceRostersDef },
+  // Managers → All-time
+  { id: 'mCareerWins', tab: 'managers', sub: 'malltime', title: 'Most career wins', definition: 'Regular-season wins across every season.', valueHeader: 'Wins', compute: ma.mCareerWins },
+  { id: 'mWinPct', tab: 'managers', sub: 'malltime', title: 'Best career win %', definition: 'Regular-season win percentage, ties as half a win. At least one complete season.', valueHeader: 'Win %', compute: ma.mWinPct },
+  { id: 'mWorstWinPct', tab: 'managers', sub: 'malltime', title: 'Worst career win %', definition: 'Regular-season win percentage, ties as half a win, lowest first. At least one complete season.', valueHeader: 'Win %', compute: ma.mWorstWinPct },
+  { id: 'mCareerPoints', tab: 'managers', sub: 'malltime', title: 'Most career points', definition: 'Regular-season points scored across every season.', valueHeader: 'Pts', compute: ma.mCareerPoints },
+  { id: 'mCareerPpg', tab: 'managers', sub: 'malltime', title: 'Best career points per game', definition: 'Regular-season points per game. At least one complete season.', valueHeader: 'PPG', compute: ma.mCareerPpg },
+  { id: 'mPointsAgainst', tab: 'managers', sub: 'malltime', title: 'Most career points against', definition: 'Regular-season points scored by opponents across every season.', valueHeader: 'Pts', compute: ma.mPointsAgainst },
+  { id: 'mTitles', tab: 'managers', sub: 'malltime', title: 'Most championships', definition: 'Championship game wins.', valueHeader: 'Titles', compute: ma.mTitles },
+  { id: 'mFinals', tab: 'managers', sub: 'malltime', title: 'Most title games', definition: 'Championship game appearances, won or lost.', valueHeader: 'Finals', compute: ma.mFinals },
+  { id: 'mBerths', tab: 'managers', sub: 'malltime', title: 'Most playoff berths', definition: 'Seasons in the championship bracket.', valueHeader: 'Berths', compute: ma.mBerths },
+  { id: 'mPlayoffWins', tab: 'managers', sub: 'malltime', title: 'Most playoff wins', definition: 'Wins in championship-bracket games.', valueHeader: 'Wins', compute: ma.mPlayoffWins },
+  { id: 'mBerthsNoTitle', tab: 'managers', sub: 'malltime', title: 'Most berths without a title', definition: 'Playoff berths by managers who have never won the championship.', valueHeader: 'Berths', compute: ma.mBerthsNoTitle },
+  { id: 'mLastPlaces', tab: 'managers', sub: 'malltime', title: 'Most last-place finishes', definition: 'Seasons finishing last, by the toilet bowl where the league plays one.', valueHeader: 'Seasons', compute: ma.mLastPlaces },
+  { id: 'mSeasons', tab: 'managers', sub: 'malltime', title: 'Most seasons played', definition: 'Seasons with a standings row, the current one included.', valueHeader: 'Seasons', compute: ma.mSeasons },
+  { id: 'mEfficiency', tab: 'managers', sub: 'malltime', title: 'Best lineup efficiency', definition: 'Points started divided by the points the best possible lineup would have scored, over every game played, playoffs included. At least one complete season.', valueHeader: 'Eff', compute: ma.mEfficiency },
+  { id: 'mWorstEfficiency', tab: 'managers', sub: 'malltime', title: 'Worst lineup efficiency', definition: 'Points started divided by the best possible lineup, lowest first, over every game played. At least one complete season.', valueHeader: 'Eff', compute: ma.mWorstEfficiency },
+  { id: 'mWeeklyHighs', tab: 'managers', sub: 'malltime', title: 'Most weekly high scores', definition: 'Regular-season weeks with the top score in the league.', valueHeader: 'Weeks', compute: ma.mWeeklyHighs },
 ];
 
 export const boardsFor = (tab: Tab, sub: string): BoardDef[] => BOARDS.filter((b) => b.tab === tab && b.sub === sub);
