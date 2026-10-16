@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { H2HSeries, Manager } from '@fantasy-dash/core';
 import HeadToHead from './HeadToHead';
@@ -41,18 +41,32 @@ describe('HeadToHead', () => {
     const seriesLink = screen.getByRole('link', { name: 'Full series →' });
     expect(seriesLink).toHaveAttribute('href', `/h2h?a=${bob.userId}&b=${alice.userId}`);
     expect(seriesLink.className).toContain('inset-0');   // the whole card is the link
-    const links = screen.getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/scores/'));
+    const links = within(screen.getByRole('list')).getAllByRole('link');
     expect(links).toHaveLength(3);
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/scores/2025/4/5', '/scores/2024/15/1', '/scores/2024/2/4']);
     expect(links[1]).toHaveTextContent('Semifinal');
     expect(links[0]).toHaveTextContent('2025 · Wk 4');
   });
 
+  it('shows streak, average margin, biggest win and closest game over the prior meetings', () => {
+    wrap(series);
+    const extras = screen.getByTestId('h2h-extras');
+    // prior from bob's side: 2025 w4 alice +10, 2024 SF bob +10, 2024 w2 alice +19, 2024 w1 alice +31
+    expect(extras).toHaveTextContent('1 in a row');
+    expect(extras).toHaveTextContent('alice');
+    expect(extras).toHaveTextContent('17.50');
+    expect(screen.getByRole('link', { name: /Biggest win/ })).toHaveAttribute('href', '/scores/2024/1/6');
+    // two games were decided by 10; the newest of them is the closest
+    expect(screen.getByRole('link', { name: /Closest/ })).toHaveAttribute('href', '/scores/2025/4/5');
+    expect(screen.getByRole('link', { name: /Closest/ })).toHaveTextContent('alice · 2025');
+  });
+
   it('marks a first meeting', () => {
     wrap(undefined);
     expect(screen.getByTestId('h2h-record')).toHaveTextContent(/^0\s*–\s*0$/);
     expect(screen.getByText('First meeting')).toBeInTheDocument();
-    expect(screen.queryAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/scores/'))).toHaveLength(0);
+    expect(screen.queryAllByRole('link')).toHaveLength(1);   // only the series link
+    expect(screen.queryByTestId('h2h-extras')).toBeNull();
     expect(screen.getByRole('link', { name: 'Full series →' })).toBeInTheDocument();
   });
 });

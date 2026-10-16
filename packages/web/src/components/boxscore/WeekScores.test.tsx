@@ -9,11 +9,11 @@ const managers: Record<string, Manager> = {
   c: { userId: 'c', displayName: 'cara', teamName: null, avatar: null, rosterId: 3 },
   d: { userId: 'd', displayName: 'dan', teamName: null, avatar: null, rosterId: 4 },
 };
-const side = (userId: string, points: number, projected: number): GameSide => ({
-  userId, points, projected, ceiling: points, efficiency: 1, starters: [], bench: [], optimalSwaps: [], recordBefore: { w: 0, l: 0, t: 0 }, seasonPpg: 100,
+const side = (userId: string, points: number, projected: number, efficiency = 1): GameSide => ({
+  userId, points, projected, ceiling: points, efficiency, starters: [], bench: [], optimalSwaps: [], recordBefore: { w: 0, l: 0, t: 0 }, seasonPpg: 100,
 });
 const game = (matchupId: number, x: GameSide, y: GameSide): Game => ({ id: `2025-3-${matchupId}`, matchupId, week: 3, tag: null, sides: [x, y], winner: null, margin: 0 });
-const g1 = game(1, side('a', 120, 100), side('b', 90, 110));
+const g1 = game(1, side('a', 120, 100, 0.9), side('b', 90, 110));
 const g2 = game(2, side('c', 150, 95), side('d', 90, 105));
 const week: Week = { week: 3, isPlayoff: false, played: true, games: [g1, g2], highScore: 'c' };
 
@@ -38,6 +38,14 @@ describe('WeekScores', () => {
     expect(screen.getByText('#2')).toBeInTheDocument();
     expect(screen.getByText('Beats 1 of the other 2 teams')).toBeInTheDocument();
     expect(screen.getByText('Beats 0 of the other 2 teams')).toBeInTheDocument();
+  });
+
+  it('lists efficiency and skips the game summary on the scoreboard', () => {
+    render(<MemoryRouter><WeekScores week={week} managers={managers} year={2025} /></MemoryRouter>);
+    expect(screen.getAllByTestId('efficiency').map((e) => e.textContent)).toEqual(['100%', '90%', '100%', '100%']);
+    expect(screen.queryByText(/of the other/)).toBeNull();
+    expect(screen.queryByText(/^#\d/)).toBeNull();
+    expect(screen.getByText('Week 3 · scores and efficiency')).toBeInTheDocument();
   });
 
   it('calls out the week high score', () => {

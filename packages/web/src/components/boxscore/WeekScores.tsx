@@ -1,12 +1,16 @@
 import { Link } from 'react-router';
 import type { Game, Manager, UserId, Week } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
-import { fmtPts } from '../../lib/format';
+import { fmtPct, fmtPts } from '../../lib/format';
 
-interface Props { week: Week; game: Game; managers: Record<UserId, Manager>; year: number }
+interface Props {
+  week: Week; managers: Record<UserId, Manager>; year: number;
+  /** when viewing one game, its two teams are highlighted and summarised */
+  game?: Game;
+}
 
 export interface WeekScoreRow {
-  userId: UserId; points: number; matchupId: number;
+  userId: UserId; points: number; efficiency: number; matchupId: number;
   /** one of the two teams in the game being viewed */
   inGame: boolean;
   /** 1 + number of teams with strictly more points */
@@ -14,16 +18,18 @@ export interface WeekScoreRow {
 }
 
 /** Every team's score this week (projection when unplayed), best first, with the viewed game's two teams flagged. */
-export function weekScoreRows(week: Week, game: Game): WeekScoreRow[] {
+export function weekScoreRows(week: Week, game?: Game): WeekScoreRow[] {
   const rows = week.games.flatMap((g) => g.sides.map((s) => ({
-    userId: s.userId, points: week.played ? s.points : s.projected, matchupId: g.matchupId, inGame: g.id === game.id, rank: 0,
+    userId: s.userId, points: week.played ? s.points : s.projected, efficiency: s.efficiency, matchupId: g.matchupId, inGame: g.id === game?.id, rank: 0,
   })));
   rows.sort((a, b) => b.points - a.points || (a.userId < b.userId ? -1 : 1));
   for (const r of rows) r.rank = 1 + rows.filter((o) => o.points > r.points).length;
   return rows;
 }
 
-export default function WeekScores({ week, game, managers, year }: Props) {
+const effColor = (e: number) => (e >= 0.95 ? 'var(--win)' : e >= 0.85 ? 'var(--accent)' : 'var(--warn)');
+
+export default function WeekScores({ week, managers, year, game }: Props) {
   const rows = weekScoreRows(week, game);
   const max = Math.max(1, ...rows.map((r) => r.points));
   const n = rows.length;
@@ -33,7 +39,7 @@ export default function WeekScores({ week, game, managers, year }: Props) {
     <section className="card p-5" aria-labelledby="week-scores-title">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 id="week-scores-title" className="section-label">Around the league</h2>
-        <span className="text-xs text-muted">Week {week.week} · {week.played ? 'scores' : 'projected'}</span>
+        <span className="text-xs text-muted">Week {week.week} · {week.played ? 'scores and efficiency' : 'projected'}</span>
       </div>
       <ol className="-mx-2 space-y-0.5">
         {rows.map((r) => (
@@ -54,26 +60,38 @@ export default function WeekScores({ week, game, managers, year }: Props) {
                   />
                 </span>
               </span>
-              <span className={`num ${r.inGame ? 'font-semibold' : ''}`}>{fmtPts(r.points)}</span>
+              <span className="flex items-center gap-3">
+                <span className={`num w-14 text-right ${r.inGame ? 'font-semibold' : ''}`}>{fmtPts(r.points)}</span>
+                {week.played && (
+                  <span className="flex items-center gap-1.5" title="Efficiency: points scored as a share of the best possible lineup">
+                    <span className="hidden h-1.5 w-12 overflow-hidden rounded bg-surface-2 sm:block" aria-hidden="true">
+                      <span className="block h-full rounded" style={{ width: `${Math.min(100, r.efficiency * 100)}%`, background: `color-mix(in srgb, ${effColor(r.efficiency)} 70%, transparent)` }} />
+                    </span>
+                    <span className="num w-9 text-right text-xs" data-testid="efficiency">{fmtPct(r.efficiency, 0)}</span>
+                  </span>
+                )}
+              </span>
             </Link>
           </li>
         ))}
       </ol>
-      <div className="mt-4 grid gap-3 border-t border-line pt-3 sm:grid-cols-2">
-        {mine.map((r) => {
-          const beats = rows.filter((o) => !o.inGame && o.points < r.points).length;
-          const others = n - 2;
-          return (
-            <div key={r.userId} className="min-w-0">
-              <div className="truncate text-xs text-muted">{name(r.userId)}</div>
-              <div className="num text-lg font-semibold leading-tight">#{r.rank} <span className="text-sm font-normal text-muted">of {n}</span></div>
-              <div className="text-xs text-muted">
-                {r.rank === 1 ? `Highest ${week.played ? 'score' : 'projection'} of the week` : `Beats ${beats} of the other ${others} teams`}
+      {mine.length > 0 && (
+        <div className="mt-4 grid gap-3 border-t border-line pt-3 sm:grid-cols-2">
+          {mine.map((r) => {
+            const beats = rows.filter((o) => !o.inGame && o.points < r.points).length;
+            const others = n - 2;
+            return (
+              <div key={r.userId} className="min-w-0">
+                <div className="truncate text-xs text-muted">{name(r.userId)}</div>
+                <div className="num text-lg font-semibold leading-tight">#{r.rank} <span className="text-sm font-normal text-muted">of {n}</span></div>
+                <div className="text-xs text-muted">
+                  {r.rank === 1 ? `Highest ${week.played ? 'score' : 'projection'} of the week` : `Beats ${beats} of the other ${others} teams`}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
