@@ -27,6 +27,11 @@ describe('Nav', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('links to Teams', () => {
+    render(<MemoryRouter><Nav /></MemoryRouter>);
+    expect(screen.getAllByRole('link', { name: 'Teams' })[0]).toHaveAttribute('href', '/teams');
+  });
+
   it('links to Records and no longer to Player stats or All-Time', () => {
     render(<MemoryRouter><Nav /></MemoryRouter>);
     expect(screen.getAllByRole('link', { name: 'Records' })[0]).toHaveAttribute('href', '/records');
