@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmtPts, fmtPpg, fmtPct, fmtWinPct, fmtRecord, fmtSigned } from './format';
+import { fmtPts, fmtPpg, fmtPct, fmtWinPct, fmtRecord, fmtSigned, fmtStreak } from './format';
 
 describe('format helpers', () => {
   it('formats points, ppg and percents', () => {
@@ -20,5 +20,13 @@ describe('format helpers', () => {
     expect(fmtSigned(-2)).toBe('-2.0');
     expect(fmtSigned(0)).toBe('0.0');
     expect(fmtSigned(1.234, 2)).toBe('+1.23');
+  });
+});
+
+describe('fmtStreak', () => {
+  it('flips the standings streak to count-first and reports its kind', () => {
+    expect(fmtStreak('W3')).toEqual({ label: '3W', kind: 'W' });
+    expect(fmtStreak('L1')).toEqual({ label: '1L', kind: 'L' });
+    expect(fmtStreak('-')).toBeNull();
   });
 });

@@ -43,11 +43,20 @@ export default function LineupTable({ sides, slots, players, seasonTeams }: Prop
           </div>
         ))}
       </div>
-      <details className="border-t border-line px-5 py-2.5">
-        <summary className="section-label cursor-pointer hover:text-ink">Bench</summary>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2">{a.bench.map((l) => <PlayerCell seasonTeams={seasonTeams} key={l.playerId} line={l} players={players} align="left" showPos />)}</div>
-          <div className="space-y-2">{b.bench.map((l) => <PlayerCell seasonTeams={seasonTeams} key={l.playerId} line={l} players={players} align="right" showPos />)}</div>
+      <details className="border-t border-line">
+        <summary className="section-label cursor-pointer px-5 py-2.5 hover:text-ink">Bench</summary>
+        <div className="divide-y divide-line border-t border-line">
+          {Array.from({ length: Math.max(a.bench.length, b.bench.length) }, (_, i) => (
+            <div key={i} className="grid grid-cols-[3rem_1fr] sm:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-2 px-5 py-2.5" data-testid="bench-row">
+              <div className="min-w-0 col-start-2 sm:col-auto">
+                {a.bench[i] ? <PlayerCell seasonTeams={seasonTeams} line={a.bench[i]} players={players} align="left" showPos /> : <div />}
+              </div>
+              <span className="order-first row-span-2 flex self-center sm:order-none sm:row-span-1 sm:w-14 sm:justify-center"><PosPill pos="BN" /></span>
+              <div className="min-w-0 col-start-2 sm:col-auto border-t border-line pt-2 sm:border-0 sm:pt-0">
+                {b.bench[i] ? <PlayerCell seasonTeams={seasonTeams} line={b.bench[i]} players={players} align="right" showPos /> : <div />}
+              </div>
+            </div>
+          ))}
         </div>
       </details>
     </div>

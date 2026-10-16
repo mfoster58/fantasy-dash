@@ -2,6 +2,12 @@ import type { PlayoffTag, WLT } from '@fantasy-dash/core';
 
 export const fmtPts = (n: number): string => n.toFixed(2);
 export const fmtPpg = (n: number): string => n.toFixed(1);
+/** Standings streak 'W3' / 'L2' as '3W' / '2L'; null for none ('-'). */
+export function fmtStreak(streak: string): { label: string; kind: 'W' | 'L' | 'T' } | null {
+  const m = /^([WLT])(\d+)$/.exec(streak);
+  return m ? { label: `${m[2]}${m[1]}`, kind: m[1] as 'W' | 'L' | 'T' } : null;
+}
+
 export const fmtPct = (ratio: number, digits = 1): string => `${(ratio * 100).toFixed(digits)}%`;
 export const fmtWinPct = (p: number): string => p.toFixed(3).replace(/^0\./, '.');
 export const fmtRecord = (r: WLT): string => (r.t ? `${r.w}-${r.l}-${r.t}` : `${r.w}-${r.l}`);
