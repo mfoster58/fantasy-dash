@@ -3,6 +3,7 @@ import type { Season } from '@fantasy-dash/core';
 import ScoreCard from '../components/ScoreCard';
 import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
+import WeekScores from '../components/boxscore/WeekScores';
 import { history, players } from '../data/load';
 
 export default function ScoresPage() {
@@ -44,6 +45,7 @@ export default function ScoresPage() {
                   to={`/scores/${season.year}/${wk.week}/${g.matchupId}`}
                 />
               ))}
+              <WeekScores week={wk} managers={season.managers} year={season.year} />
             </div>
           )}
         </div>

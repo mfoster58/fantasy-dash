@@ -5,7 +5,7 @@ import EfficiencyBlock from '../components/boxscore/EfficiencyBlock';
 import FormBlock from '../components/boxscore/FormBlock';
 import HeadToHead from '../components/boxscore/HeadToHead';
 import LineupTable from '../components/boxscore/LineupTable';
-import WeekScores from '../components/boxscore/WeekScores';
+import PositionBattle from '../components/boxscore/PositionBattle';
 import { history, players } from '../data/load';
 import { fmtPpg, fmtPts, fmtRecord, fmtTag } from '../lib/format';
 
@@ -74,7 +74,7 @@ export default function BoxScorePage() {
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <HeadToHead series={series} year={season.year} week={game.week} left={manager(a)} right={manager(b)} />
-        <WeekScores week={week} game={game} managers={season.managers} year={season.year} />
+        <PositionBattle sides={game.sides} slots={season.rosterSlots} managers={season.managers} />
       </div>
     </article>
   );

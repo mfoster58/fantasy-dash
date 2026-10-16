@@ -20,6 +20,47 @@ export function priorMeetings(series: H2HSeries | undefined, year: number, week:
   return (series?.games ?? []).filter((g) => g.year < year || (g.year === year && g.week < week));
 }
 
+export interface SeriesExtras {
+  /** consecutive wins by the same manager at the end of the prior meetings */
+  streak: { holder: string; length: number } | null;
+  avgMargin: number;
+  biggest: { game: H2HGame; winner: string; margin: number };
+  closest: { game: H2HGame; winner: string | null; margin: number };
+}
+
+/** Streak, average margin, biggest win and closest game over the prior meetings (newest first); null when there are none. */
+export function seriesExtras(prior: H2HGame[], pts: (g: H2HGame) => number[], left?: string, right?: string): SeriesExtras | null {
+  if (prior.length === 0) return null;
+  const winnerOf = (g: H2HGame): 'left' | 'right' | null => { const [l, r] = pts(g); return l > r ? 'left' : r > l ? 'right' : null; };
+  const marginOf = (g: H2HGame) => { const [l, r] = pts(g); return Math.abs(l - r); };
+  const name = (w: 'left' | 'right') => (w === 'left' ? left ?? 'left' : right ?? 'right');
+  const first = winnerOf(prior[0]);
+  let length = 0;
+  if (first) for (const g of prior) { if (winnerOf(g) === first) length += 1; else break; }
+  const biggestGame = prior.reduce((best, g) => (marginOf(g) > marginOf(best) ? g : best), prior[0]);
+  const closestGame = prior.reduce((best, g) => (marginOf(g) < marginOf(best) ? g : best), prior[0]);
+  const cw = winnerOf(closestGame);
+  return {
+    streak: first ? { holder: name(first), length } : null,
+    avgMargin: prior.reduce((s, g) => s + marginOf(g), 0) / prior.length,
+    biggest: { game: biggestGame, winner: name(winnerOf(biggestGame)!), margin: marginOf(biggestGame) },
+    closest: { game: closestGame, winner: cw ? name(cw) : null, margin: marginOf(closestGame) },
+  };
+}
+
+function Extra({ label, value, sub, to }: { label: string; value: string; sub: string; to?: string }) {
+  const body = (
+    <>
+      <dt className="section-label">{label}</dt>
+      <dd className="num mt-0.5 text-lg font-semibold leading-tight">{value}</dd>
+      <dd className="truncate text-xs text-muted">{sub}</dd>
+    </>
+  );
+  return to
+    ? <Link to={to} className="relative z-10 -m-1.5 block min-w-0 rounded-md p-1.5 hover:bg-surface-2">{body}</Link>
+    : <div className="min-w-0">{body}</div>;
+}
+
 function Side({ manager, align }: { manager: Manager; align: 'left' | 'right' }) {
   return (
     <div className={`flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3 ${align === 'right' ? 'sm:flex-row-reverse sm:text-right' : 'sm:text-left'}`}>
@@ -40,6 +81,9 @@ export default function HeadToHead({ series, year, week, left, right }: Props) {
   }
   const since = prior.length ? Math.min(...prior.map((g) => g.year)) : null;
   const recent = prior.slice(0, 3);
+  const extras = seriesExtras(prior, pts, left.userId, right.userId);
+  const nameOf = (id: string) => (id === left.userId ? left.displayName : right.displayName);
+  const gameLink = (g: H2HGame) => `/scores/${g.year}/${g.week}/${matchupOf(g.gameId)}`;
 
   return (
     <section className="card relative p-5 transition-colors hover:border-accent" aria-labelledby="h2h-title">
@@ -64,6 +108,15 @@ export default function HeadToHead({ series, year, week, left, right }: Props) {
         </div>
         <Side manager={right} align="right" />
       </div>
+
+      {extras && (
+        <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-3 sm:grid-cols-4" data-testid="h2h-extras">
+          <Extra label="Streak" value={extras.streak ? `${extras.streak.length} in a row` : '—'} sub={extras.streak ? nameOf(extras.streak.holder) : 'None'} />
+          <Extra label="Avg margin" value={fmtPts(extras.avgMargin)} sub="points" />
+          <Extra label="Biggest win" value={fmtPts(extras.biggest.margin)} sub={`${nameOf(extras.biggest.winner)} · ${extras.biggest.game.year}`} to={gameLink(extras.biggest.game)} />
+          <Extra label="Closest" value={fmtPts(extras.closest.margin)} sub={`${extras.closest.margin === 0 ? 'Tie' : nameOf(extras.closest.winner!)} · ${extras.closest.game.year}`} to={gameLink(extras.closest.game)} />
+        </dl>
+      )}
 
       {recent.length > 0 && (
         <div className="mt-5 border-t border-line pt-3">
