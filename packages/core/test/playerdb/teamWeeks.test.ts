@@ -15,12 +15,18 @@ describe('teamWeeksOf', () => {
       r('fa', null, { rush_att: 99 }),
       { ...r('TEAM_SF', 'SF', { tm_off_snp: 60, pass_att: 30, pass_sack: 2, pass_air_yd: 250, rush_att: 20, rush_rz_att: 3, rec_rz_tgt: 1 }, 'LAR'), player: { position: 'TEAM' } },
     ]]]);
-    const tws = teamWeeksOf(weeks, new Map([['SF|1', 33]]));
+    const tws = teamWeeksOf(weeks, new Map([['SF|1', 33]]), null);
     expect(tws).toEqual([
       { team: 'LAR', week: 1, opp: 'SF', offSnaps: 55, passAtt: 0, rushAtt: 10, dropbacks: 0, rzLooks: 0, airYds: 0, passPlays: null },
       { team: 'SF', week: 1, opp: 'LAR', offSnaps: 60, passAtt: 30, rushAtt: 20, dropbacks: 32, rzLooks: 4, airYds: 250, passPlays: 33 },
     ]);
     expect(teamWeekKey('SF', 1)).toBe('SF|1');
+  });
+  it('takes air yards from the nflverse map when given, 0 when the team-week is absent', () => {
+    const weeks = new Map([[1, [r('q', 'SF', { pass_att: 30, pass_air_yd: 250 }, 'LAR'), r('rb2', 'LAR', { rush_att: 10 }, 'SF')]]]);
+    const tws = teamWeeksOf(weeks, null, new Map([['SF|1', 281]]));
+    expect(tws.find((t) => t.team === 'SF')!.airYds).toBe(281);
+    expect(tws.find((t) => t.team === 'LAR')!.airYds).toBe(0);
   });
 });
 

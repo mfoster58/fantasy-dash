@@ -10,17 +10,19 @@ const raw = {
 describe('sleeperRow', () => {
   it('maps the counting stats, scores league points and the projection, and buckets 20+ catches', () => {
     const row = sleeperRow(raw, 5, scoring, { rec: 4, rec_yd: 50 });
-    expect(row).toMatchObject({ id: '12514', week: 5, team: 'TB', opp: 'DAL', gp: 1, gs: 1, snaps: 64, teamSnaps: 72, re_rec: 6, re_tgt: 9, re_yds: 38, re_air: 22, re_yac: 16, re_drop: 1, re_rz: 2, re_20: 1, ru_att: 1, ru_yds: 14, ru_td: 1, ppr: 17.2, posRankPpr: 17 });
+    expect(row).toMatchObject({ id: '12514', week: 5, team: 'TB', opp: 'DAL', gp: 1, gs: 1, snaps: 64, teamSnaps: 72, re_rec: 6, re_tgt: 9, re_yds: 38, re_yac: 16, re_drop: 1, re_rz: 2, re_20: 1, ru_att: 1, ru_yds: 14, ru_td: 1, ppr: 17.2, posRankPpr: 17 });
     expect(row!.pts).toBeCloseTo(6 + 3.8 + 1.4 + 6, 2);
     expect(row!.proj).toBeCloseTo(9, 2);
     expect(row).not.toHaveProperty('pa_att');
     expect(row).not.toHaveProperty('routes');
+    expect(row).not.toHaveProperty('re_air'); // Sleeper rec_air_yd is completed air yards; intended air yards come from nflverse
   });
   it('omits the projection when there is none and leaves re_20 out when no bucket is present', () => {
     const row = sleeperRow({ player_id: '1', team: 'KC', stats: { gp: 1, pass_att: 30 } }, 1, scoring, undefined)!;
     expect(row).not.toHaveProperty('proj');
     expect(row).not.toHaveProperty('re_20');
     expect(row.pa_att).toBe(30);
+    expect(sleeperRow({ player_id: '1', team: 'KC', stats: { gp: 1, pass_att: 30, pass_air_yd: 200 } }, 1, scoring, undefined)).not.toHaveProperty('pa_air');
   });
   it('returns null for a player who did not play or has no team', () => {
     expect(sleeperRow({ player_id: '1', team: 'KC', stats: { gp: 0, pass_att: 1 } }, 1, scoring, undefined)).toBeNull();

@@ -24,9 +24,9 @@ All per season, 2023 to the current year (the league's seasons). Files are fetch
 
 | Source | URL pattern | Key | Fields used |
 |---|---|---|---|
-| Sleeper weekly stats | `https://api.sleeper.com/stats/nfl/{year}/{week}?season_type=regular` (already called by the Sleeper sync) | Sleeper `player_id` | `gp gs off_snp tm_off_snp pass_att pass_cmp pass_yd pass_td pass_int pass_sack pass_sack_yds pass_air_yd pass_fd pass_rz_att pass_cmp_40p pass_rtg pass_ypa pass_2pt rush_att rush_yd rush_td rush_fd rush_rz_att rush_btkl rush_yac rush_tkl_loss rush_40p rush_2pt rec rec_tgt rec_yd rec_td rec_fd rec_air_yd rec_yar rec_drop rec_rz_tgt rec_40p rec_20_29 rec_30_39 rec_2pt fum fum_lost pts_ppr pos_rank_ppr`; the `player` block for name, position, team and `team`/`opponent` per row |
+| Sleeper weekly stats | `https://api.sleeper.com/stats/nfl/{year}/{week}?season_type=regular` (already called by the Sleeper sync) | Sleeper `player_id` | `gp gs off_snp tm_off_snp pass_att pass_cmp pass_yd pass_td pass_int pass_sack pass_sack_yds pass_fd pass_rz_att pass_cmp_40p pass_rtg pass_ypa pass_2pt rush_att rush_yd rush_td rush_fd rush_rz_att rush_btkl rush_yac rush_tkl_loss rush_40p rush_2pt rec rec_tgt rec_yd rec_td rec_fd rec_yar rec_drop rec_rz_tgt rec_40p rec_20_29 rec_30_39 rec_2pt fum fum_lost pts_ppr pos_rank_ppr`; the `player` block for name, position, team and `team`/`opponent` per row |
 | Sleeper projections | `https://api.sleeper.app/v1/projections/nfl/regular/{year}/{week}` (already called) | Sleeper id | projected points under league scoring |
-| nflverse weekly stats | `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_{year}.csv` | `player_id` = gsis | `passing_epa passing_cpoe pacr passing_yards_after_catch sacks_suffered rushing_epa receiving_epa receiving_yards_after_catch racr target_share air_yards_share wopr receiving_first_downs rushing_first_downs passing_first_downs` |
+| nflverse weekly stats | `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_{year}.csv` | `player_id` = gsis | `passing_epa passing_cpoe pacr passing_yards_after_catch sacks_suffered rushing_epa receiving_epa receiving_yards_after_catch racr target_share air_yards_share wopr receiving_first_downs rushing_first_downs passing_first_downs receiving_air_yards passing_air_yards` |
 | Next Gen Stats receiving | `.../nextgen_stats/ngs_receiving.csv.gz` (all seasons in one file; week 0 rows are season totals and are skipped) | `player_gsis_id` | `avg_cushion avg_separation avg_intended_air_yards percent_share_of_intended_air_yards avg_yac avg_expected_yac avg_yac_above_expectation` |
 | Next Gen Stats rushing | `.../nextgen_stats/ngs_rushing.csv.gz` | gsis | `efficiency percent_attempts_gte_eight_defenders avg_time_to_los expected_rush_yards rush_yards_over_expected rush_yards_over_expected_per_att rush_pct_over_expected` |
 | Next Gen Stats passing | `.../nextgen_stats/ngs_passing.csv.gz` | gsis | `avg_time_to_throw avg_completed_air_yards avg_intended_air_yards avg_air_yards_differential aggressiveness avg_air_yards_to_sticks expected_completion_percentage completion_percentage_above_expectation` |
@@ -85,7 +85,7 @@ export interface TeamWeek {
   passAtt: number; rushAtt: number;
   dropbacks: number;          // passAtt + sacks taken
   rzLooks: number;            // rush_rz_att + rec_rz_tgt summed over players
-  airYds: number;             // pass_air_yd summed over the team's passers
+  airYds: number;             // nflverse passing_air_yards (intended) summed over the team's passers
   passPlays: number | null;   // from participation when real, else null
 }
 
@@ -102,7 +102,8 @@ export type XfpCoefficients = Record<DbPos, number[] | null>;
 | `xfp` | model | expected league points from opportunity (below) |
 | `snaps teamSnaps` | Sleeper (`off_snp`, `tm_off_snp`), snap counts fallback | offensive snaps, team offensive snaps |
 | `routes routesEst` | participation / estimate | real routes when `routesReal`; otherwise `routesEst = round(snaps / teamSnaps × dropbacks)` and `routes` is absent |
-| `pa_att pa_cmp pa_yds pa_td pa_int pa_sack pa_sackYds pa_air pa_fd pa_rz pa_cmp40 pa_rtg pa_2pt` | Sleeper | passing counting stats |
+| `pa_att pa_cmp pa_yds pa_td pa_int pa_sack pa_sackYds pa_fd pa_rz pa_cmp40 pa_rtg pa_2pt` | Sleeper | passing counting stats |
+| `pa_air` | nflverse (`passing_air_yards`) | intended air yards on all attempts (Sleeper's `pass_air_yd` is completed air yards and is not used) |
 | `pa_epa pa_cpoe pa_pacr pa_yac` | nflverse | passing EPA, completion % over expected, passing air conversion ratio, passing yards after catch |
 | `pa_ttt pa_iay pa_cay pa_aggr pa_ays pa_xcmp` | NGS passing | time to throw, intended air yards/att, completed air yards/att, aggressiveness %, air yards to sticks, expected completion % |
 | `pa_bad pa_badPct pa_press pa_pressPct pa_blitz pa_hurry pa_hit pa_drops` | PFR passing | bad throws, pressure counts and rates, drops by receivers |
@@ -110,7 +111,8 @@ export type XfpCoefficients = Record<DbPos, number[] | null>;
 | `ru_epa ru_10 ru_20` | nflverse | rushing EPA, carries of 10+ and 20+ yards |
 | `ru_ybc ru_yacPfr` | PFR rushing | yards before contact, yards after contact (PFR's count, kept for seasons where Sleeper's is empty) |
 | `ru_xyds ru_ryoe ru_ryoeAtt ru_eff ru_box8 ru_tlos` | NGS rushing | expected yards, yards over expected, per attempt, efficiency, % of carries vs 8+ in box, time to line of scrimmage |
-| `re_tgt re_rec re_yds re_td re_fd re_air re_yac re_drop re_rz re_20 re_40 re_2pt` | Sleeper (+ nflverse `receiving_yards_after_catch` when Sleeper's `rec_yar` is absent) | receiving counting stats; `re_20` = receptions of 20+ (`rec_20_29 + rec_30_39 + rec_40p`) |
+| `re_air` | nflverse (`receiving_air_yards`) | intended air yards on all targets (Sleeper's `rec_air_yd` is completed air yards and is not used) |
+| `re_tgt re_rec re_yds re_td re_fd re_yac re_drop re_rz re_20 re_40 re_2pt` | Sleeper (+ nflverse `receiving_yards_after_catch` when Sleeper's `rec_yar` is absent) | receiving counting stats; `re_20` = receptions of 20+ (`rec_20_29 + rec_30_39 + rec_40p`) |
 | `re_epa re_racr re_tgtShare re_ayShare re_wopr` | nflverse | receiving EPA, RACR, nflverse's own shares and WOPR (kept for cross-checking; the table uses the sync's own shares) |
 | `re_cush re_sep re_iay re_iayShare re_xyac re_yacoe` | NGS receiving | cushion, separation, intended air yards/target, share of team intended air yards, expected YAC/rec, YAC over expected/rec |
 | `re_bt re_dropPfr re_dropPct re_int re_rtg` | PFR receiving | broken tackles after catch, drops, drop %, interceptions on targets, passer rating when targeted |
@@ -118,7 +120,7 @@ export type XfpCoefficients = Record<DbPos, number[] | null>;
 
 NGS rows exist only for weeks where the player met the NFL's qualifying minimum; those fields are absent otherwise. PFR rows exist for every player who appeared in the box score.
 
-**Team weeks** are summed from the Sleeper rows of every player on the team that week (all positions, not only the four in the table), so `passAtt`, `rushAtt`, `rzLooks` and `airYds` are complete. `dropbacks = passAtt + Σ pa_sack`.
+**Team weeks** are summed from the Sleeper rows of every player on the team that week (all positions, not only the four in the table), so `passAtt`, `rushAtt` and `rzLooks` are complete. `airYds` is summed from the nflverse weekly file's `passing_air_yards` per team-week (intended air yards; nflverse's `LA` maps to Sleeper's `LAR`). `dropbacks = passAtt + Σ pa_sack`.
 
 ### xFP model
 
@@ -264,5 +266,6 @@ A per-player page; FTN charting fields (catchable, contested, created receptions
 - Data: `data/playerdb/2023.json` … `2026.json`, about 3.3 MB per finished season (the spec guessed 1.5–2.5 MB; the extra is the EPA, NGS and PFR fields on every row) and 1.1 MB for 2026 through week 5. 2023–2025 carry real routes from the participation feed; 2026 is estimated until the NFL publishes it. Crosswalk misses: 2, 2, 0 and 2 players per season (practice-squad names). xFP fitted for all four positions in every season.
 - A bug found with real data: Sleeper's weekly feed ships a synthetic `TEAM_xx` row per team carrying team totals, which doubled every team-week sum (and the 2026 route estimates). `teamWeeksOf` skips those rows.
 - Deviations from the spec text, all small: week params in the URL clamp into range (a bookmarked `to=17` becomes the last scored week); rates under their sample minimum sort last as well as being dimmed; per-game mode shows one decimal only for per-game columns, so G and Rk stay whole; the table card is a capped vertical scroller from `lg` so the header can stick (a sticky header inside a horizontal scroller otherwise pins to the card, not the viewport); the sync fails loudly on a bad `--season`, a 404 of a required file, or a missing Sleeper week of a finished season; the `players` test setup installs an in-memory `localStorage` because Node 26's global shadows jsdom's.
+- Correction found in final review: Sleeper's `pass_air_yd` / `rec_air_yd` are completed air yards (`air + YAC = yards` on every row), which made aDOT, RACR, PACR, Air-yds %, WOPR and the xFP air-yard feature wrong (median WR aDOT about 5.3). `pa_air`, `re_air` and team `airYds` now come from nflverse intended air yards; after the rebuild the median WR aDOT (30+ targets) is 10.7–11.4 and RACR about 0.7–0.75 in every season, and the smoke test asserts both. In the same pass: the sync skips a season with no scored weeks, rebuilds a finished season whose file lacks real routes or week 18, and xFP is left off rows with no opportunity instead of showing the bare intercept.
 - The Players tab sits between Managers and Head to Head; the Stats tab stays where it was.
 - Follow-ups noted in the execution ledger: FTN charting fields, K and DEF tables, a player page, and moving the Extras boards to the new xFP remain out of scope as the spec says.

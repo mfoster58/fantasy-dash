@@ -2,14 +2,17 @@ import type { SleeperWeekStat } from '../../sleeper/types';
 import { scoreStats } from '../../scoring';
 import { isDbPos, type DbPos, type PlayerWeek, type PlayerWeekKey } from '../types';
 
-/** Sleeper weekly stat key → PlayerWeek key. Keys Sleeper lacks for a player are simply absent. */
+/**
+ * Sleeper weekly stat key → PlayerWeek key. Keys Sleeper lacks for a player are simply absent.
+ * Sleeper's pass_air_yd / rec_air_yd are completed air yards (air + YAC = yards), so intended air yards come from nflverse instead.
+ */
 export const SLEEPER_FIELDS: Readonly<Record<string, PlayerWeekKey>> = {
   gs: 'gs', off_snp: 'snaps', tm_off_snp: 'teamSnaps', pts_ppr: 'ppr', pos_rank_ppr: 'posRankPpr',
   pass_att: 'pa_att', pass_cmp: 'pa_cmp', pass_yd: 'pa_yds', pass_td: 'pa_td', pass_int: 'pa_int', pass_sack: 'pa_sack', pass_sack_yds: 'pa_sackYds',
-  pass_air_yd: 'pa_air', pass_fd: 'pa_fd', pass_rz_att: 'pa_rz', pass_cmp_40p: 'pa_cmp40', pass_rtg: 'pa_rtg', pass_2pt: 'pa_2pt',
+  pass_fd: 'pa_fd', pass_rz_att: 'pa_rz', pass_cmp_40p: 'pa_cmp40', pass_rtg: 'pa_rtg', pass_2pt: 'pa_2pt',
   rush_att: 'ru_att', rush_yd: 'ru_yds', rush_td: 'ru_td', rush_fd: 'ru_fd', rush_rz_att: 'ru_rz', rush_btkl: 'ru_bt', rush_yac: 'ru_yac',
   rush_tkl_loss: 'ru_tfl', rush_40p: 'ru_40', rush_2pt: 'ru_2pt',
-  rec_tgt: 're_tgt', rec: 're_rec', rec_yd: 're_yds', rec_td: 're_td', rec_fd: 're_fd', rec_air_yd: 're_air', rec_yar: 're_yac', rec_drop: 're_drop',
+  rec_tgt: 're_tgt', rec: 're_rec', rec_yd: 're_yds', rec_td: 're_td', rec_fd: 're_fd', rec_yar: 're_yac', rec_drop: 're_drop',
   rec_rz_tgt: 're_rz', rec_40p: 're_40', rec_2pt: 're_2pt',
   fum: 'fum', fum_lost: 'fumLost',
 };

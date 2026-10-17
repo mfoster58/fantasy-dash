@@ -1,11 +1,11 @@
 import { mkdir, mkdtemp, rename, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, PlayerDbSchema, buildPlayerDb, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly,
+  SleeperClient, PlayerDbSchema, buildPlayerDb, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
   type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
@@ -96,18 +96,20 @@ async function walkLeagueChain(client: SleeperClient, startId: string): Promise<
 
 interface Shared { crosswalkIds: Record<string, string>[]; nflPlayers: Record<string, string>[]; ngsRec: Record<string, string>[]; ngsRush: Record<string, string>[]; ngsPass: Record<string, string>[] }
 
+const throughWeekOf = (league: SleeperLeague): number => (league.status === 'complete' ? 18 : Math.min(18, league.settings.last_scored_leg ?? 0));
+
 async function buildSeason(client: SleeperClient, league: SleeperLeague, directory: PlayerDbInput['directory'], shared: Shared): Promise<ReturnType<typeof buildPlayerDb>> {
   const year = Number(league.season);
   const complete = league.status === 'complete';
-  const throughWeek = complete ? 18 : Math.min(18, league.settings.last_scored_leg ?? 0);
+  const throughWeek = throughWeekOf(league);
   log(`${year}: ${complete ? 'finished' : `in season, through week ${throughWeek}`}`);
 
   const sleeperWeeks = new Map<number, SleeperWeekStat[]>();
   const projections = new Map<number, StatMap>();
   for (let week = 1; week <= throughWeek; week++) {
     const [rows, proj] = await Promise.all([client.getWeekStats(league.season, week), client.getProjections(league.season, week)]);
-    if (!rows) {
-      if (complete) throw new Error(`${year} week ${week}: Sleeper weekly rows missing for a finished season`);
+    if (!rows || rows.length === 0) {
+      if (complete) throw new Error(`${year} week ${week}: Sleeper weekly rows ${rows ? 'empty' : 'missing'} for a finished season`);
       log(`WARNING: ${year} week ${week}: Sleeper weekly rows missing`);
       continue;
     }
@@ -117,8 +119,10 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
 
   const snaps = rowsOf(await optionalText(URLS.snaps(year), year, 'snap counts'));
   const crosswalk = buildCrosswalk(shared.crosswalkIds, shared.nflPlayers, snaps);
+  const weekly = rowsOf(await requireText(URLS.weekly(year), `${year} weekly stats`));
+  const teamAirYards = nflverseTeamAirYards(weekly);
   const byGsis = mergeMaps(
-    nflverseWeekly(rowsOf(await requireText(URLS.weekly(year), `${year} weekly stats`))),
+    nflverseWeekly(weekly),
     ngsWeekly(shared.ngsRec, year, NGS_RECEIVING_FIELDS),
     ngsWeekly(shared.ngsRush, year, NGS_RUSHING_FIELDS),
     ngsWeekly(shared.ngsPass, year, NGS_PASSING_FIELDS),
@@ -145,12 +149,22 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
 
   const db = buildPlayerDb({
     year, throughWeek, builtAt: new Date().toISOString(), scoring: league.scoring_settings, positionOverrides: leagueConfig.positionOverrides,
-    sleeperWeeks, projections, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation,
+    sleeperWeeks, projections, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards,
   });
   const unmapped = Object.values(db.players).filter((p) => !p.gsisId).length;
   log(`  ${db.rows.length} rows, ${Object.keys(db.players).length} players (${unmapped} without a gsis id), xfp fitted for ${Object.entries(db.xfp).filter(([, c]) => c).map(([p]) => p).join(' ') || 'nobody'}`);
   PlayerDbSchema.parse(db);
   return db;
+}
+
+/** Why a finished season's existing file is not final (null when it is): it must parse, have real routes and reach week 18. */
+function finishedFileProblem(file: string): string | null {
+  if (!existsSync(file)) return 'no file yet';
+  let db: ReturnType<typeof PlayerDbSchema.parse>;
+  try { db = PlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); } catch { return 'the existing file does not parse'; }
+  if (db.routesReal !== true) return 'the existing file has estimated routes, not real ones';
+  if (!db.rows.some((r) => r.week === 18)) return 'the existing file has no week 18 rows';
+  return null;
 }
 
 async function main() {
@@ -163,9 +177,12 @@ async function main() {
   log(`Seasons: ${leagues.map((l) => l.season).join(', ')}`);
 
   const todo = leagues.filter((l) => {
-    const finished = l.status === 'complete' && existsSync(path.join(OUT_DIR, `${l.season}.json`));
-    if (finished && !full) log(`${l.season}: finished and already built, skipping (pass --full to rebuild)`);
-    return !finished || full;
+    if (l.status !== 'complete') return true;
+    if (full) return true;
+    const why = finishedFileProblem(path.join(OUT_DIR, `${l.season}.json`));
+    if (why === null) { log(`${l.season}: finished and already built, skipping (pass --full to rebuild)`); return false; }
+    log(`${l.season}: finished but ${why}; rebuilding`);
+    return true;
   });
   if (todo.length === 0) { log('Nothing to do'); return; }
 
@@ -188,6 +205,7 @@ async function main() {
   await mkdir(staging, { recursive: true });
   const built: string[] = [];
   for (const league of todo) {
+    if (throughWeekOf(league) < 1) { log(`${league.season}: skipping, no scored weeks yet`); continue; }
     const db = await buildSeason(client, league, directory, shared);
     const file = path.join(staging, `${db.year}.json`);
     await writeFile(file, JSON.stringify(db));

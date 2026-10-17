@@ -79,7 +79,8 @@ export function aggregate(db: PlayerDb, from: number, to: number): Agg[] {
   const byPos = new Map<string, Agg[]>();
   for (const a of out) {
     const pos = db.players[a.id]?.pos ?? '?';
-    byPos.set(pos, [...(byPos.get(pos) ?? []), a]);
+    const list = byPos.get(pos);
+    if (list) list.push(a); else byPos.set(pos, [a]);
   }
   for (const list of byPos.values()) {
     list.sort((a, b) => (b.s.pts ?? 0) - (a.s.pts ?? 0) || (a.id < b.id ? -1 : 1));

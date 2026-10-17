@@ -30,6 +30,7 @@ function input(over: Partial<PlayerDbInput> = {}): PlayerDbInput {
     byPfr: new Map([['WideOn01|1', { re_bt: 1, re_rtg: 100 }]]),
     nflPlayers: new Map([['00-1', { birthDate: '2002-10-14', draft: { year: 2025, round: 1, pick: 19 }, college: 'Ohio State', height: 73, weight: 205 }]]),
     participation: null,
+    teamAirYards: new Map([['TB|1', 301], ['TB|2', 199]]),
     ...over,
   };
 }
@@ -66,7 +67,9 @@ describe('buildPlayerDb', () => {
     const w1 = db.rows.find((r) => r.id === 'w1' && r.week === 1)!;
     expect(w1.routesEst).toBe(Math.round((50 / 60) * 32));
     expect(w1).not.toHaveProperty('routes');
-    expect(db.teamWeeks.find((t) => t.team === 'TB' && t.week === 1)).toMatchObject({ passAtt: 30, dropbacks: 32, airYds: 240, passPlays: null });
+    expect(db.teamWeeks.find((t) => t.team === 'TB' && t.week === 1)).toMatchObject({ passAtt: 30, dropbacks: 32, airYds: 301, passPlays: null });
+    expect(db.teamWeeks.find((t) => t.team === 'TB' && t.week === 2)!.airYds).toBe(199);
+    expect(buildPlayerDb(input({ teamAirYards: null })).teamWeeks.find((t) => t.team === 'TB' && t.week === 1)!.airYds).toBe(240);
   });
   it('uses real routes and pass plays when participation is given', () => {
     const real = buildPlayerDb(input({ participation: { routes: new Map([['00-1|1', 31]]), passPlays: new Map([['TB|1', 35]]) } }));

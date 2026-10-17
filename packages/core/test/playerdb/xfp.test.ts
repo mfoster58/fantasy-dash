@@ -38,10 +38,15 @@ describe('xfp', () => {
     expect(wr[4]).toBe(0);
     expect(XFP_MIN_ROWS).toBe(50);
   });
+  it('returns null for a row with no opportunity rather than the bare intercept', () => {
+    const coef = fitXfpCoefficients(rows, posOf);
+    expect(predictXfp(coef.WR, 'WR', { id: 'w', week: 1, team: 'X', gp: 1 })).toBeNull();
+    expect(predictXfp(coef.WR, 'WR', { id: 'w', week: 1, team: 'X', gp: 1, re_tgt: 0, re_air: 0, pa_att: 30 })).toBeNull();
+  });
   it('predicts from the features, treating missing ones as 0, and returns null without a model', () => {
     const coef = fitXfpCoefficients(rows, posOf);
     expect(predictXfp(coef.WR, 'WR', { id: 'w', week: 1, team: 'X', gp: 1, re_tgt: 4, re_air: 40, re_rz: 1 })).toBeCloseTo(1 + 6 + 2 + 2, 2);
-    expect(predictXfp(coef.WR, 'WR', { id: 'w', week: 1, team: 'X', gp: 1 })).toBeCloseTo(1, 2);
+    expect(predictXfp(coef.WR, 'WR', { id: 'w', week: 1, team: 'X', gp: 1, re_tgt: 1 })).toBeCloseTo(1 + 1.5, 2);
     expect(predictXfp(null, 'QB', { id: 'q', week: 1, team: 'X', gp: 1 })).toBeNull();
     expect(xfpFeatures('QB', { id: 'q', week: 1, team: 'X', gp: 1, pa_att: 30, ru_att: 5 })).toEqual([1, 30, 0, 0, 5, 0]);
   });

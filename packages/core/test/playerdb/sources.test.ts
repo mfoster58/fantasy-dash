@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseCsv } from '../../src/playerdb/csv';
-import { nflverseWeekly } from '../../src/playerdb/sources/nflverse';
+import { nflverseTeamAirYards, nflverseWeekly } from '../../src/playerdb/sources/nflverse';
 import { NGS_RECEIVING_FIELDS, ngsWeekly } from '../../src/playerdb/sources/ngs';
 import { PFR_REC_FIELDS, SNAP_FIELDS, pfrWeekly } from '../../src/playerdb/sources/pfr';
 import { nflPlayerMeta } from '../../src/playerdb/sources/players';
@@ -18,8 +18,29 @@ describe('nflverseWeekly', () => {
     expect(wk1.re_wopr).toBeCloseTo(0.745, 3);
     expect(wk1.re_yac).toBe(20);
     expect(wk1.re_fd).toBe(3);
+    expect(wk1.re_air).toBe(84); // intended air yards (receiving_air_yards)
+    expect(wk1.pa_air).toBe(0);
     expect(wk1).not.toHaveProperty('pa_epa'); // blank for a receiver
     expect(m.has(`${EGBUKA}|2`)).toBe(true);
+  });
+});
+
+describe('nflverseTeamAirYards', () => {
+  it('sums passing air yards per Sleeper team code and regular-season week', () => {
+    const rows = fixture('stats_player_week.csv');
+    const m = nflverseTeamAirYards([
+      ...rows,
+      { player_id: 'q-la', team: 'LA', week: '1', season_type: 'REG', passing_air_yards: '210' },
+      { player_id: 'q2-la', team: 'LA', week: '1', season_type: 'REG', passing_air_yards: '15' },
+      { player_id: 'q-la', team: 'LA', week: '19', season_type: 'POST', passing_air_yards: '300' },
+      { player_id: 'q-la', team: 'LA', week: '2', season_type: 'REG', passing_air_yards: 'NA' },
+    ]);
+    expect(m.get('TB|1')).toBe(0);
+    expect(m.get('SF|1')).toBe(0);
+    expect(m.get('LAR|1')).toBe(225);
+    expect(m.has('LA|1')).toBe(false);
+    expect(m.has('LAR|19')).toBe(false);
+    expect(m.get('LAR|2') ?? 0).toBe(0);
   });
 });
 

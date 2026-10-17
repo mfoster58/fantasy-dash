@@ -1,4 +1,4 @@
-import { COLUMNS, DEFAULT_SORT, TABS, type Mode, type Tab } from './columns';
+import { COLUMNS, DEFAULT_SORT, TABS, columnsFor, type Mode, type Tab } from './columns';
 
 /** 'all' | 'rostered' | 'fa' | a manager's user id */
 export type RosterFilter = string;
@@ -21,13 +21,16 @@ export function parseState(params: URLSearchParams, throughWeek: number): DbStat
   let from = clampWeek(params.get('from'), 1, max);
   let to = clampWeek(params.get('to'), max, max);
   if (from > to) [from, to] = [to, from];
+  const t: Tab = tab && TABS.includes(tab) ? tab : 'all';
+  // A sort column the tab does not show (e.g. after switching tabs) falls back to points, descending.
+  const sortOk = sort !== null && Object.hasOwn(COLUMNS, sort) && columnsFor(t).some((c) => c.key === sort);
   return {
-    tab: tab && TABS.includes(tab) ? tab : 'all',
+    tab: t,
     from, to,
     mode: mode === 'pg' ? 'pg' : 'total',
     roster: params.get('roster') || 'all',
-    sort: sort && Object.hasOwn(COLUMNS, sort) ? sort : DEFAULT_SORT,
-    dir: dir === 'asc' ? 'asc' : 'desc',
+    sort: sortOk ? sort : DEFAULT_SORT,
+    dir: sortOk && dir === 'asc' ? 'asc' : 'desc',
     q: params.get('q') ?? '',
   };
 }

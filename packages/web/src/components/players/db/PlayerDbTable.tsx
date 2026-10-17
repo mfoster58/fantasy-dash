@@ -67,10 +67,13 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
 
-  const groups = groupsFor(state.tab);
+  const groups = useMemo(() => groupsFor(state.tab), [state.tab]);
   const leadCols = groups[0].cols;
   const bodyGroups = groups.slice(1);
-  const visibleCols: ColumnDef[] = [...leadCols, ...bodyGroups.filter((g) => !collapsed.has(g.group)).flatMap((g) => g.cols)];
+  const visibleCols: ColumnDef[] = useMemo(
+    () => [...groups[0].cols, ...groups.slice(1).filter((g) => !collapsed.has(g.group)).flatMap((g) => g.cols)],
+    [groups, collapsed],
+  );
   const sorted = useMemo(() => sortAggs(aggs, state), [aggs, state]);
   const tints = useMemo(() => {
     const out = new Map<string, (string | null)[]>();

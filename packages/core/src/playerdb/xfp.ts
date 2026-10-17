@@ -29,8 +29,10 @@ export function fitXfpCoefficients(rows: PlayerWeek[], posOf: (id: string) => Db
   return out;
 }
 
+/** Predicted points; null without a model or when the row has no opportunity (the model was not fitted on such rows). */
 export function predictXfp(coef: number[] | null, pos: DbPos, row: PlayerWeek): number | null {
   if (!coef) return null;
   const f = xfpFeatures(pos, row);
+  if (f.slice(1).every((v) => v === 0)) return null;
   return round2(coef.reduce((s, c, j) => s + c * f[j], 0));
 }
