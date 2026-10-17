@@ -10,9 +10,7 @@ import SeasonReviewPage from './pages/SeasonReviewPage';
 import DraftPage from './pages/DraftPage';
 import GradingPage from './pages/GradingPage';
 import RecordsPage from './pages/RecordsPage';
-import TeamsPage from './pages/TeamsPage';
 import TeamPage from './pages/TeamPage';
-import ManagersPage from './pages/ManagersPage';
 import ManagerPage from './pages/ManagerPage';
 import { currentSeason, history, loadAllSeasons, loadSeason } from './data/load';
 
@@ -28,6 +26,12 @@ export async function teamsLoader({ params }: LoaderFunctionArgs) {
   if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
   const seasons = await loadAllSeasons();
   return { seasons, season: seasons.find((s) => s.year === year)! };
+}
+
+/** There is no teams index any more: a season on its own opens the team at the top of its standings. */
+export async function topTeamLoader(args: LoaderFunctionArgs) {
+  const { season } = await teamsLoader(args);
+  return redirect(`/teams/${season.year}/${season.standings[0].userId}`);
 }
 
 function Layout() {
@@ -64,9 +68,9 @@ export const routes: RouteObject[] = [
       { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
       { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
       { path: 'teams', loader: () => redirect(`/teams/${currentSeason.year}`) },
-      { path: 'teams/:season', loader: teamsLoader, element: <TeamsPage /> },
+      { path: 'teams/:season', loader: topTeamLoader },
       { path: 'teams/:season/:userId', loader: teamsLoader, element: <TeamPage /> },
-      { path: 'managers', loader: () => loadAllSeasons(), element: <ManagersPage /> },
+      { path: 'managers', loader: () => redirect(`/managers/${history.allTime[0].userId}`) },
       { path: 'managers/:userId', loader: () => loadAllSeasons(), element: <ManagerPage /> },
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },

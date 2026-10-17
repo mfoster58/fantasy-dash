@@ -9,7 +9,6 @@ import SeasonShape, { type ShapePoint } from '../components/teams/SeasonShape';
 import TeamMoves from '../components/teams/TeamMoves';
 import TeamPicks from '../components/teams/TeamPicks';
 import TopStarts from '../components/teams/TopStarts';
-import TeamsTabs from '../components/teams/TeamsTabs';
 import { history, players } from '../data/load';
 import { fmtPct, fmtPpg, fmtPts, fmtRecord, fmtWinPct } from '../lib/format';
 import { ordinal, seasonProfile } from '../lib/teamProfile';
@@ -23,7 +22,6 @@ export default function TeamPage() {
   if (!season.managers[userId]) {
     return (
       <section className="space-y-4">
-        <TeamsTabs teamsTo={`/teams/${season.year}`} />
         <p className="text-sm text-muted">{history.managers[userId]?.displayName ?? 'That manager'} did not play in {season.year}.{years.length > 0 && <> Try <Link to={`/teams/${years[years.length - 1]}/${userId}`} className="text-accent hover:underline">{years[years.length - 1]}</Link>.</>}</p>
       </section>
     );
@@ -34,10 +32,9 @@ export default function TeamPage() {
   const complete = season.status === 'complete';
   return (
     <section className="space-y-4">
-      <TeamsTabs teamsTo={`/teams/${season.year}`} />
       <ProfileHeader
         avatar={p.avatar} name={p.displayName}
-        eyebrow={<><SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} /><Link to={`/teams/${season.year}`} className="text-accent normal-case tracking-normal hover:underline">All teams</Link></>}
+        eyebrow={<SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} />}
         title={p.teamName}
         subtitle={<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <select aria-label="Manager" value={userId} onChange={(e) => navigate(`/teams/${season.year}/${e.target.value}`)} className="rounded border border-line bg-surface px-2 py-0.5 text-sm text-ink">

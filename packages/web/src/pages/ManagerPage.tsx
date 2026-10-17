@@ -10,8 +10,7 @@ import ProfileHeader from '../components/teams/ProfileHeader';
 import Rivals from '../components/teams/Rivals';
 import SeasonShape from '../components/teams/SeasonShape';
 import SeasonsTable from '../components/teams/SeasonsTable';
-import TeamsTabs from '../components/teams/TeamsTabs';
-import { currentSeason, history, players } from '../data/load';
+import { history, players } from '../data/load';
 import { fmtPpg, fmtRecord, fmtWinPct } from '../lib/format';
 import { allTimeContext, managerRecords } from '../lib/managerRecords';
 import { careerProfile, ordinal } from '../lib/teamProfile';
@@ -23,10 +22,9 @@ export default function ManagerPage() {
   const navigate = useNavigate();
   const c = useMemo(() => careerProfile(seasons, history, userId, players), [seasons, userId]);
   const records = useMemo(() => managerRecords(allTimeContext(seasons, players, history.managers), userId), [seasons, userId]);
-  if (!history.managers[userId]) return <section className="space-y-4"><TeamsTabs teamsTo={`/teams/${currentSeason.year}`} /><p className="text-sm text-muted">No such manager.</p></section>;
+  if (!history.managers[userId]) return <section className="space-y-4"><p className="text-sm text-muted">No such manager.</p></section>;
   return (
     <section className="space-y-4">
-      <TeamsTabs teamsTo={`/teams/${currentSeason.year}`} />
       <ProfileHeader
         avatar={c.avatar} name={c.name}
         eyebrow={<><span>Manager</span>{c.allTime && <span className="num normal-case tracking-normal text-muted">all-time rank {ordinal(c.allTime.rank)} of {c.managers}</span>}</>}
