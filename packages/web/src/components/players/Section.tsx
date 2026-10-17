@@ -9,7 +9,6 @@ import PositionFilter from './PositionFilter';
 interface Props {
   id: string;
   title: string;
-  note: string;
   boards: BoardDef[];
   /** lines already narrowed to this section's position */
   ctx: BoardContext;
@@ -47,7 +46,7 @@ function useGridColumns(): boolean {
 }
 
 /** One titled block of boards with its own position filter, optional season picker, and expand state shared per grid row. */
-export default function Section({ id, title, note, boards, ctx, allLines, players, managers, pos, onPos, columns, seasonPicker, emptyMessage, hidden = false }: Props) {
+export default function Section({ id, title, boards, ctx, allLines, players, managers, pos, onPos, columns, seasonPicker, emptyMessage, hidden = false }: Props) {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [directions, setDirections] = useState<Record<string, Direction>>({});
   const [modes, setModes] = useState<Record<string, string>>({});
@@ -61,10 +60,7 @@ export default function Section({ id, title, note, boards, ctx, allLines, player
   return (
     <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`} hidden={hidden}>
     <section id={id} aria-labelledby={`section-${id}`} className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id={`section-${id}`} className="text-lg font-semibold">{title}</h2>
-        <span className="text-xs text-muted">{note}</span>
-      </div>
+      <h2 id={`section-${id}`} className="text-lg font-semibold">{title}</h2>
       <div className="flex flex-wrap items-center justify-between gap-3">
         {onPos && <PositionFilter value={pos ?? 'All'} onChange={onPos} />}
         {seasonPicker && <SeasonPicker years={seasonPicker.years} value={seasonPicker.value} onChange={seasonPicker.onChange} allTime={seasonPicker.allTime} />}

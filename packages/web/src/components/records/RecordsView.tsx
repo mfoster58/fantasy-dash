@@ -53,14 +53,12 @@ export default function RecordsView({ seasons, players, managers, years, current
     const teamGames = allTeamGames.filter((g) => year === null || g.year === year);
     const managerSeasons = allManagerSeasons.filter((m) => year === null || m.year === year);
     const ctx: BoardContext = { lines, allLines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
-    const note = s.note ?? (year === null ? 'Every season' : `${year} season`);
     const empty = s.id === 'leaders' && year !== null && !allLines.some((l) => l.year === year) ? 'Season has not started.' : null;
     return (
       <Section
         key={s.id}
         id={s.id}
         title={s.title}
-        note={note}
         boards={boardsFor(s.tab, s.id)}
         ctx={ctx}
         allLines={seasonLines}

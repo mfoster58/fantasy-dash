@@ -79,7 +79,6 @@ export interface BoardDef {
   /** offers a mode toggle; `compute` receives the chosen mode id */
   modes?: readonly BoardMode[];
   /** render `modes` as a dropdown instead of a row of pills */
-  modeSelect?: boolean;
   /** a manager board whose rows name a player: offers the per-board position dropdown, which the board applies to that player's position (player boards always offer it) */
   positions?: boolean;
   /** second, independent toggle; its valueHeaders are suffixes appended to the first header */

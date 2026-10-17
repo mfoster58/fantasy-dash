@@ -82,7 +82,6 @@ describe('player streaks', () => {
     expect(by(posTopRun(c, 'desc', '5'))).toEqual({ r1: 3, r2: 3, r3: 3, r4: 3 });
     const def = BOARDS.find((b) => b.id === 'posTopRun')!;
     expect(def.modes!.map((m) => [m.id, m.label])).toEqual([['1', 'Top scorer'], ['3', 'Top 3'], ['5', 'Top 5'], ['10', 'Top 10']]);
-    expect(def.modeSelect).toBe(true);
   });
 
   it('posTopRun ranks among every rostered player at the position, benched ones included', () => {

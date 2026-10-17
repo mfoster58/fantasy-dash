@@ -38,9 +38,29 @@ describe('Board', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('puts the position pill before the name and shows the definition', () => {
+  it('keeps the definition behind a ? button that opens on press, hover or focus, and titles the card with the title alone', () => {
+    wrapB({ rows: [row(0)] });
+    expect(screen.getByRole('heading', { name: 'Best week by a starter' })).toBeInTheDocument();
+    expect(screen.queryByText('Most points in a week.')).toBeNull();
+    const about = screen.getByRole('button', { name: 'What counts' });
+    expect(about).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(about);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Most points in a week.');
+    expect(about).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(about);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.mouseEnter(about);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    fireEvent.mouseLeave(about);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.focus(about);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    fireEvent.blur(about);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('puts the position pill before the name', () => {
     wrapB({ rows: [row(0, { userId: 'a', to: '/scores/2025/1/3', detail: '3 starts' }), row(1)] });
-    expect(screen.getByText('Most points in a week.')).toBeInTheDocument();
     const first = screen.getAllByRole('listitem')[0];
     expect(first.textContent).toMatch(/^League recordQBQuincy One/);
     expect(within(first).getByText('100.00')).toBeInTheDocument();
@@ -73,15 +93,15 @@ describe('Board', () => {
     expect(within(second).queryByText(/managers/)).toBeNull();
   });
 
-  it('shows an empty state and no buttons with no rows', () => {
+  it('shows an empty state and no button but the ? with no rows', () => {
     wrapB();
     expect(screen.getByText('No players at this position.')).toBeInTheDocument();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['What counts']);
   });
 
   it('hides the toggle with five or fewer rows, even when expanded', () => {
     wrapB({ rows: [row(0)], expanded: true });
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('button', { name: /show/i })).toBeNull();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
 
@@ -105,16 +125,16 @@ describe('Board', () => {
     expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
   });
 
-  it('renders the modes as a dropdown when the definition asks for one', () => {
+  it('renders a four-way mode set as pills, never a dropdown', () => {
     const onMode = vi.fn();
-    const modes = [{ id: '1', label: 'Top scorer', valueHeader: 'Weeks' }, { id: '3', label: 'Top 3', valueHeader: 'Weeks' }, { id: '5', label: 'Top 5', valueHeader: 'Weeks' }];
-    wrapB({ def: { ...def, modes, modeSelect: true }, rows: [row(0)], mode: '3', onMode });
-    const select = screen.getByRole('combobox', { name: 'View' });
-    expect(select).toHaveValue('3');
-    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Top scorer', 'Top 3', 'Top 5']);
-    expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
-    fireEvent.change(select, { target: { value: '5' } });
-    expect(onMode).toHaveBeenCalledWith('5');
+    const modes = [{ id: '1', label: 'Top scorer', valueHeader: 'Weeks' }, { id: '3', label: 'Top 3', valueHeader: 'Weeks' }, { id: '5', label: 'Top 5', valueHeader: 'Weeks' }, { id: '10', label: 'Top 10', valueHeader: 'Weeks' }];
+    wrapB({ def: { ...def, modes }, rows: [row(0)], mode: '3', onMode });
+    const group = screen.getByRole('group', { name: 'View' });
+    expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['Top scorer', 'Top 3', 'Top 5', 'Top 10']);
+    expect(within(group).getByRole('button', { name: 'Top 3' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('combobox')).toBeNull();
+    fireEvent.click(within(group).getByRole('button', { name: 'Top 10' }));
+    expect(onMode).toHaveBeenCalledWith('10');
   });
 
   it('shows the empty copy it is given, else the position copy', () => {
@@ -192,26 +212,31 @@ describe('Board', () => {
     expect(screen.getAllByTitle('League record')).toHaveLength(1);
   });
 
-  it('shows the player a manager row names, headshot and name, after the manager', () => {
+  it('shows the player a manager row names in a block of his own before the value, pill, headshot and name with the detail underneath', () => {
     const mdef: BoardDef = { ...def, tab: 'managers', sub: 'mdraft' };
     wrapB({ def: mdef, rows: [{ key: 'a', playerId: null, player: 'q1', value: 30, valueLabel: '+30.0', meta: '2024', detail: 'Rd 9, pick 81', userId: 'a', to: '/draft/2024?team=a' }] });
     const first = screen.getAllByRole('listitem')[0];
-    expect(first.textContent).toMatch(/alice.*Quincy One.*2024.*Rd 9, pick 81/);
+    expect(first.textContent).toMatch(/alice.*2024.*Quincy One.*Rd 9, pick 81.*\+30\.0$/);
+    const block = within(first).getByTestId('row-player');
+    expect(block).toHaveTextContent('QBQuincy OneRd 9, pick 81');
+    expect(block.querySelector('img')).not.toBeNull(); // the headshot sits in the block, hard against the value, so headshots line up down the board
     expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
     expect(within(first).getByRole('link', { name: '2024' })).toHaveAttribute('href', '/draft/2024?team=a');
+    expect(within(first).queryByText('·')).toBeNull(); // the detail moved with the player, so nothing joins it to the meta
   });
 
-  it('offers a position dropdown when the section controls one', () => {
+  it('offers a position bar when the section controls one', () => {
     const onPosition = vi.fn();
     wrapB({ rows: [row(0)], position: 'RB', onPosition });
-    const select = screen.getByRole('combobox', { name: 'Position' });
-    expect(select).toHaveValue('RB');
-    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['All', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF']);
-    fireEvent.change(select, { target: { value: 'TE' } });
+    const bar = screen.getByRole('group', { name: 'Position' });
+    expect(within(bar).getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF']);
+    expect(within(bar).getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(bar).getByRole('button', { name: 'TE' }));
     expect(onPosition).toHaveBeenCalledWith('TE');
+    expect(screen.queryByRole('combobox')).toBeNull();
     cleanup();
     wrapB({ rows: [row(0)] });
-    expect(screen.queryByRole('combobox', { name: 'Position' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Position' })).toBeNull();
   });
 
   it('uses a neutral empty copy on the managers tab', () => {
