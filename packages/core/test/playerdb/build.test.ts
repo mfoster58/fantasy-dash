@@ -90,4 +90,82 @@ describe('buildPlayerDb', () => {
     const o = buildPlayerDb(input({ positionOverrides: { k1: 'TE' } }));
     expect(o.players.k1.pos).toBe('TE');
   });
+
+  it('stops at throughWeek for rows and team weeks', () => {
+    const one = buildPlayerDb(input({ throughWeek: 1 }));
+    expect(new Set(one.rows.map((r) => r.week))).toEqual(new Set([1]));
+    expect(one.teamWeeks.length).toBeGreaterThan(0);
+    expect(new Set(one.teamWeeks.map((t) => t.week))).toEqual(new Set([1]));
+    const zero = buildPlayerDb(input({ throughWeek: 0 }));
+    expect(zero.rows).toEqual([]);
+    expect(zero.teamWeeks).toEqual([]);
+    expect(zero.xfp).toEqual({ QB: null, RB: null, WR: null, TE: null });
+    expect(PlayerDbSchema.parse(zero)).toEqual(zero);
+  });
+  it('builds the weeks that are present when one is missing', () => {
+    const base = input();
+    base.sleeperWeeks.set(3, base.sleeperWeeks.get(2)!);
+    base.sleeperWeeks.delete(2);
+    const gap = buildPlayerDb({ ...base, throughWeek: 3 });
+    expect([...new Set(gap.rows.map((r) => r.week))]).toEqual([1, 3]);
+  });
+  it('lists teams in week order across a trade', () => {
+    const base = input();
+    base.sleeperWeeks.get(1)!.push(wr('tr', 'TB', 1, 5));
+    base.sleeperWeeks.get(2)!.push(wr('tr', 'KC', 2, 5));
+    expect(buildPlayerDb(base).players.tr.teams).toEqual(['TB', 'KC']);
+  });
+  it('falls back to the directory birth date, and to null when it is blank', () => {
+    const base = input();
+    for (const w of [1, 2]) base.sleeperWeeks.get(w)!.push(wr('b1', 'TB', w, 5), wr('b2', 'TB', w, 5));
+    base.directory.b1 = { player_id: 'b1', full_name: 'B One', position: 'WR', team: 'TB', birth_date: '1999-05-05' };
+    base.directory.b2 = { player_id: 'b2', full_name: 'B Two', position: 'WR', team: 'TB', birth_date: '' };
+    const o = buildPlayerDb(base);
+    expect(o.players.b1.birthDate).toBe('1999-05-05');
+    expect(o.players.b2.birthDate).toBeNull();
+  });
+  it('falls back through the weekly row names to the id for names', () => {
+    const base = input();
+    for (const w of [1, 2]) base.sleeperWeeks.get(w)!.push(
+      { player_id: 'n1', team: 'TB', player: { position: 'WR', first_name: 'Row', last_name: 'Name' }, stats: { gp: 1, rec_tgt: 3 } },
+      { player_id: 'n2', team: 'TB', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 3 } },
+    );
+    base.directory.n1 = { player_id: 'n1', position: 'WR', team: 'TB' };
+    const o = buildPlayerDb(base);
+    expect(o.players.n1.name).toBe('Row Name');
+    expect(o.players.n2.name).toBe('n2');
+  });
+  it('never gives a QB routes', () => {
+    const real = buildPlayerDb(input({ participation: { routes: new Map([['00-q|1', 30]]), passPlays: new Map() } }));
+    const q1 = real.rows.find((r) => r.id === 'q1' && r.week === 1)!;
+    expect(q1).not.toHaveProperty('routes');
+  });
+  it('fits and applies xfp once a position has enough rows', () => {
+    const weeks = new Map<number, SleeperWeekStat[]>();
+    const dir: PlayerDbInput['directory'] = {};
+    for (let w = 1; w <= 2; w++) {
+      const list: SleeperWeekStat[] = [];
+      for (let i = 0; i < 30; i++) {
+        const id = `x${i}`;
+        list.push({ player_id: id, team: 'TB', opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 1 + ((i + w) % 12), rec_air_yd: 0, rec_rz_tgt: 0 } });
+        dir[id] = { player_id: id, full_name: id, position: 'WR', team: 'TB' };
+      }
+      weeks.set(w, list);
+    }
+    const o = buildPlayerDb(input({ scoring: { gp: 1, rec_tgt: 1.5 }, sleeperWeeks: weeks, directory: dir, projections: new Map(), byGsis: new Map(), byPfr: new Map() }));
+    expect(o.rows.length).toBe(60);
+    expect(o.xfp.WR).not.toBeNull();
+    for (const r of o.rows) expect(Math.abs(r.xfp! - r.pts!)).toBeLessThan(0.01);
+  });
+  it('builds rows for an overridden position', () => {
+    const o = buildPlayerDb(input({ positionOverrides: { k1: 'TE' } }));
+    expect(o.rows.some((r) => r.id === 'k1')).toBe(true);
+    expect(o.players.k1.pos).toBe('TE');
+  });
+  it('does not reorder the caller input', () => {
+    const base = input();
+    const before = base.sleeperWeeks.get(1)!.map((r) => r.player_id);
+    buildPlayerDb(base);
+    expect(base.sleeperWeeks.get(1)!.map((r) => r.player_id)).toEqual(before);
+  });
 });

@@ -41,16 +41,16 @@ const nameOf = (p: SleeperPlayer | undefined, raw: SleeperWeekStat): string => {
 
 export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
   const { crosswalk, directory, participation } = input;
-  const teamWeeks = teamWeeksOf(input.sleeperWeeks, participation?.passPlays ?? null);
+  const weeks = new Map([...input.sleeperWeeks].filter(([w]) => w >= 1 && w <= input.throughWeek));
+  const teamWeeks = teamWeeksOf(weeks, participation?.passPlays ?? null);
   const teamWeekOf = new Map<string, TeamWeek>(teamWeeks.map((t) => [teamWeekKey(t.team, t.week), t]));
   const players: Record<string, DbPlayer> = {};
   const posOf = new Map<string, DbPos>();
   const rows: PlayerWeek[] = [];
 
-  for (const [week, raws] of [...input.sleeperWeeks.entries()].sort((a, b) => a[0] - b[0])) {
-    if (week < 1 || week > input.throughWeek) continue;
+  for (const [week, raws] of [...weeks.entries()].sort((a, b) => a[0] - b[0])) {
     const proj = input.projections.get(week) ?? {};
-    for (const raw of raws.sort((a, b) => (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0))) {
+    for (const raw of [...raws].sort((a, b) => (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0))) {
       const dir = directory[raw.player_id];
       const pos = positionOf(raw, dir?.position ?? null, input.positionOverrides);
       if (!pos) continue;
