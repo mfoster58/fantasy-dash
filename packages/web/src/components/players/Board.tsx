@@ -4,6 +4,7 @@ import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
 import type { PosFilter } from '../../lib/playerLines';
 import { playerName, playerPos } from '../../lib/players';
+import { AboutButton, useAbout } from '../About';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
 import { CrownIcon } from '../Icons';
@@ -54,29 +55,6 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
   );
 }
 
-/**
- * The ? button beside a board title. The definition shows while the button is hovered or focused, and a press pins it until
- * the next press, Escape or blur. A press clears the hover flag, so a phone tap (mouseenter then click, never a mouseleave)
- * opens on the first tap and closes on the second. The panel itself is rendered by the board, in the flow of the header,
- * so the card's clipped overflow can never cut it off.
- */
-function useAbout(): { open: boolean; buttonProps: Record<string, unknown> } {
-  const [pinned, setPinned] = useState(false);
-  const [hover, setHover] = useState(false);
-  const open = pinned || hover;
-  return {
-    open,
-    buttonProps: {
-      onClick: () => { setPinned((p) => !p); setHover(false); },
-      onMouseEnter: () => setHover(true),
-      onMouseLeave: () => setHover(false),
-      onFocus: () => setHover(true),
-      onBlur: () => { setHover(false); setPinned(false); },
-      onKeyDown: (e: { key: string }) => { if (e.key === 'Escape') { setHover(false); setPinned(false); } },
-    },
-  };
-}
-
 export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, position, onPosition, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
@@ -103,16 +81,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         <div className="flex items-start justify-between gap-3">
           <span className="flex min-w-0 items-center gap-1.5">
             <h3 id={`board-${def.id}`} className="text-base font-semibold leading-tight text-ink">{def.title}</h3>
-            <button
-              type="button"
-              aria-label="What counts"
-              aria-expanded={about.open}
-              aria-describedby={about.open ? aboutId : undefined}
-              {...about.buttonProps}
-              className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[10px] font-semibold leading-none ${about.open ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'}`}
-            >
-              ?
-            </button>
+            <AboutButton open={about.open} buttonProps={about.buttonProps} aboutId={aboutId} />
           </span>
           <span className="section-label shrink-0 pt-1">{header}</span>
         </div>
