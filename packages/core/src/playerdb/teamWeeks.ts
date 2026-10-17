@@ -10,6 +10,7 @@ export function teamWeeksOf(sleeperWeeks: Map<number, SleeperWeekStat[]>, passPl
     const byTeam = new Map<string, TeamWeek>();
     for (const r of rows) {
       if (!r.team) continue;
+      if (r.player?.position === 'TEAM' || r.player_id.startsWith('TEAM_')) continue; // Sleeper ships a synthetic per-team totals row that would double-count
       const s = r.stats ?? {};
       let tw = byTeam.get(r.team);
       if (!tw) {

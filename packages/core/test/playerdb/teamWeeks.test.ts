@@ -13,6 +13,7 @@ describe('teamWeeksOf', () => {
       r('k', 'SF', { fgm: 2 }, 'LAR'),
       r('rb2', 'LAR', { tm_off_snp: 55, rush_att: 10 }, 'SF'),
       r('fa', null, { rush_att: 99 }),
+      { ...r('TEAM_SF', 'SF', { tm_off_snp: 60, pass_att: 30, pass_sack: 2, pass_air_yd: 250, rush_att: 20, rush_rz_att: 3, rec_rz_tgt: 1 }, 'LAR'), player: { position: 'TEAM' } },
     ]]]);
     const tws = teamWeeksOf(weeks, new Map([['SF|1', 33]]));
     expect(tws).toEqual([
