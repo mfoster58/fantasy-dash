@@ -2,7 +2,7 @@ import type { ManagerRef } from '../../lib/stats/scope';
 import type { RaceData } from '../../lib/stats/season';
 import MultiLine from './MultiLine';
 import { Empty } from './StatCard';
-import type { Pin } from './pin';
+import { colorsFor, type Pin } from './pin';
 
 export default function StandingsRace({ data, refs, pin }: { data: RaceData; refs: ManagerRef[]; pin: Pin }) {
   if (data.weeks.length === 0) return <Empty />;
@@ -15,6 +15,7 @@ export default function StandingsRace({ data, refs, pin }: { data: RaceData; ref
       invertY
       guides={[{ y: data.playoffTeams + 0.5, label: 'playoff line', tone: 'win' }]}
       rightLabel={(s) => name(s.id)}
+      colors={colorsFor(refs.map((r) => r.id))}
       refs={refs} pin={pin} ariaLabel="Standings race"
     />
   );

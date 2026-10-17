@@ -25,6 +25,17 @@ describe('MultiLine', () => {
     expect(svg.querySelector('path[data-series="b"]')).toHaveAttribute('data-pinned', 'true');
     expect(svg.querySelector('path[data-series="a"]')).toHaveAttribute('data-dim', 'true');
   });
+  it('colours each line and its label by manager when asked, gold for the active one and faded colour for the rest', () => {
+    const colors = { a: '#111111', b: '#222222' };
+    const { rerender } = render(<MultiLine series={series} xLabels={['1', '2', '3']} yDomain={[1, 2]} colors={colors} rightLabel={(s) => s.id} refs={refs} pin={null} ariaLabel="Race" />);
+    const svg = () => screen.getByRole('img', { name: 'Race' });
+    expect(svg().querySelector('path[data-series="a"]')).toHaveAttribute('stroke', '#111111');
+    expect(svg().querySelector('text[data-series-label="b"]')).toHaveAttribute('fill', '#222222');
+    rerender(<MultiLine series={series} xLabels={['1', '2', '3']} yDomain={[1, 2]} colors={colors} rightLabel={(s) => s.id} refs={refs} pin="a" ariaLabel="Race" />);
+    expect(svg().querySelector('path[data-series="a"]')).toHaveAttribute('stroke', 'var(--gold)');
+    expect(svg().querySelector('path[data-series="b"]')).toHaveAttribute('stroke', '#222222');
+    expect(svg().querySelector('path[data-series="b"]')).toHaveAttribute('opacity', '0.3');
+  });
   it('thins only crowded labels: sparse labels (a year at each season start) all show, dense ones every few points', () => {
     const sparse = Array.from({ length: 40 }, (_, i) => (i % 17 === 0 ? String(2023 + i / 17) : ''));
     render(<MultiLine series={[{ id: 'a', values: sparse.map((_, i) => i) }]} xLabels={sparse} yDomain={[0, 40]} rightLabel={(s) => s.id} refs={refs} pin={null} ariaLabel="Sparse" />);

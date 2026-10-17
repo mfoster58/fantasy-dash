@@ -18,6 +18,11 @@ describe('StandingsRace', () => {
     expect(svg.querySelector('path[data-series="b"]')).toHaveAttribute('data-pinned', 'true');
     expect(screen.getByText('playoff line')).toBeInTheDocument();
     expect(screen.getByText('wk 4')).toBeInTheDocument();
+    // every manager keeps his own colour; the pinned one is gold
+    const strokes = [...svg.querySelectorAll('path[data-series]')].map((p) => p.getAttribute('stroke'));
+    expect(strokes).toContain('var(--gold)');
+    expect(new Set(strokes).size).toBe(4);
+    expect(strokes.filter((s) => s === 'var(--dim)')).toHaveLength(0);
   });
   it('says so before anything is played', () => {
     render(<StandingsRace data={{ weeks: [], playoffTeams: 2, series: [] }} refs={refs} pin={null} />);
