@@ -54,9 +54,26 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
+/** Like fetchText, but a 404 is an error: these files must exist. */
+async function requireText(url: string, what: string): Promise<string> {
+  const text = await fetchText(url);
+  if (text === null) throw new Error(`${what} download was missing (404): ${url}`);
+  return text;
+}
+
+/** fetchText for optional files: warns when the file is missing. */
+async function optionalText(url: string, year: number, name: string): Promise<string | null> {
+  const text = await fetchText(url);
+  if (text === null) log(`WARNING: ${year}: ${name} missing (404); its fields will be absent`);
+  return text;
+}
+
 const rowsOf = (text: string | null) => (text ? [...parseCsv(text)] : []);
 
-/** Merge several `${id}|${week}` maps; earlier maps win on a shared key. */
+/**
+ * Merge several `${id}|${week}` maps; earlier maps win on a shared key.
+ * The nflverse weekly file and NGS passing both write `pa_cpoe`; the earlier map (nflverse weekly) wins on purpose.
+ */
 function mergeMaps(...maps: Map<string, WeekFields>[]): Map<string, WeekFields> {
   const out = new Map<string, WeekFields>();
   for (const m of maps) for (const [k, v] of m) out.set(k, { ...v, ...(out.get(k) ?? {}) });
@@ -89,32 +106,36 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
   const projections = new Map<number, StatMap>();
   for (let week = 1; week <= throughWeek; week++) {
     const [rows, proj] = await Promise.all([client.getWeekStats(league.season, week), client.getProjections(league.season, week)]);
-    if (!rows) { log(`WARNING: ${year} week ${week}: Sleeper weekly rows missing`); continue; }
+    if (!rows) {
+      if (complete) throw new Error(`${year} week ${week}: Sleeper weekly rows missing for a finished season`);
+      log(`WARNING: ${year} week ${week}: Sleeper weekly rows missing`);
+      continue;
+    }
     sleeperWeeks.set(week, rows);
     if (proj) projections.set(week, proj);
   }
 
-  const snaps = rowsOf(await fetchText(URLS.snaps(year)));
+  const snaps = rowsOf(await optionalText(URLS.snaps(year), year, 'snap counts'));
   const crosswalk = buildCrosswalk(shared.crosswalkIds, shared.nflPlayers, snaps);
   const byGsis = mergeMaps(
-    nflverseWeekly(rowsOf(await fetchText(URLS.weekly(year)))),
+    nflverseWeekly(rowsOf(await requireText(URLS.weekly(year), `${year} weekly stats`))),
     ngsWeekly(shared.ngsRec, year, NGS_RECEIVING_FIELDS),
     ngsWeekly(shared.ngsRush, year, NGS_RUSHING_FIELDS),
     ngsWeekly(shared.ngsPass, year, NGS_PASSING_FIELDS),
   );
   const byPfr = mergeMaps(
-    pfrWeekly(rowsOf(await fetchText(URLS.pfrRec(year))), PFR_REC_FIELDS),
-    pfrWeekly(rowsOf(await fetchText(URLS.pfrRush(year))), PFR_RUSH_FIELDS),
-    pfrWeekly(rowsOf(await fetchText(URLS.pfrPass(year))), PFR_PASS_FIELDS),
+    pfrWeekly(rowsOf(await optionalText(URLS.pfrRec(year), year, 'PFR receiving')), PFR_REC_FIELDS),
+    pfrWeekly(rowsOf(await optionalText(URLS.pfrRush(year), year, 'PFR rushing')), PFR_RUSH_FIELDS),
+    pfrWeekly(rowsOf(await optionalText(URLS.pfrPass(year), year, 'PFR passing')), PFR_PASS_FIELDS),
     pfrWeekly(snaps, SNAP_FIELDS),
   );
 
   let participation: PlayerDbInput['participation'] = null;
   if (complete) {
-    const text = await fetchText(URLS.participation(year));
+    const text = await optionalText(URLS.participation(year), year, 'participation');
     if (text) {
-      // Route runners: every RB/WR/TE gsis id the crosswalk can name, taken from the nflverse player list.
-      const runners = new Set(shared.nflPlayers.filter((p) => ['RB', 'WR', 'TE'].includes(p.position)).map((p) => p.gsis_id));
+      // Route runners: every RB/WR/TE gsis id in the nflverse player list.
+      const runners = new Set(shared.nflPlayers.filter((p) => ['RB', 'WR', 'TE'].includes(p.position) && p.gsis_id).map((p) => p.gsis_id));
       participation = countRoutes(parseCsv(text), runners);
       log(`  routes for ${participation.routes.size} player-weeks, pass plays for ${participation.passPlays.size} team-weeks`);
     } else {
@@ -134,7 +155,11 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
 
 async function main() {
   const client = new SleeperClient();
-  const leagues = (await walkLeagueChain(client, leagueConfig.leagueId)).filter((l) => onlySeason === null || Number(l.season) === onlySeason);
+  const chain = await walkLeagueChain(client, leagueConfig.leagueId);
+  if (onlySeason !== null && !(Number.isInteger(onlySeason) && chain.some((l) => Number(l.season) === onlySeason))) {
+    throw new Error(`--season must name a league season (have: ${chain.map((l) => l.season).join(', ')})`);
+  }
+  const leagues = chain.filter((l) => onlySeason === null || Number(l.season) === onlySeason);
   log(`Seasons: ${leagues.map((l) => l.season).join(', ')}`);
 
   const todo = leagues.filter((l) => {
@@ -150,11 +175,11 @@ async function main() {
 
   log('Fetching shared nflverse files');
   const shared: Shared = {
-    crosswalkIds: rowsOf(await fetchText(URLS.ids)),
-    nflPlayers: rowsOf(await fetchText(URLS.players)),
-    ngsRec: rowsOf(await fetchText(URLS.ngsReceiving)),
-    ngsRush: rowsOf(await fetchText(URLS.ngsRushing)),
-    ngsPass: rowsOf(await fetchText(URLS.ngsPassing)),
+    crosswalkIds: rowsOf(await requireText(URLS.ids, 'Id crosswalk')),
+    nflPlayers: rowsOf(await requireText(URLS.players, 'nflverse player list')),
+    ngsRec: rowsOf(await requireText(URLS.ngsReceiving, 'NGS receiving')),
+    ngsRush: rowsOf(await requireText(URLS.ngsRushing, 'NGS rushing')),
+    ngsPass: rowsOf(await requireText(URLS.ngsPassing, 'NGS passing')),
   };
   if (shared.crosswalkIds.length === 0) throw new Error('Id crosswalk download was empty');
 
