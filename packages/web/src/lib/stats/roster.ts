@@ -8,7 +8,9 @@ export interface DraftReturns { rounds: number; rows: DraftReturnRow[] }
 export interface OriginRow { id: UserId; draft: number; pickup: number; trade: number; other: number; total: number }
 export interface AgeRow { id: UserId; age: number; points: number; rookieShare: number; vetShare: number; estimated: boolean }
 export interface RosterAge { rows: AgeRow[]; estimated: boolean }
-export interface WireRow { id: UserId; perWeek: number[]; total: number; faab: number }
+/** one pickup: who came in, how, for what bid, and who went out in the same move */
+export interface WireMove { playerId: PlayerId; type: 'waiver' | 'free_agent'; bid: number | null; dropped: PlayerId[] }
+export interface WireRow { id: UserId; perWeek: number[]; moves: WireMove[][]; total: number; faab: number }
 export interface WireActivity { weeks: number[]; rows: WireRow[] }
 
 /** one started line: who started him, when, for how much, and how he was acquired */
@@ -103,7 +105,7 @@ export function wireActivity(season: Season): WireActivity {
   // a column for every week on the schedule; only weeks already played can hold a pickup
   const weeks = season.weeks.map((w) => w.week);
   const played = new Set(season.weeks.filter((w) => w.played).map((w) => w.week));
-  const rows = idsOf(season).map((id): WireRow => ({ id, perWeek: weeks.map(() => 0), total: 0, faab: 0 }));
+  const rows = idsOf(season).map((id): WireRow => ({ id, perWeek: weeks.map(() => 0), moves: weeks.map(() => []), total: 0, faab: 0 }));
   const byUser = new Map(rows.map((r) => [r.id, r]));
   for (const t of season.transactions) {
     if (t.type !== 'waiver' && t.type !== 'free_agent') continue;
@@ -113,6 +115,7 @@ export function wireActivity(season: Season): WireActivity {
       const r = byUser.get(a.userId);
       if (!r) continue;
       r.perWeek[i] += 1;
+      r.moves[i].push({ playerId: a.playerId, type: t.type, bid: t.type === 'waiver' ? t.bid : null, dropped: t.drops.filter((d) => d.userId === a.userId).map((d) => d.playerId) });
       r.total += 1;
       if (t.type === 'waiver' && t.bid) r.faab += t.bid;
     }

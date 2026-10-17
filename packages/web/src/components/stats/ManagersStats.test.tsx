@@ -16,13 +16,12 @@ describe('ManagersStats', () => {
   it('opens on the current season with the cards in the agreed order, one title each, no group headings and no head-to-head grid', () => {
     mount();
     const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby')).map((id) => document.getElementById(id!)?.textContent);
-    expect(names).toEqual(['Standings race', 'Form', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from', 'Notable matchups']);
-    // the last row: weekly finishes stacked on the points' origins on the left, the moments lists stacked on the right
-    const finishes = card('Weekly finishes'), origins = card('Where the points came from'), moments = card('Notable matchups');
+    expect(names).toEqual(['Standings race', 'Form', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from']);
+    // the last row: weekly finishes beside the points' origins, each only as tall as it needs
+    const finishes = card('Weekly finishes'), origins = card('Where the points came from');
     expect(finishes.parentElement).toBe(origins.parentElement);
-    expect(finishes.parentElement).not.toBe(moments.parentElement);
-    expect(finishes.parentElement!.parentElement).toBe(moments.parentElement);
-    expect(within(moments).getByTestId('moment-lists').className).not.toMatch(/sm:grid-cols-2/);
+    expect(finishes.parentElement!.className).toMatch(/\bitems-start\b/);
+    expect(screen.queryByRole('region', { name: 'Notable matchups' })).toBeNull();
     for (const s of ['The season', 'Strength', 'Roster', 'Moments', 'By the numbers']) expect(screen.queryByRole('heading', { name: s })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Head to head' })).toBeNull();
     expect(card('Standings race').querySelector('.section-label')).toBeNull();
@@ -45,6 +44,8 @@ describe('ManagersStats', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('?season=all');
     expect(screen.queryByRole('region', { name: 'Form' })).toBeNull();
     expect(screen.getByText('Pick a season for the week-by-week charts.')).toBeInTheDocument();
+    // the calendar stays, one column per season
+    expect(within(card('Scoring calendar')).getAllByRole('columnheader').map((h) => h.textContent).filter(Boolean)).toEqual(['2024', '2025']);
     expect(card('Power rating')).toBeInTheDocument();
     expect(within(card('The numbers')).getByRole('columnheader', { name: /Yrs/ })).toBeInTheDocument();
   });

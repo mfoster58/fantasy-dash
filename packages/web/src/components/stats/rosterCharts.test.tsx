@@ -1,14 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import DraftReturns from './DraftReturns';
 import PointOrigins from './PointOrigins';
-import RosterAge from './RosterAge';
+import RosterAge, { labelLanes } from './RosterAge';
 import WireActivity from './WireActivity';
-import Moments from './Moments';
 import { managerRefs } from '../../lib/stats/scope';
 import { draftReturns, pointOrigins, rosterAge, wireActivity } from '../../lib/stats/roster';
-import { moments } from '../../lib/stats/moments';
-import { teamGamesOf } from '../../lib/managerGames';
 import { league, season2024, season2025, statsPlayers } from '../../test/statsFixtures';
 
 const refs = managerRefs(league());
@@ -69,6 +65,10 @@ describe('RosterAge', () => {
     expect([...svg.querySelectorAll('text')].find((t) => t.textContent === 'alice')).toHaveAttribute('font-size', '13');
     expect(screen.getByText('UNC')).toBeInTheDocument();
   });
+  it('puts each name in the nearest lane where it does not overlap the one before, alternating above and below the line', () => {
+    expect(labelLanes([0, 10, 20, 200], [50, 50, 50, 50])).toEqual([0, 1, 2, 0]);
+    expect(labelLanes([0, 100], [50, 50])).toEqual([0, 0]);
+  });
   it('says so with nothing to place', () => {
     render(<RosterAge data={{ rows: [], estimated: false }} refs={refs} pin={null} />);
     expect(screen.getByText('Nothing played yet.')).toBeInTheDocument();
@@ -77,34 +77,12 @@ describe('RosterAge', () => {
 
 describe('WireActivity', () => {
   it('counts pickups per week with the totals and FAAB at the right', () => {
-    render(<WireActivity data={wireActivity(s25)} refs={refs} pin={null} />);
+    render(<WireActivity data={wireActivity(s25)} players={statsPlayers} refs={refs} pin={null} />);
     const table = screen.getByRole('table', { name: 'Wire activity' });
     const a = within(table).getAllByRole('row')[1];
     expect(within(a).getAllByRole('cell').map((c) => c.textContent)).toEqual(['', '1', '', '1', '', '2 · $13']);
-    expect(screen.getByTitle('alice week 2: 1 pickup')).toBeInTheDocument();
+    expect(screen.getByTitle('alice week 2: + Xavier One (waiver, $10), − Tony Two')).toBeInTheDocument();
+    expect(screen.getByTitle('bob week 3: + Xavier Two (free agent)')).toBeInTheDocument();
   });
 });
 
-describe('Moments', () => {
-  it('shows each notable game as a scoreline, winner left and loser right, with the margin between and a tug-of-war bar', () => {
-    render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} /></MemoryRouter>);
-    for (const h of ['High score in a loss', 'Low score in a win', 'Blowouts', 'Close calls']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
-    const first = screen.getByRole('list', { name: 'High score in a loss' }).querySelector('li')!;
-    expect(within(first).getByRole('link')).toHaveAttribute('href', '/scores/2025/5/1');
-    const win = first.querySelector('[data-side="win"]')!, loss = first.querySelector('[data-side="loss"]')!;
-    expect(win).toHaveTextContent('alice'); expect(win).toHaveTextContent('150.00');
-    expect(loss).toHaveTextContent('dan'); expect(loss).toHaveTextContent('120.00');
-    expect(first.querySelector('[data-margin]')).toHaveTextContent('+30.00');
-    // the list is about the loser here, so his side is the one called out
-    expect(loss).toHaveAttribute('data-featured', 'true');
-    // the bar splits at the winner's share of the points: 150 of 270
-    expect(parseFloat((first.querySelector('[data-share="win"]') as HTMLElement).style.width)).toBeCloseTo(55.56, 1);
-    expect(first).toHaveTextContent('Week 5');
-    expect(screen.getByRole('list', { name: 'Blowouts' }).querySelector('[data-margin]')).toHaveTextContent('+70.00');
-    expect(screen.getByTestId('moment-lists').className).toMatch(/sm:grid-cols-2/);
-  });
-  it('can stack its four lists in one column', () => {
-    render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} columns={1} /></MemoryRouter>);
-    expect(screen.getByTestId('moment-lists').className).not.toMatch(/sm:grid-cols-2/);
-  });
-});

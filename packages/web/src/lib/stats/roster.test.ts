@@ -56,6 +56,12 @@ describe('wireActivity', () => {
     expect(w.rows.map((r) => [r.id, r.total, r.faab])).toEqual([['a', 2, 13], ['b', 1, 0], ['c', 0, 0], ['d', 0, 0]]);
     expect(row(w.rows, 'a').perWeek).toEqual([0, 1, 0, 1, 0]);
   });
+  it('keeps each week\'s moves so a cell can say what they were', () => {
+    const w = wireActivity(season2025());
+    expect(row(w.rows, 'a').moves[1]).toEqual([{ playerId: 'x1', type: 'waiver', bid: 10, dropped: ['t2'] }]);
+    expect(row(w.rows, 'b').moves[2]).toEqual([{ playerId: 'x2', type: 'free_agent', bid: null, dropped: [] }]);
+    expect(row(w.rows, 'a').moves[0]).toEqual([]);
+  });
   it('has a column for every week on the schedule, counting only weeks already played', () => {
     const s = season2025();
     s.weeks = [...s.weeks, { ...s.weeks[4], week: 6, played: false, games: [] }];

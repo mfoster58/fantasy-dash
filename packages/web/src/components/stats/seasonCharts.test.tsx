@@ -4,7 +4,7 @@ import FormGuide from './FormGuide';
 import ScoringCalendar from './ScoringCalendar';
 import WeeklyFinishes from './WeeklyFinishes';
 import { managerRefs } from '../../lib/stats/scope';
-import { formGuide, scoringCalendar, standingsRace, weeklyFinishes } from '../../lib/stats/season';
+import { formGuide, scoringCalendar, seasonCalendar, standingsRace, weeklyFinishes } from '../../lib/stats/season';
 import { league, season2025 } from '../../test/statsFixtures';
 
 const refs = managerRefs(league());
@@ -57,6 +57,15 @@ describe('ScoringCalendar', () => {
   });
 });
 
+describe('ScoringCalendar by season', () => {
+  it('labels the columns by year and titles each cell with points per game', () => {
+    render(<ScoringCalendar data={seasonCalendar(league())} refs={refs} pin={null} bySeason />);
+    const table = screen.getByRole('table', { name: 'Scoring calendar' });
+    expect(within(within(table).getAllByRole('row')[1]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['95', '108']);
+    expect(screen.getByTitle('alice 2024: 95.0 a game, league 87.5 (+7.5)')).toBeInTheDocument();
+  });
+});
+
 describe('WeeklyFinishes', () => {
   it('draws a three-part bar per manager with the top and bottom counts printed', () => {
     render(<WeeklyFinishes rows={weeklyFinishes([s25])} refs={refs} pin="c" />);
@@ -66,6 +75,7 @@ describe('WeeklyFinishes', () => {
     expect(items[2]).toHaveAttribute('data-pinned', 'true');
     expect(items[2].querySelector('[data-part="top"]')).toHaveTextContent('2');
     expect(items[2].querySelector('[data-part="bottom"]')).toHaveTextContent('2');
-    expect(items[0].querySelector('[data-part="bottom"]')).toHaveTextContent('');
+    // no sliver of colour for a count of zero
+    expect(items[0].querySelector('[data-part="bottom"]')).toBeNull();
   });
 });
