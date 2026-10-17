@@ -1,6 +1,7 @@
 import type { Draft, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import { Link } from 'react-router';
 import Headshot from '../Headshot';
+import { ManagerLink } from '../NameLink';
 import PosPill from '../PosPill';
 import { fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam } from '../../lib/players';
@@ -24,7 +25,7 @@ export default function DraftRoundOne({ draft, managers, players, seasonTeams, y
               <Headshot players={players} id={p.playerId} size={28} />
               <span className="min-w-0">
                 <span className="truncate font-medium">{playerName(players, p.playerId)}</span>
-                <span className="ml-1.5 text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</span>
+                <ManagerLink userId={p.userId} className="ml-1.5 text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</ManagerLink>
               </span>
               <span className="flex items-center gap-2">
                 <PosPill pos={pos} />

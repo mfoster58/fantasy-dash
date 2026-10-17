@@ -1,5 +1,5 @@
-import { Link } from 'react-router';
 import type { BracketGame, BracketKind, Manager, UserId } from '@fantasy-dash/core';
+import { CoverLink, TeamLink } from '../NameLink';
 import { fmtPts, fmtTag } from '../../lib/format';
 
 interface Props { games: BracketGame[]; kind: BracketKind; managers: Record<UserId, Manager>; year: number }
@@ -12,11 +12,12 @@ const roundTitle = (kind: BracketKind, round: number, games: BracketGame[]) => {
   return `Round ${round}`;
 };
 
-function Side({ id, points, won, managers }: { id: UserId | null; points: number | null; won: boolean; managers: Record<UserId, Manager> }) {
-  const m = id ? managers[id] : undefined;
+const teamOf = (id: UserId | null, managers: Record<UserId, Manager>) => (id ? managers[id]?.teamName ?? managers[id]?.displayName ?? id : 'TBD');
+
+function Side({ id, points, won, managers, year }: { id: UserId | null; points: number | null; won: boolean; managers: Record<UserId, Manager>; year: number }) {
   return (
     <div className={`flex items-center justify-between gap-3 ${won ? 'text-ink font-semibold' : 'text-muted'}`}>
-      <span className="truncate">{id ? m?.teamName ?? m?.displayName ?? id : 'TBD'}</span>
+      {id ? <TeamLink userId={id} year={year} className="relative z-10 truncate">{teamOf(id, managers)}</TeamLink> : <span className="truncate">TBD</span>}
       {won && <span className="sr-only">winner</span>}
       <span className="num">{points === null ? '' : fmtPts(points)}</span>
     </div>
@@ -33,17 +34,16 @@ export default function Bracket({ games, kind, managers, year }: Props) {
           <div key={round} className="flex min-w-[220px] flex-1 flex-col gap-3">
             <div className="section-label">{roundTitle(kind, round, inRound)}</div>
             {inRound.map((g) => {
-              const body = (
-                <div className="card p-3 text-sm">
+              const matchupId = g.gameId?.split('-').pop();
+              // the card opens the box score through a cover link, so each team name can be its own link
+              return (
+                <div key={g.matchNo} className={`card relative p-3 text-sm ${g.gameId ? 'transition-colors hover:ring-1 hover:ring-accent/60' : ''}`}>
+                  {g.gameId && <CoverLink to={`/scores/${year}/${g.week}/${matchupId}`} label={`${fmtTag(g.tag)}: ${teamOf(g.home, managers)} vs ${teamOf(g.away, managers)} box score`} className="rounded-xl" />}
                   {inRound.length > 1 && tagsDiffer(inRound) && <div className="section-label mb-1">{fmtTag(g.tag)}</div>}
-                  <Side id={g.home} points={g.homePoints} won={wonBy(g, kind, 'home')} managers={managers} />
-                  <Side id={g.away} points={g.awayPoints} won={wonBy(g, kind, 'away')} managers={managers} />
+                  <Side id={g.home} points={g.homePoints} won={wonBy(g, kind, 'home')} managers={managers} year={year} />
+                  <Side id={g.away} points={g.awayPoints} won={wonBy(g, kind, 'away')} managers={managers} year={year} />
                 </div>
               );
-              const matchupId = g.gameId?.split('-').pop();
-              return g.gameId ? (
-                <Link key={g.matchNo} to={`/scores/${year}/${g.week}/${matchupId}`} className="block rounded-xl transition-colors hover:ring-1 hover:ring-accent/60">{body}</Link>
-              ) : <div key={g.matchNo}>{body}</div>;
             })}
           </div>
         );

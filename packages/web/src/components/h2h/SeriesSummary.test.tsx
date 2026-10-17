@@ -22,6 +22,8 @@ describe('SeriesSummary', () => {
     render(<MemoryRouter><SeriesSummary series={series} a="b" b="a" managers={managers} /></MemoryRouter>);
     expect(screen.getByTestId('series-record')).toHaveTextContent('1 – 3');
     expect(screen.getByText(/alice has won 2 straight/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/managers/b');
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
     expect(screen.getByText('450.25')).toBeInTheDocument();
     expect(screen.getByText('500.50')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /bob by 40\.00/ })).toHaveAttribute('href', '/scores/2024/5/2');

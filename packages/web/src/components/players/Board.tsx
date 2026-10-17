@@ -146,7 +146,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                         <span className={`truncate text-sm ${record ? 'font-semibold' : 'font-medium'}`}>{playerName(players, r.playerId)}</span>
                       </>
                     ) : (
-                      <Link to={`/h2h?a=${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
+                      <Link to={`/managers/${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
                     )}
                   </span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
@@ -165,7 +165,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                           {r.managers.length} managers
                         </button>
                         {openManagers[r.key] && r.managers.map((x) => (
-                          <Link key={x.userId} to={`/h2h?a=${x.userId}`} className="flex items-center gap-1 hover:text-accent">
+                          <Link key={x.userId} to={`/managers/${x.userId}`} className="flex items-center gap-1 hover:text-accent">
                             <Avatar avatar={managers[x.userId]?.avatar ?? null} name={managerName(x.userId)} size={14} />
                             <span>{managerName(x.userId)} {x.weeks} wks</span>
                           </Link>
@@ -174,7 +174,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     ) : r.playerId !== null && r.userId && (
                       <>
                         <span aria-hidden>·</span>
-                        <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-1 hover:text-accent">
+                        <Link to={`/managers/${r.userId}`} className="flex items-center gap-1 hover:text-accent">
                           <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId} size={14} />
                           <span>{m?.displayName ?? r.userId}</span>
                         </Link>

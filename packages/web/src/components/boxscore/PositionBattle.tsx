@@ -1,4 +1,5 @@
 import type { GameSide, Manager, UserId } from '@fantasy-dash/core';
+import { ManagerLink } from '../NameLink';
 import PosPill from '../PosPill';
 import { fmtPts } from '../../lib/format';
 
@@ -20,7 +21,7 @@ export default function PositionBattle({ sides, slots, managers }: Props) {
   const groups = positionGroups(sides, slots);
   const max = Math.max(1, ...groups.flatMap((g) => [g.left, g.right]));
   const won = (k: 'left' | 'right') => groups.filter((g) => (k === 'left' ? g.left > g.right : g.right > g.left)).length;
-  const name = (i: 0 | 1) => managers[sides[i].userId]?.displayName ?? sides[i].userId;
+  const name = (i: 0 | 1) => <ManagerLink userId={sides[i].userId} className="truncate">{managers[sides[i].userId]?.displayName ?? sides[i].userId}</ManagerLink>;
   return (
     <section className="card p-5" aria-labelledby="position-battle-title">
       <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -28,7 +29,7 @@ export default function PositionBattle({ sides, slots, managers }: Props) {
         <span className="num text-xs text-muted" data-testid="position-tally">{won('left')} – {won('right')} <span className="font-sans">positions</span></span>
       </div>
       <div className="mb-2 grid grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] text-xs text-muted">
-        <span className="truncate">{name(0)}</span><span /><span className="truncate text-right">{name(1)}</span>
+        <span className="flex min-w-0">{name(0)}</span><span /><span className="flex min-w-0 justify-end text-right">{name(1)}</span>
       </div>
       <ul className="space-y-2">
         {groups.map((g) => {

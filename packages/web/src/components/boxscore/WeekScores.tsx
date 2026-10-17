@@ -1,6 +1,6 @@
-import { Link } from 'react-router';
 import type { Game, Manager, UserId, Week } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { CoverLink, ManagerLink } from '../NameLink';
 import { fmtPct, fmtPts } from '../../lib/format';
 
 interface Props {
@@ -45,16 +45,13 @@ export default function WeekScores({ week, managers, year, game }: Props) {
       </div>
       <ol className="-mx-2 space-y-0.5">
         {rows.map((r) => (
-          <li key={r.userId}>
-            <Link
-              to={`/scores/${year}/${week.week}/${r.matchupId}`}
-              aria-current={r.inGame ? 'true' : undefined}
-              className={`grid grid-cols-[1.5rem_20px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-md px-2 py-1 text-sm hover:bg-surface-2 ${r.inGame ? 'text-ink' : 'text-muted'}`}
-            >
+          <li key={r.userId} className="relative rounded-md hover:bg-surface-2">
+            <CoverLink to={`/scores/${year}/${week.week}/${r.matchupId}`} label={`${name(r.userId)}: week ${week.week} box score`} aria-current={r.inGame ? 'true' : undefined} className="rounded-md" />
+            <div className={`grid grid-cols-[1.5rem_20px_minmax(0,1fr)_auto] items-center gap-x-2.5 px-2 py-1 text-sm ${r.inGame ? 'text-ink' : 'text-muted'}`}>
               <span className="num text-xs">{r.rank}</span>
               <Avatar avatar={managers[r.userId]?.avatar ?? null} name={name(r.userId)} size={20} />
               <span className="flex min-w-0 items-center gap-2">
-                <span className={`w-24 shrink-0 truncate sm:w-28 ${r.inGame ? 'font-semibold' : ''}`}>{name(r.userId)}</span>
+                <ManagerLink userId={r.userId} className={`relative z-10 w-24 shrink-0 truncate sm:w-28 ${r.inGame ? 'font-semibold' : ''}`}>{name(r.userId)}</ManagerLink>
                 <span className="min-w-0 flex-1" aria-hidden="true">
                   <span className="block h-2 overflow-hidden rounded bg-surface-2" style={{ width: `${(Math.max(r.points, r.ceiling) / max) * 100}%` }} data-testid="track">
                     <span
@@ -71,7 +68,7 @@ export default function WeekScores({ week, managers, year, game }: Props) {
                 )}
                 {week.played && <span className="num w-9 text-right text-xs" data-testid="efficiency">{fmtPct(r.efficiency, 0)}</span>}
               </span>
-            </Link>
+            </div>
           </li>
         ))}
       </ol>

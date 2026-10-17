@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useLoaderData } from 'react-router';
 import { BASELINE_RANKS, BENCH_RANKS, CAPITAL_DECAY, POSITION_WEIGHTS, SURPLUS_PREMIUM, TOP_BONUS, TOP_BONUS_DECAY, capital, earnedCapital, expectedAt, surplusMultiplier, type Draft, type DraftPick, type Manager, type PlayerDirectory, type Season, type UserId } from '@fantasy-dash/core';
 import Headshot from '../components/Headshot';
+import { ManagerLink } from '../components/NameLink';
 import PosPill from '../components/PosPill';
 import { fmtSigned } from '../lib/format';
 import { letterGrade, pickLabel } from '../lib/draft';
@@ -155,7 +156,7 @@ function ExampleTable({ examples, managers, teams, players }: { examples: Gradin
               <tr key={key} className="border-t border-line">
                 <td className="py-2 pr-3"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: EXAMPLE_COLORS[key] }} />{label}</td>
                 <td className="py-2 pr-3">
-                  <span className="flex items-center gap-2"><Headshot players={players} id={p.playerId} size={24} /><span className="font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /><span className="text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</span></span>
+                  <span className="flex items-center gap-2"><Headshot players={players} id={p.playerId} size={24} /><span className="font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /><ManagerLink userId={p.userId} className="text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</ManagerLink></span>
                 </td>
                 <td className="num py-2 pr-3 text-right">{pickLabel(p, teams)} <span className="text-muted">(#{p.pickNo})</span></td>
                 <td className="num py-2 pr-3 text-right">{fmt1(capital(p.pickNo))}</td>
@@ -256,7 +257,7 @@ export function GradingGuide({ season, players }: { season: Season; players: Pla
           {totals.map(([userId, total], i) => (
             <li key={userId} className="flex items-center gap-3 border-t border-line py-1.5 text-sm">
               <span className="num w-5 text-xs text-muted">{i + 1}</span>
-              <span className="min-w-0 flex-1 truncate">{season.managers[userId]?.displayName ?? userId}</span>
+              <ManagerLink userId={userId} className="min-w-0 flex-1 truncate">{season.managers[userId]?.displayName ?? userId}</ManagerLink>
               <span className={`num font-semibold ${signClass(total)}`}>{fmtSigned(total, 0)}</span>
               <span className="w-6 text-right font-bold">{letterGrade(i + 1, totals.length)}</span>
             </li>

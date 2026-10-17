@@ -1,7 +1,7 @@
-import { Link } from 'react-router';
 import type { Game, GameSide, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
 import Headshot from './Headshot';
+import { CoverLink, ManagerLink, TeamLink } from './NameLink';
 import PosPill from './PosPill';
 import { fmtPct, fmtPts, fmtRecord, fmtTag } from '../lib/format';
 import { topPerformersBySide } from '../lib/metrics';
@@ -15,6 +15,8 @@ interface Props {
   /** that season's player -> team map */
   seasonTeams: Record<PlayerId, string>;
   to: string;
+  /** the season the game belongs to, for the team links */
+  year: number;
 }
 
 type Outcome = 'won' | 'lost' | 'even';
@@ -29,17 +31,19 @@ const effColor = (e: number) => {
   return `color-mix(in srgb, ${tone} 65%, transparent)`;
 };
 
-export default function ScoreCard({ game, played, managers, players, seasonTeams, to }: Props) {
+export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year }: Props) {
   const outcome = (side: GameSide): Outcome =>
     !played || game.winner === null ? 'even' : game.winner === side.userId ? 'won' : 'lost';
   const [a, b] = game.sides;
   return (
-    <Link to={to} className="card block p-4 transition-colors hover:border-accent sm:p-5">
+    // the whole card opens the box score through a cover link, so the team and manager names can be links of their own
+    <div className="card relative p-4 transition-colors hover:border-accent sm:p-5">
+      <CoverLink to={to} label={`${teamName(a, managers[a.userId])} vs ${teamName(b, managers[b.userId])} box score`} className="rounded-xl" />
       <Header game={game} played={played} />
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4">
-        <Team side={a} manager={managers[a.userId]} played={played} outcome={outcome(a)} align="left" />
+        <Team side={a} manager={managers[a.userId]} played={played} outcome={outcome(a)} align="left" year={year} />
         <span className="section-label self-center px-0.5 text-[12px] lowercase tracking-[0.12em]" style={{ fontVariant: 'small-caps' }}>vs</span>
-        <Team side={b} manager={managers[b.userId]} played={played} outcome={outcome(b)} align="right" />
+        <Team side={b} manager={managers[b.userId]} played={played} outcome={outcome(b)} align="right" year={year} />
         {played && (
           <div
             className="col-span-3 mt-4 grid grid-cols-subgrid"
@@ -61,7 +65,7 @@ export default function ScoreCard({ game, played, managers, players, seasonTeams
           </div>
         </div>
       )}
-    </Link>
+    </div>
   );
 }
 
@@ -75,8 +79,8 @@ function Header({ game, played }: { game: Game; played: boolean }) {
   );
 }
 
-function Team({ side, manager, played, outcome, align }: {
-  side: GameSide; manager?: Manager; played: boolean; outcome: Outcome; align: Align;
+function Team({ side, manager, played, outcome, align, year }: {
+  side: GameSide; manager?: Manager; played: boolean; outcome: Outcome; align: Align; year: number;
 }) {
   const right = align === 'right';
   const scoreTone = outcome === 'won' ? 'font-semibold text-ink' : outcome === 'lost' ? 'text-muted' : 'text-ink';
@@ -88,9 +92,9 @@ function Team({ side, manager, played, outcome, align }: {
     >
       <Avatar avatar={manager?.avatar ?? null} name={manager?.displayName ?? '?'} size={40} />
       <div className="w-full min-w-0 sm:w-auto sm:flex-1">
-        <div className="line-clamp-2 font-semibold leading-tight" title={teamName(side, manager)}>{teamName(side, manager)}</div>
+        <TeamLink userId={side.userId} year={year} className="relative z-10 line-clamp-2 font-semibold leading-tight" title={teamName(side, manager)}>{teamName(side, manager)}</TeamLink>
         <div className="mt-0.5 truncate text-xs text-muted">
-          {manager?.displayName} · <span className="num">{fmtRecord(side.recordBefore)}</span>
+          {manager?.displayName && <ManagerLink userId={side.userId} className="relative z-10">{manager.displayName}</ManagerLink>} · <span className="num">{fmtRecord(side.recordBefore)}</span>
         </div>
       </div>
       {played ? (

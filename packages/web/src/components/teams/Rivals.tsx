@@ -1,6 +1,6 @@
-import { Link } from 'react-router';
 import type { History, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { CoverLink, ManagerLink } from '../NameLink';
 import { CardHeader } from '../draft/DraftAnalysis';
 import { fmtPts, fmtRecord, fmtWinPct } from '../../lib/format';
 import type { Rivalry } from '../../lib/teamProfile';
@@ -20,11 +20,12 @@ export default function Rivals({ rivalries, managers, userId }: Props) {
           const m = managers[r.opponentId];
           const tone = toneOf(r);
           return (
-            <li key={r.opponentId}>
-              <Link to={`/h2h?a=${userId}&b=${r.opponentId}`} className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-x-3 px-4 py-2 text-sm hover:bg-surface-2">
+            <li key={r.opponentId} className="relative hover:bg-surface-2">
+              <CoverLink to={`/h2h?a=${userId}&b=${r.opponentId}`} label={`Series against ${m?.displayName ?? r.opponentId}`} />
+              <div className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-x-3 px-4 py-2 text-sm">
                 <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.opponentId} size={24} />
                 <span className="min-w-0">
-                  <span className="block truncate"><span className="text-xs text-muted">vs</span> {m?.displayName ?? r.opponentId}</span>
+                  <span className="block truncate"><span className="text-xs text-muted">vs</span> <ManagerLink userId={r.opponentId} className="relative z-10">{m?.displayName ?? r.opponentId}</ManagerLink></span>
                   <span className="num block text-xs text-muted">{fmtPts(r.pf)}–{fmtPts(r.pa)} · {r.games} game{r.games === 1 ? '' : 's'}</span>
                 </span>
                 <span className="text-right" data-tone={tone}>
@@ -32,7 +33,7 @@ export default function Rivals({ rivalries, managers, userId }: Props) {
                   <span className={`num block text-xs ${toneClass[tone]}`}>{fmtWinPct(r.winPct)}</span>
                 </span>
                 <span className={`num w-8 text-right text-xs ${r.streak > 0 ? 'text-win' : r.streak < 0 ? 'text-loss' : 'text-muted'}`}>{r.streak > 0 ? `W${r.streak}` : r.streak < 0 ? `L${-r.streak}` : '—'}</span>
-              </Link>
+              </div>
             </li>
           );
         })}

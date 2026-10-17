@@ -1,10 +1,10 @@
-import { Link } from 'react-router';
 import type { Manager, StandingRow, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
+import { ManagerLink, TeamLink } from './NameLink';
 import { fmtPct, fmtPpg, fmtPts, fmtWinPct } from '../lib/format';
 import { METRIC_DEFS } from '../lib/metrics';
 
-interface Props { rows: StandingRow[]; managers: Record<UserId, Manager>; playoffTeams: number }
+interface Props { rows: StandingRow[]; managers: Record<UserId, Manager>; playoffTeams: number; year: number }
 
 const headers: { key: string; label: string; title?: string; left?: boolean }[] = [
   { key: 'rank', label: '#', left: true },
@@ -24,7 +24,7 @@ const headers: { key: string; label: string; title?: string; left?: boolean }[] 
 
 const cell = 'num whitespace-nowrap px-3 py-2.5 text-right';
 
-export default function StandingsTable({ rows, managers, playoffTeams }: Props) {
+export default function StandingsTable({ rows, managers, playoffTeams, year }: Props) {
   return (
     <div className="card overflow-x-auto">
       <table className="w-full text-sm">
@@ -51,13 +51,13 @@ export default function StandingsTable({ rows, managers, playoffTeams }: Props) 
               >
                 <td className="num py-2.5 pl-4 pr-1 text-muted">{r.rank}</td>
                 <td className="px-3 py-2.5">
-                  <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-2 hover:text-accent">
+                  <div className="flex items-center gap-2">
                     <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={28} />
                     <div className="min-w-0 leading-tight">
-                      <div className="truncate font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</div>
-                      {m?.teamName && <div className="text-xs text-muted">{m.displayName}</div>}
+                      <TeamLink userId={r.userId} year={year} className="block truncate font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</TeamLink>
+                      {m?.teamName && <ManagerLink userId={r.userId} className="block text-xs text-muted">{m.displayName}</ManagerLink>}
                     </div>
-                  </Link>
+                  </div>
                 </td>
                 <td className={cell}>{r.w}</td>
                 <td className={cell}>{r.l}</td>

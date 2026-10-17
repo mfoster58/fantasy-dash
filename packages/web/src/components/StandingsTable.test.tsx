@@ -17,7 +17,7 @@ const managers: Record<string, Manager> = {
 
 describe('StandingsTable', () => {
   it('renders rows in order with formatted metrics', () => {
-    render(<StandingsTable rows={[row('a', 1, 6, 2), row('b', 2, 4, 4, { streak: 'L1', t: 1 }), row('c', 3, 1, 7)]} managers={managers} playoffTeams={2} />);
+    render(<StandingsTable rows={[row('a', 1, 6, 2), row('b', 2, 4, 4, { streak: 'L1', t: 1 }), row('c', 3, 1, 7)]} managers={managers} playoffTeams={2} year={2025} />);
     const rows = screen.getAllByTestId('standings-row');
     expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveTextContent('Team A');
@@ -29,8 +29,17 @@ describe('StandingsTable', () => {
     expect(rows[1]).toHaveTextContent('L1');
   });
 
+  it('links the team name to that season\'s team page and the manager to the career page', () => {
+    render(<StandingsTable rows={[row('a', 1, 6, 2), row('b', 2, 4, 4)]} managers={managers} playoffTeams={2} year={2025} />);
+    expect(screen.getByRole('link', { name: 'Team A' })).toHaveAttribute('href', '/teams/2025/a');
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
+    // no team name: the manager's name stands for the team and opens the team page
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/teams/2025/b');
+    expect(document.querySelector('a[href^="/h2h"]')).toBeNull();
+  });
+
   it('marks the playoff cut line after the last playoff team', () => {
-    render(<StandingsTable rows={[row('a', 1, 6, 2), row('b', 2, 4, 4), row('c', 3, 1, 7)]} managers={managers} playoffTeams={2} />);
+    render(<StandingsTable rows={[row('a', 1, 6, 2), row('b', 2, 4, 4), row('c', 3, 1, 7)]} managers={managers} playoffTeams={2} year={2025} />);
     const rows = screen.getAllByTestId('standings-row');
     expect(rows[1]).toHaveAttribute('data-playoff-cut', 'true');
     expect(rows[0]).not.toHaveAttribute('data-playoff-cut');
@@ -38,7 +47,7 @@ describe('StandingsTable', () => {
   });
 
   it('exposes metric definitions as header tooltips', () => {
-    render(<StandingsTable rows={[]} managers={{}} playoffTeams={6} />);
+    render(<StandingsTable rows={[]} managers={{}} playoffTeams={6} year={2025} />);
     expect(screen.getByText('All-Play')).toHaveAttribute('title', expect.stringContaining('every other team'));
     expect(screen.getByText('Eff')).toHaveAttribute('title', expect.stringContaining('max points'));
   });

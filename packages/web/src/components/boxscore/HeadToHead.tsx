@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { H2HGame, H2HSeries, Manager } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { ManagerLink } from '../NameLink';
 import { fmtPts, fmtTag } from '../../lib/format';
 
 interface Props {
@@ -65,7 +66,7 @@ function Side({ manager, align }: { manager: Manager; align: 'left' | 'right' })
   return (
     <div className={`flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3 ${align === 'right' ? 'sm:flex-row-reverse sm:text-right' : 'sm:text-left'}`}>
       <Avatar avatar={manager.avatar} name={manager.displayName} size={44} />
-      <span className="w-full min-w-0 truncate font-semibold sm:w-auto">{manager.displayName}</span>
+      <ManagerLink userId={manager.userId} className="relative z-10 w-full min-w-0 truncate font-semibold sm:w-auto">{manager.displayName}</ManagerLink>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { H2HSeries, History } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { ManagerLink } from '../NameLink';
 import { fmtPts } from '../../lib/format';
 
 interface Props { series: H2HSeries | undefined; a: string; b: string; managers: History['managers'] }
@@ -30,14 +31,14 @@ export default function SeriesSummary({ series, a, b, managers }: Props) {
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
         <div className="flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3 sm:text-left">
           <Avatar avatar={managers[a]?.avatar ?? null} name={nameOf(a)} size={44} />
-          <div className="min-w-0 max-w-full"><div className="truncate text-base font-semibold sm:text-lg">{nameOf(a)}</div><div className="num text-xs text-muted"><span>{fmtPts(aPts)}</span> total</div></div>
+          <div className="min-w-0 max-w-full"><ManagerLink userId={a} className="block truncate text-base font-semibold sm:text-lg">{nameOf(a)}</ManagerLink><div className="num text-xs text-muted"><span>{fmtPts(aPts)}</span> total</div></div>
         </div>
         <div className="text-center">
           <div data-testid="series-record" className="num whitespace-nowrap text-3xl font-semibold sm:text-4xl">{aWins} – {bWins}</div>
           <div className="section-label mt-1 whitespace-nowrap">{series.ties ? `${meetings} meetings · ${series.ties} tie${series.ties > 1 ? 's' : ''}` : `${meetings} meetings`}</div>
         </div>
         <div className="flex min-w-0 flex-col-reverse items-center gap-2 text-center sm:flex-row sm:justify-end sm:gap-3 sm:text-right">
-          <div className="min-w-0 max-w-full"><div className="truncate text-base font-semibold sm:text-lg">{nameOf(b)}</div><div className="num text-xs text-muted"><span>{fmtPts(bPts)}</span> total</div></div>
+          <div className="min-w-0 max-w-full"><ManagerLink userId={b} className="block truncate text-base font-semibold sm:text-lg">{nameOf(b)}</ManagerLink><div className="num text-xs text-muted"><span>{fmtPts(bPts)}</span> total</div></div>
           <Avatar avatar={managers[b]?.avatar ?? null} name={nameOf(b)} size={44} />
         </div>
       </div>

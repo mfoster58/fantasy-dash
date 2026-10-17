@@ -24,8 +24,13 @@ describe('Bracket', () => {
     expect(screen.getByText('Championship')).toBeInTheDocument();
     expect(screen.getByText('3rd place')).toBeInTheDocument();
     expect(screen.getByText('TBD')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Team A.*120\.50.*Team B.*99\.25/s })).toHaveAttribute('href', '/scores/2025/15/1');
-    expect(screen.getByRole('link', { name: /Team C.*150\.75/s })).toHaveAttribute('href', '/scores/2025/16/3');
+    // each cover link names the game, so a reader tabbing through the bracket can tell the cards apart
+    expect(screen.getByRole('link', { name: 'Quarterfinal: Team A vs Team B box score' })).toHaveAttribute('href', '/scores/2025/15/1');
+    expect(screen.getByRole('link', { name: 'Championship: Team A vs Team C box score' })).toHaveAttribute('href', '/scores/2025/16/3');
+    // every team name opens that season's team page, above the game's own link; the unplayed game has no game link
+    expect(screen.getAllByRole('link', { name: 'Team A' }).map((l) => l.getAttribute('href'))).toEqual(['/teams/2025/a', '/teams/2025/a']);
+    expect(screen.getByRole('link', { name: 'Team C' })).toHaveAttribute('href', '/teams/2025/c');
+    expect(document.querySelectorAll('a a')).toHaveLength(0);
   });
 
   it('consolation: the higher scorer is the winner even though the lower scorer advances', () => {

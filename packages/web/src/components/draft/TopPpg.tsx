@@ -1,5 +1,6 @@
 import type { Draft, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import Headshot from '../Headshot';
+import { ManagerLink } from '../NameLink';
 import PosPill from '../PosPill';
 import { fmtPpg } from '../../lib/format';
 import { playerName, playerPos, playerTeam } from '../../lib/players';
@@ -23,7 +24,7 @@ export default function TopPpg({ draft, managers, players, seasonTeams, inSeason
                 <Headshot players={players} id={p.playerId} size={26} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5"><span className="truncate font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /></span>
-                  <span className="block truncate text-xs text-muted">{managers[p.userId]?.displayName} · {playerTeam(players, p.playerId, seasonTeams)} · {p.gamesPlayed} games</span>
+                  <span className="block truncate text-xs text-muted"><ManagerLink userId={p.userId}>{managers[p.userId]?.displayName ?? p.userId}</ManagerLink> · {playerTeam(players, p.playerId, seasonTeams)} · {p.gamesPlayed} games</span>
                 </span>
                 <span className="num text-base font-semibold">{p.ppg === null ? '—' : fmtPpg(p.ppg)}</span>
               </li>

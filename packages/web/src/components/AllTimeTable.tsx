@@ -50,7 +50,7 @@ export default function AllTimeTable({ rows, managers }: Props) {
               <tr key={r.userId} data-testid="alltime-row" className="border-t border-line transition-colors hover:bg-surface-2">
                 <td className="num w-10 px-3 py-2 text-muted">{r.rank}</td>
                 <td className="px-3 py-2">
-                  <Link to={`/h2h?a=${r.userId}`} className="flex items-center gap-2 hover:text-accent">
+                  <Link to={`/managers/${r.userId}`} className="flex items-center gap-2 hover:text-accent">
                     <Avatar avatar={m?.avatar ?? null} name={name} size={24} />
                     <span className="font-medium">{name}</span>
                   </Link>

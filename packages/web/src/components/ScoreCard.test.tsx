@@ -26,7 +26,7 @@ const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter
 describe('ScoreCard', () => {
   it('shows scores, records, efficiency and the top three starters per team', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
-    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
     expect(screen.getByText('120.50')).toBeInTheDocument();
     expect(screen.getByText('99.25')).toBeInTheDocument();
     expect(screen.getAllByText('3-1')).toHaveLength(2);
@@ -42,7 +42,7 @@ describe('ScoreCard', () => {
 
   it('splits performers into two columns without team headers', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
-    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
     const heading = screen.getByText('Top performers');
     const columns = heading.nextElementSibling!.children;
     expect(columns).toHaveLength(2);
@@ -54,7 +54,7 @@ describe('ScoreCard', () => {
 
   it('sets the scores side by side with vs and labeled efficiency bars', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
-    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
     expect(screen.getByText('vs')).toBeInTheDocument();
     expect(screen.getAllByText('Efficiency')).toHaveLength(2);
     expect(screen.getAllByText('90%')).toHaveLength(2);
@@ -62,13 +62,13 @@ describe('ScoreCard', () => {
 
   it('labels a tie', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 100, [['q2', 30]]), null);
-    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
     expect(screen.getAllByText('Tie').length).toBeGreaterThan(0);
   });
 
   it('shows projections for an upcoming game and no performers', () => {
     const g = base(side('a', 0, []), side('b', 0, []), null);
-    wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" year={2025} />);
     expect(screen.getByText('Upcoming')).toBeInTheDocument();
     expect(screen.getAllByText('100.00')).toHaveLength(2);
     expect(screen.getAllByText('proj')).toHaveLength(2);
@@ -80,9 +80,21 @@ describe('ScoreCard', () => {
 
   it('shows the playoff tag and links to the box score', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a', 'Final');
-    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/scores/2025/17/1" />);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/scores/2025/17/1" year={2025} />);
     expect(screen.getByText('Championship')).toBeInTheDocument();
     expect(screen.getByText('Final')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/scores/2025/17/1');
+    // the cover link names both teams, so a reader tabbing through a scoreboard can tell the cards apart
+    expect(screen.getByRole('link', { name: 'Team A vs Team B box score' })).toHaveAttribute('href', '/scores/2025/17/1');
+  });
+
+  it('links each team name to its team page and each manager to the career page', () => {
+    const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a');
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/scores/2025/3/1" year={2025} />);
+    expect(screen.getByRole('link', { name: 'Team A' })).toHaveAttribute('href', '/teams/2025/a');
+    expect(screen.getByRole('link', { name: 'Team B' })).toHaveAttribute('href', '/teams/2025/b');
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/managers/b');
+    // the card itself still opens the box score, without nesting one link inside another
+    expect(document.querySelectorAll('a a')).toHaveLength(0);
   });
 });

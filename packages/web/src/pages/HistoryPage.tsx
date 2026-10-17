@@ -1,16 +1,17 @@
 import { Link } from 'react-router';
 import type { UserId } from '@fantasy-dash/core';
 import Avatar from '../components/Avatar';
+import { ManagerLink } from '../components/NameLink';
 import { history } from '../data/load';
 
 function Who({ id }: { id: UserId | null }) {
   if (!id) return <span className="text-muted">—</span>;
   const m = history.managers[id];
   return (
-    <Link to={`/h2h?a=${id}`} className="flex items-center gap-2 hover:text-accent">
+    <span className="flex items-center gap-2">
       <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? id} size={24} />
-      <span className="font-medium">{m?.displayName ?? id}</span>
-    </Link>
+      <ManagerLink userId={id} className="font-medium">{m?.displayName ?? id}</ManagerLink>
+    </span>
   );
 }
 

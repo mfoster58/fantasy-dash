@@ -1,4 +1,5 @@
 import type { GameSide, Manager, UserId } from '@fantasy-dash/core';
+import { ManagerLink } from '../NameLink';
 import { fmtPts, fmtSigned } from '../../lib/format';
 
 interface Props { sides: [GameSide, GameSide]; managers: Record<UserId, Manager> }
@@ -47,7 +48,7 @@ export default function FormBlock({ sides, managers }: Props) {
           const missing = s.starters.filter((e) => e.player && e.player.projected === null).length;
           return (
             <div key={s.userId} className="space-y-2 text-sm">
-              <div className="font-medium">{managers[s.userId]?.displayName ?? s.userId}</div>
+              <div><ManagerLink userId={s.userId} className="font-medium">{managers[s.userId]?.displayName ?? s.userId}</ManagerLink></div>
               <Row label="vs projection" points={s.points} baseline={s.projected} />
               <Row label="vs season average" points={s.points} baseline={s.seasonPpg} />
               <p className="num text-xs text-muted">
