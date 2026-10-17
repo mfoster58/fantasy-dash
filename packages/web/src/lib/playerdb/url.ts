@@ -6,8 +6,10 @@ export type RosterFilter = string;
 export interface DbState { tab: Tab; from: number; to: number; mode: Mode; roster: RosterFilter; sort: string; dir: 'asc' | 'desc'; q: string }
 
 const clampWeek = (v: string | null, fallback: number, max: number): number => {
+  // Number('') is 0, so blank values must fall back rather than clamp to week 1.
+  if (v === null || v.trim() === '') return fallback;
   const n = Number(v);
-  return v !== null && Number.isInteger(n) && n >= 1 && n <= max ? n : fallback;
+  return Number.isInteger(n) ? Math.min(max, Math.max(1, n)) : fallback;
 };
 
 export function parseState(params: URLSearchParams, throughWeek: number): DbState {
@@ -24,7 +26,7 @@ export function parseState(params: URLSearchParams, throughWeek: number): DbStat
     from, to,
     mode: mode === 'pg' ? 'pg' : 'total',
     roster: params.get('roster') || 'all',
-    sort: sort && COLUMNS[sort] ? sort : DEFAULT_SORT,
+    sort: sort && Object.hasOwn(COLUMNS, sort) ? sort : DEFAULT_SORT,
     dir: dir === 'asc' ? 'asc' : 'desc',
     q: params.get('q') ?? '',
   };
