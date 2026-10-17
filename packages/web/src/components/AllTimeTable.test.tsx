@@ -23,7 +23,7 @@ describe('AllTimeTable', () => {
     expect(rows[0]).toHaveTextContent('90.9%');
     expect(rows[0]).toHaveTextContent('180-90');
     expect(rows[1]).toHaveTextContent('L3');
-    expect(screen.getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(screen.getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/managers/a');
     expect(screen.getByText('Titles')).toHaveAttribute('title', expect.stringContaining('Championships'));
   });
 });

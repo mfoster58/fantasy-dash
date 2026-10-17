@@ -44,7 +44,7 @@ export default function H2HPage() {
                 return (
                   <div key={g.gameId}>
                     <div className="section-label mb-1.5">{g.year} · Week {g.week}</div>
-                    <ScoreCard game={game} played managers={season.managers} players={players} seasonTeams={season.playerTeams} to={`/scores/${g.year}/${g.week}/${game.matchupId}`} />
+                    <ScoreCard game={game} played managers={season.managers} players={players} seasonTeams={season.playerTeams} to={`/scores/${g.year}/${g.week}/${game.matchupId}`} year={g.year} />
                   </div>
                 );
               })}

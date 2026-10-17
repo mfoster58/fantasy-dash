@@ -31,10 +31,13 @@ describe('weekScoreRows', () => {
 describe('WeekScores', () => {
   it('links each team to its game, marks the two in this game and summarises their rank', () => {
     render(<MemoryRouter><WeekScores week={week} game={g1} managers={managers} year={2025} /></MemoryRouter>);
-    const links = screen.getAllByRole('link');
+    const links = screen.getAllByRole('link').filter((l) => l.getAttribute('href')!.startsWith('/scores'));
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/scores/2025/3/2', '/scores/2025/3/1', '/scores/2025/3/1', '/scores/2025/3/2']);
     expect(links[1]).toHaveAttribute('aria-current', 'true');
     expect(links[0]).not.toHaveAttribute('aria-current');
+    // each manager's name is its own link to the career page, sitting above the row's game link
+    expect(screen.getAllByRole('link', { name: 'alice' })[0]).toHaveAttribute('href', '/managers/a');
+    expect(document.querySelectorAll('a a')).toHaveLength(0);
     expect(screen.getByText('#2')).toBeInTheDocument();
     expect(screen.getByText('Beats 1 of the other 2 teams')).toBeInTheDocument();
     expect(screen.getByText('Beats 0 of the other 2 teams')).toBeInTheDocument();

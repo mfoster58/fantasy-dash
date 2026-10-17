@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useParams } from 'react-router';
 import { computeStandings, h2hKey, type GameSide, type Manager, type Season, type StandingRow } from '@fantasy-dash/core';
 import Avatar from '../components/Avatar';
+import { ManagerLink, TeamLink } from '../components/NameLink';
 import EfficiencyBlock from '../components/boxscore/EfficiencyBlock';
 import FormBlock from '../components/boxscore/FormBlock';
 import HeadToHead from '../components/boxscore/HeadToHead';
@@ -9,8 +10,8 @@ import PositionBattle from '../components/boxscore/PositionBattle';
 import { history, players } from '../data/load';
 import { fmtPpg, fmtPts, fmtRecord, fmtStreak, fmtTag } from '../lib/format';
 
-function TeamHeader({ side, manager, outcome, played, align, entering }: {
-  side: GameSide; manager?: Manager; outcome: 'won' | 'lost' | 'even'; played: boolean; align: 'left' | 'right';
+export function TeamHeader({ side, manager, outcome, played, align, entering, year }: {
+  side: GameSide; manager?: Manager; outcome: 'won' | 'lost' | 'even'; played: boolean; align: 'left' | 'right'; year: number;
   /** standings row entering this week (undefined before week 1) */
   entering?: StandingRow;
 }) {
@@ -22,9 +23,9 @@ function TeamHeader({ side, manager, outcome, played, align, entering }: {
     <div className={`flex min-w-0 items-center gap-3 sm:gap-4 ${reverse ? 'sm:flex-row-reverse sm:text-right' : ''}`}>
       <Avatar avatar={manager?.avatar ?? null} name={manager?.displayName ?? '?'} size={48} />
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-lg font-semibold sm:text-[22px] leading-tight" title={name}>{name}</div>
+        <TeamLink userId={side.userId} year={year} className="line-clamp-2 text-lg font-semibold sm:text-[22px] leading-tight" title={name}>{name}</TeamLink>
         <div className="num mt-1 text-sm text-muted" data-testid="team-details">
-          {manager?.displayName} · {fmtRecord(side.recordBefore)}
+          {manager?.displayName && <ManagerLink userId={side.userId}>{manager.displayName}</ManagerLink>} · {fmtRecord(side.recordBefore)}
           {streak && (
             <span className={`ml-1.5 ${streak.kind === 'W' ? 'text-win' : streak.kind === 'L' ? 'text-loss' : ''}`} title="Streak entering this game">
               {streak.label}<span aria-hidden="true" className="ml-0.5 text-[10px]">{streak.kind === 'W' ? '▲' : streak.kind === 'L' ? '▼' : ''}</span>
@@ -72,9 +73,9 @@ export default function BoxScorePage() {
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-6">
-          <TeamHeader side={a} manager={season.managers[a.userId]} outcome={outcome(a)} played={week.played} align="left" entering={enteringOf(a)} />
+          <TeamHeader side={a} manager={season.managers[a.userId]} outcome={outcome(a)} played={week.played} align="left" entering={enteringOf(a)} year={season.year} />
           <div className="section-label hidden text-center text-[13px] lowercase tracking-[0.12em] sm:block" style={{ fontVariant: 'small-caps' }}>vs</div>
-          <TeamHeader side={b} manager={season.managers[b.userId]} outcome={outcome(b)} played={week.played} align="right" entering={enteringOf(b)} />
+          <TeamHeader side={b} manager={season.managers[b.userId]} outcome={outcome(b)} played={week.played} align="right" entering={enteringOf(b)} year={season.year} />
         </div>
       </header>
 

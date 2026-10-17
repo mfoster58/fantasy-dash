@@ -23,9 +23,9 @@ export default function SeasonReviewPage() {
         <h1 className="text-[22px] font-semibold">{season.year} <span className="font-normal text-muted">season review</span></h1>
         <Link to={`/scores/${season.year}/${Math.max(1, season.lastScoredWeek)}`} className="text-sm text-accent hover:underline">Scoreboard →</Link>
       </header>
-      <HonorsStrip honors={season.honors} managers={season.managers} status={season.status} lastScoredWeek={season.lastScoredWeek} />
+      <HonorsStrip honors={season.honors} managers={season.managers} status={season.status} lastScoredWeek={season.lastScoredWeek} year={season.year} />
       <Section title={season.status === 'complete' ? 'Final standings' : `Standings · through week ${season.lastScoredWeek}`}>
-        <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} />
+        <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} year={season.year} />
       </Section>
       <Section title="Playoffs">
         {hasBracket ? <Bracket games={season.brackets.winners} kind="winners" managers={season.managers} year={season.year} /> : <p className="text-sm text-muted">Playoff matchups are set after the regular season.</p>}

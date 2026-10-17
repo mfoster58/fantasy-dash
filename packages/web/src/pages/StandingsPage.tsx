@@ -18,7 +18,7 @@ export default function StandingsPage() {
         </h1>
         <SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/standings/${y}`)} />
       </header>
-      <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} />
+      <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} year={season.year} />
       <p className="text-xs text-muted">
         Regular season only. Hover a column header for its definition. Top {season.playoffTeams} make the playoffs.
       </p>

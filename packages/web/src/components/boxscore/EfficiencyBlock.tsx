@@ -1,4 +1,5 @@
 import type { GameSide, Manager, PlayerDirectory, UserId } from '@fantasy-dash/core';
+import { ManagerLink } from '../NameLink';
 import { fmtPct, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName } from '../../lib/players';
 
@@ -14,7 +15,7 @@ export default function EfficiencyBlock({ sides, managers, players }: Props) {
         {sides.map((s) => (
           <div key={s.userId}>
             <div className="flex items-baseline justify-between">
-              <span className="font-medium">{managers[s.userId]?.displayName ?? s.userId}</span>
+              <ManagerLink userId={s.userId} className="font-medium">{managers[s.userId]?.displayName ?? s.userId}</ManagerLink>
               <span className="num text-lg">{fmtPct(s.efficiency)}</span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded bg-surface-2">

@@ -40,6 +40,9 @@ describe('HeadToHead', () => {
     wrap(series);
     const seriesLink = screen.getByRole('link', { name: 'Full series →' });
     expect(seriesLink).toHaveAttribute('href', `/h2h?a=${bob.userId}&b=${alice.userId}`);
+    // the two names sit above the series overlay with their own links to the career pages
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/managers/b');
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
     expect(seriesLink.className).toContain('inset-0');   // the whole card is the link
     const links = within(screen.getByRole('list')).getAllByRole('link');
     expect(links).toHaveLength(3);
@@ -65,7 +68,7 @@ describe('HeadToHead', () => {
     wrap(undefined);
     expect(screen.getByTestId('h2h-record')).toHaveTextContent(/^0\s*–\s*0$/);
     expect(screen.getByText('First meeting')).toBeInTheDocument();
-    expect(screen.queryAllByRole('link')).toHaveLength(1);   // only the series link
+    expect(screen.queryAllByRole('link')).toHaveLength(3);   // the series link and the two names, no meeting rows
     expect(screen.queryByTestId('h2h-extras')).toBeNull();
     expect(screen.getByRole('link', { name: 'Full series →' })).toBeInTheDocument();
   });

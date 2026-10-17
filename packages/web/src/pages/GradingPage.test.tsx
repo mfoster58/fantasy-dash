@@ -44,6 +44,7 @@ describe('GradingGuide', () => {
     const grades = screen.getByRole('list').querySelectorAll('li');
     expect(grades).toHaveLength(2);
     expect(grades[0]).toHaveTextContent('alice');
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
     expect(grades[0]).toHaveTextContent('+85');
     expect(grades[0]).toHaveTextContent('A+');
     expect(grades[1]).toHaveTextContent('bob');

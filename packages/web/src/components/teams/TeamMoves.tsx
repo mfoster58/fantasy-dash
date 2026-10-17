@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { History, PlayerDirectory, PlayerId, Transaction, UserId } from '@fantasy-dash/core';
 import Headshot from '../Headshot';
+import { ManagerLink } from '../NameLink';
 import PosPill from '../PosPill';
 import { CardHeader } from '../draft/DraftAnalysis';
 import { fmtPts } from '../../lib/format';
@@ -63,7 +64,7 @@ export default function TeamMoves({ moves, bestPickup, players, seasonTeams, man
                   </span>
                   <span className="num text-right text-xs text-muted">
                     {m.type === 'waiver' && m.bid !== null && <span className="font-semibold text-ink">${m.bid}</span>}
-                    {m.type === 'trade' && partner && <span>with {managers[partner]?.displayName ?? partner}</span>}
+                    {m.type === 'trade' && partner && <span>with <ManagerLink userId={partner}>{managers[partner]?.displayName ?? partner}</ManagerLink></span>}
                     <span className="block">Week {m.week}</span>
                   </span>
                 </li>

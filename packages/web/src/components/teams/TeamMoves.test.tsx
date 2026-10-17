@@ -1,4 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 import type { Transaction } from '@fantasy-dash/core';
 import TeamMoves from './TeamMoves';
 import { players } from '../../test/playerFixtures';
@@ -16,6 +18,12 @@ describe('TeamMoves', () => {
     fireEvent.click(more);
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
     expect(screen.getByRole('button', { name: 'Show recent only' })).toBeInTheDocument();
+  });
+
+  it('links a trade partner to the career page', () => {
+    const trade: Transaction = { ...tx(9, 8), type: 'trade', adds: [{ playerId: 'r1', userId: 'a' }, { playerId: 'q1', userId: 'b' }], drops: [] };
+    render(<TeamMoves moves={[trade]} bestPickup={null} players={players} seasonTeams={{}} managers={{ b: { displayName: 'bob', avatar: null, seasons: [2025] } }} userId="a" />);
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/managers/b');
   });
 
   it('has no see-more button when everything fits', () => {

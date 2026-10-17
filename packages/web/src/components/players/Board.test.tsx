@@ -77,7 +77,7 @@ describe('Board', () => {
     expect(first.textContent).toMatch(/^League recordQBQuincy One/);
     expect(within(first).getByText('100.00')).toBeInTheDocument();
     expect(within(first).getByText('3 starts')).toBeInTheDocument();
-    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/managers/a');
     expect(within(first).getByRole('link', { name: /2025 · Wk 1/ })).toHaveAttribute('href', '/scores/2025/1/3');
     const second = screen.getAllByRole('listitem')[1];
     expect(second.textContent).toMatch(/^2\?p1/); // unknown player: '?' pill then id
@@ -96,12 +96,12 @@ describe('Board', () => {
     // a tap opens the list inline, each manager a link, for phones and keyboards where the tooltip never shows
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(within(first).getByRole('link', { name: /bob 14 wks/ })).toHaveAttribute('href', '/h2h?a=b');
-    expect(within(first).getByRole('link', { name: /alice 9 wks/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).getByRole('link', { name: /bob 14 wks/ })).toHaveAttribute('href', '/managers/b');
+    expect(within(first).getByRole('link', { name: /alice 9 wks/ })).toHaveAttribute('href', '/managers/a');
     fireEvent.click(toggle);
     expect(within(first).queryByRole('link', { name: /wks/ })).toBeNull();
     const second = screen.getAllByRole('listitem')[1];
-    expect(within(second).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(second).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/managers/a');
     expect(within(second).queryByText(/managers/)).toBeNull();
   });
 
@@ -189,7 +189,7 @@ describe('Board', () => {
     const [first, second] = screen.getAllByRole('listitem');
     expect(first.textContent).toMatch(/^League recordalice/);
     expect(within(first).getAllByRole('link')).toHaveLength(1);
-    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/managers/a');
     expect(within(first).queryByText('QB')).toBeNull();
     expect(within(first).getByText('30-12')).toBeInTheDocument();
     expect(within(second).getByRole('link', { name: /2025 · Wk 16 · Championship/ })).toHaveAttribute('href', '/scores/2025/16/3');
@@ -236,7 +236,7 @@ describe('Board', () => {
     expect(first.className).toMatch(/\bflex-wrap\b/);
     expect(block.className).toMatch(/\border-last\b.*\bmd:order-none\b/);
     expect(block.className).toMatch(/\bbasis-full\b.*\bmd:basis-2\/5\b/);
-    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
+    expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/managers/a');
     expect(within(first).getByRole('link', { name: '2024' })).toHaveAttribute('href', '/draft/2024?team=a');
     expect(within(first).queryByText('·')).toBeNull(); // the detail moved with the player, so nothing joins it to the meta
   });

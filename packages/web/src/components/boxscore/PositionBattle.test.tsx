@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 import type { GameSide, Manager } from '@fantasy-dash/core';
 import PositionBattle, { positionGroups } from './PositionBattle';
 
@@ -26,7 +28,8 @@ describe('PositionBattle', () => {
     render(<PositionBattle sides={sides} slots={slots} managers={managers} />);
     expect(screen.getAllByTestId('position-row')).toHaveLength(4);
     expect(screen.getByTestId('position-tally')).toHaveTextContent('1 – 2');
-    expect(screen.getByText('alice')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
+    expect(screen.getByRole('link', { name: 'bob' })).toHaveAttribute('href', '/managers/b');
     expect(screen.getByText('15.50')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 import type { GameSide, Manager } from '@fantasy-dash/core';
 import FormBlock from './FormBlock';
 
@@ -18,6 +20,7 @@ const side = (userId: string, points: number, projected: number, seasonPpg: numb
 describe('FormBlock', () => {
   it('shows signed differences against projection and season PPG', () => {
     render(<FormBlock sides={[side('a', 120, 110.5, 100, 0), side('b', 90, 100, 95.25, 2)]} managers={managers} />);
+    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
     expect(screen.getByText('+9.5')).toBeInTheDocument();
     expect(screen.getByText('+20.0')).toBeInTheDocument();
     expect(screen.getByText('-10.0')).toBeInTheDocument();
