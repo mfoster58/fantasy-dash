@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { parseCsv } from '../../src/playerdb/csv';
 import { nflverseTeamAirYards, nflverseWeekly } from '../../src/playerdb/sources/nflverse';
 import { NGS_RECEIVING_FIELDS, ngsWeekly } from '../../src/playerdb/sources/ngs';
-import { PFR_REC_FIELDS, SNAP_FIELDS, pfrWeekly } from '../../src/playerdb/sources/pfr';
+import { PFR_REC_FIELDS, SNAP_FIELDS, pfrWeekly, snapCountTeamSnaps } from '../../src/playerdb/sources/pfr';
 import { nflPlayerMeta } from '../../src/playerdb/sources/players';
 
 const fixture = (name: string) => [...parseCsv(readFileSync(new URL(`../fixtures/playerdb/${name}`, import.meta.url), 'utf8'))];
@@ -64,6 +64,24 @@ describe('pfrWeekly', () => {
     const snaps = pfrWeekly(fixture('snap_counts.csv'), SNAP_FIELDS);
     expect(snaps.get('EgbuEm01|1')?.snaps).toBe(49);
     expect([...snaps.keys()].some((k) => k.endsWith('|19'))).toBe(false);
+  });
+});
+
+describe('snapCountTeamSnaps', () => {
+  const row = (team: string, week: string, snaps: string, pct: string, type = 'REG') => ({ game_type: type, team, week, offense_snaps: snaps, offense_pct: pct });
+  it('derives team snaps from the fixture, keyed by team and week', () => {
+    const m = snapCountTeamSnaps(fixture('snap_counts.csv'));
+    expect(m.get('TB|1')).toBe(57);
+    expect(m.get('TB|2')).toBe(65);
+    expect([...m.keys()].some((k) => k.endsWith('|19'))).toBe(false);
+  });
+  it('normalises team codes, keeps the max, and ignores zero percentages, zero snaps, other weeks and the postseason', () => {
+    const m = snapCountTeamSnaps([
+      row('LA', '3', '66', '1.00'), row('LA', '3', '40', '0.60'), row('LA', '3', '10', '0'), row('SF', '3', '0', '0.5'),
+      row('SF', '19', '60', '1'), row('SF', '0', '60', '1'), row('SF', '4', '60', '1', 'POST'),
+    ]);
+    expect(m.get('LAR|3')).toBe(67);
+    expect([...m.keys()]).toEqual(['LAR|3']);
   });
 });
 

@@ -28,6 +28,8 @@ export interface PlayerDbInput {
   participation: Participation | null;
   /** `${team}|${week}` (Sleeper team codes) → intended passing air yards from nflverse; null falls back to Sleeper's sum */
   teamAirYards: Map<string, number> | null;
+  /** `${team}|${week}` → offensive snaps derived from the snap-count file; fills team weeks where Sleeper has none */
+  teamSnaps: Map<string, number> | null;
 }
 
 /** Copy `extra` fields the base row does not already have. Sleeper's numbers always win. */
@@ -44,7 +46,7 @@ const nameOf = (p: SleeperPlayer | undefined, raw: SleeperWeekStat): string => {
 export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
   const { crosswalk, directory, participation } = input;
   const weeks = new Map([...input.sleeperWeeks].filter(([w]) => w >= 1 && w <= input.throughWeek));
-  const teamWeeks = teamWeeksOf(weeks, participation?.passPlays ?? null, input.teamAirYards);
+  const teamWeeks = teamWeeksOf(weeks, participation?.passPlays ?? null, input.teamAirYards, input.teamSnaps);
   const teamWeekOf = new Map<string, TeamWeek>(teamWeeks.map((t) => [teamWeekKey(t.team, t.week), t]));
   const players: Record<string, DbPlayer> = {};
   const posOf = new Map<string, DbPos>();

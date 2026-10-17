@@ -32,13 +32,16 @@ describe('committed player databases', () => {
 
   it.each(files)('%s never has snaps above team snaps, and snap share stays within 100%%', (file) => {
     const db = load(file);
-    const twOf = new Map(db.teamWeeks.map((t) => [`${t.team}|${t.week}`, t]));
+    const raw = new Map<string, { snaps: number; team: number }>();
     for (const r of db.rows) {
       if (r.snaps === undefined) continue;
-      const tw = twOf.get(`${r.team}|${r.week}`);
-      if (tw && tw.offSnaps > 0) expect(r.teamSnaps, `${file} ${r.id} wk${r.week} lacks teamSnaps`).toBeDefined();
-      if (r.teamSnaps !== undefined) expect(r.snaps, `${file} ${r.id} wk${r.week}`).toBeLessThanOrEqual(r.teamSnaps);
+      expect(r.teamSnaps, `${file} ${r.id} wk${r.week} lacks teamSnaps`).toBeDefined();
+      expect(r.snaps, `${file} ${r.id} wk${r.week}`).toBeLessThanOrEqual(r.teamSnaps!);
+      const t = raw.get(r.id) ?? { snaps: 0, team: 0 };
+      t.snaps += r.snaps; t.team += r.teamSnaps!;
+      raw.set(r.id, t);
     }
+    for (const [id, t] of raw) expect(t.snaps / t.team, `${file} ${id} raw season snap share`).toBeLessThanOrEqual(1.02);
     if (db.throughWeek < 1) return;
     for (const a of aggregate(db, 1, db.throughWeek)) {
       const v = columnValue(COLUMNS.snapPct, a, 'total');

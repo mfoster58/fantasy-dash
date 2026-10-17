@@ -5,9 +5,10 @@ export const teamWeekKey = (team: string, week: number): string => `${team}|${we
 
 /**
  * One TeamWeek per team per week, summed from every player's Sleeper row (all positions). Sorted by week then team.
+ * `teamSnaps` (`${team}|${week}`, from the snap-count file) raises `offSnaps` where Sleeper has none or less.
  * `airYds` comes from `airYds` (nflverse intended air yards, `${team}|${week}`, 0 when absent) when given, else Sleeper's pass_air_yd sum.
  */
-export function teamWeeksOf(sleeperWeeks: Map<number, SleeperWeekStat[]>, passPlays: Map<string, number> | null, airYds: Map<string, number> | null): TeamWeek[] {
+export function teamWeeksOf(sleeperWeeks: Map<number, SleeperWeekStat[]>, passPlays: Map<string, number> | null, airYds: Map<string, number> | null, teamSnaps: Map<string, number> | null): TeamWeek[] {
   const out: TeamWeek[] = [];
   for (const [week, rows] of [...sleeperWeeks.entries()].sort((a, b) => a[0] - b[0])) {
     const byTeam = new Map<string, TeamWeek>();
@@ -28,6 +29,7 @@ export function teamWeeksOf(sleeperWeeks: Map<number, SleeperWeekStat[]>, passPl
       tw.rzLooks += (s.rush_rz_att ?? 0) + (s.rec_rz_tgt ?? 0);
       if (!airYds) tw.airYds += s.pass_air_yd ?? 0;
     }
+    if (teamSnaps) for (const tw of byTeam.values()) tw.offSnaps = Math.max(tw.offSnaps, teamSnaps.get(teamWeekKey(tw.team, week)) ?? 0);
     out.push(...[...byTeam.values()].sort((a, b) => (a.team < b.team ? -1 : 1)));
   }
   return out;

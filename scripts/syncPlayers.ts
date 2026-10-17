@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, PlayerDbSchema, buildPlayerDb, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly,
+  SleeperClient, PlayerDbSchema, buildPlayerDb, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
   type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
@@ -149,7 +149,7 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
 
   const db = buildPlayerDb({
     year, throughWeek, builtAt: new Date().toISOString(), scoring: league.scoring_settings, positionOverrides: leagueConfig.positionOverrides,
-    sleeperWeeks, projections, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards,
+    sleeperWeeks, projections, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards, teamSnaps: snapCountTeamSnaps(snaps),
   });
   const unmapped = Object.values(db.players).filter((p) => !p.gsisId).length;
   log(`  ${db.rows.length} rows, ${Object.keys(db.players).length} players (${unmapped} without a gsis id), xfp fitted for ${Object.entries(db.xfp).filter(([, c]) => c).map(([p]) => p).join(' ') || 'nobody'}`);

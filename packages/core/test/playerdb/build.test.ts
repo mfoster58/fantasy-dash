@@ -30,6 +30,7 @@ function input(over: Partial<PlayerDbInput> = {}): PlayerDbInput {
     byPfr: new Map([['WideOn01|1', { re_bt: 1, re_rtg: 100 }]]),
     nflPlayers: new Map([['00-1', { birthDate: '2002-10-14', draft: { year: 2025, round: 1, pick: 19 }, college: 'Ohio State', height: 73, weight: 205 }]]),
     participation: null,
+    teamSnaps: null,
     teamAirYards: new Map([['TB|1', 301], ['TB|2', 199]]),
     ...over,
   };
@@ -89,6 +90,17 @@ describe('buildPlayerDb', () => {
     const weeks = new Map([[1, [{ player_id: 'z', team: 'TB', opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 3 } } as SleeperWeekStat]]]);
     const o = buildPlayerDb(input({ sleeperWeeks: weeks, throughWeek: 1, directory: {} }));
     expect(o.rows[0]).not.toHaveProperty('teamSnaps');
+  });
+  it('takes teamSnaps from the snap-count map where Sleeper has none, ahead of the routes estimate', () => {
+    const sleeperWeeks = new Map<number, SleeperWeekStat[]>([[1, [
+      { player_id: 'w1', team: 'TB', opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 5, rec: 4, rec_yd: 40 } },
+      qb('q1', 'TB'),
+    ]]]);
+    const o = buildPlayerDb(input({ sleeperWeeks, throughWeek: 1, byPfr: new Map([['WideOn01|1', { snaps: 32 }]]), teamSnaps: new Map([['TB|1', 64]]) }));
+    const w1 = o.rows.find((r) => r.id === 'w1')!;
+    expect(w1.snaps).toBe(32);
+    expect(w1.teamSnaps).toBe(64);
+    expect(w1.routesEst).toBe(Math.round((32 / 64) * 32));
   });
   it('uses real routes and pass plays when participation is given', () => {
     const real = buildPlayerDb(input({ participation: { routes: new Map([['00-1|1', 31]]), passPlays: new Map([['TB|1', 35]]) } }));
