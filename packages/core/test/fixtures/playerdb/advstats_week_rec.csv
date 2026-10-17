@@ -1,0 +1,3 @@
+game_id,pfr_game_id,season,week,game_type,team,opponent,pfr_player_name,pfr_player_id,rushing_broken_tackles,receiving_broken_tackles,passing_drops,passing_drop_pct,receiving_drop,receiving_drop_pct,receiving_int,receiving_rat
+2026_01_TB_CIN,202609130cin,2026,1,REG,TB,CIN,Emeka Egbuka,EgbuEm01,,0,,,0,0,0,110.4
+2026_02_CLE_TB,202609200tam,2026,2,REG,TB,CLE,Emeka Egbuka,EgbuEm01,,0,,,0,0,0,105

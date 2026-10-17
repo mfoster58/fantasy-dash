@@ -40,6 +40,11 @@ jobs:
         if: github.event_name != 'push'
         run: pnpm sync
 
+      - name: Sync player database
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: pnpm sync:players
+
       - name: Test
         run: pnpm test
 
