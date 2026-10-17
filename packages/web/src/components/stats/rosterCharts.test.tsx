@@ -1,0 +1,86 @@
+import { render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import DraftReturns from './DraftReturns';
+import PointOrigins from './PointOrigins';
+import RosterAge from './RosterAge';
+import WireActivity from './WireActivity';
+import Moments from './Moments';
+import { managerRefs } from '../../lib/stats/scope';
+import { draftReturns, pointOrigins, rosterAge, wireActivity } from '../../lib/stats/roster';
+import { moments } from '../../lib/stats/moments';
+import { teamGamesOf } from '../../lib/managerGames';
+import { league, season2024, season2025, statsPlayers } from '../../test/statsFixtures';
+
+const refs = managerRefs(league());
+const s25 = season2025();
+
+describe('DraftReturns', () => {
+  it('tints each round by the points its pick returned and names the player on hover', () => {
+    render(<DraftReturns data={draftReturns(s25)} players={statsPlayers} refs={refs} pin={null} />);
+    const table = screen.getByRole('table', { name: 'Draft returns by round' });
+    const rows = within(table).getAllByRole('row');
+    expect(within(rows[1]).getAllByRole('rowheader')[0]).toHaveTextContent('bob');   // sorted by total
+    expect(within(rows[2]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['340', '']);
+    expect(screen.getByTitle('Quincy One · 340.00 started points')).toBeInTheDocument();
+    expect(screen.getByTitle('Wally Two · 0.00 started points')).toHaveTextContent('');
+  });
+  it('says so without a draft', () => {
+    render(<DraftReturns data={draftReturns(season2024())} players={statsPlayers} refs={refs} pin={null} />);
+    expect(screen.getByText('No draft recorded.')).toBeInTheDocument();
+  });
+});
+
+describe('PointOrigins', () => {
+  it('stacks draft, pickup, trade and unknown shares per manager with a legend', () => {
+    render(<PointOrigins rows={pointOrigins([s25])} refs={refs} pin="a" />);
+    const items = screen.getByRole('list', { name: 'Where the points came from' }).querySelectorAll('li');
+    expect(items).toHaveLength(4);
+    const a = items[2];
+    expect(a).toHaveAttribute('data-pinned', 'true');
+    expect(a.querySelector('[data-part="draft"]')).toHaveTextContent('59%');
+    expect(a.querySelector('[data-part="pickup"]')).toHaveTextContent('21%');
+    expect(a.querySelector('[data-part="draft"]')).toHaveAttribute('title', 'Draft: 340.00 points, 59%');
+    expect(screen.getByText('Waivers and free agents')).toBeInTheDocument();
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
+});
+
+describe('RosterAge', () => {
+  it('places a dot per manager on the rook-to-unc spectrum, the pinned one gold, with the shares in the title', () => {
+    render(<RosterAge data={rosterAge([s25], statsPlayers)} refs={refs} pin="b" />);
+    const svg = screen.getByRole('img', { name: 'Roster age' });
+    expect(svg.querySelectorAll('circle[data-manager]')).toHaveLength(4);
+    expect(svg.querySelector('circle[data-manager="b"]')).toHaveAttribute('data-pinned', 'true');
+    expect(svg.querySelector('circle[data-manager="a"] title')!.textContent).toBe('alice: average age 25.1 · rookies 16%, 30 and over 5%');
+    expect(screen.getByText('ROOK')).toBeInTheDocument();
+    expect(screen.getByText('UNC')).toBeInTheDocument();
+  });
+  it('says so with nothing to place', () => {
+    render(<RosterAge data={{ rows: [], estimated: false }} refs={refs} pin={null} />);
+    expect(screen.getByText('Nothing played yet.')).toBeInTheDocument();
+  });
+});
+
+describe('WireActivity', () => {
+  it('counts pickups per week with the totals and FAAB at the right', () => {
+    render(<WireActivity data={wireActivity(s25)} refs={refs} pin={null} />);
+    const table = screen.getByRole('table', { name: 'Wire activity' });
+    const a = within(table).getAllByRole('row')[1];
+    expect(within(a).getAllByRole('cell').map((c) => c.textContent)).toEqual(['', '1', '', '1', '', '2 · $13']);
+    expect(screen.getByTitle('alice week 2: 1 pickup')).toBeInTheDocument();
+  });
+});
+
+describe('Moments', () => {
+  it('lists four kinds of game, each row linking to its box score', () => {
+    render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} /></MemoryRouter>);
+    for (const h of ['Robbed', 'Stolen', 'Flattened', 'Close calls']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
+    const robbed = screen.getByRole('list', { name: 'Robbed' });
+    const first = robbed.querySelector('li')!;
+    expect(first).toHaveTextContent('120.00');
+    expect(first).toHaveTextContent('dan');
+    expect(within(first).getByRole('link')).toHaveAttribute('href', '/scores/2025/5/1');
+    expect(within(first).getByRole('link')).toHaveTextContent('wk 5 · 150.00–120.00 vs alice');
+    expect(screen.getByRole('list', { name: 'Flattened' }).querySelector('li')).toHaveTextContent('+70.00');
+  });
+});
