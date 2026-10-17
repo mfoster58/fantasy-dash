@@ -82,6 +82,7 @@ describe('Nav', () => {
   it('links to Records and no longer to Player stats or All-Time', () => {
     render(<MemoryRouter><Nav /></MemoryRouter>);
     expect(screen.getAllByRole('link', { name: 'Records' })[0]).toHaveAttribute('href', '/records');
+    expect(screen.getAllByRole('link', { name: 'Stats' })[0]).toHaveAttribute('href', '/stats');
     expect(screen.queryByRole('link', { name: 'Player stats' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'All-Time' })).toBeNull();
   });

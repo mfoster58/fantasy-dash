@@ -10,6 +10,7 @@ import SeasonReviewPage from './pages/SeasonReviewPage';
 import DraftPage from './pages/DraftPage';
 import GradingPage from './pages/GradingPage';
 import RecordsPage from './pages/RecordsPage';
+import StatsPage from './pages/StatsPage';
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
 import { currentSeason, history, loadAllSeasons, loadSeason } from './data/load';
@@ -75,6 +76,8 @@ export const routes: RouteObject[] = [
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
       { path: 'records', loader: () => loadAllSeasons(), element: <RecordsPage /> },
+      { path: 'stats', loader: () => loadAllSeasons(), element: <StatsPage /> },
+      { path: 'stats/managers', loader: ({ request }: LoaderFunctionArgs) => redirect(`/stats${new URL(request.url).search}`) },
       { path: 'history', element: <HistoryPage /> },
       { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
       { path: 'draft', loader: () => redirect(`/draft/${currentSeason.year}`) },
