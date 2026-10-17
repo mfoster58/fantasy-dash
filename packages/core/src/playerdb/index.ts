@@ -11,3 +11,5 @@ export * from './sources/players';
 export * from './sources/participation';
 export * from './teamWeeks';
 export * from './derive';
+export * from './ols';
+export * from './xfp';
