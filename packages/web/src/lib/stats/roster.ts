@@ -1,8 +1,9 @@
 import type { PlayerDirectory, PlayerId, Season, UserId } from '@fantasy-dash/core';
 import { ownership, type Acquisition } from './ownership';
 
-export interface DraftReturnCell { round: number; playerId: PlayerId | null; points: number }
-export interface DraftReturnRow { id: UserId; total: number; cells: DraftReturnCell[] }
+/** `value` is the pick's draft-grading value (null when not graded or no pick) */
+export interface DraftReturnCell { round: number; playerId: PlayerId | null; points: number; value: number | null }
+export interface DraftReturnRow { id: UserId; total: number; totalValue: number; cells: DraftReturnCell[] }
 export interface DraftReturns { rounds: number; rows: DraftReturnRow[] }
 export interface OriginRow { id: UserId; draft: number; pickup: number; trade: number; other: number; total: number }
 export interface AgeRow { id: UserId; age: number; points: number; rookieShare: number; vetShare: number; estimated: boolean }
@@ -39,10 +40,10 @@ export function draftReturns(season: Season): DraftReturns | null {
     const cells: DraftReturnCell[] = [];
     for (let round = 1; round <= draft.rounds; round++) {
       const pick = draft.picks.find((p) => p.userId === id && p.round === round);
-      cells.push({ round, playerId: pick?.playerId ?? null, points: 0 });
+      cells.push({ round, playerId: pick?.playerId ?? null, points: 0, value: pick?.value ?? null });
     }
     for (const s of all) if (s.id === id && s.acq?.kind === 'draft') { const cell = cells[s.acq.round - 1]; if (cell) cell.points = round2(cell.points + s.points); }
-    return { id, cells, total: round2(cells.reduce((t, c) => t + c.points, 0)) };
+    return { id, cells, total: round2(cells.reduce((t, c) => t + c.points, 0)), totalValue: round2(cells.reduce((t, c) => t + (c.value ?? 0), 0)) };
   });
   return { rounds: draft.rounds, rows: rows.sort((x, y) => y.total - x.total || byId(x, y)) };
 }

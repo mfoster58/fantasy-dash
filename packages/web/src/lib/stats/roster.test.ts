@@ -9,8 +9,9 @@ describe('draftReturns', () => {
     const d = draftReturns(season2025())!;
     expect(d.rounds).toBe(2);
     expect(d.rows.map((r) => [r.id, r.total])).toEqual([['b', 507], ['a', 340], ['d', 222], ['c', 185]]);
-    expect(row(d.rows, 'a').cells).toEqual([{ round: 1, playerId: 'q1', points: 340 }, { round: 2, playerId: 't2', points: 0 }]);
-    expect(row(d.rows, 'b').cells[1]).toEqual({ round: 2, playerId: 'w2', points: 0 });
+    expect(row(d.rows, 'a').cells).toEqual([{ round: 1, playerId: 'q1', points: 340, value: 20 }, { round: 2, playerId: 't2', points: 0, value: -8 }]);
+    expect(row(d.rows, 'a').totalValue).toBe(12);
+    expect(row(d.rows, 'b').cells[1]).toEqual({ round: 2, playerId: 'w2', points: 0, value: 3 });
   });
   it('is null without a draft', () => { expect(draftReturns(season2024())).toBeNull(); });
 });
