@@ -8,7 +8,7 @@ export default function StatCard({ id, eyebrow, title, about, caption, wide = fa
   const popover = useAbout();
   const aboutId = `about-${id}`;
   return (
-    <section className={`card flex flex-col ${wide ? 'lg:col-span-2' : ''}`} aria-labelledby={`stat-${id}`}>
+    <section className={`card flex min-w-0 flex-col ${wide ? 'lg:col-span-2' : ''}`} aria-labelledby={`stat-${id}`}>
       <header className="border-b border-line px-4 pb-2 pt-3">
         <div className="section-label">{eyebrow}</div>
         <div className="flex items-center gap-1.5">

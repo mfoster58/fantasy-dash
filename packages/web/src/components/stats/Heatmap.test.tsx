@@ -18,6 +18,9 @@ describe('Heatmap', () => {
     expect(screen.getByTitle('b in week 1')).toHaveAttribute('data-outline', 'true');
     expect(screen.getByTitle('a in week 2')).toHaveAttribute('data-divider', 'true');
     expect(screen.getByText('2 · $13')).toBeInTheDocument();
+    // the name column hugs its content so a short season's cells do not start halfway across the card
+    expect(within(table).getAllByRole('rowheader')[0].className).toMatch(/\bw-px\b/);
+    expect(within(table).getAllByRole('rowheader')[0].className).toMatch(/\bwhitespace-nowrap\b/);
     const dRow = within(table).getAllByRole('row')[4];
     expect(within(dRow).getAllByRole('cell')).toHaveLength(3);   // week 1, an empty week 2, the empty right column
   });

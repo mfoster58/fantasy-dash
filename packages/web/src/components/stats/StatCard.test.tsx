@@ -16,4 +16,8 @@ describe('StatCard', () => {
     render(<StatCard id="y" eyebrow="e" title="t" wide><p>body</p></StatCard>);
     expect(screen.getByRole('region', { name: 't' }).className).toContain('lg:col-span-2');
   });
+  it('can shrink inside the grid so a wide table scrolls within the card instead of widening the page', () => {
+    render(<StatCard id="z" eyebrow="e" title="z"><p>body</p></StatCard>);
+    expect(screen.getByRole('region', { name: 'z' }).className).toMatch(/\bmin-w-0\b/);
+  });
 });

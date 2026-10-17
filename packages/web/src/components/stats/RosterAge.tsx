@@ -2,18 +2,21 @@ import type { ManagerRef } from '../../lib/stats/scope';
 import type { RosterAge as AgeData } from '../../lib/stats/roster';
 import { Empty } from './StatCard';
 import { markAttrs, usePinHover, type Pin } from './pin';
+import { useWidth } from './useWidth';
 
-const W = 640, H = 150, PAD = 52, AXIS = 78;
+const H = 150, PAD = 52, AXIS = 78;
 
 /** a dot per manager on a spectrum from rookie-heavy to veteran-heavy rosters */
 export default function RosterAge({ data, refs, pin }: { data: AgeData; refs: ManagerRef[]; pin: Pin }) {
   const { active, hoverProps } = usePinHover(pin);
+  const [box, W] = useWidth<HTMLDivElement>();
   if (data.rows.length === 0) return <Empty />;
   const name = (id: string) => refs.find((r) => r.id === id)?.name ?? id;
   const ages = data.rows.map((r) => r.age);
   const lo = Math.min(...ages) - 0.5, hi = Math.max(...ages) + 0.5;
   const x = (v: number) => PAD + ((v - lo) / (hi - lo || 1)) * (W - 2 * PAD);
   return (
+    <div ref={box}>
     <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="Roster age">
       <defs><linearGradient id="roster-age-grad" x1="0" x2="1"><stop offset="0" stopColor="var(--win)" /><stop offset="0.5" stopColor="var(--gold)" /><stop offset="1" stopColor="var(--loss)" /></linearGradient></defs>
       <rect x={PAD} y={AXIS - 2} width={W - 2 * PAD} height="4" rx="2" fill="url(#roster-age-grad)" opacity="0.7" />
@@ -34,5 +37,6 @@ export default function RosterAge({ data, refs, pin }: { data: AgeData; refs: Ma
         );
       })}
     </svg>
+    </div>
   );
 }

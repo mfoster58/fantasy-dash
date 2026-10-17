@@ -25,4 +25,14 @@ describe('MultiLine', () => {
     expect(svg.querySelector('path[data-series="b"]')).toHaveAttribute('data-pinned', 'true');
     expect(svg.querySelector('path[data-series="a"]')).toHaveAttribute('data-dim', 'true');
   });
+  it('thins only crowded labels: sparse labels (a year at each season start) all show, dense ones every few points', () => {
+    const sparse = Array.from({ length: 40 }, (_, i) => (i % 17 === 0 ? String(2023 + i / 17) : ''));
+    render(<MultiLine series={[{ id: 'a', values: sparse.map((_, i) => i) }]} xLabels={sparse} yDomain={[0, 40]} rightLabel={(s) => s.id} refs={refs} pin={null} ariaLabel="Sparse" />);
+    for (const y of ['2023', '2024', '2025']) expect(screen.getByText(y)).toBeInTheDocument();
+    const dense = Array.from({ length: 40 }, (_, i) => `wk ${i + 1}`);
+    render(<MultiLine series={[{ id: 'a', values: dense.map((_, i) => i) }]} xLabels={dense} yDomain={[0, 40]} rightLabel={(s) => s.id} refs={refs} pin={null} ariaLabel="Dense" />);
+    const shown = [...screen.getByRole('img', { name: 'Dense' }).querySelectorAll('text')].filter((t) => /^wk /.test(t.textContent ?? ''));
+    expect(shown.length).toBeLessThanOrEqual(14);
+    expect(shown.length).toBeGreaterThanOrEqual(8);
+  });
 });

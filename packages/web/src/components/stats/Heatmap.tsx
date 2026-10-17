@@ -16,7 +16,7 @@ export default function Heatmap({ rows, cols, cell, refs, pin, right, ariaLabel 
       <table className="w-full border-separate border-spacing-0.5 text-xs" aria-label={ariaLabel}>
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-surface" />
+            <th className="sticky left-0 z-10 w-px whitespace-nowrap bg-surface" />
             {cols.map((c) => <th key={c.key} scope="col" className={`num px-0.5 pb-1 text-center font-normal text-muted ${divider(c)}`}>{c.label}</th>)}
             {right && <th />}
           </tr>
@@ -24,7 +24,7 @@ export default function Heatmap({ rows, cols, cell, refs, pin, right, ariaLabel 
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} {...markAttrs(r.id, active)} {...hoverProps(r.id)} className={active !== null && active !== r.id ? 'opacity-40' : ''}>
-              <th scope="row" className="sticky left-0 z-10 bg-surface pr-2 text-left font-normal"><ManagerName id={r.id} refs={refs} active={active} /></th>
+              <th scope="row" className="sticky left-0 z-10 w-px whitespace-nowrap bg-surface pr-2 text-left font-normal"><ManagerName id={r.id} refs={refs} active={active} /></th>
               {cols.map((c) => {
                 const v = cell(r.id, c.key);
                 return (
