@@ -8,12 +8,15 @@ import type { SeasonTransactions } from './boards/shared';
  */
 export interface WaiverClaim { year: number; week: number; playerId: PlayerId; userId: UserId; bid: number | null; points: number; starts: number; lines: PlayerLine[]; open: boolean }
 
-/** started points under which a judged bid is a flop; at or above it the bid hit */
+/** started points under which a bid is a flop; at or above it the bid hit */
 export const FLOP_POINTS = 10;
-/** a bid of real money whose stint is over, so it can be called a hit or a flop */
-export const judged = (c: WaiverClaim): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid > 0 && !c.open;
-export const isFlop = (c: WaiverClaim): c is WaiverClaim & { bid: number } => judged(c) && c.points < FLOP_POINTS;
-export const isHit = (c: WaiverClaim): boolean => judged(c) && c.points >= FLOP_POINTS;
+const paid = (c: WaiverClaim): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid > 0;
+/** a paid bid that has returned FLOP_POINTS, on an open claim or a closed one: a hit is a hit as soon as it happens */
+export const isHit = (c: WaiverClaim): boolean => paid(c) && c.points >= FLOP_POINTS;
+/** a paid bid under FLOP_POINTS once its stint is over; an open claim is never a flop, the player may still come good */
+export const isFlop = (c: WaiverClaim): c is WaiverClaim & { bid: number } => paid(c) && !c.open && c.points < FLOP_POINTS;
+/** a bid that can be called a hit or a flop */
+export const judged = (c: WaiverClaim): c is WaiverClaim & { bid: number } => paid(c) && (c.points >= FLOP_POINTS || !c.open);
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 

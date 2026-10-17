@@ -50,7 +50,7 @@ describe('manager transaction boards', () => {
     expect(mtFaabValue(flops)).toEqual([expect.objectContaining({ userId: 'a', value: 60, valueLabel: '60%', detail: '$30 of $50 · 1 of 2 claims hit' })]);
     expect(mtFaabValue(ctx)).toEqual([expect.objectContaining({ userId: 'a', value: 100, valueLabel: '100%', detail: '$30 of $30 · 1 of 1 claims hit' })]);
     const open = { ...flops, transactions: flops.transactions.map((s) => ({ ...s, complete: false })) };
-    expect(mtFaabValue(open)).toEqual([]); // neither claim was dropped, so nothing is judged yet
+    expect(mtFaabValue(open)).toEqual([expect.objectContaining({ userId: 'a', value: 100, detail: '$30 of $30 · 1 of 1 claims hit' })]); // q1 already hit; the open $20 claim is not judged yet
     expect(mtFaabValue({ ...ctx, transactions: [{ year: 2024, transactions: [tx('w2', 'waiver', 2, 10 * DAY, [mv('q1', 'a')], [], 20)] }] })).toEqual([]); // under $25
   });
   it('finds the best pickup, naming its player, and narrows by that player\'s position', () => {
