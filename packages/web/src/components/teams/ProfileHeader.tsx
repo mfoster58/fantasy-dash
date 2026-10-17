@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Avatar from '../Avatar';
+import Pennant from './Pennant';
 
 export interface Tile { label: string; value: ReactNode; sub?: string | null; /** colours the value */ tone?: 'win' | 'loss' | 'gold' | null }
 
@@ -14,10 +15,12 @@ interface Props {
   chips?: ReactNode;
   /** muted footer strip */
   strip?: ReactNode;
+  /** championship years, newest first; each hangs as a pennant from the card's top edge beside the name */
+  pennants?: number[];
 }
 
 /** The big profile card at the top of a team or manager page: avatar, titles, badge line, 3×2 stat tiles, optional chip row and footer strip. */
-export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, badges, tiles, chips, strip }: Props) {
+export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, badges, tiles, chips, strip, pennants = [] }: Props) {
   return (
     <header className="card overflow-hidden">
       <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
@@ -29,6 +32,12 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
             {subtitle && <div className="mt-0.5 text-sm text-muted">{subtitle}</div>}
             {badges && badges.length > 0 && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">{badges.map((b, i) => <span key={i}>{b}</span>)}</div>}
           </div>
+          {pennants.length > 0 && (
+            // pulled up by the card padding so the pennants hang from the top edge, draped over the card
+            <div className="-mt-5 flex shrink-0 gap-2 self-start pl-1 sm:-mt-6 sm:gap-3" data-testid="pennants">
+              {pennants.map((y) => <Pennant key={y} year={y} />)}
+            </div>
+          )}
         </div>
         <dl className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3">
           {tiles.map((t) => (

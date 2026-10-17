@@ -27,6 +27,7 @@ export default function ManagerPage() {
     <section className="space-y-4">
       <ProfileHeader
         avatar={c.avatar} name={c.name}
+        pennants={[...c.honors.champion].sort((a, b) => b - a)}
         eyebrow={<><span>Manager</span>{c.allTime && <span className="num normal-case tracking-normal text-muted">all-time rank {ordinal(c.allTime.rank)} of {c.managers}</span>}</>}
         title={c.name}
         subtitle={<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
