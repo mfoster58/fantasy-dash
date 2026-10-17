@@ -6,7 +6,7 @@ export interface RaceData { weeks: number[]; playoffTeams: number; series: { id:
 export interface FormCell { week: number; points: number; oppId: UserId; oppPoints: number; result: 'W' | 'L' | 'T'; matchupId: number; top: boolean }
 export interface FormData { weeks: { week: number; playoff: boolean }[]; rows: { id: UserId; cells: (FormCell | null)[] }[]; playoffAt: number | null }
 export interface CalendarCell { week: number; points: number; avg: number; delta: number }
-export interface CalendarData { weeks: number[]; rows: { id: UserId; cells: (CalendarCell | null)[] }[] }
+export interface CalendarData { weeks: { week: number; playoff: boolean }[]; rows: { id: UserId; cells: (CalendarCell | null)[] }[]; playoffAt: number | null }
 export interface FinishRow { id: UserId; top: number; middle: number; bottom: number; weeks: number }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -28,14 +28,20 @@ export function standingsRace(season: Season): RaceData {
   return { weeks: weeks.map((w) => w.week), playoffTeams: season.playoffTeams, series: ids.map((id) => ({ id, ranks: ranks.get(id)! })) };
 }
 
-/** one cell per manager per played week, regular and postseason, the week's top score marked */
+/** every week on the schedule, played or not, with the games of the played ones; the grids keep the same columns all season */
+function scheduleWeeks(season: Season): { week: number; playoff: boolean; games: TeamGame[] }[] {
+  const played = new Map(byWeek(teamGamesOf([season])).map((w) => [w.week, w.games]));
+  return season.weeks.map((w) => ({ week: w.week, playoff: w.isPlayoff, games: played.get(w.week) ?? [] }));
+}
+const firstPlayoff = (weeks: { playoff: boolean }[]) => { const i = weeks.findIndex((w) => w.playoff); return i >= 0 ? i : null; };
+
+/** one cell per manager per week on the schedule, regular and postseason, the week's top score marked; empty until played */
 export function formGuide(season: Season): FormData {
   const ids = idsOf(season);
-  const weeks = byWeek(teamGamesOf([season]));
-  const playoffAt = weeks.findIndex((w) => w.playoff);
+  const weeks = scheduleWeeks(season);
   return {
     weeks: weeks.map((w) => ({ week: w.week, playoff: w.playoff })),
-    playoffAt: playoffAt >= 0 ? playoffAt : null,
+    playoffAt: firstPlayoff(weeks),
     rows: ids.map((id) => ({
       id,
       cells: weeks.map((w) => {
@@ -48,12 +54,13 @@ export function formGuide(season: Season): FormData {
   };
 }
 
-/** every regular-season score against that week's league average */
+/** every score, playoffs included, against that week's league average; a column for every week on the schedule */
 export function scoringCalendar(season: Season): CalendarData {
   const ids = idsOf(season);
-  const weeks = byWeek(regular(teamGamesOf([season])));
+  const weeks = scheduleWeeks(season);
   return {
-    weeks: weeks.map((w) => w.week),
+    weeks: weeks.map((w) => ({ week: w.week, playoff: w.playoff })),
+    playoffAt: firstPlayoff(weeks),
     rows: ids.map((id) => ({
       id,
       cells: weeks.map((w) => {

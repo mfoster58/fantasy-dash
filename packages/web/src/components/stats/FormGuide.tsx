@@ -5,7 +5,8 @@ import Heatmap, { type HeatCell } from './Heatmap';
 import { Empty } from './StatCard';
 import type { Pin } from './pin';
 
-const FILL = { W: 'var(--win)', L: 'var(--loss)', T: 'var(--muted)' } as const;
+/** muted squares: the result colour mixed into the card, so a column of them reads calmly */
+const FILL = { W: 'color-mix(in srgb, var(--win) 45%, var(--surface-2))', L: 'color-mix(in srgb, var(--loss) 45%, var(--surface-2))', T: 'var(--surface-2)' } as const;
 
 export default function FormGuide({ data, refs, pin }: { data: FormData; refs: ManagerRef[]; pin: Pin }) {
   if (data.weeks.length === 0) return <Empty />;

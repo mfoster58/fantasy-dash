@@ -37,7 +37,9 @@ describe('FormGuide', () => {
     const a = within(table).getAllByRole('row')[1];
     expect(within(a).getAllByRole('cell').map((c) => c.textContent)).toEqual(['W', 'W', 'W', 'W', 'W']);
     expect(within(a).getAllByRole('cell')[0].querySelector('[data-dot]')).not.toBeNull();
-    expect(within(a).getAllByRole('cell')[4]).toHaveAttribute('data-divider', 'true');
+    expect(within(a).getAllByRole('cell')[4].previousElementSibling).toHaveAttribute('data-divider-gap');
+    // muted: tinted squares, not the full win and loss colours
+    expect(within(a).getAllByRole('cell')[0].getAttribute('style')).toMatch(/color-mix/);
     expect(screen.getByTitle('Week 1: 120.00 vs bob 100.00')).toBeInTheDocument();
     const d = within(table).getAllByRole('row')[4];
     expect(within(d).getAllByRole('cell').map((c) => c.textContent)).toEqual(['W', 'L', 'L', 'L', 'L']);
@@ -48,7 +50,9 @@ describe('ScoringCalendar', () => {
   it('prints the score in every regular-season cell and titles it against the week\'s average', () => {
     render(<ScoringCalendar data={scoringCalendar(s25)} refs={refs} pin={null} />);
     const table = screen.getByRole('table', { name: 'Scoring calendar' });
-    expect(within(within(table).getAllByRole('row')[1]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['120', '130', '80', '100']);
+    const a = within(table).getAllByRole('row')[1];
+    expect(within(a).getAllByRole('cell').map((c) => c.textContent)).toEqual(['120', '130', '80', '100', '150']);
+    expect(within(a).getAllByRole('cell')[4].previousElementSibling).toHaveAttribute('data-divider-gap');
     expect(screen.getByTitle('Week 3: 80.00, league average 98.75 (-18.75)')).toBeInTheDocument();
   });
 });

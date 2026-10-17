@@ -53,6 +53,7 @@ describe('RosterAge', () => {
     expect(svg.querySelector('circle[data-manager="b"]')).toHaveAttribute('data-pinned', 'true');
     expect(svg.querySelector('circle[data-manager="a"] title')!.textContent).toBe('alice: average age 25.1 · rookies 16%, 30 and over 5%');
     expect(screen.getByText('ROOK')).toBeInTheDocument();
+    expect([...svg.querySelectorAll('text')].find((t) => t.textContent === 'alice')).toHaveAttribute('font-size', '13');
     expect(screen.getByText('UNC')).toBeInTheDocument();
   });
   it('says so with nothing to place', () => {
@@ -72,16 +73,24 @@ describe('WireActivity', () => {
 });
 
 describe('Moments', () => {
-  it('lists four kinds of game, each row linking to its box score', () => {
+  it('draws each notable game as two score bars, winner over loser, linking to its box score', () => {
     render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} /></MemoryRouter>);
-    for (const h of ['Robbed', 'Stolen', 'Flattened', 'Close calls']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
-    const robbed = screen.getByRole('list', { name: 'Robbed' });
-    const first = robbed.querySelector('li')!;
-    expect(first).toHaveTextContent('120.00');
-    expect(first).toHaveTextContent('dan');
-    expect(within(first).getByRole('link')).toHaveAttribute('href', '/scores/2025/5/1');
-    expect(within(first).getByRole('link')).toHaveTextContent('wk 5 · 150.00–120.00 vs alice');
-    expect(screen.getByRole('list', { name: 'Flattened' }).querySelector('li')).toHaveTextContent('+70.00');
+    for (const h of ['High score in a loss', 'Low score in a win', 'Blowouts', 'Close calls']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
+    const first = screen.getByRole('list', { name: 'High score in a loss' }).querySelector('li')!;
+    const link = within(first).getByRole('link');
+    expect(link).toHaveAttribute('href', '/scores/2025/5/1');
+    expect(link).toHaveTextContent('Week 5');
+    const bars = first.querySelectorAll('[data-bar]');
+    expect([...bars].map((b) => b.getAttribute('data-bar'))).toEqual(['win', 'loss']);
+    expect(bars[0]).toHaveTextContent('alice');
+    expect(bars[0]).toHaveTextContent('150.00');
+    expect(bars[1]).toHaveTextContent('dan');
+    expect(bars[1]).toHaveTextContent('120.00');
+    // the bars are scaled to the biggest score in the list, so the gap between them is the margin
+    expect(parseFloat((bars[1].querySelector('[data-fill]') as HTMLElement).style.width)).toBeLessThan(parseFloat((bars[0].querySelector('[data-fill]') as HTMLElement).style.width));
+    // the manager each list is about is marked: the loser for a high score in a loss
+    expect(bars[1]).toHaveAttribute('data-featured', 'true');
+    expect(screen.getByRole('list', { name: 'Blowouts' }).querySelector('li')).toHaveTextContent('+70.00');
     expect(screen.getByTestId('moment-lists').className).toMatch(/sm:grid-cols-2/);
   });
   it('can stack its four lists in one column', () => {

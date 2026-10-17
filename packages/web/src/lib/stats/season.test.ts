@@ -37,10 +37,23 @@ describe('formGuide', () => {
 });
 
 describe('scoringCalendar', () => {
-  it('compares every regular-season score with that week\'s league average', () => {
+  it('compares every score, playoffs included, with that week\'s league average', () => {
     const c = scoringCalendar(s25);
-    expect(c.weeks).toEqual([1, 2, 3, 4]);
-    expect(row(c.rows, 'a').cells.map((x) => [x!.points, x!.avg, x!.delta])).toEqual([[120, 105, 15], [130, 113.75, 16.25], [80, 98.75, -18.75], [100, 97.25, 2.75]]);
+    expect(c.weeks).toEqual([{ week: 1, playoff: false }, { week: 2, playoff: false }, { week: 3, playoff: false }, { week: 4, playoff: false }, { week: 5, playoff: true }]);
+    expect(c.playoffAt).toBe(4);
+    expect(row(c.rows, 'a').cells.map((x) => [x!.points, x!.avg, x!.delta])).toEqual([[120, 105, 15], [130, 113.75, 16.25], [80, 98.75, -18.75], [100, 97.25, 2.75], [150, 113.75, 36.25]]);
+  });
+});
+
+describe('every week of the season, played or not', () => {
+  it('gives the form guide and the calendar a column for each week on the schedule, empty until it is played', () => {
+    const s = season2025();
+    s.weeks = [...s.weeks, { ...week(6, [], true), played: false }];
+    const f = formGuide(s), c = scoringCalendar(s);
+    expect(f.weeks.map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(row(f.rows, 'a').cells[5]).toBeNull();
+    expect(c.weeks.map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(row(c.rows, 'a').cells[5]).toBeNull();
   });
 });
 

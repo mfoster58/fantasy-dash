@@ -55,6 +55,14 @@ describe('wireActivity', () => {
     expect(w.rows.map((r) => [r.id, r.total, r.faab])).toEqual([['a', 2, 13], ['b', 1, 0], ['c', 0, 0], ['d', 0, 0]]);
     expect(row(w.rows, 'a').perWeek).toEqual([0, 1, 0, 1, 0]);
   });
+  it('has a column for every week on the schedule, counting only weeks already played', () => {
+    const s = season2025();
+    s.weeks = [...s.weeks, { ...s.weeks[4], week: 6, played: false, games: [] }];
+    s.transactions = [...s.transactions, { id: 't7', type: 'free_agent', week: 6, created: 7000, adds: [{ playerId: 'x2', userId: 'c' }], drops: [], bid: null }];
+    const w = wireActivity(s);
+    expect(w.weeks).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(row(w.rows, 'c')).toMatchObject({ total: 0, perWeek: [0, 0, 0, 0, 0, 0] });
+  });
   it('leaves out adds logged for a week that has not been played, so the totals match the row', () => {
     const s = season2025();
     s.transactions = [...s.transactions, { id: 't6', type: 'waiver', week: 6, created: 6000, adds: [{ playerId: 'x2', userId: 'a' }], drops: [], bid: 7 }];

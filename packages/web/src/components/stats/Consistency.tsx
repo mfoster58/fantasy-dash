@@ -20,7 +20,7 @@ export default function Consistency({ rows, refs, pin }: { rows: ConsistencyRow[
             <ManagerName id={r.id} refs={refs} active={active} />
             <span className="relative h-4">
               <span className="absolute top-1/2 h-px -translate-y-1/2 bg-muted opacity-60" style={{ left: x(r.min), width: `calc(${x(r.max)} - ${x(r.min)})` }} />
-              <span data-box title={`${name(r.id)}: floor ${fmtPts(r.floor)}, median ${fmtPts(r.median)}, ceiling ${fmtPts(r.ceiling)}; worst ${fmtPts(r.min)}, best ${fmtPts(r.max)}`} className="absolute top-0.5 h-3 rounded-sm" style={{ left: x(r.floor), width: `calc(${x(r.ceiling)} - ${x(r.floor)})`, background: r.id === active ? 'var(--gold)' : 'var(--dim)', opacity: 0.8 }} />
+              <span data-box title={`${name(r.id)}: floor ${fmtPts(r.floor)}, median ${fmtPts(r.median)}, ceiling ${fmtPts(r.ceiling)}; worst ${fmtPts(r.min)}, best ${fmtPts(r.max)}`} className="absolute top-0.5 h-3 rounded-sm" style={{ left: x(r.floor), width: `calc(${x(r.ceiling)} - ${x(r.floor)})`, background: r.id === active ? 'var(--gold)' : 'color-mix(in srgb, var(--accent) 55%, var(--surface-2))', opacity: 0.9 }} />
               <span className="absolute top-0 h-4 w-0.5 -translate-x-1/2 bg-ink" style={{ left: x(r.median) }} />
             </span>
           </li>
