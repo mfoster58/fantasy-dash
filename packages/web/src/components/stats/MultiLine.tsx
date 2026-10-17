@@ -10,6 +10,8 @@ interface Props {
   /** indexes a dashed vertical line sits before */ dividers?: number[];
   /** indexes drawn over a faint band (playoff weeks) */ bands?: number[];
   rightLabel: (s: LineSeries) => string; refs: ManagerRef[]; pin: Pin; ariaLabel: string; height?: number;
+  /** a colour per manager; given, every line keeps its colour and only the active one turns gold */
+  colors?: Record<UserId, string>;
 }
 const PAD = { l: 34, r: 96, t: 12, b: 24 };
 const GUIDE: Record<Guide['tone'], string> = { line: 'var(--line)', win: 'var(--win)', gold: 'var(--gold)' };
@@ -18,8 +20,12 @@ const GUIDE: Record<Guide['tone'], string> = { line: 'var(--line)', win: 'var(--
  * Several lines over the same x axis; the active manager's is gold on top, the rest dim. The viewBox follows the
  * container's width so text stays a real 10px in a wide card. Labels sit at the right edge, pushed apart so they never overlap.
  */
-export default function MultiLine({ series, xLabels, yDomain, invertY = false, guides = [], dividers = [], bands = [], rightLabel, refs, pin, ariaLabel, height = 240 }: Props) {
+export default function MultiLine({ series, xLabels, yDomain, invertY = false, guides = [], dividers = [], bands = [], rightLabel, refs, pin, ariaLabel, height = 240, colors }: Props) {
   const { active, hoverProps } = usePinHover(pin);
+  const stroke = (id: UserId) => (id === active ? 'var(--gold)' : colors?.[id] ?? lineStroke(id, active));
+  const labelFill = (id: UserId) => (id === active ? 'var(--gold)' : colors?.[id] ?? 'var(--muted)');
+  const dimmed = (id: UserId) => active !== null && active !== id;
+  const lineOpacity = (id: UserId) => (dimmed(id) ? (colors ? 0.3 : 0.45) : 1);
   const [box, W] = useWidth<HTMLDivElement>();
   const n = xLabels.length;
   const [lo, hi] = yDomain;
@@ -50,12 +56,12 @@ export default function MultiLine({ series, xLabels, yDomain, invertY = false, g
         ))}
         {xLabels.map((l, i) => showLabel.has(i) && <text key={l + i} x={x(i)} y={height - 6} fontSize="10" textAnchor="middle" fill="var(--muted)" className="num">{l}</text>)}
         {ordered.map((s) => (
-          <path key={s.id} data-series={s.id} {...markAttrs(s.id, active)} {...hoverProps(s.id)} d={path(s.values)} fill="none" stroke={lineStroke(s.id, active)} strokeWidth={lineWidth(s.id, active)} strokeLinejoin="round" strokeLinecap="round" opacity={active !== null && active !== s.id ? 0.45 : 1} style={{ cursor: 'default' }}>
+          <path key={s.id} data-series={s.id} {...markAttrs(s.id, active)} {...hoverProps(s.id)} d={path(s.values)} fill="none" stroke={stroke(s.id)} strokeWidth={colors && !dimmed(s.id) && s.id !== active ? 2 : lineWidth(s.id, active)} strokeLinejoin="round" strokeLinecap="round" opacity={lineOpacity(s.id)} style={{ cursor: 'default' }}>
             <title>{name(s.id)}</title>
           </path>
         ))}
         {ends.map(({ s, y: ly }) => (
-          <text key={`l${s.id}`} data-series-label={s.id} {...markAttrs(s.id, active)} {...hoverProps(s.id)} x={W - PAD.r + 6} y={ly + 3} fontSize="10" fill={s.id === active ? 'var(--gold)' : 'var(--muted)'} fontWeight={s.id === active ? 600 : 400} opacity={active !== null && active !== s.id ? 0.5 : 1}>{rightLabel(s)}</text>
+          <text key={`l${s.id}`} data-series-label={s.id} {...markAttrs(s.id, active)} {...hoverProps(s.id)} x={W - PAD.r + 6} y={ly + 3} fontSize="10" fill={labelFill(s.id)} fontWeight={s.id === active ? 600 : 400} opacity={dimmed(s.id) ? 0.5 : 1}>{rightLabel(s)}</text>
         ))}
       </svg>
     </div>
