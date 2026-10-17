@@ -12,10 +12,14 @@ describe('countRoutes', () => {
       play('2025_01_TB_CIN', 'TB', true, ['00-A']),
       play('2025_01_TB_CIN', 'CIN', true, ['00-C']),
       play('2025_19_TB_CIN', 'TB', true, ['00-A']),
+      play('2025_01_LA_SF', 'LA', true, ['00-C']),
+      play('2025_01_LA_SF', 'LA', true, ['00-C']),
+      play('2025_01_LA_SF', 'LA', true, ['00-C']),
     ];
     const p = countRoutes(rows, new Set(['00-A', '00-B', '00-C']));
     expect(p.passPlays.get('TB|1')).toBe(2);
     expect(p.passPlays.get('CIN|1')).toBe(1);
+    expect(p.passPlays.get('LAR|1')).toBe(3);
     expect(p.passPlays.has('TB|19')).toBe(false);
     expect(p.routes.get('00-A|1')).toBe(2);
     expect(p.routes.get('00-B|1')).toBe(1);

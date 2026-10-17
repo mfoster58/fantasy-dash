@@ -1,5 +1,6 @@
 import { weekKey } from '../fields';
 import { teamWeekKey } from '../teamWeeks';
+import { normalizeTeam } from '../crosswalk';
 
 export interface Participation {
   /** `${gsis}|${week}` → routes run (pass plays he was on the field for) */
@@ -20,7 +21,7 @@ export function countRoutes(rows: Iterable<Record<string, string>>, routeRunners
   for (const r of rows) {
     const week = weekOfGame(r.nflverse_game_id ?? '');
     if (!(week >= 1 && week <= 18) || !r.time_to_throw || !r.possession_team) continue;
-    bump(passPlays, teamWeekKey(r.possession_team, week));
+    bump(passPlays, teamWeekKey(normalizeTeam(r.possession_team), week));
     for (const gsis of (r.offense_players ?? '').split(';')) if (routeRunners.has(gsis)) bump(routes, weekKey(gsis, week));
   }
   return { routes, passPlays };
