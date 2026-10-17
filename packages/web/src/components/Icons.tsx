@@ -42,11 +42,11 @@ export function FinishIcon({ kind, className = '', size = '1.3em' }: { kind: Fin
   return <Icon shape={shape} title={title} width={size} height={size} className={`${tone} ${className}`} data-testid={`finish-${kind}`} />;
 }
 
-/** The same icon for use inside an existing `<svg>`: a `size`-wide group whose top-left corner sits at (x, y). */
-export function FinishGlyph({ kind, x, y, size }: { kind: FinishKind; x: number; y: number; size: number }): ReactElement {
-  const { shape, color, title } = FINISH[kind];
+/** The same icon for use inside an existing `<svg>`: a `size`-wide group whose top-left corner sits at (x, y); `color` overrides the finish's own tone. */
+export function FinishGlyph({ kind, x, y, size, color }: { kind: FinishKind; x: number; y: number; size: number; color?: string }): ReactElement {
+  const { shape, color: tone, title } = FINISH[kind];
   return (
-    <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(size / 24).toFixed(3)})`} style={{ color }} {...STROKE} data-testid={`glyph-${kind}`}>
+    <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(size / 24).toFixed(3)})`} style={{ color: color ?? tone }} {...STROKE} data-testid={`glyph-${kind}`}>
       <title>{title}</title>
       {SHAPES[shape]}
     </g>

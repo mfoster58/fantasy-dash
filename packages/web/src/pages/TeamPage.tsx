@@ -34,6 +34,7 @@ export default function TeamPage() {
     <section className="space-y-4">
       <ProfileHeader
         avatar={p.avatar} name={p.displayName}
+        pennants={season.honors.champion === userId ? [season.year] : []}
         eyebrow={<SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/teams/${y}/${userId}`)} />}
         title={p.teamName}
         subtitle={<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
