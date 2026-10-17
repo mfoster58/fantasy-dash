@@ -13,10 +13,10 @@ const managers: Record<string, Manager> = {
   b: { userId: 'b', displayName: 'bob', teamName: 'Team B', avatar: null, rosterId: 2 },
 };
 const players: PlayerDirectory = {
-  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
-  r1: { id: 'r1', name: 'Ricky One', firstName: 'Ricky', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 2 },
-  q2: { id: 'q2', name: 'Quinn Two', firstName: 'Quinn', lastName: 'Two', position: 'QB', team: 'BUF', yearsExp: 5 },
-  r2: { id: 'r2', name: 'Rob Two', firstName: 'Rob', lastName: 'Two', position: 'RB', team: 'DET', yearsExp: 1 },
+  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3, birthDate: null },
+  r1: { id: 'r1', name: 'Ricky One', firstName: 'Ricky', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 2, birthDate: null },
+  q2: { id: 'q2', name: 'Quinn Two', firstName: 'Quinn', lastName: 'Two', position: 'QB', team: 'BUF', yearsExp: 5, birthDate: null },
+  r2: { id: 'r2', name: 'Rob Two', firstName: 'Rob', lastName: 'Two', position: 'RB', team: 'DET', yearsExp: 1, birthDate: null },
 };
 const base = (a: GameSide, b: GameSide, winner: string | null, tag: Game['tag'] = null): Game => ({
   id: '2025-3-1', matchupId: 1, week: 3, tag, sides: [a, b], winner, margin: Math.abs(a.points - b.points),

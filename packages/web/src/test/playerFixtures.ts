@@ -2,12 +2,12 @@ import type { BracketGame, Game, GameSide, PlayerDirectory, PlayerLine as CoreLi
 import type { BoardContext } from '../lib/boards/shared';
 
 export const players: PlayerDirectory = {
-  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
-  r1: { id: 'r1', name: 'Ricky One', firstName: 'Ricky', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 2 },
-  w1: { id: 'w1', name: 'Wally One', firstName: 'Wally', lastName: 'One', position: 'WR', team: 'MIA', yearsExp: 4 },
-  t1: { id: 't1', name: 'Tony One', firstName: 'Tony', lastName: 'One', position: 'TE', team: 'KC', yearsExp: 6 },
-  k1: { id: 'k1', name: 'Kick One', firstName: 'Kick', lastName: 'One', position: 'K', team: 'BAL', yearsExp: 8 },
-  KC: { id: 'KC', name: 'Kansas City Chiefs', firstName: 'Kansas City', lastName: 'Chiefs', position: 'DEF', team: 'KC', yearsExp: null },
+  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3, birthDate: null },
+  r1: { id: 'r1', name: 'Ricky One', firstName: 'Ricky', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 2, birthDate: null },
+  w1: { id: 'w1', name: 'Wally One', firstName: 'Wally', lastName: 'One', position: 'WR', team: 'MIA', yearsExp: 4, birthDate: null },
+  t1: { id: 't1', name: 'Tony One', firstName: 'Tony', lastName: 'One', position: 'TE', team: 'KC', yearsExp: 6, birthDate: null },
+  k1: { id: 'k1', name: 'Kick One', firstName: 'Kick', lastName: 'One', position: 'K', team: 'BAL', yearsExp: 8, birthDate: null },
+  KC: { id: 'KC', name: 'Kansas City Chiefs', firstName: 'Kansas City', lastName: 'Chiefs', position: 'DEF', team: 'KC', yearsExp: null, birthDate: null },
 };
 
 export const line = (playerId: string, points: number, stats: Record<string, number> = { rec: 1 }): CoreLine => ({ playerId, points, projected: null, stats });

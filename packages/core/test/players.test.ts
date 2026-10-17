@@ -5,12 +5,13 @@ import type { Season } from '../src/types';
 describe('toPlayerDirectory', () => {
   it('normalizes players and team defenses', () => {
     const dir = toPlayerDirectory({
-      '4034': { player_id: '4034', full_name: 'Christian McCaffrey', first_name: 'Christian', last_name: 'McCaffrey', position: 'RB', team: 'SF', years_exp: 7 },
+      '4034': { player_id: '4034', full_name: 'Christian McCaffrey', first_name: 'Christian', last_name: 'McCaffrey', position: 'RB', team: 'SF', years_exp: 7, birth_date: '1996-06-07' },
       'SF': { player_id: 'SF', first_name: 'San Francisco', last_name: '49ers', position: 'DEF', team: 'SF' },
-      '999': { player_id: '999', first_name: 'No', last_name: 'Position' },
+      '999': { player_id: '999', first_name: 'No', last_name: 'Position', birth_date: '' },
     });
-    expect(dir['4034']).toEqual({ id: '4034', name: 'Christian McCaffrey', firstName: 'Christian', lastName: 'McCaffrey', position: 'RB', team: 'SF', yearsExp: 7 });
-    expect(dir['SF']).toEqual({ id: 'SF', name: 'San Francisco 49ers', firstName: 'San Francisco', lastName: '49ers', position: 'DEF', team: 'SF', yearsExp: null });
+    expect(dir['4034']).toEqual({ id: '4034', name: 'Christian McCaffrey', firstName: 'Christian', lastName: 'McCaffrey', position: 'RB', team: 'SF', yearsExp: 7, birthDate: '1996-06-07' });
+    expect(dir['SF']).toEqual({ id: 'SF', name: 'San Francisco 49ers', firstName: 'San Francisco', lastName: '49ers', position: 'DEF', team: 'SF', yearsExp: null, birthDate: null });
+    expect(dir['999'].birthDate).toBeNull();
     expect(dir['999'].position).toBeNull();
     expect(dir['999'].name).toBe('No Position');
   });

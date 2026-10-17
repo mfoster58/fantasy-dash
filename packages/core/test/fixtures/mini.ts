@@ -51,7 +51,7 @@ function matchup(userId: string, week: number, matchupId: number): SleeperMatchu
 }
 
 function info(id: string, position: string): PlayerInfo {
-  return { id, name: id.toUpperCase(), firstName: id, lastName: '', position, team: null, yearsExp: null };
+  return { id, name: id.toUpperCase(), firstName: id, lastName: '', position, team: null, yearsExp: null, birthDate: null };
 }
 
 function user(user_id: string, display_name: string, team_name: string | null): SleeperUser {

@@ -4,10 +4,10 @@ import type { Draft, DraftPick, PlayerDirectory, Season } from '@fantasy-dash/co
 import { GradingGuide } from './GradingPage';
 
 const players: PlayerDirectory = {
-  p1: { id: 'p1', name: 'Star Back', firstName: 'Star', lastName: 'Back', position: 'RB', team: 'SF', yearsExp: 3 },
-  p2: { id: 'p2', name: 'Bust Wide', firstName: 'Bust', lastName: 'Wide', position: 'WR', team: 'DAL', yearsExp: 3 },
-  p3: { id: 'p3', name: 'Late Gem', firstName: 'Late', lastName: 'Gem', position: 'TE', team: 'KC', yearsExp: 3 },
-  p4: { id: 'p4', name: 'Dart Miss', firstName: 'Dart', lastName: 'Miss', position: 'WR', team: 'NYJ', yearsExp: 1 },
+  p1: { id: 'p1', name: 'Star Back', firstName: 'Star', lastName: 'Back', position: 'RB', team: 'SF', yearsExp: 3, birthDate: null },
+  p2: { id: 'p2', name: 'Bust Wide', firstName: 'Bust', lastName: 'Wide', position: 'WR', team: 'DAL', yearsExp: 3, birthDate: null },
+  p3: { id: 'p3', name: 'Late Gem', firstName: 'Late', lastName: 'Gem', position: 'TE', team: 'KC', yearsExp: 3, birthDate: null },
+  p4: { id: 'p4', name: 'Dart Miss', firstName: 'Dart', lastName: 'Miss', position: 'WR', team: 'NYJ', yearsExp: 1, birthDate: null },
 };
 const pick = (pickNo: number, userId: string, playerId: string, contribution: number, earnedPick: number | null, value: number, seasonPoints = 200): DraftPick => ({
   round: Math.ceil(pickNo / 2), pickNo, slot: ((pickNo - 1) % 2) + 1, userId, playerId, isKeeper: false,

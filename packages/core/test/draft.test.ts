@@ -40,7 +40,7 @@ describe('buildDraft', () => {
   });
 });
 
-const info = (id: string, position: string | null): PlayerDirectory[string] => ({ id, name: id, firstName: id, lastName: '', position, team: null, yearsExp: null });
+const info = (id: string, position: string | null): PlayerDirectory[string] => ({ id, name: id, firstName: id, lastName: '', position, team: null, yearsExp: null, birthDate: null });
 
 describe('computeDraftValues', () => {
   // Four scoring RBs + one zero RB, three QBs, a DEF, and an unknown-position player.

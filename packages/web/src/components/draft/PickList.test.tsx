@@ -4,7 +4,7 @@ import type { DraftPick, PlayerDirectory } from '@fantasy-dash/core';
 import PickList, { type PickRow } from './PickList';
 
 const players: PlayerDirectory = {
-  p1: { id: 'p1', name: 'Player One', firstName: 'Player', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 1 },
+  p1: { id: 'p1', name: 'Player One', firstName: 'Player', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 1, birthDate: null },
 };
 const pick = (pickNo: number, value: number): DraftPick => ({
   round: Math.ceil(pickNo / 10), pickNo, slot: 1, userId: 'a', playerId: 'p1', isKeeper: false, posDraftRank: 1, seasonPoints: 200, gamesPlayed: 17, ppg: 11.8, healthy: true,

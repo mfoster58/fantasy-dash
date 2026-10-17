@@ -3,11 +3,11 @@ import type { GameSide, PlayerDirectory } from '@fantasy-dash/core';
 import LineupTable from './LineupTable';
 
 const players: PlayerDirectory = {
-  a1: { id: 'a1', name: 'Alpha One', firstName: 'Alpha', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 1 },
-  a2: { id: 'a2', name: 'Alpha Two', firstName: 'Alpha', lastName: 'Two', position: 'RB', team: 'SF', yearsExp: 1 },
-  a3: { id: 'a3', name: 'Alpha Three', firstName: 'Alpha', lastName: 'Three', position: 'WR', team: 'DAL', yearsExp: 1 },
-  b1: { id: 'b1', name: 'Bravo One', firstName: 'Bravo', lastName: 'One', position: 'QB', team: 'BUF', yearsExp: 1 },
-  b2: { id: 'b2', name: 'Bravo Two', firstName: 'Bravo', lastName: 'Two', position: 'TE', team: 'DET', yearsExp: 1 },
+  a1: { id: 'a1', name: 'Alpha One', firstName: 'Alpha', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 1, birthDate: null },
+  a2: { id: 'a2', name: 'Alpha Two', firstName: 'Alpha', lastName: 'Two', position: 'RB', team: 'SF', yearsExp: 1, birthDate: null },
+  a3: { id: 'a3', name: 'Alpha Three', firstName: 'Alpha', lastName: 'Three', position: 'WR', team: 'DAL', yearsExp: 1, birthDate: null },
+  b1: { id: 'b1', name: 'Bravo One', firstName: 'Bravo', lastName: 'One', position: 'QB', team: 'BUF', yearsExp: 1, birthDate: null },
+  b2: { id: 'b2', name: 'Bravo Two', firstName: 'Bravo', lastName: 'Two', position: 'TE', team: 'DET', yearsExp: 1, birthDate: null },
 };
 const line = (playerId: string, points: number) => ({ playerId, points, projected: null, stats: {} });
 const side = (userId: string, starter: string, bench: string[]): GameSide => ({
