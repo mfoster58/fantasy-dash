@@ -104,7 +104,7 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
         <StatCard id="age" title="Roster age" wide caption={age.estimated ? 'Average age behind each manager\'s started points; some ages are estimated from NFL seasons where the birth date is missing.' : 'Average age behind each manager\'s started points, weighted by the points each player scored.'}><RosterAge data={age} refs={refs} pin={pin} /></StatCard>
       </Row>
       <Row cols={2}>
-        {single && <StatCard id="draft" title="Draft returns by round" caption="Started points from each manager's pick in each round; hover a cell for the player. A bright late cell is a steal."><DraftReturns data={draft} players={players} refs={refs} pin={pin} /></StatCard>}
+        {single && <StatCard id="draft" title="Draft returns by round" caption="Points: started points from each manager's pick in each round. Value: what the pick was worth against its slot in the draft grading, green beat it, red fell short. Hover a cell for the player."><DraftReturns data={draft} players={players} refs={refs} pin={pin} /></StatCard>}
         {single && wire && <StatCard id="wire" title="Wire activity" caption="Waiver and free-agent adds per week; totals and FAAB spent on the right."><WireActivity data={wire} refs={refs} pin={pin} /></StatCard>}
       </Row>
       <Row cols={2}>
@@ -112,7 +112,7 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
           <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
           <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
         </div>
-        <StatCard id="moments" title="Notable matchups" caption="Each game is the winner's bar over the loser's on one scale, so the gap is the margin. Each one opens the box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
+        <StatCard id="moments" title="Notable matchups" caption="Winner on the left, loser on the right, the margin between. The bar splits at each side's share of the points; the tick is halfway. Each game opens its box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
       </Row>
     </div>
   );

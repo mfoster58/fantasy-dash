@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import DraftReturns from './DraftReturns';
 import PointOrigins from './PointOrigins';
@@ -23,6 +23,19 @@ describe('DraftReturns', () => {
     expect(within(rows[2]).getAllByRole('cell').map((c) => c.textContent)).toEqual(['340', '']);
     expect(screen.getByTitle('Quincy One · 340.00 started points')).toBeInTheDocument();
     expect(screen.getByTitle('Wally Two · 0.00 started points')).toHaveTextContent('');
+  });
+  it('switches to draft value: green for picks that beat their slot, red for picks that fell short, sorted by total value', () => {
+    render(<DraftReturns data={draftReturns(s25)} players={statsPlayers} refs={refs} pin={null} />);
+    const toggle = screen.getByRole('group', { name: 'Show' });
+    expect(within(toggle).getByRole('button', { name: 'Points' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(toggle).getByRole('button', { name: 'Value' }));
+    const rows = within(screen.getByRole('table', { name: 'Draft returns by round' })).getAllByRole('row');
+    expect(within(rows[1]).getAllByRole('rowheader')[0]).toHaveTextContent('bob');   // 15 + 3
+    const alice = rows.find((r) => r.textContent?.includes('alice'))!;
+    expect(within(alice).getAllByRole('cell').map((c) => c.textContent)).toEqual(['+20', '-8']);
+    expect(screen.getByTitle('Quincy One · value +20.0')).toBeInTheDocument();
+    expect(within(alice).getAllByRole('cell')[0].getAttribute('style')).toMatch(/--win/);
+    expect(within(alice).getAllByRole('cell')[1].getAttribute('style')).toMatch(/--loss/);
   });
   it('says so without a draft', () => {
     render(<DraftReturns data={draftReturns(season2024())} players={statsPlayers} refs={refs} pin={null} />);
@@ -73,24 +86,21 @@ describe('WireActivity', () => {
 });
 
 describe('Moments', () => {
-  it('draws each notable game as two score bars, winner over loser, linking to its box score', () => {
+  it('shows each notable game as a scoreline, winner left and loser right, with the margin between and a tug-of-war bar', () => {
     render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} /></MemoryRouter>);
     for (const h of ['High score in a loss', 'Low score in a win', 'Blowouts', 'Close calls']) expect(screen.getByRole('heading', { name: h })).toBeInTheDocument();
     const first = screen.getByRole('list', { name: 'High score in a loss' }).querySelector('li')!;
-    const link = within(first).getByRole('link');
-    expect(link).toHaveAttribute('href', '/scores/2025/5/1');
-    expect(link).toHaveTextContent('Week 5');
-    const bars = first.querySelectorAll('[data-bar]');
-    expect([...bars].map((b) => b.getAttribute('data-bar'))).toEqual(['win', 'loss']);
-    expect(bars[0]).toHaveTextContent('alice');
-    expect(bars[0]).toHaveTextContent('150.00');
-    expect(bars[1]).toHaveTextContent('dan');
-    expect(bars[1]).toHaveTextContent('120.00');
-    // the bars are scaled to the biggest score in the list, so the gap between them is the margin
-    expect(parseFloat((bars[1].querySelector('[data-fill]') as HTMLElement).style.width)).toBeLessThan(parseFloat((bars[0].querySelector('[data-fill]') as HTMLElement).style.width));
-    // the manager each list is about is marked: the loser for a high score in a loss
-    expect(bars[1]).toHaveAttribute('data-featured', 'true');
-    expect(screen.getByRole('list', { name: 'Blowouts' }).querySelector('li')).toHaveTextContent('+70.00');
+    expect(within(first).getByRole('link')).toHaveAttribute('href', '/scores/2025/5/1');
+    const win = first.querySelector('[data-side="win"]')!, loss = first.querySelector('[data-side="loss"]')!;
+    expect(win).toHaveTextContent('alice'); expect(win).toHaveTextContent('150.00');
+    expect(loss).toHaveTextContent('dan'); expect(loss).toHaveTextContent('120.00');
+    expect(first.querySelector('[data-margin]')).toHaveTextContent('+30.00');
+    // the list is about the loser here, so his side is the one called out
+    expect(loss).toHaveAttribute('data-featured', 'true');
+    // the bar splits at the winner's share of the points: 150 of 270
+    expect(parseFloat((first.querySelector('[data-share="win"]') as HTMLElement).style.width)).toBeCloseTo(55.56, 1);
+    expect(first).toHaveTextContent('Week 5');
+    expect(screen.getByRole('list', { name: 'Blowouts' }).querySelector('[data-margin]')).toHaveTextContent('+70.00');
     expect(screen.getByTestId('moment-lists').className).toMatch(/sm:grid-cols-2/);
   });
   it('can stack its four lists in one column', () => {
