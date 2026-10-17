@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { PlayerDbSchema, type PlayerDb } from '@fantasy-dash/core';
 import { aggregate } from './aggregate';
-import { TABS, columnValue, columnsFor, tabPositions } from './columns';
+import { COLUMNS, TABS, columnValue, columnsFor, tabPositions } from './columns';
 
 const dir = new URL('../../../../../data/playerdb/', import.meta.url);
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -27,6 +27,22 @@ describe('committed player databases', () => {
         const v = columnValue(c, a, 'total');
         expect(v === null || Number.isFinite(v), `${file} ${tab} ${c.key} ${a.id}`).toBe(true);
       }
+    }
+  });
+
+  it.each(files)('%s never has snaps above team snaps, and snap share stays within 100%%', (file) => {
+    const db = load(file);
+    const twOf = new Map(db.teamWeeks.map((t) => [`${t.team}|${t.week}`, t]));
+    for (const r of db.rows) {
+      if (r.snaps === undefined) continue;
+      const tw = twOf.get(`${r.team}|${r.week}`);
+      if (tw && tw.offSnaps > 0) expect(r.teamSnaps, `${file} ${r.id} wk${r.week} lacks teamSnaps`).toBeDefined();
+      if (r.teamSnaps !== undefined) expect(r.snaps, `${file} ${r.id} wk${r.week}`).toBeLessThanOrEqual(r.teamSnaps);
+    }
+    if (db.throughWeek < 1) return;
+    for (const a of aggregate(db, 1, db.throughWeek)) {
+      const v = columnValue(COLUMNS.snapPct, a, 'total');
+      expect(v === null || v <= 1, `${file} ${a.id} snapPct ${v}`).toBe(true);
     }
   });
 

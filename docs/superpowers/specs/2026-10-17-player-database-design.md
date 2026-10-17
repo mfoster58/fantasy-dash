@@ -81,7 +81,7 @@ export interface DbPlayer {
 /** One NFL team's offensive volume in one week, summed from every player's row for that team. */
 export interface TeamWeek {
   team: string; week: number; opp: string;
-  offSnaps: number;           // max tm_off_snp over the team's players
+  offSnaps: number;           // max of tm_off_snp and any player's off_snp
   passAtt: number; rushAtt: number;
   dropbacks: number;          // passAtt + sacks taken
   rzLooks: number;            // rush_rz_att + rec_rz_tgt summed over players
@@ -100,7 +100,7 @@ export type XfpCoefficients = Record<DbPos, number[] | null>;
 | `id week team opp gp gs` | Sleeper | identity; `gp` games played (0/1), `gs` started |
 | `pts proj ppr posRankPpr` | Sleeper + league scoring | league points via `scoreStats`, Sleeper projection scored the same way, Sleeper's PPR points and PPR position rank |
 | `xfp` | model | expected league points from opportunity (below) |
-| `snaps teamSnaps` | Sleeper (`off_snp`, `tm_off_snp`), snap counts fallback | offensive snaps, team offensive snaps |
+| `snaps teamSnaps` | Sleeper (`off_snp`, `tm_off_snp`), snap counts fallback | offensive snaps, team offensive snaps; `teamSnaps` is the team week's `offSnaps` (set on every row with a team week) |
 | `routes routesEst` | participation / estimate | real routes when `routesReal`; otherwise `routesEst = round(snaps / teamSnaps × dropbacks)` and `routes` is absent |
 | `pa_att pa_cmp pa_yds pa_td pa_int pa_sack pa_sackYds pa_fd pa_rz pa_cmp40 pa_rtg pa_2pt` | Sleeper | passing counting stats |
 | `pa_air` | nflverse (`passing_air_yards`) | intended air yards on all attempts (Sleeper's `pass_air_yd` is completed air yards and is not used) |
@@ -269,3 +269,4 @@ A per-player page; FTN charting fields (catchable, contested, created receptions
 - Correction found in final review: Sleeper's `pass_air_yd` / `rec_air_yd` are completed air yards (`air + YAC = yards` on every row), which made aDOT, RACR, PACR, Air-yds %, WOPR and the xFP air-yard feature wrong (median WR aDOT about 5.3). `pa_air`, `re_air` and team `airYds` now come from nflverse intended air yards; after the rebuild the median WR aDOT (30+ targets) is 10.7–11.4 and RACR about 0.7–0.75 in every season, and the smoke test asserts both. In the same pass: the sync skips a season with no scored weeks, rebuilds a finished season whose file lacks real routes or week 18, and xFP is left off rows with no opportunity instead of showing the bare intercept.
 - The Players tab sits between Managers and Head to Head; the Stats tab stays where it was.
 - Follow-ups noted in the execution ledger: FTN charting fields, K and DEF tables, a player page, and moving the Extras boards to the new xFP remain out of scope as the spec says.
+- Snap share over 100% fixed: Sleeper's `tm_off_snp` is missing on week 18 and sporadically elsewhere, and in three team-weeks (NYG wk 6, ARI wk 11, NYJ wk 17) is 1–2 below a player's `off_snp`. `TeamWeek.offSnaps` is now the max of both fields, every row's `teamSnaps` is its team week's `offSnaps`, and Snap% / Route% are clamped to 100% in the table; the smoke test asserts no row has `snaps > teamSnaps`.

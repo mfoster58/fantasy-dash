@@ -71,6 +71,25 @@ describe('buildPlayerDb', () => {
     expect(db.teamWeeks.find((t) => t.team === 'TB' && t.week === 2)!.airYds).toBe(199);
     expect(buildPlayerDb(input({ teamAirYards: null })).teamWeeks.find((t) => t.team === 'TB' && t.week === 1)!.airYds).toBe(240);
   });
+  it('gives every row its team week snap count, filling and overriding Sleeper', () => {
+    const base = input();
+    const noTm = wr('nt', 'TB', 1, 5, { off_snp: 50 });
+    delete (noTm.stats as Record<string, number>).tm_off_snp;
+    const low = wr('lo', 'TB', 1, 5, { tm_off_snp: 66, off_snp: 40 });
+    const high = wr('hi', 'TB', 1, 5, { tm_off_snp: 66, off_snp: 67 });
+    base.sleeperWeeks.get(1)!.push(noTm, low, high);
+    const o = buildPlayerDb(base);
+    const tw = o.teamWeeks.find((t) => t.team === 'TB' && t.week === 1)!;
+    expect(tw.offSnaps).toBe(67);
+    expect(o.rows.find((r) => r.id === 'nt' && r.week === 1)!.teamSnaps).toBe(tw.offSnaps);
+    expect(o.rows.find((r) => r.id === 'lo' && r.week === 1)!.teamSnaps).toBe(67);
+    expect(o.rows.find((r) => r.id === 'hi' && r.week === 1)!.teamSnaps).toBe(67);
+  });
+  it('leaves teamSnaps off when the team week has no snap count', () => {
+    const weeks = new Map([[1, [{ player_id: 'z', team: 'TB', opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 3 } } as SleeperWeekStat]]]);
+    const o = buildPlayerDb(input({ sleeperWeeks: weeks, throughWeek: 1, directory: {} }));
+    expect(o.rows[0]).not.toHaveProperty('teamSnaps');
+  });
   it('uses real routes and pass plays when participation is given', () => {
     const real = buildPlayerDb(input({ participation: { routes: new Map([['00-1|1', 31]]), passPlays: new Map([['TB|1', 35]]) } }));
     expect(real.routesReal).toBe(true);

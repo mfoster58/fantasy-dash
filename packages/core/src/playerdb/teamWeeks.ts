@@ -21,7 +21,7 @@ export function teamWeeksOf(sleeperWeeks: Map<number, SleeperWeekStat[]>, passPl
         byTeam.set(r.team, tw);
       }
       if (!tw.opp && r.opponent) tw.opp = r.opponent;
-      tw.offSnaps = Math.max(tw.offSnaps, s.tm_off_snp ?? 0);
+      tw.offSnaps = Math.max(tw.offSnaps, s.tm_off_snp ?? 0, s.off_snp ?? 0); // tm_off_snp is missing on some rows (all of week 18) and sometimes below a player's own count
       tw.passAtt += s.pass_att ?? 0;
       tw.rushAtt += s.rush_att ?? 0;
       tw.dropbacks += (s.pass_att ?? 0) + (s.pass_sack ?? 0);

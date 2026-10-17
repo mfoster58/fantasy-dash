@@ -35,6 +35,11 @@ describe('columnValue', () => {
     expect(columnValue(COLUMNS.fdrr, w1, 'total')).toBeCloseTo(11 / 97, 6);
     expect(columnValue(COLUMNS.epaDb, agg('q1'), 'total')).toBeCloseTo(9 / 96, 6);
   });
+  it('caps snap and route share at 100%', () => {
+    const over = { ...w1, s: { ...w1.s, snaps: 70, teamSnaps: 66 }, routes: 50, t: { ...w1.t, dropbacks: 40 } };
+    expect(columnValue(COLUMNS.snapPct, over, 'total')).toBe(1);
+    expect(columnValue(COLUMNS.routePct, over, 'total')).toBe(1);
+  });
   it('divides counting stats by games in per-game mode and leaves rates alone', () => {
     expect(columnValue(COLUMNS.tgt, w1, 'total')).toBe(26);
     expect(columnValue(COLUMNS.tgt, w1, 'pg')).toBeCloseTo(26 / 3, 6);

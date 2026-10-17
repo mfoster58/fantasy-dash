@@ -36,6 +36,8 @@ const ratio = (num: (a: Agg) => number | null, den: (a: Agg) => number) => (a: A
   const n = num(a), d = den(a);
   return n === null || d <= 0 ? null : n / d;
 };
+/** A share of a team total cannot exceed 100%; guards against a numerator that outruns its denominator. */
+const capped = (f: (a: Agg) => number | null) => (a: Agg): number | null => { const v = f(a); return v === null ? null : Math.min(1, v); };
 const add = (...ks: PlayerWeekKey[]) => (a: Agg): number => ks.reduce((t, k) => t + (a.s[k] ?? 0), 0);
 const anySum = (...ks: PlayerWeekKey[]) => (a: Agg): number | null => (ks.some((k) => a.s[k] !== undefined) ? add(...ks)(a) : null);
 const routes = (a: Agg) => a.routes;
@@ -125,10 +127,10 @@ const list: ColumnDef[] = [
   col('rzTgtPct', 'RZ tgt%', 'Share of the team\'s red-zone looks that were targets to him', 'pct', ratio(sum('re_rz'), (a) => a.t.rzLooks)),
   // usage
   count('snaps', 'Snaps', 'Offensive snaps', 'snaps'),
-  col('snapPct', 'Snap%', 'Offensive snaps per team offensive snap', 'pct', ratio(sum('snaps'), S('teamSnaps')), { min: minSnaps }),
+  col('snapPct', 'Snap%', 'Offensive snaps per team offensive snap', 'pct', capped(ratio(sum('snaps'), S('teamSnaps'))), { min: minSnaps }),
   col('dbPg', 'DB/g', 'Dropbacks (attempts plus sacks) per game', 'dec1', ratio(dropbacks, games)),
   col('routes', 'Routes', 'Routes run: pass plays he was on the field for', 'int', routes, { perGame: true, est: true }),
-  col('routePct', 'Route%', 'Routes run per team dropback', 'pct', ratio(routes, (a) => a.t.dropbacks), { est: true, min: minSnaps }),
+  col('routePct', 'Route%', 'Routes run per team dropback', 'pct', capped(ratio(routes, (a) => a.t.dropbacks)), { est: true, min: minSnaps }),
   col('yprr', 'YPRR', 'Receiving yards per route run', 'dec2', ratio(sum('re_yds'), routes), { est: true, min: minRoutes }),
   col('tprr', 'TPRR', 'Targets per route run', 'dec2', ratio(sum('re_tgt'), routes), { est: true, min: minRoutes }),
   col('fdrr', 'FDRR', 'Receiving first downs per route run', 'dec2', ratio(sum('re_fd'), routes), { est: true, min: minRoutes }),

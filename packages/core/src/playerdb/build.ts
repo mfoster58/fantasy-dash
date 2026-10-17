@@ -58,6 +58,8 @@ export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
       if (!pos) continue;
       const row = sleeperRow(raw, week, input.scoring, proj[raw.player_id]);
       if (!row) continue;
+      const tw = teamWeekOf.get(teamWeekKey(row.team, week));
+      if (tw && tw.offSnaps > 0) row.teamSnaps = tw.offSnaps;
       let p = players[raw.player_id];
       if (!p) {
         const hint = { name: nameOf(dir, raw), pos, team: raw.team };
@@ -78,7 +80,7 @@ export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
       if (participation) {
         if (p.gsisId && pos !== 'QB') { const r = participation.routes.get(weekKey(p.gsisId, week)); if (r !== undefined) row.routes = r; }
       } else if (pos !== 'QB') {
-        const est = routesEstimate(row, teamWeekOf.get(teamWeekKey(row.team, week)));
+        const est = routesEstimate(row, tw);
         if (est !== null) row.routesEst = est;
       }
       rows.push(row);

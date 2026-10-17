@@ -30,6 +30,17 @@ describe('teamWeeksOf', () => {
   });
 });
 
+describe('teamWeeksOf offSnaps', () => {
+  it('falls back to the largest off_snp when no row carries tm_off_snp', () => {
+    const weeks = new Map([[18, [r('q', 'SF', { off_snp: 60, pass_att: 30 }), r('ol', 'SF', { off_snp: 64 })]]]);
+    expect(teamWeeksOf(weeks, null, null)[0].offSnaps).toBe(64);
+  });
+  it('is never below a player off_snp that exceeds tm_off_snp', () => {
+    const weeks = new Map([[6, [r('a', 'NYG', { tm_off_snp: 66, off_snp: 60 }), r('b', 'NYG', { tm_off_snp: 66, off_snp: 67 })]]]);
+    expect(teamWeeksOf(weeks, null, null)[0].offSnaps).toBe(67);
+  });
+});
+
 describe('routesEstimate', () => {
   const tw = { team: 'SF', week: 1, opp: 'LAR', offSnaps: 60, passAtt: 30, rushAtt: 20, dropbacks: 32, rzLooks: 4, airYds: 250, passPlays: null };
   it('scales team dropbacks by snap share', () => {
