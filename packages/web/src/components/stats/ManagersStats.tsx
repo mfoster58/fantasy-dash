@@ -83,13 +83,13 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
       {allTime && <p className="text-sm text-muted">Pick a season for the week-by-week charts.</p>}
       <Row cols={2}>
         {race && <StatCard id="race" title="Standings race" caption="Each line is a manager; the dotted line is the playoff cut."><StandingsRace data={race} refs={refs} pin={pin} /></StatCard>}
-        {form && <StatCard id="form" title="Form guide" caption="W and L squares; the dashed line is where the playoffs start; a gold dot marks the week's top score. Hover a square for the score."><FormGuide data={form} refs={refs} pin={pin} /></StatCard>}
+        {form && <StatCard id="form" title="Form" caption="W and L squares; the dashed line is where the playoffs start; a gold dot marks the week's top score. Hover a square for the score."><FormGuide data={form} refs={refs} pin={pin} /></StatCard>}
       </Row>
       <Row cols={1}>
         <StatCard id="table" title="The numbers" wide about={TABLE_ABOUT} caption={`Every advanced stat; click a header to rank by it. Regular season unless the column says otherwise.${through}`}><StatTable rows={table} refs={refs} pin={pin} allTime={allTime} /></StatCard>
       </Row>
       <Row cols={2}>
-        {calendar && <StatCard id="calendar" title="Scoring calendar" caption="Each week against the league average: greener the further above, redder below."><ScoringCalendar data={calendar} refs={refs} pin={pin} /></StatCard>}
+        {calendar && <StatCard id="calendar" title="Scoring calendar" caption="Each week against the league average, playoffs after the dashed line: greener the further above, redder below."><ScoringCalendar data={calendar} refs={refs} pin={pin} /></StatCard>}
         <StatCard id="consistency" title="Consistency" caption="Box: second-worst to second-best week; tick: median; thin line: the full range. Short boxes are steady teams."><Consistency rows={spread} refs={refs} pin={pin} /></StatCard>
       </Row>
       <Row cols={1}>
@@ -112,7 +112,7 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
           <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
           <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
         </div>
-        <StatCard id="moments" title="Robbed, stolen, flattened" caption="Highest score in a loss, lowest score in a win, biggest margins, closest calls. Each row opens the box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
+        <StatCard id="moments" title="Notable matchups" caption="Each game is the winner's bar over the loser's on one scale, so the gap is the margin. Each one opens the box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
       </Row>
     </div>
   );

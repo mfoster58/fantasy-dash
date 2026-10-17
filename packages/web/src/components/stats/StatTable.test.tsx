@@ -31,6 +31,18 @@ describe('StatTable', () => {
     expect(cara).toHaveAttribute('data-pinned', 'true');
     expect(within(cara).getAllByRole('cell')[0]).toHaveTextContent('2');
   });
+  it('tints every number by how it ranks in its column, green for good and red for bad', () => {
+    render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
+    const ppgOf = (name: string) => {
+      const r = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === name)!;
+      const col = [...screen.getAllByRole('columnheader')].findIndex((h) => /^PPG/.test(h.textContent ?? '')) - 1;
+      return within(r).getAllByRole('cell')[col] as HTMLElement;
+    };
+    expect(ppgOf('bob').getAttribute('data-tone')).toBe('good');
+    expect(ppgOf('bob').style.background).toMatch(/--win/);
+    expect(ppgOf('dan').getAttribute('data-tone')).toBe('bad');
+    expect(ppgOf('dan').style.background).toMatch(/--loss/);
+  });
   it('explains every column in its header title', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
     expect(screen.getByRole('button', { name: 'xW' })).toHaveAttribute('title', 'Expected wins: all-play win rate × games played');

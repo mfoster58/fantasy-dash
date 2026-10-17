@@ -16,9 +16,9 @@ describe('ManagersStats', () => {
   it('opens on the current season with the cards in the agreed order, one title each, no group headings and no head-to-head grid', () => {
     mount();
     const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby')).map((id) => document.getElementById(id!)?.textContent);
-    expect(names).toEqual(['Standings race', 'Form guide', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from', 'Robbed, stolen, flattened']);
+    expect(names).toEqual(['Standings race', 'Form', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from', 'Notable matchups']);
     // the last row: weekly finishes stacked on the points' origins on the left, the moments lists stacked on the right
-    const finishes = card('Weekly finishes'), origins = card('Where the points came from'), moments = card('Robbed, stolen, flattened');
+    const finishes = card('Weekly finishes'), origins = card('Where the points came from'), moments = card('Notable matchups');
     expect(finishes.parentElement).toBe(origins.parentElement);
     expect(finishes.parentElement).not.toBe(moments.parentElement);
     expect(finishes.parentElement!.parentElement).toBe(moments.parentElement);
@@ -32,7 +32,7 @@ describe('ManagersStats', () => {
   it('pins through the URL and lights the manager in every chart', () => {
     mount('/stats?pin=c');
     expect(screen.getByRole('button', { name: 'cara' })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(card('Form guide')).getAllByRole('row')[3]).toHaveAttribute('data-pinned', 'true');
+    expect(within(card('Form')).getAllByRole('row')[3]).toHaveAttribute('data-pinned', 'true');
     expect(within(card('The numbers')).getAllByRole('row').find((r) => r.textContent?.includes('cara'))).toHaveAttribute('data-pinned', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'alice' }));
     expect(screen.getByTestId('where')).toHaveTextContent('?pin=a');
@@ -43,7 +43,7 @@ describe('ManagersStats', () => {
     mount();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'all' } });
     expect(screen.getByTestId('where')).toHaveTextContent('?season=all');
-    expect(screen.queryByRole('region', { name: 'Form guide' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Form' })).toBeNull();
     expect(screen.getByText('Pick a season for the week-by-week charts.')).toBeInTheDocument();
     expect(card('Power rating')).toBeInTheDocument();
     expect(within(card('The numbers')).getByRole('columnheader', { name: /Yrs/ })).toBeInTheDocument();

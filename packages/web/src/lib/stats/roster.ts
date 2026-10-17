@@ -99,13 +99,15 @@ export function rosterAge(seasons: Season[], players: PlayerDirectory, asOf = Ma
 
 /** waiver and free-agent pickups per played week, with the season's total and FAAB spent */
 export function wireActivity(season: Season): WireActivity {
-  const weeks = season.weeks.filter((w) => w.played).map((w) => w.week);
+  // a column for every week on the schedule; only weeks already played can hold a pickup
+  const weeks = season.weeks.map((w) => w.week);
+  const played = new Set(season.weeks.filter((w) => w.played).map((w) => w.week));
   const rows = idsOf(season).map((id): WireRow => ({ id, perWeek: weeks.map(() => 0), total: 0, faab: 0 }));
   const byUser = new Map(rows.map((r) => [r.id, r]));
   for (const t of season.transactions) {
     if (t.type !== 'waiver' && t.type !== 'free_agent') continue;
     const i = weeks.indexOf(t.week);
-    if (i < 0) continue;   // logged for a week not yet played: it is not in the row, so not in the total either
+    if (i < 0 || !played.has(t.week)) continue;   // logged for a week not yet played: it is not in the row, so not in the total either
     for (const a of t.adds) {
       const r = byUser.get(a.userId);
       if (!r) continue;

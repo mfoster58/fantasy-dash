@@ -11,10 +11,10 @@ const FULL = 45;
 export default function ScoringCalendar({ data, refs, pin }: { data: CalendarData; refs: ManagerRef[]; pin: Pin }) {
   if (data.weeks.length === 0) return <Empty />;
   const cell = (rowId: string, key: string): HeatCell | null => {
-    const i = data.weeks.indexOf(Number(key));
+    const i = data.weeks.findIndex((w) => String(w.week) === key);
     const c = data.rows.find((r) => r.id === rowId)?.cells[i];
     if (!c) return null;
     return { fill: tint(c.delta >= 0 ? 'win' : 'loss', Math.abs(c.delta) / FULL), text: String(Math.round(c.points)), title: `Week ${c.week}: ${fmtPts(c.points)}, league average ${fmtPts(c.avg)} (${fmtSigned(c.delta, 2)})` };
   };
-  return <Heatmap rows={data.rows} cols={data.weeks.map((w) => ({ key: String(w), label: String(w) }))} cell={cell} refs={refs} pin={pin} ariaLabel="Scoring calendar" />;
+  return <Heatmap rows={data.rows} cols={data.weeks.map((w, i) => ({ key: String(w.week), label: String(w.week), divider: i === data.playoffAt }))} cell={cell} refs={refs} pin={pin} ariaLabel="Scoring calendar" />;
 }

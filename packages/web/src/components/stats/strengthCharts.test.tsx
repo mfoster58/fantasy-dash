@@ -26,7 +26,7 @@ describe('PowerRating', () => {
     expect(ELO_ABOUT).toMatch(/1500/);
     expect(ELO_ABOUT).toMatch(/margin of 40 or more/);
     // a taller chart so ten lines and their labels have room
-    expect(svg.getAttribute('viewBox')).toMatch(/ 420$/);
+    expect(svg.getAttribute('viewBox')).toMatch(/ 520$/);
   });
   it('labels one season\'s weeks by week number', () => {
     render(<PowerRating history={eloFor(eloHistory(league()), 2025)} refs={refs} pin="a" />);
@@ -48,6 +48,8 @@ describe('Consistency', () => {
     expect(items).toHaveLength(4);
     expect(items[0]).toHaveAttribute('data-pinned', 'true');
     expect(items[0].querySelector('[data-box]')).toHaveAttribute('title', 'alice: floor 100.00, median 110.00, ceiling 120.00; worst 80.00, best 130.00');
+    // light blue for everyone else, gold for the pinned manager
+    expect((items[1].querySelector('[data-box]') as HTMLElement).style.background).toMatch(/--accent/);
     expect(screen.getAllByText(/^\d+$/).length).toBeGreaterThan(1);   // axis ticks
   });
 });

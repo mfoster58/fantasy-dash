@@ -16,7 +16,12 @@ describe('Heatmap', () => {
     expect(screen.getByTitle('a in week 1')).toHaveTextContent('a1');
     expect(screen.getByTitle('a in week 1').querySelector('[data-dot]')).not.toBeNull();
     expect(screen.getByTitle('b in week 1')).toHaveAttribute('data-outline', 'true');
-    expect(screen.getByTitle('a in week 2')).toHaveAttribute('data-divider', 'true');
+    // the dashed line sits in a narrow gap column of its own, so it never runs over a box
+    const gaps = table.querySelectorAll('[data-divider-gap]');
+    expect(gaps).toHaveLength(5);   // the header row and the four manager rows
+    expect(screen.getByTitle('a in week 2').previousElementSibling).toHaveAttribute('data-divider-gap');
+    // sticky name cells stay below the page's sticky bars
+    expect(within(table).getAllByRole('rowheader')[0].className).not.toMatch(/\bz-10\b/);
     expect(screen.getByText('2 · $13')).toBeInTheDocument();
     // the name column hugs its content so a short season's cells do not start halfway across the card
     expect(within(table).getAllByRole('rowheader')[0].className).toMatch(/\bw-px\b/);
