@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router';
 import { useState } from 'react';
 import PlayerDbTable, { sortAggs, useCollapsedGroups } from './PlayerDbTable';
 import { aggregate } from '../../../lib/playerdb/aggregate';
-import { tabPositions } from '../../../lib/playerdb/columns';
+import { COLUMNS, belowMin, columnValue, tabPositions } from '../../../lib/playerdb/columns';
 import type { DbState } from '../../../lib/playerdb/url';
 import { miniDb } from '../../../test/playerDbFixtures';
 
@@ -101,6 +101,30 @@ describe('PlayerDbTable', () => {
     const desc = sortAggs(aggs, { ...base, sort: 'sep', dir: 'desc' }).map((a) => a.id);
     expect(asc[0]).toBe('w1'); expect(desc[0]).toBe('w1');
     expect(asc.slice(1).sort()).toEqual(desc.slice(1).sort());
+  });
+  it('sortAggs ranks below-minimum rates after rows that meet it, in both directions', () => {
+    const db = miniDb();
+    const aggs = aggregate(db, 1, 3);
+    const dims = aggs.filter((a) => belowMin(COLUMNS.ypt, a) || columnValue(COLUMNS.ypt, a, 'total') === null).map((a) => a.id);
+    expect(dims).toContain('r1');
+    for (const dir of ['asc', 'desc'] as const) {
+      const ids = sortAggs(aggs, { ...base, sort: 'ypt', dir }).map((a) => a.id);
+      const firstDim = Math.min(...dims.map((d) => ids.indexOf(d)));
+      const lastOk = Math.max(-1, ...ids.map((id, i) => (dims.includes(id) ? -1 : i)));
+      expect(firstDim).toBeGreaterThan(lastOk);
+    }
+  });
+  it('per-game mode shows integer columns as integers except per-game ones', () => {
+    render(<MemoryRouter><Harness state={{ ...base, mode: 'pg' }} /></MemoryRouter>);
+    const r = screen.getAllByTestId('db-row')[0];
+    expect(within(r).getByTestId('cell-g')).toHaveTextContent(/^3$/);
+    expect(within(r).getByTestId('cell-tgt')).toHaveTextContent('8.7');
+  });
+  it('keeps header and body column counts equal', () => {
+    render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
+    const first = document.querySelector('thead tr')!;
+    const sum = [...first.children].reduce((n, c) => n + Number(c.getAttribute('colSpan') ?? 1), 0);
+    expect(sum).toBe(screen.getAllByTestId('db-row')[0].children.length);
   });
   it('useCollapsedGroups persists per tab', () => {
     function Probe() {

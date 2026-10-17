@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useLoaderData, useNavigate, useSearchParams } from 'react-router';
 import type { PlayerDb, Season } from '@fantasy-dash/core';
 import PlayerDbToolbar from '../components/players/db/PlayerDbToolbar';
-import PlayerDbTable, { sortAggs, useCollapsedGroups } from '../components/players/db/PlayerDbTable';
+import PlayerDbTable, { PAGE, useCollapsedGroups } from '../components/players/db/PlayerDbTable';
 import SeasonPicker from '../components/SeasonPicker';
 import { history } from '../data/load';
 import { aggregate } from '../lib/playerdb/aggregate';
@@ -54,7 +54,7 @@ function Loaded({ season, db, years, onYear }: { season: Season; db: PlayerDb; y
       return !q || p.name.toLowerCase().includes(q);
     });
   }, [allAggs, db, state.tab, state.roster, state.q, rosters]);
-  const shown = Math.min(25, sortAggs(aggs, state).length);
+  const shown = Math.min(PAGE, aggs.length);
 
   return (
     <div className="space-y-4">

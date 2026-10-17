@@ -31,7 +31,7 @@ export function sortAggs(aggs: Agg[], state: DbState): Agg[] {
   const col = COLUMNS[state.sort] ?? COLUMNS.pts;
   const sign = state.dir === 'asc' ? 1 : -1;
   return [...aggs].sort((a, b) => {
-    const va = columnValue(col, a, state.mode), vb = columnValue(col, b, state.mode);
+    const va = belowMin(col, a) ? null : columnValue(col, a, state.mode), vb = belowMin(col, b) ? null : columnValue(col, b, state.mode);
     if (va === null && vb === null) return (b.s.pts ?? 0) - (a.s.pts ?? 0);
     if (va === null) return 1;
     if (vb === null) return -1;
@@ -90,11 +90,12 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
   );
 
   return (
-    <div className="card overflow-x-auto">
+    <div className="card overflow-auto lg:max-h-[calc(100vh-10rem)]">
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead className="sticky top-0 z-[2] bg-surface">
           <tr>
-            <th colSpan={3 + leadCols.length} className={`${lead} left-0 z-[3] border-b border-line`} />
+            <th colSpan={2} className="sticky left-0 z-[3] bg-surface border-b border-line" />
+            <th colSpan={1 + leadCols.length} className="border-b border-line" />
             {bodyGroups.map((g) => {
               const off = collapsed.has(g.group);
               return (
@@ -105,8 +106,8 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
             })}
           </tr>
           <tr>
-            <th className={`${lead} left-0 z-[3] w-8 border-b border-line px-2 py-2 text-left section-label`}>#</th>
-            <th className={`${lead} left-8 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
+            <th className={`${lead} left-0 z-[3] w-10 min-w-10 border-b border-line px-2 py-2 text-left section-label`}>#</th>
+            <th className={`${lead} left-10 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
             <th className="section-label border-b border-line px-2 py-2 text-left">Mgr</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
             {bodyGroups.map((g) => (collapsed.has(g.group)
@@ -123,9 +124,9 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
             return (
               <Fragment key={a.id}>
                 <tr data-testid="db-row" className="border-t border-line transition-colors hover:bg-surface-2/60">
-                  <td className={`${lead} left-0 num border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
-                  <td className={`${lead} left-8 border-b border-line px-2 py-1.5`}>
-                    <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 text-left hover:text-accent">
+                  <td className={`${lead} left-0 num w-10 min-w-10 border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
+                  <td className={`${lead} left-10 border-b border-line px-2 py-1.5`}>
+                    <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap text-left hover:text-accent">
                       <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
                       <span data-testid="db-name" className="font-medium">{p?.name ?? a.id}</span>
                       <span className="text-xs text-muted">{a.team}</span>
@@ -134,7 +135,7 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
                   </td>
                   <td className="border-b border-line px-2 py-1.5">
                     {m ? (
-                      <TeamLink userId={owner} year={year} className="flex items-center gap-1.5 text-xs"><Avatar avatar={m.avatar} name={m.displayName} size={18} />{m.teamName ?? m.displayName}</TeamLink>
+                      <TeamLink userId={owner} year={year} className="flex items-center gap-1.5 whitespace-nowrap text-xs"><Avatar avatar={m.avatar} name={m.displayName} size={18} /><span className="max-w-40 truncate">{m.teamName ?? m.displayName}</span></TeamLink>
                     ) : <span className="text-xs text-muted">FA</span>}
                   </td>
                   {leadCols.map((c) => cell(c, a, i))}
