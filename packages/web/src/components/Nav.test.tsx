@@ -60,6 +60,17 @@ describe('Nav', () => {
     expect(screen.getByRole('button', { name: 'Managers' })).not.toHaveAttribute('data-active');
   });
 
+  it('closes a pinned tab when the pointer moves onto the other one, so two panels are never open together', () => {
+    render(<MemoryRouter><Nav /></MemoryRouter>);
+    const rosters = screen.getByRole('button', { name: 'Rosters' });
+    const managers = screen.getByRole('button', { name: 'Managers' });
+    fireEvent.click(rosters);
+    expect(rosters).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.mouseEnter(managers.parentElement!);
+    expect(managers).toHaveAttribute('aria-expanded', 'true');
+    expect(rosters).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('puts the same two groups in the narrow-screen menu', () => {
     render(<MemoryRouter><Nav /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /^menu$/i }));

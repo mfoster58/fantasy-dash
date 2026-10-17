@@ -156,7 +156,7 @@ function ExampleTable({ examples, managers, teams, players }: { examples: Gradin
               <tr key={key} className="border-t border-line">
                 <td className="py-2 pr-3"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: EXAMPLE_COLORS[key] }} />{label}</td>
                 <td className="py-2 pr-3">
-                  <span className="flex items-center gap-2"><Headshot players={players} id={p.playerId} size={24} /><span className="font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /><span className="text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</span></span>
+                  <span className="flex items-center gap-2"><Headshot players={players} id={p.playerId} size={24} /><span className="font-medium">{playerName(players, p.playerId)}</span><PosPill pos={playerPos(players, p.playerId)} /><ManagerLink userId={p.userId} className="text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</ManagerLink></span>
                 </td>
                 <td className="num py-2 pr-3 text-right">{pickLabel(p, teams)} <span className="text-muted">(#{p.pickNo})</span></td>
                 <td className="num py-2 pr-3 text-right">{fmt1(capital(p.pickNo))}</td>

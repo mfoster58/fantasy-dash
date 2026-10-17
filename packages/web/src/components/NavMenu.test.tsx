@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Link, MemoryRouter } from 'react-router';
-import NavMenu, { NavMenuGroup } from './NavMenu';
+import NavMenu, { NavMenuGroup, type MenuEntries } from './NavMenu';
 import type { MenuEntry } from '../lib/navMenus';
 
 const entries: MenuEntry[] = [
@@ -8,9 +9,15 @@ const entries: MenuEntry[] = [
   { userId: 'a', title: 'Team Alice', subtitle: 'alice', avatar: null, to: '/teams/2025/a' },
 ];
 
-const setup = (active = false) => render(
+/** The bar owns the pinned state; this stands in for it. */
+function Harness({ active = false, list = entries as MenuEntries, onEnter }: { active?: boolean; list?: MenuEntries; onEnter?: () => void }) {
+  const [pinned, setPinned] = useState(false);
+  return <NavMenu id="rosters" label="Rosters" active={active} entries={list} pinned={pinned} onPin={setPinned} onEnter={onEnter} />;
+}
+
+const setup = (props: Parameters<typeof Harness>[0] = {}) => render(
   <MemoryRouter>
-    <NavMenu id="rosters" label="Rosters" active={active} entries={entries} />
+    <Harness {...props} />
     <Link to="/scores">elsewhere</Link>
   </MemoryRouter>,
 );
@@ -31,12 +38,14 @@ describe('NavMenu', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('opens while hovered and closes when the pointer leaves', () => {
-    setup();
+  it('opens while hovered, tells the bar the pointer arrived, and closes when the pointer leaves', () => {
+    const onEnter = vi.fn();
+    setup({ onEnter });
     const button = screen.getByRole('button', { name: 'Rosters' });
     const wrap = button.parentElement!;
     fireEvent.mouseEnter(wrap);
     expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(onEnter).toHaveBeenCalledTimes(1);
     fireEvent.mouseLeave(wrap);
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
@@ -60,14 +69,17 @@ describe('NavMenu', () => {
   });
 
   it('marks the tab active for the section it leads to', () => {
-    setup(true);
+    setup({ active: true });
     expect(screen.getByRole('button', { name: 'Rosters' })).toHaveAttribute('data-active', 'true');
   });
 
-  it('says so while the entries are still loading', () => {
-    render(<MemoryRouter><NavMenu id="rosters" label="Rosters" active={false} entries={[]} /></MemoryRouter>);
+  it('says so while the entries are still loading, and when they could not be loaded', () => {
+    setup({ list: 'loading' });
     fireEvent.click(screen.getByRole('button', { name: 'Rosters' }));
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    render(<MemoryRouter><Harness list="failed" /></MemoryRouter>);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Rosters' })[1]);
+    expect(screen.getByText(/could not load/i)).toBeInTheDocument();
   });
 });
 

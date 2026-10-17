@@ -12,11 +12,12 @@ const roundTitle = (kind: BracketKind, round: number, games: BracketGame[]) => {
   return `Round ${round}`;
 };
 
+const teamOf = (id: UserId | null, managers: Record<UserId, Manager>) => (id ? managers[id]?.teamName ?? managers[id]?.displayName ?? id : 'TBD');
+
 function Side({ id, points, won, managers, year }: { id: UserId | null; points: number | null; won: boolean; managers: Record<UserId, Manager>; year: number }) {
-  const m = id ? managers[id] : undefined;
   return (
     <div className={`flex items-center justify-between gap-3 ${won ? 'text-ink font-semibold' : 'text-muted'}`}>
-      {id ? <TeamLink userId={id} year={year} className="relative z-10 truncate">{m?.teamName ?? m?.displayName ?? id}</TeamLink> : <span className="truncate">TBD</span>}
+      {id ? <TeamLink userId={id} year={year} className="relative z-10 truncate">{teamOf(id, managers)}</TeamLink> : <span className="truncate">TBD</span>}
       {won && <span className="sr-only">winner</span>}
       <span className="num">{points === null ? '' : fmtPts(points)}</span>
     </div>
@@ -37,7 +38,7 @@ export default function Bracket({ games, kind, managers, year }: Props) {
               // the card opens the box score through a cover link, so each team name can be its own link
               return (
                 <div key={g.matchNo} className={`card relative p-3 text-sm ${g.gameId ? 'transition-colors hover:ring-1 hover:ring-accent/60' : ''}`}>
-                  {g.gameId && <CoverLink to={`/scores/${year}/${g.week}/${matchupId}`} label="Box score" className="rounded-xl" />}
+                  {g.gameId && <CoverLink to={`/scores/${year}/${g.week}/${matchupId}`} label={`${fmtTag(g.tag)}: ${teamOf(g.home, managers)} vs ${teamOf(g.away, managers)} box score`} className="rounded-xl" />}
                   {inRound.length > 1 && tagsDiffer(inRound) && <div className="section-label mb-1">{fmtTag(g.tag)}</div>}
                   <Side id={g.home} points={g.homePoints} won={wonBy(g, kind, 'home')} managers={managers} year={year} />
                   <Side id={g.away} points={g.awayPoints} won={wonBy(g, kind, 'away')} managers={managers} year={year} />

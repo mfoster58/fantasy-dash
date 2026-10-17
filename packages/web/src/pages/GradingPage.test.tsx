@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { Draft, DraftPick, PlayerDirectory, Season } from '@fantasy-dash/core';
 import { GradingGuide } from './GradingPage';
@@ -37,6 +37,7 @@ describe('GradingGuide', () => {
     expect(screen.getByText('ceiling 150')).toBeInTheDocument();             // bounded earned capital before pick 1
     const table = screen.getByText('Most productive player').closest('table')!;
     expect(table).toHaveTextContent('Star Back');
+    expect(within(table).getAllByRole('link', { name: 'alice' })[0]).toHaveAttribute('href', '/managers/a');
     expect(table).toHaveTextContent('Biggest bust');
     expect(table).toHaveTextContent('off the board');
     expect(table).toHaveTextContent('+60.0');
@@ -44,7 +45,7 @@ describe('GradingGuide', () => {
     const grades = screen.getByRole('list').querySelectorAll('li');
     expect(grades).toHaveLength(2);
     expect(grades[0]).toHaveTextContent('alice');
-    expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
+    expect(within(grades[0]).getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
     expect(grades[0]).toHaveTextContent('+85');
     expect(grades[0]).toHaveTextContent('A+');
     expect(grades[1]).toHaveTextContent('bob');

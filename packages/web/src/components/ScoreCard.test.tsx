@@ -83,7 +83,8 @@ describe('ScoreCard', () => {
     wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/scores/2025/17/1" year={2025} />);
     expect(screen.getByText('Championship')).toBeInTheDocument();
     expect(screen.getByText('Final')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Box score' })).toHaveAttribute('href', '/scores/2025/17/1');
+    // the cover link names both teams, so a reader tabbing through a scoreboard can tell the cards apart
+    expect(screen.getByRole('link', { name: 'Team A vs Team B box score' })).toHaveAttribute('href', '/scores/2025/17/1');
   });
 
   it('links each team name to its team page and each manager to the career page', () => {

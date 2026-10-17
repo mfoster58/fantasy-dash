@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { leagueConfig } from '../../../../league.config';
 import { currentSeason, history, loadSeason } from '../data/load';
-import { managerEntries, rosterEntries, type MenuEntry } from '../lib/navMenus';
-import NavMenu, { NavMenuGroup } from './NavMenu';
+import { managerEntries, rosterEntries } from '../lib/navMenus';
+import NavMenu, { NavMenuGroup, type MenuEntries } from './NavMenu';
 import ThemeToggle from './ThemeToggle';
 
 type Item =
@@ -29,7 +29,8 @@ const managers = managerEntries(history);
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
-  const [rosters, setRosters] = useState<MenuEntry[]>([]);
+  const [rosters, setRosters] = useState<MenuEntries>('loading');
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
   const { pathname } = useLocation();
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function Nav() {
   // team names live in the season file, so the Rosters list arrives once it has loaded
   useEffect(() => {
     let live = true;
-    loadSeason(currentSeason.year).then((s) => { if (live) setRosters(rosterEntries(s)); }).catch(() => {});
+    loadSeason(currentSeason.year).then((s) => { if (live) setRosters(rosterEntries(s)); }).catch(() => { if (live) setRosters('failed'); });
     return () => { live = false; };
   }, []);
   const entriesOf = (id: 'rosters' | 'managers') => (id === 'rosters' ? rosters : managers);
@@ -53,7 +54,14 @@ export default function Nav() {
         <nav className="hidden h-full min-w-0 items-center gap-1 text-sm md:flex">
           {items.map((i) => i.kind === 'link'
             ? <NavLink key={i.to} to={i.to} className={linkClass}>{i.label}</NavLink>
-            : <NavMenu key={i.id} id={i.id} label={i.label} active={activeOf(i.prefix)} entries={entriesOf(i.id)} />)}
+            : (
+              <NavMenu
+                key={i.id} id={i.id} label={i.label} active={activeOf(i.prefix)} entries={entriesOf(i.id)}
+                pinned={pinnedId === i.id}
+                onPin={(p) => setPinnedId((cur) => (p ? i.id : cur === i.id ? null : cur))}
+                onEnter={() => setPinnedId((cur) => (cur === i.id ? cur : null))}
+              />
+            ))}
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle />

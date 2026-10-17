@@ -38,7 +38,7 @@ export default function ScoreCard({ game, played, managers, players, seasonTeams
   return (
     // the whole card opens the box score through a cover link, so the team and manager names can be links of their own
     <div className="card relative p-4 transition-colors hover:border-accent sm:p-5">
-      <CoverLink to={to} label="Box score" className="rounded-xl" />
+      <CoverLink to={to} label={`${teamName(a, managers[a.userId])} vs ${teamName(b, managers[b.userId])} box score`} className="rounded-xl" />
       <Header game={game} played={played} />
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4">
         <Team side={a} manager={managers[a.userId]} played={played} outcome={outcome(a)} align="left" year={year} />
