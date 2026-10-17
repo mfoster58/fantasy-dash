@@ -1,16 +1,15 @@
 import type { ReactNode } from 'react';
 import { AboutButton, useAbout } from '../About';
 
-interface Props { id: string; eyebrow: string; title: string; about?: string; caption?: string; wide?: boolean; children: ReactNode }
+interface Props { id: string; title: string; about?: string; caption?: string; /** spans every column of its row */ wide?: boolean; children: ReactNode }
 
-/** One chart card: eyebrow, title with the ? definition, the chart, a one-line caption. */
-export default function StatCard({ id, eyebrow, title, about, caption, wide = false, children }: Props) {
+/** One chart card: a title with the ? definition, the chart, a one-line caption. */
+export default function StatCard({ id, title, about, caption, wide = false, children }: Props) {
   const popover = useAbout();
   const aboutId = `about-${id}`;
   return (
-    <section className={`card flex min-w-0 flex-col ${wide ? 'lg:col-span-2' : ''}`} aria-labelledby={`stat-${id}`}>
+    <section className={`card flex min-w-0 flex-col ${wide ? 'lg:col-span-full' : ''}`} aria-labelledby={`stat-${id}`}>
       <header className="border-b border-line px-4 pb-2 pt-3">
-        <div className="section-label">{eyebrow}</div>
         <div className="flex items-center gap-1.5">
           <h3 id={`stat-${id}`} className="text-base font-semibold leading-tight text-ink">{title}</h3>
           {about && <AboutButton open={popover.open} buttonProps={popover.buttonProps} aboutId={aboutId} />}

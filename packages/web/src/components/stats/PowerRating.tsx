@@ -21,7 +21,7 @@ export default function PowerRating({ history, refs, pin }: { history: EloHistor
       series={history.series.map((s) => ({ id: s.id, values: s.ratings }))}
       xLabels={xLabels} yDomain={[lo, hi]} guides={[{ y: ELO_START, label: String(ELO_START), tone: 'line' }]} dividers={dividers} bands={bands}
       rightLabel={(s) => { const v = last(history.series.find((x) => x.id === s.id)!); return v === undefined ? name(s.id) : `${name(s.id)} ${Math.round(v)}`; }}
-      refs={refs} pin={pin} ariaLabel="Power rating"
+      refs={refs} pin={pin} ariaLabel="Power rating" height={420}
     />
   );
 }

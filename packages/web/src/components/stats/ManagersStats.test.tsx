@@ -13,10 +13,13 @@ const mount = (url = '/stats', seasons = league()) => render(
 const card = (name: string) => screen.getByRole('region', { name });
 
 describe('ManagersStats', () => {
-  it('opens on the current season with every section and card', () => {
+  it('opens on the current season with the cards in the agreed order, one title each, no group headings and no head-to-head grid', () => {
     mount();
-    for (const s of ['The season', 'Strength', 'Roster', 'Moments', 'By the numbers']) expect(screen.getByRole('heading', { name: s })).toBeInTheDocument();
-    for (const c of ['Standings race', 'Form guide', 'Scoring calendar', 'Weekly finishes', 'Power rating', 'Consistency', 'Schedule luck', 'Strength of schedule', 'Head to head', 'Postseason form', 'Draft returns by round', 'Where the points came from', 'Roster age', 'Wire activity', 'Robbed, stolen, flattened', 'The numbers']) expect(card(c)).toBeInTheDocument();
+    const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby')).map((id) => document.getElementById(id!)?.textContent);
+    expect(names).toEqual(['Standings race', 'Form guide', 'The numbers', 'Scoring calendar', 'Consistency', 'Schedule luck', 'Power rating', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Where the points came from', 'Wire activity', 'Weekly finishes', 'Robbed, stolen, flattened']);
+    for (const s of ['The season', 'Strength', 'Roster', 'Moments', 'By the numbers']) expect(screen.queryByRole('heading', { name: s })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Head to head' })).toBeNull();
+    expect(card('Standings race').querySelector('.section-label')).toBeNull();
     expect(screen.getByRole('combobox')).toHaveValue('2025');
     expect(screen.getByTestId('where')).toBeEmptyDOMElement();
   });
