@@ -257,3 +257,12 @@ The implementation plan builds the data first (core module, script, committed `d
 ## Out of scope
 
 A per-player page; FTN charting fields (catchable, contested, created receptions need a play-by-play join); kicker and defense tables; the Stats page's Players tab and its charts; switching the Extras boards to the new xFP; seasons before 2023; postseason NFL weeks; in-season updates between Tuesday syncs; column reordering or user-defined column sets; CSV export.
+
+## Closing notes (implementation, 2026-10-17)
+
+- Built on branch `worktree-player-db` from the plan `docs/superpowers/plans/2026-10-17-player-database.md`, one subagent per task with a review after each.
+- Data: `data/playerdb/2023.json` … `2026.json`, about 3.3 MB per finished season (the spec guessed 1.5–2.5 MB; the extra is the EPA, NGS and PFR fields on every row) and 1.1 MB for 2026 through week 5. 2023–2025 carry real routes from the participation feed; 2026 is estimated until the NFL publishes it. Crosswalk misses: 2, 2, 0 and 2 players per season (practice-squad names). xFP fitted for all four positions in every season.
+- A bug found with real data: Sleeper's weekly feed ships a synthetic `TEAM_xx` row per team carrying team totals, which doubled every team-week sum (and the 2026 route estimates). `teamWeeksOf` skips those rows.
+- Deviations from the spec text, all small: week params in the URL clamp into range (a bookmarked `to=17` becomes the last scored week); rates under their sample minimum sort last as well as being dimmed; per-game mode shows one decimal only for per-game columns, so G and Rk stay whole; the table card is a capped vertical scroller from `lg` so the header can stick (a sticky header inside a horizontal scroller otherwise pins to the card, not the viewport); the sync fails loudly on a bad `--season`, a 404 of a required file, or a missing Sleeper week of a finished season; the `players` test setup installs an in-memory `localStorage` because Node 26's global shadows jsdom's.
+- The Players tab sits between Managers and Head to Head; the Stats tab stays where it was.
+- Follow-ups noted in the execution ledger: FTN charting fields, K and DEF tables, a player page, and moving the Extras boards to the new xFP remain out of scope as the spec says.
