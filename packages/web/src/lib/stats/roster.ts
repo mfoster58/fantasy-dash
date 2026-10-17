@@ -61,29 +61,34 @@ export function pointOrigins(seasons: Season[]): OriginRow[] {
   return [...rows.values()].sort((x, y) => share(y) - share(x) || byId(x, y));
 }
 
-/** age on 1 September of the year, from the birth date; else 22 plus NFL seasons (estimated); else null */
-export function ageOf(player: PlayerDirectory[string] | undefined, year: number): { age: number; estimated: boolean } | null {
+/** NFL seasons the player had behind him in `year`, given the directory describes `asOf`; never below zero; null when unknown */
+export const experienceIn = (player: PlayerDirectory[string] | undefined, year: number, asOf: number): number | null =>
+  player?.yearsExp === null || player?.yearsExp === undefined ? null : Math.max(0, player.yearsExp - (asOf - year));
+
+/** age on 1 September of the year, from the birth date; else 22 plus the NFL seasons he had by then (estimated); else null */
+export function ageOf(player: PlayerDirectory[string] | undefined, year: number, asOf: number): { age: number; estimated: boolean } | null {
   if (!player) return null;
   if (player.birthDate) {
     const [by, bm, bd] = player.birthDate.split('-').map(Number);
     const before = bm > 9 || (bm === 9 && bd > 1);
     return { age: year - by - (before ? 1 : 0), estimated: false };
   }
-  if (player.yearsExp !== null && player.yearsExp !== undefined) return { age: 22 + player.yearsExp, estimated: true };
+  const exp = experienceIn(player, year, asOf);
+  if (exp !== null) return { age: 22 + exp, estimated: true };
   return null;
 }
 
-/** average age behind each manager's started points, weighted by those points */
-export function rosterAge(seasons: Season[], players: PlayerDirectory): RosterAge {
+/** average age behind each manager's started points, weighted by those points; `asOf` is the season the player directory describes */
+export function rosterAge(seasons: Season[], players: PlayerDirectory, asOf = Math.max(...seasons.map((s) => s.year))): RosterAge {
   const acc = new Map<UserId, { weighted: number; points: number; rookie: number; vet: number; estimated: boolean }>();
   for (const season of seasons) for (const s of starts(season)) {
     if (s.points <= 0) continue;
-    const a = ageOf(players[s.playerId], season.year);
+    const a = ageOf(players[s.playerId], season.year, asOf);
     if (!a) continue;
     const r = acc.get(s.id) ?? { weighted: 0, points: 0, rookie: 0, vet: 0, estimated: false };
     r.weighted += a.age * s.points;
     r.points += s.points;
-    if (players[s.playerId]?.yearsExp === 0) r.rookie += s.points;
+    if (experienceIn(players[s.playerId], season.year, asOf) === 0) r.rookie += s.points;
     if (a.age >= 30) r.vet += s.points;
     r.estimated = r.estimated || a.estimated;
     acc.set(s.id, r);
@@ -99,11 +104,12 @@ export function wireActivity(season: Season): WireActivity {
   const byUser = new Map(rows.map((r) => [r.id, r]));
   for (const t of season.transactions) {
     if (t.type !== 'waiver' && t.type !== 'free_agent') continue;
+    const i = weeks.indexOf(t.week);
+    if (i < 0) continue;   // logged for a week not yet played: it is not in the row, so not in the total either
     for (const a of t.adds) {
       const r = byUser.get(a.userId);
       if (!r) continue;
-      const i = weeks.indexOf(t.week);
-      if (i >= 0) r.perWeek[i] += 1;
+      r.perWeek[i] += 1;
       r.total += 1;
       if (t.type === 'waiver' && t.bid) r.faab += t.bid;
     }

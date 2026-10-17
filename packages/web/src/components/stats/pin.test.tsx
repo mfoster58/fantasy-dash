@@ -15,7 +15,7 @@ describe('pin helpers', () => {
     expect(markAttrs('b', 'a')).toEqual({ 'data-dim': 'true' });
     expect(markAttrs('b', null)).toEqual({});
     expect(rowClass('a', 'a')).toBe('text-gold font-semibold');
-    expect(rowClass('b', 'a')).toBe('opacity-40');
+    expect(rowClass('b', 'a')).toBe('');   // the row carries the single fade; the name must not fade again
     expect(rowClass('b', null)).toBe('');
     expect([lineStroke('a', 'a'), lineStroke('b', 'a'), lineStroke('b', null)]).toEqual(['var(--gold)', 'var(--dim)', 'var(--dim)']);
     expect([lineWidth('a', 'a'), lineWidth('b', 'a')]).toEqual([3, 1.5]);

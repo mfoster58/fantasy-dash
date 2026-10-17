@@ -68,7 +68,8 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
   const post = useMemo(() => postseasonForm(games), [games]);
   const draft = useMemo(() => (single ? draftReturns(single) : null), [single]);
   const origins = useMemo(() => pointOrigins(scoped), [scoped]);
-  const age = useMemo(() => rosterAge(scoped, players), [scoped, players]);
+  // the player directory describes the current season, so experience is rolled back to the season being viewed
+  const age = useMemo(() => rosterAge(scoped, players, currentYear), [scoped, players, currentYear]);
   const wire = useMemo(() => (single ? wireActivity(single) : null), [single]);
   const moment = useMemo(() => moments(games), [games]);
   const table = useMemo(() => statTable(scoped), [scoped]);

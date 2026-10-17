@@ -122,7 +122,7 @@ The Players tab, custom tooltips, animation, exporting images, per-manager deep-
 
 ## Built (2026-10-17)
 
-Shipped as planned in `docs/superpowers/plans/2026-10-17-stats-managers.md`: `/stats` with the toolbar, five groups of cards and the table, pure maths under `lib/stats/`, components under `components/stats/`, the Stats nav tab, the `/stats/managers` alias, and `birthDate` on every player (the sync ran; 411 of 443 players have one, the rest are estimated from NFL seasons and the roster-age caption says so).
+Shipped as planned in `docs/superpowers/plans/2026-10-17-stats-managers.md`: `/stats` with the toolbar, five groups of cards and the table, pure maths under `lib/stats/`, components under `components/stats/`, the Stats nav tab, the `/stats/managers` alias, and `birthDate` on every player (the sync ran; 411 of 443 players have one; the 32 without are team defenses with no experience count either, so defense points are left out of the age weighting and the "estimated" caption only appears if a skill player ever lacks a birth date).
 
 Decisions made while building:
 - The season view of the power rating shows that season's weeks with ratings carried in from earlier seasons (after the offseason pull toward 1500), not a fresh 1500 start, so it agrees with the all-time line.

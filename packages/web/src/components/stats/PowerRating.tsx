@@ -4,7 +4,7 @@ import MultiLine from './MultiLine';
 import { Empty } from './StatCard';
 import type { Pin } from './pin';
 
-export const ELO_ABOUT = `Everyone starts at ${ELO_START}. Before a game the rating gap sets the expected result; afterwards each side moves by up to ${ELO_K} points times how surprising the result was, doubled for a margin of ${ELO_MARGIN * 2} or more. Every game counts, playoffs and consolation included. Between seasons a rating keeps ${Math.round(ELO_CARRY * 100)}% of its distance from ${ELO_START}.`;
+export const ELO_ABOUT = `Everyone starts at ${ELO_START}. Before a game the rating gap sets the expected result; afterwards each side moves by up to ${ELO_K} points times how surprising the result was, doubled for a margin of ${ELO_MARGIN} or more. Every game counts, playoffs and consolation included. Between seasons a rating keeps ${Math.round(ELO_CARRY * 100)}% of its distance from ${ELO_START}.`;
 
 export default function PowerRating({ history, refs, pin }: { history: EloHistory; refs: ManagerRef[]; pin: Pin }) {
   if (history.points.length === 0) return <Empty />;

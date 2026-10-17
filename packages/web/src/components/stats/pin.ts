@@ -14,7 +14,8 @@ export function usePinHover(pin: Pin): { active: Pin; hoverProps: (id: UserId) =
 
 export const markAttrs = (id: UserId, active: Pin): { 'data-pinned'?: 'true'; 'data-dim'?: 'true' } =>
   active === null ? {} : id === active ? { 'data-pinned': 'true' } : { 'data-dim': 'true' };
-export const rowClass = (id: UserId, active: Pin): string => (active === null ? '' : id === active ? 'text-gold font-semibold' : 'opacity-40');
+/** the active manager's name is gold; the rest are left alone, the row they sit in carries the single fade */
+export const rowClass = (id: UserId, active: Pin): string => (id === active ? 'text-gold font-semibold' : '');
 export const lineStroke = (id: UserId, active: Pin): string => (id === active ? 'var(--gold)' : 'var(--dim)');
 export const lineWidth = (id: UserId, active: Pin): number => (id === active ? 3 : 1.5);
 /** colour-mix helper for tinted cells: `k` from 0 to 1 over the card's second surface */

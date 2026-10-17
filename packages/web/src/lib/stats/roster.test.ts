@@ -55,4 +55,17 @@ describe('wireActivity', () => {
     expect(w.rows.map((r) => [r.id, r.total, r.faab])).toEqual([['a', 2, 13], ['b', 1, 0], ['c', 0, 0], ['d', 0, 0]]);
     expect(row(w.rows, 'a').perWeek).toEqual([0, 1, 0, 1, 0]);
   });
+  it('leaves out adds logged for a week that has not been played, so the totals match the row', () => {
+    const s = season2025();
+    s.transactions = [...s.transactions, { id: 't6', type: 'waiver', week: 6, created: 6000, adds: [{ playerId: 'x2', userId: 'a' }], drops: [], bid: 7 }];
+    expect(row(wireActivity(s).rows, 'a')).toMatchObject({ total: 2, faab: 13 });
+  });
+});
+
+describe('rosterAge as of a later season', () => {
+  it('counts rookies and estimates ages by the experience a player had in that season, not today', () => {
+    // viewed from 2026: r2 (one season today) was a rookie in 2025; t2 (none today) cannot have fewer than none, so he counts as one too
+    const r = rosterAge([season2025()], statsPlayers, 2026);
+    expect(row(r.rows, 'a').rookieShare).toBeCloseTo(210 / 580, 4);
+  });
 });
