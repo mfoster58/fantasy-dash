@@ -1,5 +1,5 @@
-import { formGuide, scoringCalendar, standingsRace, weeklyFinishes } from './season';
-import { league, season2025 } from '../../test/statsFixtures';
+import { formGuide, scoringCalendar, seasonCalendar, standingsRace, weeklyFinishes } from './season';
+import { league, season2024, season2025 } from '../../test/statsFixtures';
 import { game, side, week } from '../../test/playerFixtures';
 
 const s25 = season2025();
@@ -42,6 +42,23 @@ describe('scoringCalendar', () => {
     expect(c.weeks).toEqual([{ week: 1, playoff: false }, { week: 2, playoff: false }, { week: 3, playoff: false }, { week: 4, playoff: false }, { week: 5, playoff: true }]);
     expect(c.playoffAt).toBe(4);
     expect(row(c.rows, 'a').cells.map((x) => [x!.points, x!.avg, x!.delta])).toEqual([[120, 105, 15], [130, 113.75, 16.25], [80, 98.75, -18.75], [100, 97.25, 2.75], [150, 113.75, 36.25]]);
+  });
+});
+
+describe('seasonCalendar', () => {
+  it('gives each season a column: the manager\'s regular-season points per game against that season\'s league average', () => {
+    const c = seasonCalendar(league());
+    expect(c.weeks).toEqual([{ week: 2024, playoff: false }, { week: 2025, playoff: false }]);
+    expect(c.playoffAt).toBeNull();
+    expect(row(c.rows, 'a').cells).toEqual([{ week: 2024, points: 95, avg: 87.5, delta: 7.5 }, { week: 2025, points: 107.5, avg: 103.69, delta: 3.81 }]);
+  });
+  it('leaves a season empty for a manager who did not play it', () => {
+    const old = season2024();
+    old.managers = { ...old.managers };
+    delete old.managers.d;
+    old.standings = old.standings.filter((r) => r.userId !== 'd');
+    old.weeks = old.weeks.map((w) => ({ ...w, games: w.games.filter((g) => g.sides.every((s) => s.userId !== 'd')) }));
+    expect(row(seasonCalendar([old, season2025()]).rows, 'd').cells[0]).toBeNull();
   });
 });
 

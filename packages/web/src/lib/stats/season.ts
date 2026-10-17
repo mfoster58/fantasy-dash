@@ -1,6 +1,6 @@
 import type { Season, UserId } from '@fantasy-dash/core';
 import { teamGamesOf, type TeamGame } from '../managerGames';
-import { byWeek, regular } from './scope';
+import { byWeek, managerRefs, regular } from './scope';
 
 export interface RaceData { weeks: number[]; playoffTeams: number; series: { id: UserId; ranks: number[] }[] }
 export interface FormCell { week: number; points: number; oppId: UserId; oppPoints: number; result: 'W' | 'L' | 'T'; matchupId: number; top: boolean }
@@ -68,6 +68,30 @@ export function scoringCalendar(season: Season): CalendarData {
         if (!g) return null;
         const avg = round2(w.games.reduce((t, x) => t + x.points, 0) / w.games.length);
         return { week: w.week, points: g.points, avg, delta: round2(g.points - avg) };
+      }),
+    })),
+  };
+}
+
+/** all-time view of the calendar: a column per season, each cell the manager's regular-season points per game against that season's league average */
+export function seasonCalendar(seasons: Season[]): CalendarData {
+  const sorted = [...seasons].sort((a, b) => a.year - b.year);
+  const ids = managerRefs(sorted).map((r) => r.id);
+  const perSeason = sorted.map((s) => {
+    const games = regular(teamGamesOf([s]));
+    const avg = games.length ? round2(games.reduce((t, g) => t + g.points, 0) / games.length) : 0;
+    return { year: s.year, games, avg };
+  });
+  return {
+    weeks: sorted.map((s) => ({ week: s.year, playoff: false })),
+    playoffAt: null,
+    rows: ids.map((id) => ({
+      id,
+      cells: perSeason.map(({ year, games, avg }) => {
+        const mine = games.filter((g) => g.userId === id);
+        if (mine.length === 0) return null;
+        const ppg = round2(mine.reduce((t, g) => t + g.points, 0) / mine.length);
+        return { week: year, points: ppg, avg, delta: round2(ppg - avg) };
       }),
     })),
   };

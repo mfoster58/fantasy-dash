@@ -4,10 +4,9 @@ import type { PlayerDirectory, Season } from '@fantasy-dash/core';
 import { teamGamesOf } from '../../lib/managerGames';
 import { managerRefs, regular, scopeSeasons, type Scope } from '../../lib/stats/scope';
 import { eloFor, eloHistory } from '../../lib/stats/elo';
-import { formGuide, scoringCalendar, standingsRace, weeklyFinishes } from '../../lib/stats/season';
+import { formGuide, scoringCalendar, seasonCalendar, standingsRace, weeklyFinishes } from '../../lib/stats/season';
 import { consistency, postseasonForm, scheduleLuck, strengthOfSchedule } from '../../lib/stats/strength';
 import { draftReturns, pointOrigins, rosterAge, wireActivity } from '../../lib/stats/roster';
-import { moments } from '../../lib/stats/moments';
 import { COLUMNS, statTable } from '../../lib/stats/table';
 import StatCard from './StatCard';
 import StatsToolbar from './StatsToolbar';
@@ -24,7 +23,6 @@ import DraftReturns from './DraftReturns';
 import PointOrigins from './PointOrigins';
 import RosterAge from './RosterAge';
 import WireActivity from './WireActivity';
-import Moments from './Moments';
 import StatTable from './StatTable';
 import type { Pin } from './pin';
 
@@ -33,11 +31,11 @@ interface Props { seasons: Season[]; players: PlayerDirectory; years: number[]; 
 const TABLE_ABOUT = COLUMNS.map((c) => `${c.label}: ${c.title}.`).join(' ');
 
 /** one row of cards: two or three across from lg, one below; cards that are not for this view are passed as null and skipped */
-function Row({ cols, children }: { cols: 1 | 2 | 3; children: ReactNode }) {
+function Row({ cols, top = false, children }: { cols: 1 | 2 | 3; /** cards keep their own height instead of stretching to the tallest */ top?: boolean; children: ReactNode }) {
   const shown = Children.toArray(children);   // drops the nulls and falses
   if (shown.length === 0) return null;
   const grid = cols === 3 ? 'lg:grid-cols-3' : cols === 2 ? 'lg:grid-cols-2' : '';
-  return <div className={`grid gap-4 ${grid}`}>{shown}</div>;
+  return <div className={`grid gap-4 ${grid} ${top ? 'items-start' : ''}`}>{shown}</div>;
 }
 
 /** The Managers stats page: toolbar, then rows of chart cards and the table. The season and the pinned manager live in the URL. */
@@ -57,7 +55,8 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
   const elo = useMemo(() => eloFor(eloHistory(seasons), scope), [seasons, scope]);
   const race = useMemo(() => (single ? standingsRace(single) : null), [single]);
   const form = useMemo(() => (single ? formGuide(single) : null), [single]);
-  const calendar = useMemo(() => (single ? scoringCalendar(single) : null), [single]);
+  // a season shows its weeks; all-time shows one column per season
+  const calendar = useMemo(() => (single ? scoringCalendar(single) : seasonCalendar(scoped)), [single, scoped]);
   const finishes = useMemo(() => weeklyFinishes(scoped), [scoped]);
   const spread = useMemo(() => consistency(reg), [reg]);
   const luck = useMemo(() => scheduleLuck(reg), [reg]);
@@ -68,7 +67,6 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
   // the player directory describes the current season, so experience is rolled back to the season being viewed
   const age = useMemo(() => rosterAge(scoped, players, currentYear), [scoped, players, currentYear]);
   const wire = useMemo(() => (single ? wireActivity(single) : null), [single]);
-  const moment = useMemo(() => moments(games), [games]);
   const table = useMemo(() => statTable(scoped), [scoped]);
 
   const toolbar = (
@@ -89,7 +87,7 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
         <StatCard id="table" title="The numbers" wide about={TABLE_ABOUT} caption={`Every advanced stat; click a header to rank by it. Regular season unless the column says otherwise.${through}`}><StatTable rows={table} refs={refs} pin={pin} allTime={allTime} /></StatCard>
       </Row>
       <Row cols={2}>
-        {calendar && <StatCard id="calendar" title="Scoring calendar" caption="Each week against the league average, playoffs after the dashed line: greener the further above, redder below."><ScoringCalendar data={calendar} refs={refs} pin={pin} /></StatCard>}
+        <StatCard id="calendar" title="Scoring calendar" caption={allTime ? 'Each season\'s points per game against that season\'s league average: greener the further above, redder below.' : 'Each week against the league average, playoffs after the dashed line: greener the further above, redder below.'}><ScoringCalendar data={calendar} refs={refs} pin={pin} bySeason={allTime} /></StatCard>
         <StatCard id="consistency" title="Consistency" caption="Box: second-worst to second-best week; tick: median; thin line: the full range. Short boxes are steady teams."><Consistency rows={spread} refs={refs} pin={pin} /></StatCard>
       </Row>
       <Row cols={1}>
@@ -105,14 +103,11 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
       </Row>
       <Row cols={2}>
         {single && <StatCard id="draft" title="Draft returns by round" caption="Points: started points from each manager's pick in each round. Value: what the pick was worth against its slot in the draft grading, green beat it, red fell short. Hover a cell for the player."><DraftReturns data={draft} players={players} refs={refs} pin={pin} /></StatCard>}
-        {single && wire && <StatCard id="wire" title="Wire activity" caption="Waiver and free-agent adds per week; totals and FAAB spent on the right."><WireActivity data={wire} refs={refs} pin={pin} /></StatCard>}
+        {single && wire && <StatCard id="wire" title="Wire activity" caption="Waiver and free-agent adds per week; hover a week for the moves. Totals and FAAB spent on the right."><WireActivity data={wire} players={players} refs={refs} pin={pin} /></StatCard>}
       </Row>
-      <Row cols={2}>
-        <div className="grid gap-4">
-          <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
-          <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
-        </div>
-        <StatCard id="moments" title="Notable matchups" caption="Winner on the left, loser on the right, the margin between. The bar splits at each side's share of the points; the tick is halfway. Each game opens its box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
+      <Row cols={2} top>
+        <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
+        <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
       </Row>
     </div>
   );
