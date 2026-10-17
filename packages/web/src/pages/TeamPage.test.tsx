@@ -24,13 +24,16 @@ describe('TeamPage', () => {
     expect(screen.getByRole('img', { name: 'Champion 2025' })).toBeInTheDocument();
   });
 
-  it('hangs nothing for the runner-up, and nothing for a season still in play', () => {
+  it('hangs nothing for the runner-up', () => {
     mount(2025, honors2025.runnerUp!);
-    expect(screen.queryByRole('img', { name: /^Champion/ })).toBeNull();
-    const live = history.seasons.find((s) => s.status === 'in_season');
-    if (live) {
-      mount(live.year, honors2025.champion!);
-      expect(screen.queryByRole('img', { name: /^Champion/ })).toBeNull();
-    }
+    expect(screen.queryByRole('img', { name: /^Champion \d{4}$/ })).toBeNull();
+  });
+
+  it('takes the champion from the season honors, the same source the manager page uses', () => {
+    // same season, same bracket, but the honors name nobody: no pennant, whatever the bracket placement says
+    const s2025 = seasons.find((s) => s.year === 2025)!;
+    seasons = seasons.map((s) => (s === s2025 ? { ...s, honors: { ...s.honors, champion: null } } : s));
+    mount(2025, honors2025.champion!);
+    expect(screen.queryByRole('img', { name: /^Champion \d{4}$/ })).toBeNull();
   });
 });
