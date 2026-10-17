@@ -25,7 +25,7 @@ describe('Pennant', () => {
     // the banner is a faint gold tint with a gold outline, not a solid gold block
     const banner = img.querySelector('path')!;
     expect(banner.getAttribute('stroke')).toContain('var(--gold)');
-    const stops = [...img.querySelectorAll('linearGradient stop')];
+    const stops = [...img.querySelectorAll<SVGStopElement>('linearGradient stop')];
     expect(stops).toHaveLength(2);
     for (const s of stops) expect(s.style.stopColor).toContain('var(--surface)');
   });
