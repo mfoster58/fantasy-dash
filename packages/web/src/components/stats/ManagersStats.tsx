@@ -88,29 +88,31 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
       <Row cols={1}>
         <StatCard id="table" title="The numbers" wide about={TABLE_ABOUT} caption={`Every advanced stat; click a header to rank by it. Regular season unless the column says otherwise.${through}`}><StatTable rows={table} refs={refs} pin={pin} allTime={allTime} /></StatCard>
       </Row>
-      <Row cols={3}>
+      <Row cols={2}>
         {calendar && <StatCard id="calendar" title="Scoring calendar" caption="Each week against the league average: greener the further above, redder below."><ScoringCalendar data={calendar} refs={refs} pin={pin} /></StatCard>}
         <StatCard id="consistency" title="Consistency" caption="Box: second-worst to second-best week; tick: median; thin line: the full range. Short boxes are steady teams."><Consistency rows={spread} refs={refs} pin={pin} /></StatCard>
-        <StatCard id="luck" title="Schedule luck" caption="Hollow dot: wins if you had played the league median every week. Filled dot: what the schedule gave you."><ScheduleLuck rows={luck} refs={refs} pin={pin} /></StatCard>
       </Row>
       <Row cols={1}>
-        <StatCard id="elo" title="Power rating" wide about={ELO_ABOUT} caption={allTime ? 'Week by week across every season; each season starts a third of the way back toward 1500.' : 'Week by week, margin-aware Elo; the pinned manager is bright, the rest fade.'}><PowerRating history={elo} refs={refs} pin={pin} /></StatCard>
+        <StatCard id="elo" title="Power rating" wide about={ELO_ABOUT} caption={allTime ? 'Week by week across every season; each season starts a third of the way back toward 1500.' : 'Week by week, margin-aware Elo; pin a manager to lift his line.'}><PowerRating history={elo} refs={refs} pin={pin} /></StatCard>
       </Row>
-      <Row cols={2}>
+      <Row cols={3}>
+        <StatCard id="luck" title="Schedule luck" caption="Hollow dot: wins if you had played the league median every week. Filled dot: what the schedule gave you."><ScheduleLuck rows={luck} refs={refs} pin={pin} /></StatCard>
         <StatCard id="sos" title="Strength of schedule" caption="What opponents scored against each manager: red bars faced the hardest schedules, green the softest."><StrengthOfSchedule rows={sos} refs={refs} pin={pin} /></StatCard>
         {single && <StatCard id="post" title="Postseason form" caption="Hollow dot: regular-season average. Filled dot: postseason average, consolation games included."><PostseasonForm rows={post} refs={refs} pin={pin} /></StatCard>}
       </Row>
       <Row cols={1}>
         <StatCard id="age" title="Roster age" wide caption={age.estimated ? 'Average age behind each manager\'s started points; some ages are estimated from NFL seasons where the birth date is missing.' : 'Average age behind each manager\'s started points, weighted by the points each player scored.'}><RosterAge data={age} refs={refs} pin={pin} /></StatCard>
       </Row>
-      <Row cols={3}>
+      <Row cols={2}>
         {single && <StatCard id="draft" title="Draft returns by round" caption="Started points from each manager's pick in each round; hover a cell for the player. A bright late cell is a steal."><DraftReturns data={draft} players={players} refs={refs} pin={pin} /></StatCard>}
-        <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
         {single && wire && <StatCard id="wire" title="Wire activity" caption="Waiver and free-agent adds per week; totals and FAAB spent on the right."><WireActivity data={wire} refs={refs} pin={pin} /></StatCard>}
       </Row>
       <Row cols={2}>
-        <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
-        <StatCard id="moments" title="Robbed, stolen, flattened" caption="Highest score in a loss, lowest score in a win, biggest margins, closest calls. Each row opens the box score."><Moments data={moment} refs={refs} pin={pin} /></StatCard>
+        <div className="grid gap-4">
+          <StatCard id="finishes" title="Weekly finishes" caption="Green: weeks in the top three scorers. Red: weeks in the bottom three."><WeeklyFinishes rows={finishes} refs={refs} pin={pin} /></StatCard>
+          <StatCard id="origins" title="Where the points came from" caption="Draft, pickups, trades; sorted by the share of points that did not come from the draft."><PointOrigins rows={origins} refs={refs} pin={pin} /></StatCard>
+        </div>
+        <StatCard id="moments" title="Robbed, stolen, flattened" caption="Highest score in a loss, lowest score in a win, biggest margins, closest calls. Each row opens the box score."><Moments data={moment} refs={refs} pin={pin} columns={1} /></StatCard>
       </Row>
     </div>
   );

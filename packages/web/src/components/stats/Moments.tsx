@@ -13,12 +13,12 @@ const LISTS: { key: keyof MomentsData; title: string; who: (m: Moment) => string
   { key: 'close', title: 'Close calls', who: (m) => m.winnerId, value: (m) => fmtPts(m.margin) },
 ];
 
-export default function Moments({ data, refs, pin }: { data: MomentsData; refs: ManagerRef[]; pin: Pin }) {
+export default function Moments({ data, refs, pin, columns = 2 }: { data: MomentsData; refs: ManagerRef[]; pin: Pin; /** two lists across from sm, or one stacked column */ columns?: 1 | 2 }) {
   const { active, hoverProps } = usePinHover(pin);
   if (data.robbed.length === 0) return <Empty />;
   const name = (id: string) => refs.find((r) => r.id === id)?.name ?? id;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div data-testid="moment-lists" className={`grid gap-4 ${columns === 2 ? 'sm:grid-cols-2' : ''}`}>
       {LISTS.map((l) => (
         <div key={l.key}>
           <h4 className="section-label mb-1">{l.title}</h4>
