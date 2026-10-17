@@ -16,6 +16,7 @@ export const items: Item[] = [
   { kind: 'link', to: '/standings', label: 'Standings' },
   { kind: 'menu', id: 'rosters', label: 'Rosters', prefix: '/teams' },
   { kind: 'menu', id: 'managers', label: 'Managers', prefix: '/managers' },
+  { kind: 'link', to: '/players', label: 'Players' },
   { kind: 'link', to: '/h2h', label: 'Head to Head' },
   { kind: 'link', to: '/records', label: 'Records' },
   { kind: 'link', to: '/stats', label: 'Stats' },

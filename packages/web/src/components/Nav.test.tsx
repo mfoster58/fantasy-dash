@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { Link, MemoryRouter } from 'react-router';
 import Nav from './Nav';
 import { currentSeason, history } from '../data/load';
@@ -85,5 +85,17 @@ describe('Nav', () => {
     expect(screen.getAllByRole('link', { name: 'Stats' })[0]).toHaveAttribute('href', '/stats');
     expect(screen.queryByRole('link', { name: 'Player stats' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'All-Time' })).toBeNull();
+  });
+
+  it('has a Players tab between Managers and Head to Head', async () => {
+    render(<MemoryRouter><Nav /></MemoryRouter>);
+    await act(async () => {}); // let the Rosters menu finish loading
+    const nav = screen.getAllByRole('navigation')[0];
+    const labels = [...nav.querySelectorAll('a, button')].map((el) => el.textContent).filter((t) => t && t !== 'Menu');
+    const i = labels.indexOf('Players');
+    expect(i).toBeGreaterThan(0);
+    expect(labels[i - 1]).toBe('Managers');
+    expect(labels[i + 1]).toBe('Head to Head');
+    expect(nav.querySelector('a[href="/players"]')).not.toBeNull();
   });
 });

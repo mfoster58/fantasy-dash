@@ -9,7 +9,7 @@ const locationOf = async (p: unknown) => ((await p) as Response).headers.get('Lo
 
 describe('routes', () => {
   it('redirects the retired player stats and all-time URLs to records', () => {
-    expect(RETIRED_PATHS).toEqual({ players: '/records', 'all-time': '/records' });
+    expect(RETIRED_PATHS).toEqual({ 'all-time': '/records' });
     for (const path of Object.keys(RETIRED_PATHS)) {
       expect(child(path)?.loader).toBeTypeOf('function');
       expect(child(path)?.element).toBeUndefined();
@@ -38,5 +38,15 @@ describe('routes', () => {
   it('serves records with every season loaded', () => {
     expect(child('records')?.element).toBeTruthy();
     expect(child('records')?.loader).toBeTypeOf('function');
+  });
+  it('serves the players page per season and sends the bare URL to the current year', async () => {
+    expect(RETIRED_PATHS).toEqual({ 'all-time': '/records' });
+    expect(child('players')?.element).toBeUndefined();
+    expect(await locationOf(run('players'))).toBe(`/players/${currentSeason.year}`);
+    expect(child('players/:season')?.element).toBeTruthy();
+    await expect(run('players/:season', { season: '1999' })).rejects.toMatchObject({ status: 404 });
+    const data = (await run('players/:season', { season: String(currentSeason.year) })) as { season: { year: number }; db: { year: number } | null };
+    expect(data.season.year).toBe(currentSeason.year);
+    expect(data.db === null || data.db.year === currentSeason.year).toBe(true);
   });
 });
