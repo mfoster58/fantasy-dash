@@ -82,5 +82,10 @@ describe('Moments', () => {
     expect(within(first).getByRole('link')).toHaveAttribute('href', '/scores/2025/5/1');
     expect(within(first).getByRole('link')).toHaveTextContent('wk 5 · 150.00–120.00 vs alice');
     expect(screen.getByRole('list', { name: 'Flattened' }).querySelector('li')).toHaveTextContent('+70.00');
+    expect(screen.getByTestId('moment-lists').className).toMatch(/sm:grid-cols-2/);
+  });
+  it('can stack its four lists in one column', () => {
+    render(<MemoryRouter><Moments data={moments(teamGamesOf([s25]))} refs={refs} pin={null} columns={1} /></MemoryRouter>);
+    expect(screen.getByTestId('moment-lists').className).not.toMatch(/sm:grid-cols-2/);
   });
 });
