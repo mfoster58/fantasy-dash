@@ -39,7 +39,7 @@ describe('manager transaction boards', () => {
   it('sums the FAAB a manager bid on flops, claims that returned under 10 started points once their stint was over', () => {
     // a also claims w1 for $20 before week 2 and never starts him; the season is complete, so that bid is a flop
     const flops = { ...ctx, transactions: [{ year: 2024, transactions: [...transactions[0].transactions, tx('w9', 'waiver', 2, 11 * DAY, [mv('w1', 'a')], [], 20)] }] };
-    expect(mtFaabWasted(flops)).toEqual([expect.objectContaining({ userId: 'a', value: 20, valueLabel: '$20', detail: 'of $50 spent · 1 flop', meta: '1 season' })]);
+    expect(mtFaabWasted(flops)).toEqual([expect.objectContaining({ userId: 'a', value: 20, valueLabel: '$20', detail: 'of $50 judged · 1 flop', meta: '1 season' })]);
     expect(mtFaabWasted(ctx)).toEqual([]); // q1 returned 60: no flops
     // an open claim in a season still in progress is not judged yet
     const open = { ...flops, transactions: flops.transactions.map((s) => ({ ...s, complete: false })) };

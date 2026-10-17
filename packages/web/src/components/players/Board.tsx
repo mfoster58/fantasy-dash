@@ -54,39 +54,35 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
   );
 }
 
-/** The board's definition behind a small ? button: shown while hovered or focused, and kept open by a press until the next press or blur. */
-function About({ text }: { text: string }) {
+/**
+ * The ? button beside a board title. The definition shows while the button is hovered or focused, and a press pins it until
+ * the next press, Escape or blur. A press clears the hover flag, so a phone tap (mouseenter then click, never a mouseleave)
+ * opens on the first tap and closes on the second. The panel itself is rendered by the board, in the flow of the header,
+ * so the card's clipped overflow can never cut it off.
+ */
+function useAbout(): { open: boolean; buttonProps: Record<string, unknown> } {
   const [pinned, setPinned] = useState(false);
   const [hover, setHover] = useState(false);
   const open = pinned || hover;
-  return (
-    <span className="relative inline-flex">
-      <button
-        type="button"
-        aria-label="What counts"
-        aria-expanded={open}
-        onClick={() => setPinned((p) => !p)}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onFocus={() => setHover(true)}
-        onBlur={() => { setHover(false); setPinned(false); }}
-        className={`grid h-4 w-4 place-items-center rounded-full border text-[10px] font-semibold leading-none ${open ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'}`}
-      >
-        ?
-      </button>
-      {open && (
-        <span role="tooltip" className="absolute left-0 top-full z-10 mt-1.5 w-64 rounded-md border border-line bg-surface p-2.5 text-xs leading-snug text-ink shadow-lg">
-          {text}
-        </span>
-      )}
-    </span>
-  );
+  return {
+    open,
+    buttonProps: {
+      onClick: () => { setPinned((p) => !p); setHover(false); },
+      onMouseEnter: () => setHover(true),
+      onMouseLeave: () => setHover(false),
+      onFocus: () => setHover(true),
+      onBlur: () => { setHover(false); setPinned(false); },
+      onKeyDown: (e: { key: string }) => { if (e.key === 'Escape') { setHover(false); setPinned(false); } },
+    },
+  };
 }
 
 export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, position, onPosition, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
   const [openManagers, setOpenManagers] = useState<Record<string, boolean>>({});
+  const about = useAbout();
+  const aboutId = `about-${def.id}`;
   const managerName = (id: string) => managers[id]?.displayName ?? id;
   const activeMode = def.modes?.find((m) => m.id === mode) ?? def.modes?.[0];
   const activeMode2 = def.modes2?.find((m) => m.id === mode2) ?? def.modes2?.[0];
@@ -107,14 +103,24 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
         <div className="flex items-start justify-between gap-3">
           <span className="flex min-w-0 items-center gap-1.5">
             <h3 id={`board-${def.id}`} className="text-base font-semibold leading-tight text-ink">{def.title}</h3>
-            <About text={def.definition} />
+            <button
+              type="button"
+              aria-label="What counts"
+              aria-expanded={about.open}
+              aria-describedby={about.open ? aboutId : undefined}
+              {...about.buttonProps}
+              className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[10px] font-semibold leading-none ${about.open ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'}`}
+            >
+              ?
+            </button>
           </span>
           <span className="section-label shrink-0 pt-1">{header}</span>
         </div>
+        {about.open && <p id={aboutId} role="tooltip" className="mt-1.5 rounded-md bg-surface-2 px-2.5 py-2 text-xs leading-snug text-ink">{def.definition}</p>}
         {(onPosition || toggles.length > 0) && (
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            {onPosition ? <PositionFilter value={position ?? 'All'} onChange={onPosition} size="sm" /> : <span />}
-            {toggles.length > 0 && <span className="flex flex-wrap items-center gap-2">{toggles}</span>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {onPosition && <PositionFilter value={position ?? 'All'} onChange={onPosition} size="sm" />}
+            {toggles.length > 0 && <span className="ml-auto flex flex-wrap items-center justify-end gap-2">{toggles}</span>}
           </div>
         )}
       </header>
@@ -129,7 +135,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
               ? <Link to={r.to} className="num hover:text-accent">{r.meta}</Link>
               : <span className="num">{r.meta}</span>;
             return (
-              <li key={r.key} data-rank={i + 1} className={`flex items-center gap-3 px-3 py-2 ${record ? RECORD_ROW : ''}`}>
+              <li key={r.key} data-rank={i + 1} className={`flex flex-wrap items-center gap-3 px-3 py-2 ${record ? RECORD_ROW : ''}`}>
                 <span className={`num w-4 shrink-0 text-right text-xs ${record ? 'font-bold text-gold' : 'text-muted'}`}>{record ? <CrownIcon title="League record" /> : i + 1}</span>
                 {r.playerId !== null ? <Headshot players={players} id={r.playerId} size={28} /> : <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId ?? '?'} size={28} />}
                 <span className="min-w-0 flex-1">
@@ -177,8 +183,9 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                   </span>
                 </span>
                 {r.player && (
-                  // the player a manager row names: right-aligned, headshot against the value, so the headshots line up down the board
-                  <span data-testid="row-player" className="flex min-w-0 basis-2/5 shrink-0 items-center justify-end gap-2 text-right">
+                  // the player a manager row names: right-aligned, headshot against the value, so the headshots line up down the board;
+                  // on a phone the row wraps and the block takes a full second line, so neither name nor the detail is squeezed
+                  <span data-testid="row-player" className="order-last flex min-w-0 basis-full shrink-0 items-center justify-end gap-2 text-right md:order-none md:basis-2/5">
                     <span className="min-w-0">
                       <span className="flex items-center justify-end gap-1.5">
                         <PosPill pos={playerPos(players, r.player)} />

@@ -57,6 +57,18 @@ describe('Board', () => {
     expect(screen.getByRole('tooltip')).toBeInTheDocument();
     fireEvent.blur(about);
     expect(screen.queryByRole('tooltip')).toBeNull();
+    // a phone tap is a mouseenter then a click, with no focus and no mouseleave: the first opens, the second closes
+    fireEvent.mouseEnter(about); fireEvent.click(about);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    fireEvent.mouseEnter(about); fireEvent.click(about);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.click(about);
+    fireEvent.keyDown(about, { key: 'Escape' });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.click(about);
+    expect(about).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id);
+    // the definition sits in the flow of the header, under the title row, where the card's clipped overflow cannot cut it
+    expect(screen.getByRole('tooltip').parentElement?.tagName).toBe('HEADER');
   });
 
   it('puts the position pill before the name', () => {
@@ -220,6 +232,10 @@ describe('Board', () => {
     const block = within(first).getByTestId('row-player');
     expect(block).toHaveTextContent('QBQuincy OneRd 9, pick 81');
     expect(block.querySelector('img')).not.toBeNull(); // the headshot sits in the block, hard against the value, so headshots line up down the board
+    // below the grid breakpoint the block takes a full second line of a wrapping row, so neither name is squeezed on a phone
+    expect(first.className).toMatch(/\bflex-wrap\b/);
+    expect(block.className).toMatch(/\border-last\b.*\bmd:order-none\b/);
+    expect(block.className).toMatch(/\bbasis-full\b.*\bmd:basis-2\/5\b/);
     expect(within(first).getByRole('link', { name: /alice/ })).toHaveAttribute('href', '/h2h?a=a');
     expect(within(first).getByRole('link', { name: '2024' })).toHaveAttribute('href', '/draft/2024?team=a');
     expect(within(first).queryByText('·')).toBeNull(); // the detail moved with the player, so nothing joins it to the meta

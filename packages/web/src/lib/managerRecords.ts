@@ -18,7 +18,7 @@ export function allTimeContext(seasons: Season[], players: PlayerDirectory, mana
   return {
     lines, players, champions: championsOf(seasons), lastPlaces: lastPlacesOf(seasons), year: null,
     currentYear: Math.max(...seasons.map((s) => s.year)), pos: 'All', picks: draftValuesOf(seasons), xfp: fitXfp(lines),
-    transactions: seasons.map((s) => ({ year: s.year, transactions: s.transactions })),
+    transactions: seasons.map((s) => ({ year: s.year, transactions: s.transactions, complete: s.status === 'complete' })),
     playerSeasons: Object.fromEntries(seasons.map((s) => [s.year, s.playerSeasons])),
     drafts: Object.fromEntries(seasons.map((s) => [s.year, s.draft])),
     teamGames, managerSeasons: managerSeasonsOf(seasons, teamGames), managers,

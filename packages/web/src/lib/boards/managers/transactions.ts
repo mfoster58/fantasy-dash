@@ -74,7 +74,7 @@ function faabVerdicts(ctx: BoardContext): Map<UserId, { judged: number; hit: num
 /** dollars bid on flops: judged claims that returned under FLOP_POINTS started points */
 export const mtFaabWasted = (ctx: BoardContext): BoardRow[] => {
   const items = [...faabVerdicts(ctx).entries()].filter(([, t]) => t.flopped > 0).map(([userId, t]) => ({ userId, t, value: t.flopped, latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
-  return rank(items).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: dollars(i.value), meta: scopeMeta(ctx, i.t.years), detail: `of ${dollars(i.t.judged)} spent · ${plural(i.t.flops, 'flop')}`, userId: i.userId, to: null }));
+  return rank(items).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: dollars(i.value), meta: scopeMeta(ctx, i.t.years), detail: `of ${dollars(i.t.judged)} judged · ${plural(i.t.flops, 'flop')}`, userId: i.userId, to: null }));
 };
 /** share of judged dollars that went on hits, managers with at least MIN_JUDGED judged */
 export const mtFaabValue = (ctx: BoardContext): BoardRow[] => {
