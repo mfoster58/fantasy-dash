@@ -28,6 +28,8 @@ const mount = (initial = '/records', currentYear = 2025) => render(
   </MemoryRouter>,
 );
 const region = (name: string) => screen.getByRole('region', { name });
+/** the section's own position bar, the first in its region; every board below has one of its own */
+const sectionPos = (name: string) => within(within(region(name)).getAllByRole('group', { name: 'Position' })[0]);
 const firstRow = (boardTitle: string) => within(region(boardTitle)).getAllByRole('listitem')[0];
 const tabs = (label: string) => within(screen.getByRole('tablist', { name: label }));
 const tab = (name: RegExp) => tabs('Tabs').getByRole('tab', { name });
@@ -75,7 +77,8 @@ describe('RecordsView', () => {
 
   it('keeps each sub-tab\'s position and season in their own URL params across switches', () => {
     mount('/records?sub=alltime');
-    fireEvent.click(within(region('All-time')).getByRole('button', { name: 'RB' }));
+    fireEvent.click(sectionPos('All-time').getByRole('button', { name: 'RB' }));
+    expect(screen.queryByText('Every season')).toBeNull(); // no note under the section title
     expect(loc()).toContain('alltime=RB');
     expect(firstRow('Most career points started')).toHaveTextContent('Ricky One');
     fireEvent.change(within(region('All-time')).getByRole('combobox', { name: 'Season' }), { target: { value: '2024' } });
@@ -84,13 +87,13 @@ describe('RecordsView', () => {
     expect(within(region('Leaders')).getByRole('combobox', { name: 'Season' })).toHaveValue('2025'); // leaders default to the current season
     expect(firstRow('Most points')).toHaveTextContent('Quincy One');
     fireEvent.click(sub(/^All-time/));
-    expect(within(region('All-time')).getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
+    expect(sectionPos('All-time').getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(region('All-time')).getByRole('combobox', { name: 'Season' })).toHaveValue('2024');
   });
 
   it('falls back for junk params and shows the not-started message on Leaders only', () => {
     mount('/records?sub=leaders&leaders=XYZ&leadersSeason=1999', 2026);
-    expect(within(region('Leaders')).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    expect(sectionPos('Leaders').getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Season has not started.')).toBeInTheDocument();
     fireEvent.click(sub(/^Moments/));
     expect(screen.getByText('Best week by a starter')).toBeInTheDocument();

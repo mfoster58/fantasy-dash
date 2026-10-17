@@ -2,7 +2,7 @@ import type { PlayerSeasonLine, Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPts, fmtSigned } from '../format';
 import type { PlayerLine } from '../playerLines';
 import { longestStartRun } from '../ironman';
-import { waiverClaims, type WaiverClaim } from '../waivers';
+import { isFlop, waiverClaims, type WaiverClaim } from '../waivers';
 import type { BoardContext, BoardRow, Direction, DraftValue } from './shared';
 import { KICKING_DEF, careerBoard, fmt1, groupBy, inYear, intLabel, metaOf, momentBoard, plural, posOk, rank, round1, skillOnly, started, sum, toneOf } from './shared';
 
@@ -82,9 +82,10 @@ export const waiverHeroes = (ctx: BoardContext): BoardRow[] =>
   rank(claims(ctx).map((c) => ({ c, playerId: c.playerId, value: c.points, latestYear: c.year, latestWeek: c.week })))
     .map(({ c }) => claimRow(c, c.points, fmtPts(c.points), `${bidLabel(c)} · ${plural(c.starts, 'start')}`));
 
-export const waiverVillains = (ctx: BoardContext): BoardRow[] =>
-  rank(claims(ctx).filter((c): c is WaiverClaim & { bid: number } => c.bid !== null && c.bid >= 10).map((c) => ({ c, playerId: c.playerId, value: round1(c.bid / Math.max(c.points, 1)), latestYear: c.year, latestWeek: c.week })))
-    .map(({ c, value }) => claimRow(c, value, `$${value.toFixed(1)}/pt`, `$${c.bid} · ${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));
+/** Bids whose player returned under FLOP_POINTS started points once his stint was over, the biggest bid first. */
+export const waiverFlops = (ctx: BoardContext): BoardRow[] =>
+  rank(claims(ctx).filter(isFlop).map((c) => ({ c, playerId: c.playerId, value: c.bid, latestYear: c.year, latestWeek: c.week })))
+    .map(({ c, value }) => claimRow(c, value, `$${value}`, `${fmtPts(c.points)} pts · ${plural(c.starts, 'start')}`));
 
 const SKILL = new Set(['QB', 'RB', 'WR', 'TE']);
 const slot = (p: { round: number; pickNo: number }) => `Rd ${p.round}, pick ${p.pickNo}`;

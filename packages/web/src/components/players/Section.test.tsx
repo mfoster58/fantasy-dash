@@ -23,7 +23,7 @@ const wrap = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter
 describe('Section', () => {
   it('expands only the boards in the same grid row and leaves short boards alone', () => {
     // two columns: row 1 = big + small, row 2 = sortable + moded
-    wrap(<Section id="extras" title="Extras" note="Every season" boards={[big, small, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    wrap(<Section id="extras" title="Extras" boards={[big, small, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const bigBoard = screen.getByRole('region', { name: 'Big board' });
     const sortBoard = screen.getByRole('region', { name: 'Sortable board' });
     const smallBoard = screen.getByRole('region', { name: 'Small board' });
@@ -36,7 +36,7 @@ describe('Section', () => {
     expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(5);
     expect(within(modedBoard).getAllByRole('listitem')).toHaveLength(5);
     expect(within(smallBoard).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(smallBoard).queryByRole('button')).toBeNull();
+    expect(within(smallBoard).queryByRole('button', { name: /show/i })).toBeNull();
     fireEvent.click(within(modedBoard).getByRole('button', { name: /show all/i }));
     expect(within(sortBoard).getAllByRole('listitem')).toHaveLength(6);
     expect(within(modedBoard).getAllByRole('listitem')).toHaveLength(7);
@@ -49,7 +49,7 @@ describe('Section', () => {
   it('groups rows by three in a three-column section', () => {
     const third: BoardDef = { ...big, id: 'third', title: 'Third board' };
     const fourth: BoardDef = { ...big, id: 'fourth', title: 'Fourth board' };
-    wrap(<Section id="leaders" title="Leaders" note="" boards={[big, sortable, third, fourth]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
+    wrap(<Section id="leaders" title="Leaders" boards={[big, sortable, third, fourth]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
     fireEvent.click(within(screen.getByRole('region', { name: 'Third board' })).getByRole('button', { name: /show all/i }));
     expect(within(screen.getByRole('region', { name: 'Big board' })).getAllByRole('listitem')).toHaveLength(8);
     expect(within(screen.getByRole('region', { name: 'Sortable board' })).getAllByRole('listitem')).toHaveLength(6);
@@ -62,7 +62,7 @@ describe('Section', () => {
     const mql = { get matches() { return matches; }, addEventListener: (_: string, fn: () => void) => listeners.push(fn), removeEventListener: vi.fn() };
     vi.stubGlobal('matchMedia', vi.fn(() => mql));
     try {
-      wrap(<Section id="extras" title="Extras" note="" boards={[big, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
+      wrap(<Section id="extras" title="Extras" boards={[big, sortable, moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={3} />);
       const bigBoard = screen.getByRole('region', { name: 'Big board' });
       fireEvent.click(within(bigBoard).getByRole('button', { name: /show all/i }));
       expect(within(bigBoard).getAllByRole('listitem')).toHaveLength(8);
@@ -81,7 +81,7 @@ describe('Section', () => {
     const two: BoardDef = { ...moded, id: 'two', title: 'Two toggles', modes2: [{ id: 'total', label: 'Total', valueHeader: '' }, { id: 'pg', label: 'Per game', valueHeader: '/G' }],
       empty: (_ctx, _mode, mode2) => (mode2 === 'pg' ? 'Need more games.' : undefined),
       compute: (_ctx, _direction, mode, mode2) => (mode2 === 'pg' ? [] : mode === 'ppg' ? rows(7, 'g') : rows(7, 'x')) };
-    wrap(<Section id="extras" title="Extras" note="" boards={[two]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    wrap(<Section id="extras" title="Extras" boards={[two]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const board = screen.getByRole('region', { name: 'Two toggles' });
     const perGame = within(board).getByRole('group', { name: 'Per game' });
     fireEvent.click(within(perGame).getByRole('button', { name: 'Per game' }));
@@ -92,7 +92,7 @@ describe('Section', () => {
   });
 
   it('passes the chosen mode to a moded board and keeps it per board', () => {
-    wrap(<Section id="extras" title="Extras" note="" boards={[moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    wrap(<Section id="extras" title="Extras" boards={[moded]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const board = screen.getByRole('region', { name: 'Moded board' });
     expect(within(board).getAllByRole('listitem')[1]).toHaveTextContent('x1');
     expect(within(board).getByRole('button', { name: 'Total' })).toHaveAttribute('aria-pressed', 'true');
@@ -102,7 +102,7 @@ describe('Section', () => {
   });
 
   it('passes the direction to a sortable board', () => {
-    wrap(<Section id="extras" title="Extras" note="" boards={[sortable]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
+    wrap(<Section id="extras" title="Extras" boards={[sortable]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} />);
     const board = screen.getByRole('region', { name: 'Sortable board' });
     // row 0 is always q1; row 1's id carries the direction prefix ('o1' vs 'u1')
     expect(within(board).getAllByRole('listitem')[1]).toHaveTextContent('o1');
@@ -110,7 +110,7 @@ describe('Section', () => {
     expect(within(board).getAllByRole('listitem')[1]).toHaveTextContent('u1');
   });
 
-  it('gives each player board its own position dropdown that narrows that board alone and follows the section filter when it changes', () => {
+  it('gives each player board its own position bar that narrows that board alone and follows the section filter when it changes', () => {
     const lines = flattenLines([season(2025, [week(1, [game(2025, 1, 1, side('a', 10, [line('q1', 10)]), side('b', 5, [line('r1', 5)]))])])], players);
     const echo = (id: string, title: string, extra: Partial<BoardDef> = {}): BoardDef => ({ ...big, id, title, ...extra,
       compute: (c) => [{ key: c.pos, playerId: 'q1', value: 1, valueLabel: c.pos, meta: `${c.pos} meta`, detail: `${c.lines.length} lines`, userId: null, to: null }] });
@@ -118,33 +118,35 @@ describe('Section', () => {
     const other = echo('other', 'Other board');
     const mboard = echo('mb', 'Manager board', { tab: 'managers', sub: 'mdraft', positions: true });
     const plain = echo('plain', 'Plain manager board', { tab: 'managers', sub: 'mdraft' });
-    const ui = (pos: 'All' | 'WR') => <Section id="s" title="S" note="" boards={[posBoard, other, mboard, plain]} ctx={{ ...ctx, pos, lines: pos === 'All' ? lines : lines.filter((l) => l.position === pos) }} allLines={lines} players={players} managers={managers} pos={pos} onPos={() => {}} columns={2} />;
+    const ui = (pos: 'All' | 'WR') => <Section id="s" title="S" boards={[posBoard, other, mboard, plain]} ctx={{ ...ctx, pos, lines: pos === 'All' ? lines : lines.filter((l) => l.position === pos) }} allLines={lines} players={players} managers={managers} pos={pos} onPos={() => {}} columns={2} />;
     const { rerender } = wrap(ui('All'));
     const region = (name: string) => screen.getByRole('region', { name });
-    const select = (name: string) => within(region(name)).getByRole('combobox', { name: 'Position' });
-    expect(select('Pos board')).toHaveValue('All');
+    const bar = (name: string) => within(within(region(name)).getByRole('group', { name: 'Position' }));
+    const pressed = (name: string) => bar(name).getAllByRole('button').find((b) => b.getAttribute('aria-pressed') === 'true')?.textContent;
+    expect(pressed('Pos board')).toBe('All');
     expect(within(region('Pos board')).getByText('2 lines')).toBeInTheDocument();
-    fireEvent.change(select('Pos board'), { target: { value: 'RB' } });
-    expect(select('Pos board')).toHaveValue('RB');
+    fireEvent.click(bar('Pos board').getByRole('button', { name: 'RB' }));
+    expect(pressed('Pos board')).toBe('RB');
     expect(within(region('Pos board')).getByText('RB meta')).toBeInTheDocument();
     expect(within(region('Pos board')).getByText('1 lines')).toBeInTheDocument();
     expect(within(region('Other board')).getByText('2 lines')).toBeInTheDocument(); // untouched
     // a manager board that names players narrows by position but keeps every line
-    fireEvent.change(select('Manager board'), { target: { value: 'QB' } });
+    fireEvent.click(bar('Manager board').getByRole('button', { name: 'QB' }));
     expect(within(region('Manager board')).getByText('QB meta')).toBeInTheDocument();
     expect(within(region('Manager board')).getByText('2 lines')).toBeInTheDocument();
-    expect(within(region('Plain manager board')).queryByRole('combobox', { name: 'Position' })).toBeNull();
+    expect(within(region('Plain manager board')).queryByRole('group', { name: 'Position' })).toBeNull();
+    expect(screen.queryByRole('combobox')).toBeNull(); // nothing on a board is a dropdown
     // the section filter changing clears every override
     rerender(<MemoryRouter>{ui('WR')}</MemoryRouter>);
-    expect(select('Pos board')).toHaveValue('WR');
+    expect(pressed('Pos board')).toBe('WR');
     expect(within(region('Pos board')).getByText('WR meta')).toBeInTheDocument();
-    expect(select('Manager board')).toHaveValue('WR');
+    expect(pressed('Manager board')).toBe('WR');
   });
 
   it('does not compute its boards while hidden, and keeps its toggle state for when it shows again', () => {
     const compute = vi.fn(() => rows(7, 'h'));
     const spy: BoardDef = { ...moded, id: 'spy', title: 'Spy board', compute };
-    const ui = (hidden: boolean) => <Section id="s" title="S" note="" boards={[spy]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} hidden={hidden} />;
+    const ui = (hidden: boolean) => <Section id="s" title="S" boards={[spy]} ctx={ctx} players={players} managers={managers} pos="All" onPos={() => {}} columns={2} hidden={hidden} />;
     const { rerender } = wrap(ui(false));
     fireEvent.click(within(screen.getByRole('region', { name: 'Spy board' })).getByRole('button', { name: 'PPG' }));
     const calls = compute.mock.calls.length;
@@ -158,7 +160,7 @@ describe('Section', () => {
   it('renders its own position filter and optional season picker, and an empty message instead of boards', () => {
     const onPos = vi.fn();
     const onChange = vi.fn();
-    wrap(<Section id="leaders" title="League leaders" note="" boards={[big]} ctx={ctx} players={players} managers={managers} pos="RB" onPos={onPos} columns={3}
+    wrap(<Section id="leaders" title="League leaders" boards={[big]} ctx={ctx} players={players} managers={managers} pos="RB" onPos={onPos} columns={3}
       seasonPicker={{ years: [2024, 2025], value: 2025, onChange, allTime: true }} emptyMessage="Season has not started." />);
     expect(screen.getByRole('option', { name: 'All-time' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'League leaders' })).toBeInTheDocument();

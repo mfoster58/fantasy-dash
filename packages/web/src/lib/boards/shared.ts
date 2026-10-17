@@ -29,11 +29,14 @@ export interface BoardRow {
 export interface RowManager { userId: UserId; weeks: number }
 
 export interface DraftValue { year: number; playerId: PlayerId; value: number; round: number; pickNo: number }
-export interface SeasonTransactions { year: number; transactions: Transaction[] }
+/** `complete` is false while the season is still being played; unsaid means complete */
+export interface SeasonTransactions { year: number; transactions: Transaction[]; complete?: boolean }
 
 export interface BoardContext {
   /** already narrowed to the section's position and season */
   lines: PlayerLine[];
+  /** every line in the data, any season or position, for boards that need ownership history; defaults to `lines` */
+  allLines?: PlayerLine[];
   players: PlayerDirectory;
   champions: Record<number, UserId | null>;
   lastPlaces: Record<number, UserId | null>;
@@ -76,7 +79,6 @@ export interface BoardDef {
   /** offers a mode toggle; `compute` receives the chosen mode id */
   modes?: readonly BoardMode[];
   /** render `modes` as a dropdown instead of a row of pills */
-  modeSelect?: boolean;
   /** a manager board whose rows name a player: offers the per-board position dropdown, which the board applies to that player's position (player boards always offer it) */
   positions?: boolean;
   /** second, independent toggle; its valueHeaders are suffixes appended to the first header */

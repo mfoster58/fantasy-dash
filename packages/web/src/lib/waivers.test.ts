@@ -12,9 +12,19 @@ const s = season(2025, [
   week(4, [game(2025, 4, 1, side('b', 30, [line('w1', 30)]), side('a', 2, [line('q1', 2)]))]),
 ]);
 const lines = flattenLines([s], players);
-const bare = (cs: ReturnType<typeof waiverClaims>) => cs.map(({ lines: _lines, ...c }) => c);
+const bare = (cs: ReturnType<typeof waiverClaims>) => cs.map(({ lines: _lines, open: _open, ...c }) => c);
 
 describe('waiverClaims', () => {
+  it('marks a claim open while its player is still on the roster in a season that is not complete', () => {
+    const txs = [
+      t({ id: 'c1', week: 2, created: 2, adds: [{ playerId: 'w1', userId: 'a' }], bid: 12 }),
+      t({ id: 'c2', week: 1, created: 1, adds: [{ playerId: 'r1', userId: 'b' }], bid: 4 }),
+      t({ id: 'd2', week: 3, created: 3, type: 'free_agent', drops: [{ playerId: 'r1', userId: 'b' }], bid: null }),
+    ];
+    expect(waiverClaims([{ year: 2025, complete: false, transactions: txs }], lines).map((c) => [c.playerId, c.open])).toEqual([['r1', false], ['w1', true]]);
+    expect(waiverClaims([{ year: 2025, complete: true, transactions: txs }], lines).map((c) => c.open)).toEqual([false, false]);
+    expect(waiverClaims([{ year: 2025, transactions: txs }], lines).map((c) => c.open)).toEqual([false, false]); // unsaid: a complete season
+  });
   it('sums started points for the claimer from the claim week through the week that manager drops the player', () => {
     // a drops w1 in week 3 (Sleeper keeps leg at 3 until the Tuesday after week 3), so a's week-3 start still counts
     const claims = waiverClaims([{ year: 2025, transactions: [

@@ -1,8 +1,8 @@
 import type { Transaction, UserId } from '@fantasy-dash/core';
 import { fmtPts } from '../../format';
-import { waiverClaims, type WaiverClaim } from '../../waivers';
+import { isHit, judged, waiverClaims, type WaiverClaim } from '../../waivers';
 import type { BoardContext, BoardRow } from '../shared';
-import { boxScore, inYear, plural, posOk, rank, round1, round2, when } from '../shared';
+import { boxScore, inYear, plural, posOk, rank, round2, when } from '../shared';
 import { seasonRows } from './shared';
 
 interface YearTx { year: number; tx: Transaction }
@@ -58,20 +58,29 @@ export const mtBiggestBid = (ctx: BoardContext): BoardRow[] => {
 
 const claims = (ctx: BoardContext): WaiverClaim[] => waiverClaims(ctx.transactions.filter((s) => inYear(ctx, s.year)), ctx.lines);
 const bidLabel = (c: WaiverClaim) => (c.bid === null ? 'FA' : dollars(c.bid));
-const MIN_SPEND = 25;
-function perPoint(ctx: BoardContext, direction: 'asc' | 'desc'): BoardRow[] {
-  const by = new Map<UserId, { spent: number; points: number; years: Set<number>; latest: number }>();
+const MIN_JUDGED = 25;
+/** per manager: dollars on judged bids, split into hits and flops; open claims are not judged yet */
+function faabVerdicts(ctx: BoardContext): Map<UserId, { judged: number; hit: number; flopped: number; claims: number; hits: number; flops: number; years: Set<number>; latest: number }> {
+  const by = new Map<UserId, { judged: number; hit: number; flopped: number; claims: number; hits: number; flops: number; years: Set<number>; latest: number }>();
   for (const c of claims(ctx)) {
-    if (c.bid === null) continue;
-    const t = by.get(c.userId) ?? { spent: 0, points: 0, years: new Set<number>(), latest: 0 };
-    t.spent += c.bid; t.points += c.points; t.years.add(c.year); t.latest = Math.max(t.latest, c.year * 100 + c.week);
+    if (!judged(c)) continue;
+    const t = by.get(c.userId) ?? { judged: 0, hit: 0, flopped: 0, claims: 0, hits: 0, flops: 0, years: new Set<number>(), latest: 0 };
+    t.judged += c.bid; t.claims += 1; t.years.add(c.year); t.latest = Math.max(t.latest, c.year * 100 + c.week);
+    if (isHit(c)) { t.hit += c.bid; t.hits += 1; } else { t.flopped += c.bid; t.flops += 1; }
     by.set(c.userId, t);
   }
-  const items = [...by.entries()].filter(([, t]) => t.spent >= MIN_SPEND).map(([userId, t]) => ({ userId, t, value: round2(t.spent / Math.max(t.points, 1)), latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
-  return rank(items, direction).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: `$${i.value.toFixed(2)}/pt`, meta: scopeMeta(ctx, i.t.years), detail: `$${i.t.spent} · ${fmtPts(round1(i.t.points))} pts`, userId: i.userId, to: null }));
+  return by;
 }
-export const mtCheap = (ctx: BoardContext): BoardRow[] => perPoint(ctx, 'asc');
-export const mtCostly = (ctx: BoardContext): BoardRow[] => perPoint(ctx, 'desc');
+/** dollars bid on flops: judged claims that returned under FLOP_POINTS started points */
+export const mtFaabWasted = (ctx: BoardContext): BoardRow[] => {
+  const items = [...faabVerdicts(ctx).entries()].filter(([, t]) => t.flopped > 0).map(([userId, t]) => ({ userId, t, value: t.flopped, latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
+  return rank(items).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: dollars(i.value), meta: scopeMeta(ctx, i.t.years), detail: `of ${dollars(i.t.judged)} judged · ${plural(i.t.flops, 'flop')}`, userId: i.userId, to: null }));
+};
+/** share of judged dollars that went on hits, managers with at least MIN_JUDGED judged */
+export const mtFaabValue = (ctx: BoardContext): BoardRow[] => {
+  const items = [...faabVerdicts(ctx).entries()].filter(([, t]) => t.judged >= MIN_JUDGED).map(([userId, t]) => ({ userId, t, value: Math.round((t.hit / t.judged) * 100), latestYear: Math.max(...t.years), latestWeek: 0, secondary: t.latest }));
+  return rank(items).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: `${i.value}%`, meta: scopeMeta(ctx, i.t.years), detail: `${dollars(i.t.hit)} of ${dollars(i.t.judged)} · ${i.t.hits} of ${i.t.claims} claims hit`, userId: i.userId, to: null }));
+};
 /** the pickup that returned the most started points at the board's position, the player shown beside the manager */
 export const mtBestPickup = (ctx: BoardContext): BoardRow[] =>
   rank(claims(ctx).filter((c) => posOk(ctx, c.playerId)).map((c) => ({ c, userId: c.userId, value: c.points, latestYear: c.year, latestWeek: c.week })))

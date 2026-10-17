@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
-import { POS_FILTERS, type PosFilter } from '../../lib/playerLines';
+import type { PosFilter } from '../../lib/playerLines';
 import { playerName, playerPos } from '../../lib/players';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
 import { CrownIcon } from '../Icons';
 import PosPill from '../PosPill';
+import PositionFilter from './PositionFilter';
 
 interface Props {
   def: BoardDef;
@@ -24,7 +25,7 @@ interface Props {
   onMode?: (m: string) => void;
   mode2?: string;
   onMode2?: (m: string) => void;
-  /** this board's own position; the dropdown shows only when the section controls it */
+  /** this board's own position; the bar shows only when the section controls it */
   position?: PosFilter;
   onPosition?: (p: PosFilter) => void;
   /** empty-state copy from the definition; falls back to the position copy */
@@ -53,44 +54,75 @@ function Toggle<T extends string>({ label, options, value, onChange }: { label: 
   );
 }
 
-/** A compact dropdown for a toggle with too many options for pills. */
-export function Select<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value as T)} className="rounded border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink">
-      {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-    </select>
-  );
+/**
+ * The ? button beside a board title. The definition shows while the button is hovered or focused, and a press pins it until
+ * the next press, Escape or blur. A press clears the hover flag, so a phone tap (mouseenter then click, never a mouseleave)
+ * opens on the first tap and closes on the second. The panel itself is rendered by the board, in the flow of the header,
+ * so the card's clipped overflow can never cut it off.
+ */
+function useAbout(): { open: boolean; buttonProps: Record<string, unknown> } {
+  const [pinned, setPinned] = useState(false);
+  const [hover, setHover] = useState(false);
+  const open = pinned || hover;
+  return {
+    open,
+    buttonProps: {
+      onClick: () => { setPinned((p) => !p); setHover(false); },
+      onMouseEnter: () => setHover(true),
+      onMouseLeave: () => setHover(false),
+      onFocus: () => setHover(true),
+      onBlur: () => { setHover(false); setPinned(false); },
+      onKeyDown: (e: { key: string }) => { if (e.key === 'Escape') { setHover(false); setPinned(false); } },
+    },
+  };
 }
 
 export default function Board({ def, rows, players, managers, expanded, onToggle, direction = 'desc', onDirection, mode, onMode, mode2, onMode2, position, onPosition, empty }: Props) {
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
   // rows whose manager list is opened inline (the hover tooltip never shows on a phone or from the keyboard)
   const [openManagers, setOpenManagers] = useState<Record<string, boolean>>({});
+  const about = useAbout();
+  const aboutId = `about-${def.id}`;
   const managerName = (id: string) => managers[id]?.displayName ?? id;
   const activeMode = def.modes?.find((m) => m.id === mode) ?? def.modes?.[0];
   const activeMode2 = def.modes2?.find((m) => m.id === mode2) ?? def.modes2?.[0];
   const header = (activeMode?.valueHeader ?? def.valueHeader) + (activeMode2?.valueHeader ?? '');
   const [over, under] = def.directionLabels ?? ['Over', 'Under'];
   const directions: { id: Direction; label: string }[] = [{ id: 'desc', label: over }, { id: 'asc', label: under }];
+  const toggles = [
+    def.sortable && onDirection && <Toggle key="dir" label="Direction" options={directions} value={direction} onChange={onDirection} />,
+    def.modes && activeMode && onMode && <Toggle key="mode" label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />,
+    def.modes2 && activeMode2 && onMode2 && <Toggle key="mode2" label="Per game" options={def.modes2.map((m) => ({ id: m.id, label: m.label }))} value={activeMode2.id} onChange={onMode2} />,
+  ].filter(Boolean);
   // the record: the top row and any row tied with it, unless the tie is more than three deep or the whole board (then nobody stands out)
   const tiedAtTop = rows.filter((r) => r.value === rows[0]?.value).length;
   const recordValue = tiedAtTop <= MAX_CROWNS && (tiedAtTop < rows.length || rows.length === 1) ? rows[0]?.value : undefined;
   return (
     <section className="card overflow-hidden" aria-labelledby={`board-${def.id}`}>
-      <header className="flex items-start justify-between gap-3 border-b border-line px-3 py-2" title={def.definition}>
-        <div className="min-w-0">
-          <h3 id={`board-${def.id}`} className="section-label text-ink">{def.title}</h3>
-          <p className="mt-0.5 text-xs text-muted">{def.definition}</p>
+      <header className="border-b border-line px-3 py-2">
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <h3 id={`board-${def.id}`} className="text-base font-semibold leading-tight text-ink">{def.title}</h3>
+            <button
+              type="button"
+              aria-label="What counts"
+              aria-expanded={about.open}
+              aria-describedby={about.open ? aboutId : undefined}
+              {...about.buttonProps}
+              className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[10px] font-semibold leading-none ${about.open ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'}`}
+            >
+              ?
+            </button>
+          </span>
+          <span className="section-label shrink-0 pt-1">{header}</span>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="section-label">{header}</span>
-          {onPosition && <Select label="Position" options={POS_FILTERS.map((p) => ({ id: p, label: p }))} value={position ?? 'All'} onChange={onPosition} />}
-          {def.sortable && onDirection && <Toggle label="Direction" options={directions} value={direction} onChange={onDirection} />}
-          {def.modes && activeMode && onMode && (def.modeSelect
-            ? <Select label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />
-            : <Toggle label="View" options={def.modes.map((m) => ({ id: m.id, label: m.label }))} value={activeMode.id} onChange={onMode} />)}
-          {def.modes2 && activeMode2 && onMode2 && <Toggle label="Per game" options={def.modes2.map((m) => ({ id: m.id, label: m.label }))} value={activeMode2.id} onChange={onMode2} />}
-        </div>
+        {about.open && <p id={aboutId} role="tooltip" className="mt-1.5 rounded-md bg-surface-2 px-2.5 py-2 text-xs leading-snug text-ink">{def.definition}</p>}
+        {(onPosition || toggles.length > 0) && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {onPosition && <PositionFilter value={position ?? 'All'} onChange={onPosition} size="sm" />}
+            {toggles.length > 0 && <span className="ml-auto flex flex-wrap items-center justify-end gap-2">{toggles}</span>}
+          </div>
+        )}
       </header>
       {rows.length === 0 ? (
         <p className="px-3 py-4 text-sm text-muted">{empty ?? (def.tab === 'managers' ? 'Nothing recorded yet.' : 'No players at this position.')}</p>
@@ -103,7 +135,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
               ? <Link to={r.to} className="num hover:text-accent">{r.meta}</Link>
               : <span className="num">{r.meta}</span>;
             return (
-              <li key={r.key} data-rank={i + 1} className={`flex items-center gap-3 px-3 py-2 ${record ? RECORD_ROW : ''}`}>
+              <li key={r.key} data-rank={i + 1} className={`flex flex-wrap items-center gap-3 px-3 py-2 ${record ? RECORD_ROW : ''}`}>
                 <span className={`num w-4 shrink-0 text-right text-xs ${record ? 'font-bold text-gold' : 'text-muted'}`}>{record ? <CrownIcon title="League record" /> : i + 1}</span>
                 {r.playerId !== null ? <Headshot players={players} id={r.playerId} size={28} /> : <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? r.userId ?? '?'} size={28} />}
                 <span className="min-w-0 flex-1">
@@ -114,20 +146,12 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                         <span className={`truncate text-sm ${record ? 'font-semibold' : 'font-medium'}`}>{playerName(players, r.playerId)}</span>
                       </>
                     ) : (
-                      <>
-                        <Link to={`/h2h?a=${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
-                        {r.player && (
-                          <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
-                            <Headshot players={players} id={r.player} size={20} />
-                            <span className="truncate">{playerName(players, r.player)}</span>
-                          </span>
-                        )}
-                      </>
+                      <Link to={`/h2h?a=${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
                     )}
                   </span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                     {metaNode}
-                    {r.detail && <><span aria-hidden>·</span><span>{r.detail}</span></>}
+                    {r.detail && !r.player && <><span aria-hidden>·</span><span>{r.detail}</span></>}
                     {r.managers && r.managers.length > 1 ? (
                       <>
                         <span aria-hidden>·</span>
@@ -158,6 +182,20 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     )}
                   </span>
                 </span>
+                {r.player && (
+                  // the player a manager row names: right-aligned, headshot against the value, so the headshots line up down the board;
+                  // on a phone the row wraps and the block takes a full second line, so neither name nor the detail is squeezed
+                  <span data-testid="row-player" className="order-last flex min-w-0 basis-full shrink-0 items-center justify-end gap-2 text-right md:order-none md:basis-2/5">
+                    <span className="min-w-0">
+                      <span className="flex items-center justify-end gap-1.5">
+                        <PosPill pos={playerPos(players, r.player)} />
+                        <span className="truncate text-sm font-medium">{playerName(players, r.player)}</span>
+                      </span>
+                      {r.detail && <span className="mt-0.5 block truncate text-xs text-muted">{r.detail}</span>}
+                    </span>
+                    <Headshot players={players} id={r.player} size={28} />
+                  </span>
+                )}
                 <span className={`num shrink-0 text-base font-semibold ${record ? 'text-gold' : r.tone === 'win' ? 'text-win' : r.tone === 'loss' ? 'text-loss' : ''}`}>{r.valueLabel}</span>
               </li>
             );

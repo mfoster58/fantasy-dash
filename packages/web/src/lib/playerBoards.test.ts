@@ -252,8 +252,8 @@ describe('BOARDS registry by tab and sub-tab', () => {
   const ids = (tab: 'players' | 'managers', sub: string) => boardsFor(tab, sub).map((b) => b.id);
   it('lays every player board under its sub-tab in display order', () => {
     expect(ids('players', 'leaders')).toEqual(['leadPoints', 'leadYards', 'leadTouchdowns', 'leadRushYards', 'leadRecYards', 'leadPassYards', 'leadRushTd', 'leadRecTd', 'leadPassTd', 'leadTouches', 'leadFpoe', 'leadXfp']);
-    expect(ids('players', 'alltime')).toEqual(['careerPoints', 'weeksStarted', 'bestSeason', 'championshipRosters', 'lastPlaceRosters', 'loyalty', 'journeyman', 'benchWarmers', 'fodder', 'boomStarts', 'dudStarts', 'waiverHeroes', 'waiverVillains', 'draftValue', 'mrIrrelevant', 'topScorerWeeks']);
-    expect(ids('players', 'moments')).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin']);
+    expect(ids('players', 'alltime')).toEqual(['careerPoints', 'weeksStarted', 'bestSeason', 'championshipRosters', 'lastPlaceRosters', 'loyalty', 'journeyman', 'benchWarmers', 'fodder', 'boomStarts', 'dudStarts', 'waiverHeroes', 'waiverFlops', 'draftValue', 'mrIrrelevant', 'topScorerWeeks']);
+    expect(ids('players', 'moments')).toEqual(['bestWeek', 'benchBlunder', 'breakout', 'fallOff', 'bestStartInLoss', 'worstStartInWin', 'revengeGames']);
     expect(ids('players', 'streaks')).toEqual(['ironman', 'run15', 'run20', 'drought', 'posTopRun']);
     expect(ids('players', 'postseason')).toEqual(['postPoints', 'postStarts', 'postTouchdowns', 'postYards', 'postReceptions', 'bestPlayoffStarts', 'postChampionshipRosters', 'postToiletBowl', 'worstToiletStarts', 'postLastPlaceRosters']);
     expect(BOARDS.filter((b) => b.sortable).map((b) => b.id)).toEqual(['leadFpoe', 'draftValue']);
@@ -264,7 +264,7 @@ describe('BOARDS registry by tab and sub-tab', () => {
     expect(ids('managers', 'mstreaks')).toEqual(['mWinStreak', 'mLoseStreak', 'mPlayoffStreak', 'mRun100', 'mHighRun']);
     expect(ids('managers', 'mplayoffs')).toEqual(['mpHigh', 'mpLow', 'mpBlowout', 'mpClosest', 'mpLowSeed', 'msNoTitle', 'mpFinalsLost', 'mpConsolationApps', 'mpToiletApps', 'mpToiletWins']);
     expect(ids('managers', 'mdraft')).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdFirstRound']);
-    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtCheap', 'mtCostly', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
+    expect(ids('managers', 'mtransactions')).toEqual(['mtAdds', 'mtDrops', 'mtTrades', 'mtBusiest', 'mtFaabCareer', 'mtBiggestBid', 'mtFaabValue', 'mtFaabWasted', 'mtBestPickup', 'mtBestStart', 'mtWaiverStarts', 'mtWaiverPoints']);
   });
   it('points boards offer a Total/PPG mode and touches a Both/Rec/Car mode', () => {
     const modes = (id: string) => BOARDS.find((b) => b.id === id)!.modes?.map((m) => [m.id, m.label, m.valueHeader]);

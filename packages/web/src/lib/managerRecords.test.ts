@@ -37,6 +37,15 @@ describe('managerRecords', () => {
     expect(managerRecords(ctx, 'a').find((r) => r.boardId === 'mFinals')).toMatchObject({ rank: 1 });
   });
 
+  it('never judges an open claim in a season still being played, the same as the Records page', () => {
+    // b claims w1 for $40 before week 1 of a live season and never starts him: not a flop until he is dropped or the season ends
+    const live = { ...season(2026, [week(1, [game(2026, 1, 1, side('a', 150, [line('q1', 30)]), side('b', 90, [line('r1', 10)]))])]), status: 'in_season' as const,
+      transactions: [{ id: 'c', type: 'waiver' as const, week: 1, created: 1, adds: [{ playerId: 'w1', userId: 'b' }], drops: [], bid: 40 }] };
+    expect(managerRecords(allTimeContext([s, live], players, managers), 'b').find((r) => r.boardId === 'mtFaabWasted')).toBeUndefined();
+    const done = { ...live, status: 'complete' as const };
+    expect(managerRecords(allTimeContext([s, done], players, managers), 'b').find((r) => r.boardId === 'mtFaabWasted')).toMatchObject({ rank: 1, valueLabel: '$40' });
+  });
+
   it('honours maxRank', () => {
     expect(managerRecords(ctx, 'b', 1).every((r) => r.rank === 1)).toBe(true);
   });
