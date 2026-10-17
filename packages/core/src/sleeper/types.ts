@@ -73,6 +73,9 @@ export type StatMap = Record<string, Record<string, number>>;
 export interface SleeperWeekStat {
   player_id: string;
   team: string | null;
+  opponent?: string | null;
+  /** the player block Sleeper embeds in each weekly row */
+  player?: { position?: string | null; first_name?: string; last_name?: string; years_exp?: number | null } | null;
   stats?: Record<string, number> | null;
 }
 

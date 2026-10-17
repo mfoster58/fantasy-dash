@@ -5,6 +5,7 @@
   "scripts": {
     "sync": "tsx scripts/sync.ts",
     "sync:dry": "tsx scripts/sync.ts --dry-run",
+    "sync:players": "tsx scripts/syncPlayers.ts",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "typecheck:scripts": "tsc -p tsconfig.json",

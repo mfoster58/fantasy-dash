@@ -1,0 +1,3 @@
+game_id,pfr_game_id,season,game_type,week,player,pfr_player_id,position,team,opponent,offense_snaps,offense_pct,defense_snaps,defense_pct,st_snaps,st_pct
+2026_01_TB_CIN,202609130cin,2026,REG,1,Emeka Egbuka,EgbuEm01,WR,TB,CIN,49,0.86,0,0,0,0
+2026_02_CLE_TB,202609200tam,2026,REG,2,Emeka Egbuka,EgbuEm01,WR,TB,CLE,56,0.86,0,0,0,0

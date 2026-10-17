@@ -13,7 +13,8 @@ import RecordsPage from './pages/RecordsPage';
 import StatsPage from './pages/StatsPage';
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
-import { currentSeason, history, loadAllSeasons, loadSeason } from './data/load';
+import PlayersPage from './pages/PlayersPage';
+import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
   const year = Number(params.season);
@@ -35,6 +36,14 @@ export async function topTeamLoader(args: LoaderFunctionArgs) {
   return redirect(`/teams/${season.year}/${season.standings[0].userId}`);
 }
 
+/** The season plus its player database, or null for a year not yet synced; 404 for a year the league never played. */
+export async function playersLoader({ params }: LoaderFunctionArgs) {
+  const year = Number(params.season);
+  if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
+  const [season, db] = await Promise.all([loadSeason(year), hasPlayerDb(year) ? loadPlayerDb(year) : Promise.resolve(null)]);
+  return { season, db };
+}
+
 function Layout() {
   return (
     <div className="min-h-screen bg-bg text-ink">
@@ -47,7 +56,7 @@ function Layout() {
 }
 
 /** URLs of pages that no longer exist, and where they go now. */
-export const RETIRED_PATHS: Record<string, string> = { players: '/records', 'all-time': '/records' };
+export const RETIRED_PATHS: Record<string, string> = { 'all-time': '/records' };
 
 export const routes: RouteObject[] = [
   {
@@ -73,6 +82,8 @@ export const routes: RouteObject[] = [
       { path: 'teams/:season/:userId', loader: teamsLoader, element: <TeamPage /> },
       { path: 'managers', loader: () => redirect(`/managers/${history.allTime[0].userId}`) },
       { path: 'managers/:userId', loader: () => loadAllSeasons(), element: <ManagerPage /> },
+      { path: 'players', loader: () => redirect(`/players/${currentSeason.year}`) },
+      { path: 'players/:season', loader: playersLoader, element: <PlayersPage /> },
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
       { path: 'records', loader: () => loadAllSeasons(), element: <RecordsPage /> },
