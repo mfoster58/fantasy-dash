@@ -1,0 +1,167 @@
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import type { Manager, PlayerDb, PlayerId, UserId } from '@fantasy-dash/core';
+import Avatar from '../../Avatar';
+import Headshot from '../../Headshot';
+import PosPill from '../../PosPill';
+import { TeamLink } from '../../NameLink';
+import type { Agg } from '../../../lib/playerdb/aggregate';
+import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
+import { dbDirectory } from '../../../lib/playerdb/directory';
+import { percentiles, tintFor } from '../../../lib/playerdb/percentile';
+import type { DbState } from '../../../lib/playerdb/url';
+import TintCell from './TintCell';
+import WeekRows from './WeekRows';
+
+export const PAGE = 25;
+
+interface Props {
+  db: PlayerDb;
+  aggs: Agg[];
+  state: DbState;
+  onSort: (key: string) => void;
+  year: number;
+  managers: Record<UserId, Manager>;
+  rosters: Record<PlayerId, UserId>;
+  collapsed: ReadonlySet<string>;
+  onToggleGroup: (group: string) => void;
+}
+
+/** Sort by the state's column, nulls last whichever way, ties by points then id. */
+export function sortAggs(aggs: Agg[], state: DbState): Agg[] {
+  const col = COLUMNS[state.sort] ?? COLUMNS.pts;
+  const sign = state.dir === 'asc' ? 1 : -1;
+  return [...aggs].sort((a, b) => {
+    const va = columnValue(col, a, state.mode), vb = columnValue(col, b, state.mode);
+    if (va === null && vb === null) return (b.s.pts ?? 0) - (a.s.pts ?? 0);
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    return sign * (va - vb) || (b.s.pts ?? 0) - (a.s.pts ?? 0) || (a.id < b.id ? -1 : 1);
+  });
+}
+
+/** Collapsed column groups for a tab, remembered in localStorage (ignored when storage is unavailable). */
+export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: string) => void] {
+  const key = `playerdb.collapsed.${tab}`;
+  const [set, setSet] = useState<ReadonlySet<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(key) ?? '[]') as string[]); } catch { return new Set(); }
+  });
+  useEffect(() => {
+    try { setSet(new Set(JSON.parse(localStorage.getItem(key) ?? '[]') as string[])); } catch { setSet(new Set()); }
+  }, [key]);
+  const toggle = useCallback((group: string) => {
+    setSet((c) => {
+      const n = new Set(c);
+      if (n.has(group)) n.delete(group); else n.add(group);
+      try { localStorage.setItem(key, JSON.stringify([...n])); } catch { /* storage unavailable */ }
+      return n;
+    });
+  }, [key]);
+  return [set, toggle];
+}
+
+const th = 'section-label whitespace-nowrap px-2 py-2 text-right';
+const lead = 'sticky bg-surface';
+
+export default function PlayerDbTable({ db, aggs, state, onSort, year, managers, rosters, collapsed, onToggleGroup }: Props) {
+  const [shown, setShown] = useState(PAGE);
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
+
+  const groups = groupsFor(state.tab);
+  const leadCols = groups[0].cols;
+  const bodyGroups = groups.slice(1);
+  const visibleCols: ColumnDef[] = [...leadCols, ...bodyGroups.filter((g) => !collapsed.has(g.group)).flatMap((g) => g.cols)];
+  const sorted = useMemo(() => sortAggs(aggs, state), [aggs, state]);
+  const tints = useMemo(() => {
+    const out = new Map<string, (string | null)[]>();
+    for (const c of visibleCols) {
+      if (c.tinted === false) continue;
+      const values = sorted.map((a) => (belowMin(c, a) ? null : columnValue(c, a, state.mode)));
+      out.set(c.key, percentiles(values).map((p) => tintFor(p, c.lowerIsBetter)));
+    }
+    return out;
+  }, [sorted, visibleCols, state.mode]);
+  const dir = dbDirectory(db);
+  const span = 3 + visibleCols.length;
+  const sortArrow = (key: string) => (state.sort === key ? (state.dir === 'desc' ? ' ▾' : ' ▴') : '');
+  const headerTitle = (c: ColumnDef) => (c.est && !db.routesReal ? `${c.def}. Estimated from snap share × team dropbacks until the NFL publishes participation data.` : c.def);
+  const cell = (c: ColumnDef, a: Agg, i: number) => (
+    <TintCell key={c.key} value={columnValue(c, a, state.mode)} col={c} mode={state.mode} tint={tints.get(c.key)?.[i] ?? 'transparent'} dim={belowMin(c, a)} est={Boolean(c.est) && a.routesEst} />
+  );
+
+  return (
+    <div className="card overflow-x-auto">
+      <table className="w-full border-separate border-spacing-0 text-sm">
+        <thead className="sticky top-0 z-[2] bg-surface">
+          <tr>
+            <th colSpan={3 + leadCols.length} className={`${lead} left-0 z-[3] border-b border-line`} />
+            {bodyGroups.map((g) => {
+              const off = collapsed.has(g.group);
+              return (
+                <th key={g.group} colSpan={off ? 1 : g.cols.length} className="section-label border-b border-l border-line px-2 py-1 text-left">
+                  <button type="button" aria-label={`${off ? 'Expand' : 'Collapse'} ${g.group}`} onClick={() => onToggleGroup(g.group)} className="hover:text-ink">{off ? '▸ ' : '▾ '}{g.group}</button>
+                </th>
+              );
+            })}
+          </tr>
+          <tr>
+            <th className={`${lead} left-0 z-[3] w-8 border-b border-line px-2 py-2 text-left section-label`}>#</th>
+            <th className={`${lead} left-8 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
+            <th className="section-label border-b border-line px-2 py-2 text-left">Mgr</th>
+            {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
+            {bodyGroups.map((g) => (collapsed.has(g.group)
+              ? <th key={g.group} className={`${th} border-b border-l border-line text-muted`}>…</th>
+              : g.cols.map((c, i) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} first={i === 0} />)))}
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.slice(0, shown).map((a, i) => {
+            const p = db.players[a.id];
+            const owner = rosters[a.id];
+            const m = owner ? managers[owner] : undefined;
+            const isOpen = open === a.id;
+            return (
+              <Fragment key={a.id}>
+                <tr data-testid="db-row" className="border-t border-line transition-colors hover:bg-surface-2/60">
+                  <td className={`${lead} left-0 num border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
+                  <td className={`${lead} left-8 border-b border-line px-2 py-1.5`}>
+                    <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 text-left hover:text-accent">
+                      <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
+                      <span data-testid="db-name" className="font-medium">{p?.name ?? a.id}</span>
+                      <span className="text-xs text-muted">{a.team}</span>
+                      <PosPill pos={p?.pos ?? '?'} />
+                    </button>
+                  </td>
+                  <td className="border-b border-line px-2 py-1.5">
+                    {m ? (
+                      <TeamLink userId={owner} year={year} className="flex items-center gap-1.5 text-xs"><Avatar avatar={m.avatar} name={m.displayName} size={18} />{m.teamName ?? m.displayName}</TeamLink>
+                    ) : <span className="text-xs text-muted">FA</span>}
+                  </td>
+                  {leadCols.map((c) => cell(c, a, i))}
+                  {bodyGroups.map((g) => (collapsed.has(g.group)
+                    ? <td key={g.group} className="border-b border-l border-line" />
+                    : g.cols.map((c) => cell(c, a, i))))}
+                </tr>
+                {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} />}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+      {sorted.length === 0 && <p className="px-4 py-6 text-sm text-muted">No players match.</p>}
+      {shown < sorted.length && (
+        <div className="border-t border-line px-4 py-3">
+          <button type="button" onClick={() => setShown((s) => s + PAGE)} className="text-sm text-accent hover:underline">Show {PAGE} more</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeaderCell({ col, title, arrow, onSort, first = false }: { col: ColumnDef; title: string; arrow: string; onSort: (key: string) => void; first?: boolean }) {
+  return (
+    <th scope="col" title={title} className={`${th} border-b border-line ${first ? 'border-l' : ''}`}>
+      <button type="button" onClick={() => onSort(col.key)} className="hover:text-ink">{col.label}{arrow}</button>
+    </th>
+  );
+}
