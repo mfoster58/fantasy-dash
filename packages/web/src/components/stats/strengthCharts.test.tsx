@@ -25,6 +25,8 @@ describe('PowerRating', () => {
     expect(svg.querySelector('text[data-series-label="a"]')!.textContent).toMatch(/^alice \d{4}$/);
     expect(ELO_ABOUT).toMatch(/1500/);
     expect(ELO_ABOUT).toMatch(/margin of 40 or more/);
+    // a taller chart so ten lines and their labels have room
+    expect(svg.getAttribute('viewBox')).toMatch(/ 420$/);
   });
   it('labels one season\'s weeks by week number', () => {
     render(<PowerRating history={eloFor(eloHistory(league()), 2025)} refs={refs} pin="a" />);
