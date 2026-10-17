@@ -16,7 +16,13 @@ describe('ManagersStats', () => {
   it('opens on the current season with the cards in the agreed order, one title each, no group headings and no head-to-head grid', () => {
     mount();
     const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby')).map((id) => document.getElementById(id!)?.textContent);
-    expect(names).toEqual(['Standings race', 'Form guide', 'The numbers', 'Scoring calendar', 'Consistency', 'Schedule luck', 'Power rating', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Where the points came from', 'Wire activity', 'Weekly finishes', 'Robbed, stolen, flattened']);
+    expect(names).toEqual(['Standings race', 'Form guide', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from', 'Robbed, stolen, flattened']);
+    // the last row: weekly finishes stacked on the points' origins on the left, the moments lists stacked on the right
+    const finishes = card('Weekly finishes'), origins = card('Where the points came from'), moments = card('Robbed, stolen, flattened');
+    expect(finishes.parentElement).toBe(origins.parentElement);
+    expect(finishes.parentElement).not.toBe(moments.parentElement);
+    expect(finishes.parentElement!.parentElement).toBe(moments.parentElement);
+    expect(within(moments).getByTestId('moment-lists').className).not.toMatch(/sm:grid-cols-2/);
     for (const s of ['The season', 'Strength', 'Roster', 'Moments', 'By the numbers']) expect(screen.queryByRole('heading', { name: s })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Head to head' })).toBeNull();
     expect(card('Standings race').querySelector('.section-label')).toBeNull();

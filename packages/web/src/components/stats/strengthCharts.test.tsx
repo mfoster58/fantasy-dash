@@ -31,7 +31,13 @@ describe('PowerRating', () => {
   it('labels one season\'s weeks by week number', () => {
     render(<PowerRating history={eloFor(eloHistory(league()), 2025)} refs={refs} pin="a" />);
     expect(screen.getByText('wk 5')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Power rating' }).querySelector('path[data-series="a"]')).toHaveAttribute('data-pinned', 'true');
+    const svg = screen.getByRole('img', { name: 'Power rating' });
+    expect(svg.querySelector('path[data-series="a"]')).toHaveAttribute('data-pinned', 'true');
+    // colour-coded like the standings race: every manager his own colour, the pinned one gold
+    const strokes = [...svg.querySelectorAll('path[data-series]')].map((p) => p.getAttribute('stroke'));
+    expect(strokes).toContain('var(--gold)');
+    expect(new Set(strokes).size).toBe(4);
+    expect(strokes.filter((s) => s === 'var(--dim)')).toHaveLength(0);
   });
 });
 
