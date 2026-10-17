@@ -67,7 +67,7 @@ describe('player streaks', () => {
     expect(rows.find((r) => r.playerId === 'r1')).toMatchObject({ value: 2 }); // the only started RB each week; week 3 has no stat from any SF player, so it is an inferred bye and skipped
   });
   it('posTopRun widens to the top 3, 5 or 10 at the position in its modes, ties sharing a rank', () => {
-    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1 });
+    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1, birthDate: null });
     const four = { ...players, r2: rb('r2'), r3: rb('r3'), r4: rb('r4') };
     const rbs = season(2024, [
       week(1, [game(2024, 1, 1, side('a', 35, [line('r1', 20), line('r2', 15)]), side('b', 20, [line('r3', 10), line('r4', 10)]))]),
@@ -85,7 +85,7 @@ describe('player streaks', () => {
   });
 
   it('posTopRun ranks among every rostered player at the position, benched ones included', () => {
-    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1 });
+    const rb = (id: string) => ({ id, name: id, firstName: id, lastName: id, position: 'RB', team: 'SF', yearsExp: 1, birthDate: null });
     const two = { ...players, r2: rb('r2') };
     // r2 is benched both weeks but outscores the started r1 in week 1
     const s = season(2024, [

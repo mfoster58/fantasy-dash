@@ -30,8 +30,8 @@ describe('posColor', () => {
 
 describe('headshotUrl', () => {
   const dir: PlayerDirectory = {
-    '4046': { id: '4046', name: 'Patrick Mahomes', firstName: 'Patrick', lastName: 'Mahomes', position: 'QB', team: 'KC', yearsExp: 8 },
-    DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0 },
+    '4046': { id: '4046', name: 'Patrick Mahomes', firstName: 'Patrick', lastName: 'Mahomes', position: 'QB', team: 'KC', yearsExp: 8, birthDate: null },
+    DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0, birthDate: null },
   };
   it('uses the player thumbnail for skill players', () => {
     expect(headshotUrl(dir, '4046')).toBe('https://sleepercdn.com/content/nfl/players/thumb/4046.jpg');

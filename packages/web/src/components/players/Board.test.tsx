@@ -6,7 +6,7 @@ import Board from './Board';
 import PositionFilter from './PositionFilter';
 
 const players: PlayerDirectory = {
-  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3 },
+  q1: { id: 'q1', name: 'Quincy One', firstName: 'Quincy', lastName: 'One', position: 'QB', team: 'KC', yearsExp: 3, birthDate: null },
 };
 const managers: History['managers'] = { a: { displayName: 'alice', avatar: 'av', seasons: [2025] } };
 const def: BoardDef = { id: 'x', tab: 'players', sub: 'alltime', title: 'Best week by a starter', definition: 'Most points in a week.', valueHeader: 'Pts', compute: () => [] };

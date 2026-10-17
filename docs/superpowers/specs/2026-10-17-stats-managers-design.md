@@ -119,3 +119,15 @@ Cards, `section-label` eyebrows, `num` mono numbers, `Avatar`, the `--gold`, `--
 ## Out of scope
 
 The Players tab, custom tooltips, animation, exporting images, per-manager deep-dive pages (the manager page already exists), the "what if" standings table, the trade ledger, and any change to the Records page.
+
+## Built (2026-10-17)
+
+Shipped as planned in `docs/superpowers/plans/2026-10-17-stats-managers.md`: `/stats` with the toolbar, five groups of cards and the table, pure maths under `lib/stats/`, components under `components/stats/`, the Stats nav tab, the `/stats/managers` alias, and `birthDate` on every player (the sync ran; 411 of 443 players have one; the 32 without are team defenses with no experience count either, so defense points are left out of the age weighting and the "estimated" caption only appears if a skill player ever lacks a birth date).
+
+Decisions made while building:
+- The season view of the power rating shows that season's weeks with ratings carried in from earlier seasons (after the offseason pull toward 1500), not a fresh 1500 start, so it agrees with the all-time line.
+- The head-to-head grid counts regular-season weeks only, matching the league's all-play record; the real matchups (any week) are in the hover.
+- Weekly finishes for a small league: top = rank 3 or better, bottom = rank below max(3, n − 3), so four managers split into a top three and a bottom one.
+- Ownership: an add counts from its week; a drop takes effect the week after it is logged (Sleeper logs a drop against the just-played week), so the drop week still belongs to the dropper. A player neither drafted nor logged counts as "unknown" origin and is drawn grey in the points-origin bars.
+- Line charts and the age spectrum size their SVG to the card so text stays 10px in a wide card; dense week labels are thinned to about twelve, sparse year labels all show.
+- Known: at phone widths the whole site, not only this page, is wider than the viewport (the nav's Menu button is clipped on /standings and /records too); left for a separate fix.

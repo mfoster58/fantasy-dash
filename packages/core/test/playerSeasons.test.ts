@@ -6,11 +6,11 @@ import { miniInput } from './fixtures/mini';
 import type { PlayerDirectory } from '../src/types';
 
 const dir: PlayerDirectory = {
-  a: { id: 'a', name: 'A', firstName: 'A', lastName: '', position: 'WR', team: 'KC', yearsExp: 1 },
-  b: { id: 'b', name: 'B', firstName: 'B', lastName: '', position: 'WR', team: 'KC', yearsExp: 1 },
-  c: { id: 'c', name: 'C', firstName: 'C', lastName: '', position: 'WR', team: 'KC', yearsExp: 1 },
-  q: { id: 'q', name: 'Q', firstName: 'Q', lastName: '', position: 'QB', team: 'KC', yearsExp: 1 },
-  u: { id: 'u', name: 'U', firstName: 'U', lastName: '', position: null, team: null, yearsExp: null },
+  a: { id: 'a', name: 'A', firstName: 'A', lastName: '', position: 'WR', team: 'KC', yearsExp: 1, birthDate: null },
+  b: { id: 'b', name: 'B', firstName: 'B', lastName: '', position: 'WR', team: 'KC', yearsExp: 1, birthDate: null },
+  c: { id: 'c', name: 'C', firstName: 'C', lastName: '', position: 'WR', team: 'KC', yearsExp: 1, birthDate: null },
+  q: { id: 'q', name: 'Q', firstName: 'Q', lastName: '', position: 'QB', team: 'KC', yearsExp: 1, birthDate: null },
+  u: { id: 'u', name: 'U', firstName: 'U', lastName: '', position: null, team: null, yearsExp: null, birthDate: null },
 };
 
 describe('playerSeasonsOf', () => {

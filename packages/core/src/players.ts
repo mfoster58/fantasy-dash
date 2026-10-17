@@ -15,6 +15,7 @@ export function toPlayerDirectory(raw: Record<string, SleeperPlayer>): PlayerDir
       position: p.position ?? null,
       team: p.team ?? null,
       yearsExp: typeof p.years_exp === 'number' ? p.years_exp : null,
+      birthDate: /^\d{4}-\d{2}-\d{2}$/.test(p.birth_date ?? '') ? (p.birth_date as string) : null,
     };
     dir[id] = info;
   }

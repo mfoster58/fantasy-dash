@@ -7,10 +7,10 @@ const managers: Record<string, Manager> = {
   b: { userId: 'b', displayName: 'bob', teamName: 'Team B', avatar: null, rosterId: 2 },
 };
 const players: PlayerDirectory = {
-  p1: { id: 'p1', name: 'Player One', firstName: 'Player', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 1 },
-  p2: { id: 'p2', name: 'Player Two', firstName: 'Player', lastName: 'Two', position: 'WR', team: 'DAL', yearsExp: 1 },
-  p3: { id: 'p3', name: 'Player Three', firstName: 'Player', lastName: 'Three', position: 'QB', team: 'KC', yearsExp: 1 },
-  p4: { id: 'p4', name: 'Player Four', firstName: 'Player', lastName: 'Four', position: 'RB', team: 'DET', yearsExp: 1 },
+  p1: { id: 'p1', name: 'Player One', firstName: 'Player', lastName: 'One', position: 'RB', team: 'SF', yearsExp: 1, birthDate: null },
+  p2: { id: 'p2', name: 'Player Two', firstName: 'Player', lastName: 'Two', position: 'WR', team: 'DAL', yearsExp: 1, birthDate: null },
+  p3: { id: 'p3', name: 'Player Three', firstName: 'Player', lastName: 'Three', position: 'QB', team: 'KC', yearsExp: 1, birthDate: null },
+  p4: { id: 'p4', name: 'Player Four', firstName: 'Player', lastName: 'Four', position: 'RB', team: 'DET', yearsExp: 1, birthDate: null },
 };
 const pick = (round: number, pickNo: number, slot: number, userId: string, playerId: string, value: number | null, extra: Partial<DraftPick> = {}): DraftPick => ({
   round, pickNo, slot, userId, playerId, isKeeper: false, posDraftRank: 1, seasonPoints: 120.5, gamesPlayed: 5, ppg: 24.1, healthy: true,

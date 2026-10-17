@@ -13,6 +13,8 @@ export interface PlayerInfo {
   position: string | null;
   team: string | null;
   yearsExp: number | null;
+  /** 'YYYY-MM-DD'; null when Sleeper has none (team defenses, some older players) */
+  birthDate: string | null;
 }
 export type PlayerDirectory = Record<PlayerId, PlayerInfo>;
 

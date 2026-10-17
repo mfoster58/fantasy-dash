@@ -62,6 +62,8 @@ export interface SleeperPlayer {
   position?: string | null;
   team?: string | null;
   years_exp?: number | null;
+  /** 'YYYY-MM-DD'; empty or absent for team defenses and some retired players */
+  birth_date?: string | null;
 }
 
 /** player_id -> stat line. Used for both /stats and /projections. */

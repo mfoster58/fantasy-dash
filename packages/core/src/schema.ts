@@ -160,6 +160,7 @@ export const PlayerDirectorySchema = z.record(z.object({
   position: z.string().nullable(),
   team: z.string().nullable(),
   yearsExp: z.number().nullable(),
+  birthDate: z.string().nullable(),
 }));
 
 const AllTimeRow = z.object({

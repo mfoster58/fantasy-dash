@@ -35,8 +35,8 @@ describe('leagueExtremes', () => {
 describe('byPosition', () => {
   it('filters rows to a position by the directory, and keeps everything for null', () => {
     const players: PlayerDirectory = {
-      p1: { id: 'p1', name: 'A', firstName: 'A', lastName: 'A', position: 'RB', team: 'SF', yearsExp: 1 },
-      p2: { id: 'p2', name: 'B', firstName: 'B', lastName: 'B', position: 'WR', team: 'SF', yearsExp: 1 },
+      p1: { id: 'p1', name: 'A', firstName: 'A', lastName: 'A', position: 'RB', team: 'SF', yearsExp: 1, birthDate: null },
+      p2: { id: 'p2', name: 'B', firstName: 'B', lastName: 'B', position: 'WR', team: 'SF', yearsExp: 1, birthDate: null },
     };
     expect(byPosition(draft.picks, players, 'RB').map((p) => p.playerId)).toEqual(['p1']);
     expect(byPosition(draft.picks, players, 'TE')).toEqual([]);

@@ -29,6 +29,12 @@ describe('routes', () => {
     await expect(run('teams/:season', { season: '1999' })).rejects.toMatchObject({ status: 404 });
     expect(await locationOf(run('managers'))).toBe(`/managers/${history.allTime[0].userId}`);
   });
+  it('serves stats with every season loaded and sends the managers alias to it with its query intact', async () => {
+    expect(child('stats')?.element).toBeTruthy();
+    expect(child('stats')?.loader).toBeTypeOf('function');
+    const r = (await (child('stats/managers')!.loader as (a: LoaderFunctionArgs) => unknown)({ params: {}, request: new Request('http://x/stats/managers?season=all&pin=1'), context: {} } as LoaderFunctionArgs)) as Response;
+    expect(r.headers.get('Location')).toBe('/stats?season=all&pin=1');
+  });
   it('serves records with every season loaded', () => {
     expect(child('records')?.element).toBeTruthy();
     expect(child('records')?.loader).toBeTypeOf('function');

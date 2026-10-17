@@ -21,6 +21,7 @@
   --loss: #e46a6f;
   --warn: #e3a93b;
   --gold: #e3b341;
+  --dim: #4a5666;
   --silver: #b4bcc8;
   --bronze: #c98a4b;
   --pos-QB: #e45d5d;
@@ -44,6 +45,7 @@
   --loss: #c13d47;
   --warn: #b7791f;
   --gold: #b8860b;
+  --dim: #aeb8c6;
   --silver: #7c8794;
   --bronze: #a0632b;
   --pos-QB: #cc3f3f;
@@ -66,6 +68,7 @@
   --color-loss: var(--loss);
   --color-warn: var(--warn);
   --color-gold: var(--gold);
+  --color-dim: var(--dim);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

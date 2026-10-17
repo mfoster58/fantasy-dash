@@ -18,6 +18,7 @@ export const items: Item[] = [
   { kind: 'menu', id: 'managers', label: 'Managers', prefix: '/managers' },
   { kind: 'link', to: '/h2h', label: 'Head to Head' },
   { kind: 'link', to: '/records', label: 'Records' },
+  { kind: 'link', to: '/stats', label: 'Stats' },
   { kind: 'link', to: '/history', label: 'History' },
   { kind: 'link', to: '/draft', label: 'Draft' },
 ];
