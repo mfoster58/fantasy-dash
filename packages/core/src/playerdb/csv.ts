@@ -13,16 +13,18 @@ export function* parseCsv(text: string): Generator<Record<string, string>> {
       if (text.charCodeAt(i) === QUOTE) {
         i++;
         let start = i;
+        let closed = false;
         while (i < n) {
           if (text.charCodeAt(i) === QUOTE) {
             field += text.slice(start, i);
             if (text.charCodeAt(i + 1) === QUOTE) { field += '"'; i += 2; start = i; continue; }
             i++;
+            closed = true;
             break;
           }
           i++;
         }
-        if (i >= n && start < i) field += text.slice(start, i);
+        if (!closed) field += text.slice(start, i);
       }
       const start = i;
       let c = 0;

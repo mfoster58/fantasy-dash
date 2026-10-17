@@ -16,4 +16,9 @@ describe('parseCsv', () => {
   it('pads short lines with empty strings', () => {
     expect(rows('a,b,c\n1,2\n')).toEqual([{ a: '1', b: '2', c: '' }]);
   });
+  it('closes a quoted field that ends the input without a newline', () => {
+    expect(rows('a,b\n1,"x"')).toEqual([{ a: '1', b: 'x' }]);
+    expect(rows('a,b\n1,""')).toEqual([{ a: '1', b: '' }]);
+    expect(rows('a,b\n1,"unterminated')).toEqual([{ a: '1', b: 'unterminated' }]);
+  });
 });
