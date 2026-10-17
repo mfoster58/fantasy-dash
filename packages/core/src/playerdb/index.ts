@@ -8,3 +8,6 @@ export * from './sources/nflverse';
 export * from './sources/ngs';
 export * from './sources/pfr';
 export * from './sources/players';
+export * from './sources/participation';
+export * from './teamWeeks';
+export * from './derive';

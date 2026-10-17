@@ -1,0 +1,36 @@
+import { describe, it, expect } from 'vitest';
+import { teamWeekKey, teamWeeksOf } from '../../src/playerdb/teamWeeks';
+import { routesEstimate } from '../../src/playerdb/derive';
+
+const r = (id: string, team: string | null, stats: Record<string, number>, opponent = 'X') => ({ player_id: id, team, opponent, stats });
+
+describe('teamWeeksOf', () => {
+  it('sums each team-week from every position and takes the max team snaps', () => {
+    const weeks = new Map([[1, [
+      r('q', 'SF', { tm_off_snp: 60, pass_att: 30, pass_sack: 2, pass_air_yd: 250, pass_rz_att: 4 }, 'LAR'),
+      r('rb', 'SF', { tm_off_snp: 60, rush_att: 20, rush_rz_att: 3, rec_tgt: 4, rec_rz_tgt: 1 }, 'LAR'),
+      r('ol', 'SF', { tm_off_snp: 60 }, 'LAR'),
+      r('k', 'SF', { fgm: 2 }, 'LAR'),
+      r('rb2', 'LAR', { tm_off_snp: 55, rush_att: 10 }, 'SF'),
+      r('fa', null, { rush_att: 99 }),
+    ]]]);
+    const tws = teamWeeksOf(weeks, new Map([['SF|1', 33]]));
+    expect(tws).toEqual([
+      { team: 'LAR', week: 1, opp: 'SF', offSnaps: 55, passAtt: 0, rushAtt: 10, dropbacks: 0, rzLooks: 0, airYds: 0, passPlays: null },
+      { team: 'SF', week: 1, opp: 'LAR', offSnaps: 60, passAtt: 30, rushAtt: 20, dropbacks: 32, rzLooks: 4, airYds: 250, passPlays: 33 },
+    ]);
+    expect(teamWeekKey('SF', 1)).toBe('SF|1');
+  });
+});
+
+describe('routesEstimate', () => {
+  const tw = { team: 'SF', week: 1, opp: 'LAR', offSnaps: 60, passAtt: 30, rushAtt: 20, dropbacks: 32, rzLooks: 4, airYds: 250, passPlays: null };
+  it('scales team dropbacks by snap share', () => {
+    expect(routesEstimate({ id: 'a', week: 1, team: 'SF', gp: 1, snaps: 45, teamSnaps: 60 }, tw)).toBe(24);
+  });
+  it('is null without snaps, team snaps or a team week', () => {
+    expect(routesEstimate({ id: 'a', week: 1, team: 'SF', gp: 1, snaps: 45 }, tw)).toBeNull();
+    expect(routesEstimate({ id: 'a', week: 1, team: 'SF', gp: 1, snaps: 45, teamSnaps: 0 }, tw)).toBeNull();
+    expect(routesEstimate({ id: 'a', week: 1, team: 'SF', gp: 1, snaps: 45, teamSnaps: 60 }, undefined)).toBeNull();
+  });
+});
