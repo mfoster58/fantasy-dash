@@ -1,9 +1,10 @@
-import type { History, HistorySeason, PlayerDirectory, Season } from '@fantasy-dash/core';
+import type { History, HistorySeason, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
 
 // import.meta.glob keeps tsc from type-inferring multi-megabyte JSON literals.
 const historyMod = import.meta.glob<{ default: History }>('../../../../data/history.json', { eager: true });
 const playersMod = import.meta.glob<{ default: PlayerDirectory }>('../../../../data/players.json', { eager: true });
 const seasonMods = import.meta.glob<{ default: Season }>('../../../../data/seasons/*.json');
+const playerDbMods = import.meta.glob<{ default: PlayerDb }>('../../../../data/playerdb/*.json');
 
 export const history: History = Object.values(historyMod)[0].default;
 export const players: PlayerDirectory = Object.values(playersMod)[0].default;
@@ -29,4 +30,21 @@ export function loadAllSeasons(): Promise<Season[]> {
     allSeasons = Promise.all(history.seasons.map((s) => loadSeason(s.year))).catch((err) => { allSeasons = null; throw err; });
   }
   return allSeasons;
+}
+
+const playerDbCache = new Map<number, Promise<PlayerDb>>();
+const playerDbKey = (year: number) => Object.keys(playerDbMods).find((k) => k.endsWith(`/${year}.json`));
+
+/** Whether a player database file exists for the season (a new year has none until its first sync). */
+export const hasPlayerDb = (year: number): boolean => playerDbKey(year) !== undefined;
+
+export function loadPlayerDb(year: number): Promise<PlayerDb> {
+  let pending = playerDbCache.get(year);
+  if (!pending) {
+    const key = playerDbKey(year);
+    if (!key) return Promise.reject(new Response(`No player data for ${year}`, { status: 404 }));
+    pending = playerDbMods[key]().then((m) => m.default).catch((err) => { playerDbCache.delete(year); throw err; });
+    playerDbCache.set(year, pending);
+  }
+  return pending;
 }
