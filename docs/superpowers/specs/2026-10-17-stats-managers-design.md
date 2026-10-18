@@ -87,12 +87,12 @@ All hand-drawn SVG, one component each under `components/stats/`, each taking it
 One row per manager, every column sortable by clicking its header (first click descending for the "more is better" columns, ascending for the rest; a second click flips), default sort PPG descending. Column groups with a group header row:
 
 - **Record**: Rec · All-play · xW · Luck · vs median · Streaks
-- **Scoring**: PPG · PA/G · High weeks · Top-3 · Bottom-3 · SD · Floor · Ceiling
+- **Scoring**: PPG · PA/G · High weeks · Top-3 · Bottom-3 · SD · Min · Max
 - **Games**: Close (≤10) · Blowouts (≥30) · SOS · Postseason rec · Postseason PPG
 - **Lineups**: Eff · Bench left · Proj+ · Δproj
 - **Roster**: FAAB · Pickups · Waiver share · Draft value
 
-Definitions (regular season unless said): xW = all-play win rate × games; Luck = W − xW; vs median = wins over the weekly league median; Streaks = longest win and loss streaks as `W5 / L3`; PA/G = points against per game; High weeks = weeks as the top scorer; SD = standard deviation of weekly score; Floor and Ceiling = second-worst and second-best week; Close = record in games decided by ten or fewer; Blowouts = record in games decided by thirty or more; SOS = opponents' average score against him minus the league average; Postseason = playoff and consolation games; Eff = points / optimal lineup points; Bench left = optimal minus actual, total; Proj+ = share of weeks over Sleeper's projection; Δproj = average points over projection; FAAB = dollars bid on won waivers; Pickups = waiver and free-agent adds; Waiver share = share of started points from non-draft pickups; Draft value = sum of pick values from the draft grading. A "?" popover on the card holds this list. All-time adds a Seasons column after the manager.
+Definitions (regular season unless said): xW = all-play win rate × games; Luck = W − xW; vs median = wins over the weekly league median; Streaks = longest win and loss streaks as `W5 / L3`; PA/G = points against per game; High weeks = weeks as the top scorer; SD = standard deviation of weekly score; Min and Max = lowest and highest week; Close = record in games decided by ten or fewer; Blowouts = record in games decided by thirty or more; SOS = opponents' average score against him minus the league average; Postseason = playoff and consolation games; Eff = points / optimal lineup points; Bench left = optimal minus actual, total; Proj+ = share of weeks over Sleeper's projection; Δproj = average points over projection; FAAB = dollars bid on won waivers; Pickups = waiver and free-agent adds; Waiver share = share of started points from non-draft pickups; Draft value = sum of pick values from the draft grading. A "?" popover on the card holds this list. All-time adds a Seasons column after the manager.
 
 Phone: the table scrolls horizontally with the manager column sticky.
 

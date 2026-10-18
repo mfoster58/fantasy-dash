@@ -36,15 +36,21 @@ describe('columnTints', () => {
     const re = at('reTd');
     expect(re('w1')).toBe(green(0.8 + 0.2 * (2 / 3)));   // 2 TD in 3 games
     expect(re('t1')).toBe(green(0.8 + 0.2 * (1 / 3)));   // 1 TD in 3 games: still green
-    expect(re('w2')).toBe('transparent');               // none
+    expect(re('w2')).toBe(valueColor(-VALUE_SATURATION)); // targets but no TD: a zero, full red
     expect(at('ruTd')('r1')).toBe(green(1));            // a TD a game or better is full green
   });
   it('puts passing TDs on a per-game scale: 0 red, 1 yellow, 2 green, 3+ full green, only for real passers', () => {
     expect(at('paTd')('q1')).toBe(valueColor(0.8 * (5 / 3 - 1) * VALUE_SATURATION)); // 5 TD in 3 games
     expect(at('paTd')('w1')).toBe('transparent');                                     // never threw
   });
-  it('leaves a zero counting stat untinted, but a zero of a bad thing counts when the player had the chance', () => {
-    expect(at('cmp')('w1')).toBe('transparent');
+  it('paints a zero full red when the player had the chance, and leaves it alone when he did not', () => {
+    expect(at('cmp')('w1')).toBe('transparent');          // never threw: his 0 completions say nothing
+    expect(at('ruTd')('w2')).toBe('transparent');         // never carried
+    expect(at('paTd')('w1')).toBe('transparent');         // not a real passer
+    // a signed column sits at the middle of its scale at 0, it is not a bad zero
+    const flat = { ...COLUMNS.projPlus, value: () => 0 };
+    expect(columnTints(flat, aggs, 'total').some((t) => t === valueColor(-VALUE_SATURATION))).toBe(false);
+
     expect(at('cmp')('q1')).not.toBe('transparent');
     const fum = at('fum');
     expect(fum('w1')).not.toBe('transparent');           // touches but no fumbles: a good zero

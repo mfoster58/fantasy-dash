@@ -16,7 +16,7 @@ describe('statTable', () => {
   });
   it('carries the scoring, game and lineup numbers', () => {
     const a = row(rows, 'a');
-    expect([a.ppg, a.paPg, a.highs, a.top3, a.bottom3, a.floor, a.ceiling]).toEqual([107.5, 92.25, 2, 4, 0, 100, 120]);
+    expect([a.ppg, a.paPg, a.highs, a.top3, a.bottom3, a.min, a.max]).toEqual([107.5, 92.25, 2, 4, 0, 80, 130]);
     expect(a.sd).toBeCloseTo(19.2, 1);
     expect([a.closeW, a.closeL, a.blowW, a.blowL, a.sos]).toEqual([2, 0, 1, 0, -11.44]);
     expect([a.postW, a.postL, a.postGames, a.postPpg]).toEqual([1, 0, 1, 150]);
