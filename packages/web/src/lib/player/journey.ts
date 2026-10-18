@@ -70,11 +70,11 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
     for (const e of evs.filter((x) => x.at.year === s.year)) {
       const cur: Span | null = open;
       if (!e.acquire) {
-        if (cur && cur.userId === e.userId) { cur.moves.push(asMove(e)); close({ year: e.at.year, week: Math.max(0, e.at.week - 1) }); }
+        if (cur && cur.userId === e.userId) { cur.moves.push(asMove(e)); close(e.at); }
         continue;
       }
       if (cur && cur.userId === e.userId) { cur.moves.push(asMove(e)); continue; }
-      if (cur) close({ year: e.at.year, week: Math.max(0, e.at.week - 1) });
+      if (cur) close(e.at);
       // a re-add in the very week of the drop reopens the stint it closed
       const last = done[done.length - 1];
       const lastMove = last?.moves[last.moves.length - 1];
@@ -98,6 +98,24 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
   }
 
   const inside = (l: PlayerLine, d: Span) => { const at = { year: l.year, week: l.week }; return cmp(at, d.from) >= 0 && (d.to === null || cmp(at, d.to) <= 0); };
+  const atOf = (l: PlayerLine): At => ({ year: l.year, week: l.week });
+  const byWeek = [...lines].sort((a, b) => a.year - b.year || a.week - b.week);
+  // A move's leg is not the roster boundary: a waiver claim can first play the next week and a drop can come after that
+  // week's game. The weeks he spent on the roster date each stint; the move's own week stands in when there are none.
+  for (const d of done) {
+    const mine = byWeek.filter((l) => l.userId === d.userId && inside(l, d));
+    if (d.from.week !== 0 && mine.length) d.from = atOf(mine[0]);
+    if (d.to) d.to = mine.length ? atOf(mine[mine.length - 1]) : d.from;
+  }
+  // a spell on a roster that no recorded move explains still gets its own stint
+  for (const l of byWeek) {
+    if (done.some((d) => d.userId === l.userId && inside(l, d))) continue;
+    const last = done.find((d) => d.moves.length === 0 && d.userId === l.userId && d.to && cmp(d.to, atOf(l)) < 0 && !byWeek.some((o) => cmp(atOf(o), d.to!) > 0 && cmp(atOf(o), atOf(l)) < 0));
+    if (last) last.to = atOf(l); else done.push({ userId: l.userId, from: atOf(l), to: atOf(l), moves: [] });
+  }
+  const newestLast = { year: newest, week: lastWeekOf(sorted[sorted.length - 1]) };
+  for (const d of done) if (d.moves.length === 0 && d.to && cmp(d.to, newestLast) === 0) d.to = null;
+
   return done.map((d) => {
     const mine = lines.filter((l) => !l.consolation && l.userId === d.userId && inside(l, d));
     const started = mine.filter((l) => l.started);

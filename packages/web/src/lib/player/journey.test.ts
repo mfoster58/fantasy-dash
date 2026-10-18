@@ -1,7 +1,7 @@
 import { flattenLines } from '../playerLines';
 import { journeyOf, stintRange } from './journey';
 import { leagueSeasons, tx } from '../../test/playerPageFixtures';
-import { players } from '../../test/playerFixtures';
+import { line, players } from '../../test/playerFixtures';
 
 const of = (id: string, s = leagueSeasons()) => journeyOf(flattenLines(s, players).filter((l) => l.playerId === id), s, players, id);
 
@@ -25,7 +25,7 @@ describe('journeyOf', () => {
     const s = leagueSeasons();
     s[1].transactions = [tx('free_agent', 2, 500, [], [['r1', 'A']]), tx('free_agent', 3, 600, [['r1', 'A']], [])];
     const st = of('r1', s);
-    expect(st.map((x) => [x.userId, x.from, x.to])).toEqual([['A', { year: 2026, week: 3 }, null], ['A', { year: 2025, week: 3 }, { year: 2026, week: 1 }], ['B', { year: 2025, week: 0 }, { year: 2025, week: 2 }]]);
+    expect(st.map((x) => [x.userId, x.from, x.to])).toEqual([['A', { year: 2026, week: 3 }, null], ['A', { year: 2025, week: 3 }, { year: 2026, week: 2 }], ['B', { year: 2025, week: 0 }, { year: 2025, week: 2 }]]);
     expect(st[0].moves.map((m) => m.text)).toEqual(['Free-agent add']);
   });
   it('ends a stint at the season it was not kept into', () => {
@@ -34,6 +34,25 @@ describe('journeyOf', () => {
     s[1].weeks = s[1].weeks.map((w) => ({ ...w, games: w.games.map((g) => ({ ...g, sides: g.sides.map((sd) => ({ ...sd, starters: sd.starters.filter((e) => e.player?.playerId !== 'w1') })) as typeof g.sides })) }));
     const [bob] = of('w1', s);
     expect(bob.to).toEqual({ year: 2025, week: 3 });
+  });
+  it('dates a stint by the weeks he was on the roster: an add and a drop in the same week make a one-week stint', () => {
+    const s = leagueSeasons();
+    s[1].transactions.push(tx('free_agent', 1, 100, [['k1', 'B']], []), tx('waiver', 1, 150, [], [['k1', 'B']]));
+    const st = of('k1', s);
+    expect(st.map((x) => [x.userId, x.from, x.to, x.starts])).toEqual([['B', { year: 2026, week: 1 }, { year: 2026, week: 1 }, 0]]);
+    expect(st[0].moves.map((m) => m.kind)).toEqual(['dropped', 'freeAgent']);
+  });
+  it('starts a waiver claim at the first week he was on the roster, which can be the week after the claim', () => {
+    const s = leagueSeasons();
+    const [wk1, wk2] = s[1].weeks.map((w) => w.games[0].sides[1]);
+    wk1.bench = wk1.bench.filter((b) => b.playerId !== 'k1');
+    wk2.bench = [...wk2.bench, line('k1', 6)];
+    s[1].transactions.push(tx('waiver', 1, 50, [['k1', 'B']], [], 3));
+    expect(of('k1', s).map((x) => [x.from, x.to])).toEqual([[{ year: 2026, week: 2 }, null]]); // still on the roster in the newest week
+  });
+  it('still shows a spell on a roster with no recorded move', () => {
+    const st = of('k1');
+    expect(st.map((x) => [x.userId, x.from, x.to, x.moves.length])).toEqual([['B', { year: 2026, week: 1 }, { year: 2026, week: 1 }, 0]]);
   });
   it('is empty for a player never rostered', () => {
     expect(of('t1')).toEqual([]);
