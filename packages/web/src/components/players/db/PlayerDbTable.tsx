@@ -7,6 +7,7 @@ import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } f
 import { dbDirectory } from '../../../lib/playerdb/directory';
 import { columnTints } from '../../../lib/playerdb/percentile';
 import type { DbState } from '../../../lib/playerdb/url';
+import { ColumnHeaderCells, GroupHeaderCells, HeaderCell, StatCells, th } from './GridParts';
 import TintCell from './TintCell';
 import WeekRows from './WeekRows';
 
@@ -58,7 +59,6 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
   return [set, toggle];
 }
 
-const th = 'section-label whitespace-nowrap px-2 py-2 text-center';
 const lead = 'sticky bg-surface';
 
 export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
@@ -93,23 +93,14 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
           <tr>
             <th colSpan={3} className="sticky left-0 z-[3] bg-surface border-b border-line" />
             <th colSpan={leadCols.length} className="border-b border-line" />
-            {bodyGroups.map((g) => {
-              const off = collapsed.has(g.group);
-              return (
-                <th key={g.group} colSpan={off ? 1 : g.cols.length} className="section-label border-b border-l border-line px-2 py-1 text-left">
-                  <button type="button" aria-label={`${off ? 'Expand' : 'Collapse'} ${g.group}`} onClick={() => onToggleGroup(g.group)} className="hover:text-ink">{off ? '▸ ' : '▾ '}{g.group}</button>
-                </th>
-              );
-            })}
+            <GroupHeaderCells groups={bodyGroups} collapsed={collapsed} onToggleGroup={onToggleGroup} />
           </tr>
           <tr>
             <th className={`${lead} left-0 z-[3] w-10 min-w-10 border-b border-line px-2 py-2 text-left section-label`}>#</th>
             <th className={`${lead} left-10 z-[3] w-14 min-w-14 border-b border-line px-2 py-2 text-left section-label`}>Pos</th>
             <th className={`${lead} left-24 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
-            {bodyGroups.map((g) => (collapsed.has(g.group)
-              ? <th key={g.group} className={`${th} border-b border-l border-line text-muted`}>…</th>
-              : g.cols.map((c, i) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} first={i === 0} />)))}
+            <ColumnHeaderCells groups={bodyGroups} collapsed={collapsed} title={headerTitle} arrow={sortArrow} onSort={onSort} />
           </tr>
         </thead>
         <tbody>
@@ -130,9 +121,7 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
                     </button>
                   </td>
                   {leadCols.map((c) => cell(c, a, i))}
-                  {bodyGroups.map((g) => (collapsed.has(g.group)
-                    ? <td key={g.group} className="border-b border-l border-line" />
-                    : g.cols.map((c) => cell(c, a, i))))}
+                  <StatCells groups={bodyGroups} collapsed={collapsed} agg={a} mode={state.mode} tint={(k) => tints.get(k)?.[i] ?? 'transparent'} />
                 </tr>
                 {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} weekLabel={weekLabel} />}
               </Fragment>
@@ -147,13 +136,5 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
         </div>
       )}
     </div>
-  );
-}
-
-function HeaderCell({ col, title, arrow, onSort, first = false }: { col: ColumnDef; title: string; arrow: string; onSort: (key: string) => void; first?: boolean }) {
-  return (
-    <th scope="col" title={title} className={`${th} border-b border-line ${first ? 'border-l' : ''}`}>
-      <button type="button" onClick={() => onSort(col.key)} className="hover:text-ink">{col.label}{arrow}</button>
-    </th>
   );
 }
