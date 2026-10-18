@@ -55,7 +55,7 @@ describe('PlayersPage', () => {
     expect(screen.getByLabelText('Season')).toHaveValue('all');
     expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Last 4' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByTestId('db-name').find((n) => n.textContent === 'Wide One')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Show weeks for Wide One' }));
     expect(screen.getAllByTestId('db-week')[0]).toHaveTextContent(/^'25 W1/);
   });
 });

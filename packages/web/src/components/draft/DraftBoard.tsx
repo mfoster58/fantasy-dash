@@ -1,6 +1,7 @@
 import type { Draft, DraftPick, Manager, PlayerDirectory, PlayerId, UserId } from '@fantasy-dash/core';
 import { fmtPpg, fmtPts, fmtSigned } from '../../lib/format';
 import { playerName, playerPos, playerTeam, posColor } from '../../lib/players';
+import { PlayerLink } from '../NameLink';
 import { letterGrade, managerDraftSummaries, posLabel, valueColor } from '../../lib/draft';
 
 export type BoardMode = 'position' | 'value';
@@ -106,7 +107,7 @@ export default function DraftBoard({ draft, managers, players, seasonTeams, mode
                       {p.isKeeper && <LockIcon />}
                     </span>
                   )}
-                  <div className="truncate pr-5 font-medium">{playerName(players, p.playerId)}</div>
+                  <div className="truncate pr-5 font-medium"><PlayerLink id={p.playerId} onClick={(e) => e.stopPropagation()}>{playerName(players, p.playerId)}</PlayerLink></div>
                   <div className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] text-muted">
                     <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
                     {p.tradedTo

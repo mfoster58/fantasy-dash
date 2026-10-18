@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { PlayerDb, PlayerId, UserId } from '@fantasy-dash/core';
 import Headshot from '../../Headshot';
 import PosPill from '../../PosPill';
+import { PlayerLink } from '../../NameLink';
 import type { Agg } from '../../../lib/playerdb/aggregate';
 import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
 import { dbDirectory } from '../../../lib/playerdb/directory';
@@ -113,12 +114,16 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
                   <td className={`${lead} left-0 num w-10 min-w-10 border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
                   <td data-testid="db-pos" className={`${lead} left-10 w-14 min-w-14 border-b border-line px-2 py-1.5`}><PosPill pos={p?.pos ?? '?'} /></td>
                   <td className={`${lead} left-24 border-b border-line px-2 py-1.5`}>
-                    <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap text-left hover:text-accent">
-                      <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
-                      <span data-testid="db-name" className="font-medium">{p?.name ?? a.id}</span>
+                    <span className="flex items-center gap-2 whitespace-nowrap">
+                      {/* the chevron and headshot open his weeks; the name opens his page */}
+                      <button type="button" aria-expanded={isOpen} aria-label={`Show weeks for ${p?.name ?? a.id}`} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-1.5 text-muted hover:text-accent">
+                        <span aria-hidden="true" className="w-2 text-[10px]">{isOpen ? '▾' : '▸'}</span>
+                        <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
+                      </button>
+                      <PlayerLink id={a.id} className="font-medium"><span data-testid="db-name">{p?.name ?? a.id}</span></PlayerLink>
                       <span className="text-xs text-muted">{a.team}</span>
                       {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
-                    </button>
+                    </span>
                   </td>
                   {leadCols.map((c) => cell(c, a, i))}
                   <StatCells groups={bodyGroups} collapsed={collapsed} agg={a} mode={state.mode} tint={(k) => tints.get(k)?.[i] ?? 'transparent'} />

@@ -1,6 +1,7 @@
 import type { GameSide, PlayerDirectory, PlayerId, PlayerLine } from '@fantasy-dash/core';
 import { fmtPts } from '../../lib/format';
 import { playerName, playerPos, playerTeam, statLine } from '../../lib/players';
+import { PlayerLink } from '../NameLink';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
 
@@ -17,7 +18,7 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false }: {
       {showPos && <PosPill pos={pos} />}
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">
-          {playerName(players, line.playerId)} <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId, seasonTeams)}</span>
+          <PlayerLink id={line.playerId}>{playerName(players, line.playerId)}</PlayerLink> <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId, seasonTeams)}</span>
         </div>
         <div className="truncate text-xs text-muted">{statLine(pos, line.stats) || '-'}</div>
       </div>

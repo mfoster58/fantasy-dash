@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import type { GameSide, PlayerDirectory } from '@fantasy-dash/core';
+import { MemoryRouter } from 'react-router';
 import LineupTable from './LineupTable';
 
 const players: PlayerDirectory = {
@@ -17,7 +18,7 @@ const side = (userId: string, starter: string, bench: string[]): GameSide => ({
 
 describe('LineupTable', () => {
   it('pairs bench players row by row with a BN pill between them, padding the shorter bench', () => {
-    render(<LineupTable sides={[side('a', 'a1', ['a2', 'a3']), side('b', 'b1', ['b2'])]} slots={['QB']} players={players} seasonTeams={{ a2: 'NYG' }} />);
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', ['a2', 'a3']), side('b', 'b1', ['b2'])]} slots={['QB']} players={players} seasonTeams={{ a2: 'NYG' }} /></MemoryRouter>);
     const rows = screen.getAllByTestId('bench-row');
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByText('BN')).toHaveClass('pos-pill');
@@ -27,5 +28,9 @@ describe('LineupTable', () => {
     expect(rows[1]).toHaveTextContent('Alpha Three');
     expect(rows[1]).not.toHaveTextContent('Bravo');
     expect(screen.queryByText('Total')).toBeNull();
+  });
+  it('links each player name to the player page', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', ['a2']), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Alpha One' })).toHaveAttribute('href', '/player/a1');
   });
 });

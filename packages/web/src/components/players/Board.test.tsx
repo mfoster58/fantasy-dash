@@ -23,6 +23,10 @@ const wrapB = (props: Partial<React.ComponentProps<typeof Board>> = {}) => {
 describe('Board', () => {
   const eight = Array.from({ length: 8 }, (_, i) => row(i));
 
+  it('links a player row name to the player page', () => {
+    wrapB({ rows: eight });
+    expect(screen.getAllByRole('link').some((a) => a.getAttribute('href')?.startsWith('/player/'))).toBe(true);
+  });
   it('shows five rows when collapsed and asks the section to expand', () => {
     const { onToggle } = wrapB({ rows: eight });
     expect(screen.getAllByRole('listitem')).toHaveLength(5);
@@ -81,7 +85,7 @@ describe('Board', () => {
     expect(within(first).getByRole('link', { name: /2025 · Wk 1/ })).toHaveAttribute('href', '/scores/2025/1/3');
     const second = screen.getAllByRole('listitem')[1];
     expect(second.textContent).toMatch(/^2\?p1/); // unknown player: '?' pill then id
-    expect(within(second).queryByRole('link')).toBeNull();
+    expect(within(second).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/player/p1']); // only the player page
   });
 
   it('shows several managers as a count with a tooltip naming each, and one manager as the usual link', () => {

@@ -4,6 +4,7 @@ import Headshot from '../Headshot';
 import { CardHeader } from '../draft/DraftAnalysis';
 import { fmtPts } from '../../lib/format';
 import { playerName, playerTeam, posColor } from '../../lib/players';
+import { PlayerLink } from '../NameLink';
 import type { PositionGroup, PositionPlayer } from '../../lib/teamProfile';
 
 interface Props { positions: PositionGroup[]; neverStarted: PositionPlayer[]; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; weeksPlayed: number }
@@ -51,7 +52,7 @@ function Group({ g, bench, players, seasonTeams, weeksPlayed, mode }: { g: Posit
         style={{ '--pos-color': color } as React.CSSProperties}>
         <Headshot players={players} id={p.playerId} size={26} />
         <span className="min-w-0 flex-1 truncate">
-          <span className={started ? 'font-medium' : ''}>{playerName(players, p.playerId)}</span>
+          <PlayerLink id={p.playerId} className={started ? 'font-medium' : ''}>{playerName(players, p.playerId)}</PlayerLink>
           <span className="ml-1.5 text-xs text-muted">{playerTeam(players, p.playerId, seasonTeams)}</span>
           {rankChip(p)}
         </span>
