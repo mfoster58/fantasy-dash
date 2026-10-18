@@ -19,12 +19,12 @@ describe('PlayerDbToolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'RB' }));
     expect(onChange).toHaveBeenCalledWith({ tab: 'rb' });
   });
-  it('sets the week range from the selects and the chips', () => {
+  it('sets the weeks from a row of week bubbles instead of From and To selects', () => {
     const { onChange } = setup();
-    fireEvent.change(screen.getByLabelText('From'), { target: { value: '3' } });
-    expect(onChange).toHaveBeenCalledWith({ from: 3 });
-    fireEvent.change(screen.getByLabelText('To'), { target: { value: '5' } });
-    expect(onChange).toHaveBeenCalledWith({ to: 5 });
+    expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Week 3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Week 5' }));
+    expect(onChange).toHaveBeenCalledWith({ from: 3, to: 5 });
     fireEvent.click(screen.getByRole('button', { name: 'Last 4' }));
     expect(onChange).toHaveBeenCalledWith({ from: 3, to: 6 });
     fireEvent.click(screen.getByRole('button', { name: 'Season' }));
