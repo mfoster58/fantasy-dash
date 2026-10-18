@@ -9,12 +9,12 @@ import { pointOrigins, wireActivity } from './roster';
 export interface StatRow {
   id: UserId; seasons: number;
   w: number; l: number; t: number; apW: number; apL: number; apT: number; xw: number; luck: number; medW: number; medL: number; streakW: number; streakL: number;
-  ppg: number; paPg: number; highs: number; top3: number; bottom3: number; sd: number; floor: number; ceiling: number;
+  ppg: number; paPg: number; highs: number; top3: number; bottom3: number; sd: number; min: number; max: number;
   closeW: number; closeL: number; blowW: number; blowL: number; sos: number; postW: number; postL: number; postGames: number; postPpg: number;
   eff: number; benchLeft: number; projPlus: number; dProj: number;
   faab: number; pickups: number; waiverShare: number; draftValue: number;
   /** winners-bracket games only (quarterfinal, semifinal, final) */
-  titles: number; poApps: number; poW: number; poL: number; poGames: number; poPpg: number; finals: number;
+  titles: number; runnerUps: number; thirds: number; poApps: number; poW: number; poL: number; poGames: number; poPpg: number; finals: number;
 }
 export type ColumnGroup = 'Season' | 'Record' | 'Scoring' | 'Games' | 'Lineups' | 'Roster' | 'Playoffs';
 export interface ColumnDef { key: string; label: string; group: ColumnGroup; title: string; higherBetter: boolean; value: (r: StatRow) => number; text: (r: StatRow) => string }
@@ -31,7 +31,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 const one = (v: number) => v.toFixed(1);
 
 function blank(id: UserId): StatRow {
-  return { id, seasons: 0, w: 0, l: 0, t: 0, apW: 0, apL: 0, apT: 0, xw: 0, luck: 0, medW: 0, medL: 0, streakW: 0, streakL: 0, ppg: 0, paPg: 0, highs: 0, top3: 0, bottom3: 0, sd: 0, floor: 0, ceiling: 0, closeW: 0, closeL: 0, blowW: 0, blowL: 0, sos: 0, postW: 0, postL: 0, postGames: 0, postPpg: 0, eff: 0, benchLeft: 0, projPlus: 0, dProj: 0, faab: 0, pickups: 0, waiverShare: 0, draftValue: 0, titles: 0, poApps: 0, poW: 0, poL: 0, poGames: 0, poPpg: 0, finals: 0 };
+  return { id, seasons: 0, w: 0, l: 0, t: 0, apW: 0, apL: 0, apT: 0, xw: 0, luck: 0, medW: 0, medL: 0, streakW: 0, streakL: 0, ppg: 0, paPg: 0, highs: 0, top3: 0, bottom3: 0, sd: 0, min: 0, max: 0, closeW: 0, closeL: 0, blowW: 0, blowL: 0, sos: 0, postW: 0, postL: 0, postGames: 0, postPpg: 0, eff: 0, benchLeft: 0, projPlus: 0, dProj: 0, faab: 0, pickups: 0, waiverShare: 0, draftValue: 0, titles: 0, runnerUps: 0, thirds: 0, poApps: 0, poW: 0, poL: 0, poGames: 0, poPpg: 0, finals: 0 };
 }
 
 /** every advanced number per manager over the seasons given */
@@ -57,6 +57,8 @@ export function statTable(seasons: Season[]): StatRow[] {
       if (!st) continue;
       r.seasons += 1;
       if (s.honors.champion === ref.id) r.titles += 1;
+      if (s.honors.runnerUp === ref.id) r.runnerUps += 1;
+      if (s.honors.third === ref.id) r.thirds += 1;
       r.apW += st.allPlay.w; r.apL += st.allPlay.l; r.apT += st.allPlay.t;
       for (const p of s.draft?.picks ?? []) if (p.userId === ref.id && p.value !== null) r.draftValue += p.value;
       const wire = wireActivity(s).rows.find((x) => x.id === ref.id);
@@ -84,7 +86,7 @@ export function statTable(seasons: Season[]): StatRow[] {
     if (f) { r.top3 = f.top; r.bottom3 = f.bottom; }
     r.sd = pts.length ? Math.sqrt(mean(pts.map((p) => (p - r.ppg) ** 2))) : 0;
     const sp = spread.get(ref.id);
-    if (sp) { r.floor = sp.floor; r.ceiling = sp.ceiling; }
+    if (sp) { r.min = sp.min; r.max = sp.max; }
     r.sos = sos.get(ref.id)?.delta ?? 0;
     for (const g of myPost) { if (g.result === 'W') r.postW += 1; else if (g.result === 'L') r.postL += 1; }
     r.postGames = myPost.length;
@@ -123,8 +125,8 @@ export const COLUMNS: ColumnDef[] = [
   col('top3', 'Top-3', 'Scoring', 'Weeks in the top three scorers', true, (r) => r.top3, (r) => String(r.top3)),
   col('bottom3', 'Bot-3', 'Scoring', 'Weeks in the bottom three scorers', false, (r) => r.bottom3, (r) => String(r.bottom3)),
   col('sd', 'SD', 'Scoring', 'Week-to-week spread (standard deviation)', false, (r) => r.sd, (r) => one(r.sd)),
-  col('floor', 'Floor', 'Scoring', 'Second-worst week', true, (r) => r.floor, (r) => one(r.floor)),
-  col('ceiling', 'Ceil', 'Scoring', 'Second-best week', true, (r) => r.ceiling, (r) => one(r.ceiling)),
+  col('min', 'Min', 'Scoring', 'Lowest weekly score', true, (r) => r.min, (r) => one(r.min)),
+  col('max', 'Max', 'Scoring', 'Highest weekly score', true, (r) => r.max, (r) => one(r.max)),
   col('close', 'Close', 'Games', `Record in games decided by ${CLOSE_MARGIN} or fewer`, true, (r) => share(r.closeW, r.closeL, 0), (r) => rec(r.closeW, r.closeL, 0)),
   col('sos', 'SOS', 'Games', "Opponents' average score against the league average", false, (r) => r.sos, (r) => fmtSigned(r.sos, 1)),
   col('post', 'Post rec', 'Games', 'Postseason record, consolation included', true, (r) => share(r.postW, r.postL, 0), (r) => rec(r.postW, r.postL, 0)),

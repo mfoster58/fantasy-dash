@@ -14,7 +14,7 @@ const gradient = (s: number): string => {
   return `color-mix(in srgb, color-mix(in srgb, ${end} ${k}%, var(--warn)) 40%, var(--surface-2))`;
 };
 /** columns that describe rather than rank, left untinted */
-const UNTINTED = new Set(['seasons', 'rec', 'allPlay', 'median', 'streaks', 'close', 'post', 'pickups', 'waiverShare']);
+const UNTINTED = new Set(['seasons', 'rec', 'allPlay', 'median', 'streaks', 'close', 'post', 'pickups', 'waiverShare', 'poRec']);
 
 /**
  * Where a row sits in a column, from -1 (worst) to 1 (best), by rank so one outlier does not wash the rest out;
@@ -53,7 +53,7 @@ export default function StatTable({ rows, refs, pin, allTime }: Props) {
           <tr>
             <th scope="col" className="sticky left-0 z-[1] bg-surface px-2 py-1.5 text-left font-normal text-muted">Manager</th>
             {columns.map((c) => (
-              <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined} className="whitespace-nowrap px-2 py-1.5 text-right">
+              <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined} className="whitespace-nowrap px-2 py-1.5 text-center">
                 <button type="button" title={c.title} onClick={() => click(c)} className={`font-medium hover:text-ink ${sort.key === c.key ? 'text-ink underline decoration-dotted underline-offset-4' : 'text-muted'}`}>
                   {c.label}{sort.key === c.key ? (sort.dir === 'asc' ? ' ▴' : ' ▾') : ''}
                 </button>
@@ -66,12 +66,12 @@ export default function StatTable({ rows, refs, pin, allTime }: Props) {
             const rowTint = r.id === active ? PINNED_ROW : '';
             return (
               <tr key={r.id} {...markAttrs(r.id, active)} {...hoverProps(r.id)} className={`border-t border-line ${rowTint} ${active !== null && active !== r.id ? 'opacity-60' : ''}`}>
-                <th scope="row" className={`sticky left-0 z-[1] bg-surface px-2 py-1.5 text-left font-normal ${rowTint}`}><span className="inline-flex items-center gap-1"><ManagerName id={r.id} refs={refs} active={active} />{Array.from({ length: r.titles }, (_, i) => <FinishIcon key={i} kind="champion" size="1em" />)}</span></th>
+                <th scope="row" className={`sticky left-0 z-[1] bg-surface px-2 py-1.5 text-left font-normal ${rowTint}`}><span className="inline-flex items-center gap-1"><ManagerName id={r.id} refs={refs} active={active} />{([['champion', r.titles], ['runnerUp', r.runnerUps], ['third', r.thirds]] as const).flatMap(([kind, n]) => Array.from({ length: n }, (_, i) => <FinishIcon key={`${kind}${i}`} kind={kind} size="1em" />))}</span></th>
                 {columns.map((c) => {
                   const s = standing(c, rows, r);
                   const tone = s === null ? undefined : s > 0 ? 'good' : s < 0 ? 'bad' : 'mid';
                   return (
-                    <td key={c.key} data-tone={tone} className="num whitespace-nowrap px-2 py-1.5 text-right"
+                    <td key={c.key} data-tone={tone} className="num whitespace-nowrap px-2 py-1.5 text-center"
                       style={tone ? { background: gradient(s!) } : undefined}>{c.text(r)}</td>
                   );
                 })}

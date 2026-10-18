@@ -56,11 +56,30 @@ describe('StatTable', () => {
       expect(within(bob).getAllByRole('cell')[i], label).not.toHaveAttribute('data-tone');
     }
   });
-  it('shows a trophy per title beside the name, and the playoffs group only in all-time', () => {
+  it('shows gold, silver and bronze trophies beside the name, and the playoffs group only in all-time', () => {
+    const seasons = league();
+    seasons[0].honors = { ...seasons[0].honors, champion: 'a', runnerUp: 'c', third: 'd' };
+    render(<StatTable rows={statTable(seasons)} refs={refs} pin={null} allTime />);
+    const row = (name: string) => screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === name)!;
+    expect(within(row('alice')).getAllByTestId('finish-champion')).toHaveLength(2);
+    expect(within(row('dan')).getAllByTestId('finish-runnerUp')).toHaveLength(1);
+    expect(within(row('dan')).getAllByTestId('finish-third')).toHaveLength(1);
+    expect(within(row('cara')).getAllByTestId('finish-runnerUp')).toHaveLength(1);
+    expect(within(row('bob')).queryByTestId(/finish-/)).toBeNull();
+    // gold first, then silver, then bronze
+    const kinds = within(row('dan')).getAllByTestId(/finish-/).map((e) => e.getAttribute('data-testid'));
+    expect(kinds).toEqual(['finish-runnerUp', 'finish-third']);
+    expect(screen.getByText('Playoffs')).toBeInTheDocument();
+  });
+  it('centres the numbers and leaves the playoff record untinted', () => {
     render(<StatTable rows={statTable(league())} refs={refs} pin={null} allTime />);
     const alice = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === 'alice')!;
-    expect(within(alice).getAllByTestId('finish-champion')).toHaveLength(1);
-    expect(screen.getByText('Playoffs')).toBeInTheDocument();
+    const cells = within(alice).getAllByRole('cell');
+    for (const c of cells) expect(c).toHaveClass('text-center');
+    const headers = within(screen.getAllByRole('row')[1]).getAllByRole('columnheader').map((h) => (h.textContent ?? '').replace(/ [▾▴]$/, ''));
+    const poRec = headers.lastIndexOf('Rec') - 1;
+    expect(poRec).toBeGreaterThan(headers.indexOf('Rec') - 1);
+    expect(cells[poRec]).not.toHaveAttribute('data-tone');
   });
   it('explains every column in its header title', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
