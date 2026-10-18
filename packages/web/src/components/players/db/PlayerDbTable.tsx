@@ -1,9 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import type { Manager, PlayerDb, PlayerId, UserId } from '@fantasy-dash/core';
-import Avatar from '../../Avatar';
+import type { PlayerDb, PlayerId, UserId } from '@fantasy-dash/core';
 import Headshot from '../../Headshot';
 import PosPill from '../../PosPill';
-import { TeamLink } from '../../NameLink';
 import type { Agg } from '../../../lib/playerdb/aggregate';
 import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
 import { dbDirectory } from '../../../lib/playerdb/directory';
@@ -19,8 +17,7 @@ interface Props {
   aggs: Agg[];
   state: DbState;
   onSort: (key: string) => void;
-  year: number;
-  managers: Record<UserId, Manager>;
+  /** who holds each player now; absent = free agent */
   rosters: Record<PlayerId, UserId>;
   collapsed: ReadonlySet<string>;
   onToggleGroup: (group: string) => void;
@@ -62,7 +59,7 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
 const th = 'section-label whitespace-nowrap px-2 py-2 text-right';
 const lead = 'sticky bg-surface';
 
-export default function PlayerDbTable({ db, aggs, state, onSort, year, managers, rosters, collapsed, onToggleGroup }: Props) {
+export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup }: Props) {
   const [shown, setShown] = useState(PAGE);
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
@@ -97,8 +94,8 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead className="sticky top-0 z-[2] bg-surface">
           <tr>
-            <th colSpan={2} className="sticky left-0 z-[3] bg-surface border-b border-line" />
-            <th colSpan={1 + leadCols.length} className="border-b border-line" />
+            <th colSpan={3} className="sticky left-0 z-[3] bg-surface border-b border-line" />
+            <th colSpan={leadCols.length} className="border-b border-line" />
             {bodyGroups.map((g) => {
               const off = collapsed.has(g.group);
               return (
@@ -110,8 +107,8 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
           </tr>
           <tr>
             <th className={`${lead} left-0 z-[3] w-10 min-w-10 border-b border-line px-2 py-2 text-left section-label`}>#</th>
-            <th className={`${lead} left-10 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
-            <th className="section-label border-b border-line px-2 py-2 text-left">Mgr</th>
+            <th className={`${lead} left-10 z-[3] w-14 min-w-14 border-b border-line px-2 py-2 text-left section-label`}>Pos</th>
+            <th className={`${lead} left-24 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
             {bodyGroups.map((g) => (collapsed.has(g.group)
               ? <th key={g.group} className={`${th} border-b border-l border-line text-muted`}>…</th>
@@ -121,25 +118,19 @@ export default function PlayerDbTable({ db, aggs, state, onSort, year, managers,
         <tbody>
           {sorted.slice(0, shown).map((a, i) => {
             const p = db.players[a.id];
-            const owner = rosters[a.id];
-            const m = owner ? managers[owner] : undefined;
             const isOpen = open === a.id;
             return (
               <Fragment key={a.id}>
                 <tr data-testid="db-row" className="border-t border-line transition-colors hover:bg-surface-2/60">
                   <td className={`${lead} left-0 num w-10 min-w-10 border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
-                  <td className={`${lead} left-10 border-b border-line px-2 py-1.5`}>
+                  <td data-testid="db-pos" className={`${lead} left-10 w-14 min-w-14 border-b border-line px-2 py-1.5`}><PosPill pos={p?.pos ?? '?'} /></td>
+                  <td className={`${lead} left-24 border-b border-line px-2 py-1.5`}>
                     <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap text-left hover:text-accent">
                       <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
                       <span data-testid="db-name" className="font-medium">{p?.name ?? a.id}</span>
                       <span className="text-xs text-muted">{a.team}</span>
-                      <PosPill pos={p?.pos ?? '?'} />
+                      {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
                     </button>
-                  </td>
-                  <td className="border-b border-line px-2 py-1.5">
-                    {m ? (
-                      <TeamLink userId={owner} year={year} className="flex items-center gap-1.5 whitespace-nowrap text-xs"><Avatar avatar={m.avatar} name={m.displayName} size={18} /><span className="max-w-40 truncate">{m.teamName ?? m.displayName}</span></TeamLink>
-                    ) : <span className="text-xs text-muted">FA</span>}
                   </td>
                   {leadCols.map((c) => cell(c, a, i))}
                   {bodyGroups.map((g) => (collapsed.has(g.group)

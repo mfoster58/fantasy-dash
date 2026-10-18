@@ -31,6 +31,13 @@ describe('statTable', () => {
     const b = row(rows, 'b');
     expect([b.streakW, b.streakL, b.closeW, b.closeL, b.draftValue]).toEqual([2, 1, 1, 1, 18]);
   });
+  it('counts winners-bracket playoff games only, with titles and finals', () => {
+    const rows = statTable(league());
+    expect(row(rows, 'a')).toMatchObject({ titles: 1, poApps: 1, poW: 1, poL: 0, poGames: 1, poPpg: 150, finals: 1 });
+    expect(row(rows, 'd')).toMatchObject({ titles: 0, poApps: 1, poW: 0, poL: 1, finals: 1 });
+    // the toilet bowl is consolation, not the playoffs
+    expect(row(rows, 'b')).toMatchObject({ poApps: 0, poGames: 0, poPpg: 0 });
+  });
   it('adds seasons up for all-time', () => {
     const a = row(statTable(league()), 'a');
     expect([a.seasons, a.w, a.l, a.ppg]).toEqual([2, 5, 1, (430 + 190) / 6]);
@@ -56,11 +63,19 @@ describe('COLUMNS', () => {
     expect(text.median).toBe('3-1');
     expect(text.streaks).toBe('W4 / L0');
     expect(text.eff).toBe('92%');
-    expect(text.faab).toBe('$13');
     expect(text.sos).toBe('-11.4');
     expect(COLUMNS.find((c) => c.key === 'rec')!.value(a)).toBe(1);
     expect(COLUMNS.find((c) => c.key === 'postPpg')!.text(rows[1])).toBe('90.0');
     expect(COLUMNS.find((c) => c.key === 'postPpg')!.text({ ...a, postGames: 0 })).toBe('—');
+  });
+  it('drops the blowout and FAAB columns, calls bench points Bench+, and adds a playoffs group', () => {
+    expect(COLUMNS.map((c) => c.key)).not.toContain('blow');
+    expect(COLUMNS.map((c) => c.key)).not.toContain('faab');
+    expect(COLUMNS.find((c) => c.key === 'bench')!.label).toBe('Bench+');
+    expect(COLUMNS.filter((c) => c.group === 'Playoffs').map((c) => c.label)).toEqual(['Apps', 'Rec', 'Win %', 'PPG', 'Finals', 'Titles']);
+    const a = statTable(league()).find((r) => r.id === 'a')!;
+    expect(COLUMNS.filter((c) => c.group === 'Playoffs').map((c) => c.text(a))).toEqual(['1', '1-0', '1.000', '150.0', '1', '1']);
+    expect(COLUMNS.find((c) => c.key === 'poPpg')!.text({ ...a, poGames: 0 })).toBe('—');
   });
   it('knows which way is good', () => {
     expect(COLUMNS.find((c) => c.key === 'paPg')!.higherBetter).toBe(false);

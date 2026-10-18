@@ -155,11 +155,6 @@ const list: ColumnDef[] = [
   col('fpSnap', 'FP/snap', 'Fantasy points per offensive snap', 'dec2', ratio(sum('pts'), S('snaps')), { min: minSnaps }),
   col('fpTgt', 'FP/tgt', 'Fantasy points per target', 'dec2', ratio(sum('pts'), S('re_tgt')), { min: minTgt }),
   col('fpRoute', 'FP/route', 'Fantasy points per route run', 'dec2', ratio(sum('pts'), routes), { est: true, min: minRoutes }),
-  // all-positions
-  col('touches', 'Touches', 'Carries plus receptions', 'int', anySum('ru_att', 're_rec'), { perGame: true }),
-  col('totYds', 'Yds', 'Passing, rushing and receiving yards', 'int', anySum('pa_yds', 'ru_yds', 're_yds'), { perGame: true }),
-  col('totTd', 'TD', 'Passing, rushing and receiving touchdowns', 'int', anySum('pa_td', 'ru_td', 're_td'), { perGame: true }),
-  col('totEpa', 'EPA', 'Passing, rushing and receiving expected points added', 'dec1', anySum('pa_epa', 'ru_epa', 're_epa')),
 ];
 
 export const COLUMNS: Readonly<Record<string, ColumnDef>> = Object.fromEntries(list.map((c) => [c.key, c]));
@@ -176,8 +171,9 @@ const WR_GROUPS = [
 export const TAB_GROUPS: Readonly<Record<Tab, { group: string; keys: string[] }[]>> = {
   all: [
     { group: '', keys: LEAD },
-    { group: 'Volume', keys: ['touches', 'totYds', 'totTd', 'snapPct', 'oppPct', 'totEpa'] },
-    { group: 'Fantasy', keys: ['xfp', 'fpoe'] },
+    { group: 'Rushing', keys: ['car', 'ruYds', 'ruTd'] },
+    { group: 'Receiving', keys: ['tgt', 'rec', 'reYds', 'reTd'] },
+    { group: 'Passing', keys: ['cmp', 'att', 'paYds', 'paTd', 'int'] },
   ],
   qb: [
     { group: '', keys: LEAD },
