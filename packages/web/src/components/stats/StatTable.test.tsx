@@ -62,6 +62,20 @@ describe('StatTable', () => {
     expect(within(alice).getAllByTestId('finish-champion')).toHaveLength(1);
     expect(screen.getByText('Playoffs')).toBeInTheDocument();
   });
+  it('paints a zero fully red in a column where more is better, however many managers share it', () => {
+    render(<StatTable rows={statTable(league())} refs={refs} pin={null} allTime />);
+    const labels = within(screen.getAllByRole('row')[1]).getAllByRole('columnheader').map((h) => (h.textContent ?? '').replace(/ [▾▴]$/, ''));
+    const cellOf = (name: string, label: string) => {
+      const r = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === name)!;
+      return within(r).getAllByRole('cell')[labels.lastIndexOf(label) - 1] as HTMLElement;
+    };
+    for (const label of ['Titles', 'Apps', 'Finals']) {
+      const zero = cellOf('bob', label);
+      expect(zero, label).toHaveTextContent('0');
+      expect(zero, label).toHaveAttribute('data-tone', 'bad');
+      expect(zero.style.background, label).toMatch(/--loss\) 100%/);
+    }
+  });
   it('explains every column in its header title', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
     expect(screen.getByRole('button', { name: 'xW' })).toHaveAttribute('title', 'Expected wins: all-play win rate × games played');
