@@ -66,7 +66,7 @@ function Loaded({ season, db, spans, years, onYear }: { season: Season; db: Play
         <h1 className="text-2xl font-semibold tracking-tight">Players</h1>
         <p className="text-sm text-muted">Showing {shown} of {aggs.length} · {range}{db.routesReal ? '' : ' · routes estimated'}</p>
       </div>
-      <PlayerDbToolbar state={state} onChange={onChange} years={years} year={spans ? 'all' : db.year} onYear={onYear} throughWeek={db.throughWeek} managers={managerList} />
+      <PlayerDbToolbar state={state} onChange={onChange} years={years} year={spans ? 'all' : db.year} onYear={onYear} throughWeek={db.throughWeek} playoffAt={season.playoffWeekStart} managers={managerList} />
       <PlayerDbTable db={db} aggs={aggs} state={state} onSort={onSort} rosters={rosters} collapsed={collapsed} onToggleGroup={toggleGroup} weekLabel={labelWeek} />
       <details className="card px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium">Column definitions</summary>
