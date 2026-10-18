@@ -5,7 +5,7 @@ import PosPill from '../../PosPill';
 import type { Agg } from '../../../lib/playerdb/aggregate';
 import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
 import { dbDirectory } from '../../../lib/playerdb/directory';
-import { percentiles, tintFor } from '../../../lib/playerdb/percentile';
+import { columnTints } from '../../../lib/playerdb/percentile';
 import type { DbState } from '../../../lib/playerdb/url';
 import TintCell from './TintCell';
 import WeekRows from './WeekRows';
@@ -56,7 +56,7 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
   return [set, toggle];
 }
 
-const th = 'section-label whitespace-nowrap px-2 py-2 text-right';
+const th = 'section-label whitespace-nowrap px-2 py-2 text-center';
 const lead = 'sticky bg-surface';
 
 export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup }: Props) {
@@ -72,15 +72,10 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
     [groups, collapsed],
   );
   const sorted = useMemo(() => sortAggs(aggs, state), [aggs, state]);
-  const tints = useMemo(() => {
-    const out = new Map<string, (string | null)[]>();
-    for (const c of visibleCols) {
-      if (c.tinted === false) continue;
-      const values = sorted.map((a) => (belowMin(c, a) ? null : columnValue(c, a, state.mode)));
-      out.set(c.key, percentiles(values).map((p) => tintFor(p, c.lowerIsBetter)));
-    }
-    return out;
-  }, [sorted, visibleCols, state.mode]);
+  const tints = useMemo(
+    () => new Map(visibleCols.map((c) => [c.key, columnTints(c, sorted, state.mode)] as const)),
+    [sorted, visibleCols, state.mode],
+  );
   const dir = dbDirectory(db);
   const span = 3 + visibleCols.length;
   const sortArrow = (key: string) => (state.sort === key ? (state.dir === 'desc' ? ' ▾' : ' ▴') : '');

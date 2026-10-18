@@ -1,4 +1,7 @@
-import { percentiles, tintFor } from './percentile';
+import { columnTints, percentiles, tintFor } from './percentile';
+import { aggregate } from './aggregate';
+import { COLUMNS } from './columns';
+import { miniDb } from '../../test/playerDbFixtures';
 import { VALUE_SATURATION, valueColor } from '../draft';
 
 describe('percentiles', () => {
@@ -21,5 +24,30 @@ describe('tintFor', () => {
     expect(tintFor(1)).toContain('#2f9e5f');
     expect(tintFor(0)).toContain('#d64545');
     expect(tintFor(0.5)).toContain('#e6c229');
+  });
+});
+
+describe('columnTints', () => {
+  const aggs = aggregate(miniDb(), 1, 3);
+  const at = (key: string) => { const t = columnTints(COLUMNS[key], aggs, 'total'); return (id: string) => t[aggs.findIndex((a) => a.id === id)]; };
+  const green = (s: number) => valueColor(s * VALUE_SATURATION);
+
+  it('colours any rushing or receiving TD green, deeper per game, and leaves none untinted', () => {
+    const re = at('reTd');
+    expect(re('w1')).toBe(green(0.8 + 0.2 * (2 / 3)));   // 2 TD in 3 games
+    expect(re('t1')).toBe(green(0.8 + 0.2 * (1 / 3)));   // 1 TD in 3 games: still green
+    expect(re('w2')).toBe('transparent');               // none
+    expect(at('ruTd')('r1')).toBe(green(1));            // a TD a game or better is full green
+  });
+  it('puts passing TDs on a per-game scale: 0 red, 1 yellow, 2 green, 3+ full green, only for real passers', () => {
+    expect(at('paTd')('q1')).toBe(valueColor(0.8 * (5 / 3 - 1) * VALUE_SATURATION)); // 5 TD in 3 games
+    expect(at('paTd')('w1')).toBe('transparent');                                     // never threw
+  });
+  it('leaves a zero counting stat untinted, but a zero of a bad thing counts when the player had the chance', () => {
+    expect(at('cmp')('w1')).toBe('transparent');
+    expect(at('cmp')('q1')).not.toBe('transparent');
+    const fum = at('fum');
+    expect(fum('w1')).not.toBe('transparent');           // touches but no fumbles: a good zero
+    expect(at('int')('r1')).toBe('transparent');         // never a real passer: his 0 INT says nothing
   });
 });
