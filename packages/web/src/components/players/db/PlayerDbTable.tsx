@@ -21,6 +21,8 @@ interface Props {
   rosters: Record<PlayerId, UserId>;
   collapsed: ReadonlySet<string>;
   onToggleGroup: (group: string) => void;
+  /** how an expanded row names its weeks; all-time passes season and week */
+  weekLabel?: (week: number) => string;
 }
 
 /** Sort by the state's column, nulls last whichever way, ties by points then id. */
@@ -59,7 +61,7 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
 const th = 'section-label whitespace-nowrap px-2 py-2 text-center';
 const lead = 'sticky bg-surface';
 
-export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup }: Props) {
+export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
   const [shown, setShown] = useState(PAGE);
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
@@ -132,7 +134,7 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
                     ? <td key={g.group} className="border-b border-l border-line" />
                     : g.cols.map((c) => cell(c, a, i))))}
                 </tr>
-                {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} />}
+                {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} weekLabel={weekLabel} />}
               </Fragment>
             );
           })}

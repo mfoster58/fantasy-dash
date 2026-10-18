@@ -7,8 +7,8 @@ interface Props {
   state: DbState;
   onChange: (patch: Partial<DbState>) => void;
   years: number[];
-  year: number;
-  onYear: (y: number) => void;
+  year: number | 'all';
+  onYear: (y: number | 'all') => void;
   throughWeek: number;
   managers: { userId: string; name: string }[];
 }
@@ -35,8 +35,9 @@ export default function PlayerDbToolbar({ state, onChange, years, year, onYear, 
           <button key={t} type="button" aria-pressed={state.tab === t} onClick={() => onChange({ tab: t })} className={pill(state.tab === t)}>{TAB_LABELS[t]}</button>
         ))}
       </div>
-      <SeasonPicker years={years} value={year} onChange={(v) => { if (v !== 'all') onYear(v); }} />
-      <div className="flex items-center gap-2 text-muted">
+      <SeasonPicker years={years} value={year} onChange={onYear} allTime />
+      {/* week numbers mean nothing across seasons */}
+      {year !== 'all' && <div className="flex items-center gap-2 text-muted">
         <label className="flex items-center gap-1">From
           <select aria-label="From" value={state.from} onChange={(e) => onChange({ from: Number(e.target.value) })} className={select}>
             {weeks.map((w) => <option key={w} value={w}>{w}</option>)}
@@ -49,7 +50,7 @@ export default function PlayerDbToolbar({ state, onChange, years, year, onYear, 
         </label>
         <button type="button" onClick={() => onChange({ from: Math.max(1, throughWeek - 3), to: Math.max(1, throughWeek) })} className={pill(false)}>Last 4</button>
         <button type="button" onClick={() => onChange({ from: 1, to: Math.max(1, throughWeek) })} className={pill(false)}>Season</button>
-      </div>
+      </div>}
       <div role="group" aria-label="Mode" className="flex gap-1">
         <button type="button" aria-pressed={state.mode === 'total'} onClick={() => onChange({ mode: 'total' })} className={pill(state.mode === 'total')}>Total</button>
         <button type="button" aria-pressed={state.mode === 'pg'} onClick={() => onChange({ mode: 'pg' })} className={pill(state.mode === 'pg')}>Per game</button>

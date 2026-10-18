@@ -14,6 +14,7 @@ import StatsPage from './pages/StatsPage';
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
 import PlayersPage from './pages/PlayersPage';
+import { mergeSeasons } from './lib/playerdb/merge';
 import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
@@ -38,6 +39,13 @@ export async function topTeamLoader(args: LoaderFunctionArgs) {
 
 /** The season plus its player database, or null for a year not yet synced; 404 for a year the league never played. */
 export async function playersLoader({ params }: LoaderFunctionArgs) {
+  if (params.season === 'all') {
+    const years = history.seasons.map((s) => s.year).filter(hasPlayerDb);
+    const [season, dbs] = await Promise.all([loadSeason(currentSeason.year), Promise.all(years.map(loadPlayerDb))]);
+    if (!dbs.length) return { season, db: null };
+    const { db, spans } = mergeSeasons(dbs);
+    return { season, db, spans };
+  }
   const year = Number(params.season);
   if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
   const [season, db] = await Promise.all([loadSeason(year), hasPlayerDb(year) ? loadPlayerDb(year) : Promise.resolve(null)]);

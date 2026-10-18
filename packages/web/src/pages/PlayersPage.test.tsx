@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import PlayersPage from './PlayersPage';
+import { mergeSeasons } from '../lib/playerdb/merge';
 import { miniDb } from '../test/playerDbFixtures';
 import { game, line, season, side, week } from '../test/playerFixtures';
 
@@ -11,11 +12,11 @@ vi.mock('react-router', async (orig) => ({ ...(await orig<typeof import('react-r
 let search = '';
 function Probe() { search = useLocation().search; return null; }
 
-function mount(db: ReturnType<typeof miniDb> | null, path = '/players/2026') {
+function mount(db: ReturnType<typeof miniDb> | null, path = '/players/2026', spans?: unknown) {
   const s = season(2026, [week(1, [game(2026, 1, 1, side('A', 100, [line('w1', 10)]), side('B', 90, [line('q1', 20)]))])], null, 1);
   s.managers = { A: { userId: 'A', displayName: 'Alice', teamName: 'Team A', avatar: null, rosterId: 1 }, B: { userId: 'B', displayName: 'Bob', teamName: null, avatar: null, rosterId: 2 } };
   s.standings = [{ userId: 'A', rank: 1, w: 1, l: 0, t: 0, winPct: 1, pf: 100, pa: 90, ppg: 100, maxPoints: 110, efficiency: 0.9, streak: 'W1', allPlay: { w: 1, l: 0, t: 0, pct: 1 }, weeklyHighs: 1 }, { userId: 'B', rank: 2, w: 0, l: 1, t: 0, winPct: 0, pf: 90, pa: 100, ppg: 90, maxPoints: 100, efficiency: 0.9, streak: 'L1', allPlay: { w: 0, l: 1, t: 0, pct: 0 }, weeklyHighs: 0 }];
-  loaded = { season: s, db };
+  loaded = spans ? { season: s, db, spans } : { season: s, db };
   render(<MemoryRouter initialEntries={[path]}><Probe /><Routes><Route path="/players/:season" element={<PlayersPage />} /></Routes></MemoryRouter>);
 }
 
@@ -46,5 +47,15 @@ describe('PlayersPage', () => {
     mount(null);
     expect(screen.getByText('No player data yet for 2026')).toBeInTheDocument();
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+  it('shows every season at once under All-time, without week pickers', () => {
+    const m = mergeSeasons([{ ...miniDb(), year: 2025 }, miniDb()]);
+    mount(m.db, '/players/all', m.spans);
+    expect(screen.getByText(/Showing 5 of 5 · All-time · 2025–2026/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Season')).toHaveValue('all');
+    expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Last 4' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByTestId('db-name').find((n) => n.textContent === 'Wide One')!);
+    expect(screen.getAllByTestId('db-week')[0]).toHaveTextContent(/^'25 W1/);
   });
 });
