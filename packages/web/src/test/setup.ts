@@ -13,3 +13,12 @@ import '@testing-library/jest-dom/vitest';
   } as Storage;
   Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true });
 }
+
+// jsdom has no PointerEvent, so fireEvent.pointer* would drop `pointerType`; a MouseEvent carrying it is enough for our handlers.
+if (typeof window.PointerEvent === 'undefined') {
+  class PointerEventShim extends MouseEvent {
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) { super(type, init); this.pointerType = init.pointerType ?? ''; }
+  }
+  Object.defineProperty(window, 'PointerEvent', { value: PointerEventShim, configurable: true });
+}

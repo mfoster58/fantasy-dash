@@ -34,10 +34,32 @@ describe('RouteTree', () => {
   });
   it('hovering a bar highlights its route and fills the tip line', () => {
     render(<RouteTree charts={[miniCharts()]} gsis="00-w1" pos="WR" />);
-    fireEvent.mouseEnter(card().querySelector('li[data-key="GO"]')!);
+    fireEvent.pointerEnter(card().querySelector('li[data-key="GO"]')!, { pointerType: 'mouse' });
     expect(card().querySelector('[data-route="GO"]')!.getAttribute('data-hot')).toBe('true');
     expect(screen.getByTestId('chart-tip')).toHaveTextContent('Go · 30 targets, 15 catches, 450 yds, 3 TD');
     expect(screen.getByTestId('chart-tip')).toHaveTextContent('ranked against 3 WRs');
+  });
+  it('clicking a route the mouse is on keeps it highlighted', () => {
+    render(<RouteTree charts={[miniCharts()]} gsis="00-w1" pos="WR" />);
+    const go = card().querySelector('[data-route="GO"]')!;
+    // a real browser fires both pointer and mouse events for a mouse
+    fireEvent.pointerEnter(go, { pointerType: 'mouse' });
+    fireEvent.mouseEnter(go);
+    fireEvent.pointerDown(go, { pointerType: 'mouse' });
+    fireEvent.click(go);
+    expect(go.getAttribute('data-hot')).toBe('true');
+  });
+  it('a tap highlights a route even though the browser also fires mouse compatibility events', () => {
+    render(<RouteTree charts={[miniCharts()]} gsis="00-w1" pos="WR" />);
+    const go = card().querySelector('[data-route="GO"]')!;
+    fireEvent.pointerEnter(go, { pointerType: 'touch' });
+    fireEvent.pointerDown(go, { pointerType: 'touch' });
+    fireEvent.mouseEnter(go);
+    fireEvent.click(go);
+    expect(go.getAttribute('data-hot')).toBe('true');
+    fireEvent.pointerDown(go, { pointerType: 'touch' });
+    fireEvent.click(go);
+    expect(go.getAttribute('data-hot')).toBe('false');
   });
   it('renders nothing for a player with no route data', () => {
     const { container } = render(<RouteTree charts={[miniCharts()]} gsis="00-q1" pos="QB" />);

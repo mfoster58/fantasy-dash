@@ -1,10 +1,21 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import SeasonPicker from '../SeasonPicker';
 
-/** Hover (and tap on touch) highlights one item; the rest dim. */
-export function useHot(): [string | null, (key: string) => { onMouseEnter: () => void; onMouseLeave: () => void; onClick: () => void }] {
+type HotBind = { onPointerEnter: (e: PointerEvent) => void; onPointerLeave: (e: PointerEvent) => void; onPointerDown: (e: PointerEvent) => void; onClick: () => void };
+
+/**
+ * A mouse highlights an item by hovering it; a tap (touch or pen) toggles it.
+ * Pointer events tell the two apart, so the mouse events a browser also fires for a tap don't cancel it.
+ */
+export function useHot(): [string | null, (key: string) => HotBind] {
   const [hot, setHot] = useState<string | null>(null);
-  return [hot, (key) => ({ onMouseEnter: () => setHot(key), onMouseLeave: () => setHot(null), onClick: () => setHot((h) => (h === key ? null : key)) })];
+  const lastPointer = useRef<string>('mouse');
+  return [hot, (key) => ({
+    onPointerEnter: (e) => { if (e.pointerType === 'mouse') setHot(key); },
+    onPointerLeave: (e) => { if (e.pointerType === 'mouse') setHot(null); },
+    onPointerDown: (e) => { lastPointer.current = e.pointerType; },
+    onClick: () => { if (lastPointer.current !== 'mouse') setHot((h) => (h === key ? null : key)); },
+  })];
 }
 
 export function Seg<T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) {

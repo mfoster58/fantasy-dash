@@ -52,7 +52,7 @@ export default function RunLanes({ charts, gsis }: { charts: ChartDb[]; gsis: st
               const gap: [number, number] = [CX + g.gap, LOS], tip: [number, number] = [CX + g.tip[0], g.tip[1]];
               const ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * 0.55, LOS + 38] : [CX + g.gap * 0.6, LOS + 30];
               const d = `M${CX},${RB_Y - 12} Q${ctrl[0]},${ctrl[1]} ${gap[0]},${gap[1]} L${tip[0]},${tip[1]}`;
-              const chipText = share ? `${Math.round(i.share * 100)}%` : def!.fmt(i.value!);
+              const chipText = share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value);
               const sm = share ? `${i.volume} car` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} car` : `${i.volume} car · too few to rank`;
               const ly = tip[1] - 14, chipW = chipText.length * 7 + 10, rowW = chipW + 4 + sm.length * 5.4, x0 = tip[0] - rowW / 2;
               const chip = Chip({ x: x0, y: ly, text: chipText, fill: share || i.ranked ? c : 'var(--surface-2)', ink: share ? chipInk('heat', i.share) : i.ranked ? chipInk('pct') : 'var(--muted)' });

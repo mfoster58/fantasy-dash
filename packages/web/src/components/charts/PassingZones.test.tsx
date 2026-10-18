@@ -23,6 +23,13 @@ describe('PassingZones', () => {
     const tiles = within(card()).getAllByTestId('zone-tile');
     expect(tiles.map((t) => t.textContent)).toEqual([expect.stringContaining('+0.11'), expect.stringContaining('+0.07'), expect.stringContaining('+0.13')]);
   });
+  it('CPOE on a zone with no CPOE attempts shows a dash instead of crashing', () => {
+    const db = miniCharts();
+    db.players['00-q1'].zones!.all['blos|middle'] = [1, 0, 0, -0.5, 0, 0, 0, 0];
+    render(<PassingZones charts={[db]} gsis="00-q1" />);
+    fireEvent.click(within(card()).getByRole('button', { name: 'CPOE' }));
+    expect(zone('blos|middle').querySelector('[data-main]')!.textContent).toBe('–');
+  });
   it('renders nothing without zone data', () => {
     const { container } = render(<PassingZones charts={[miniCharts()]} gsis="00-w1" />);
     expect(container).toBeEmptyDOMElement();

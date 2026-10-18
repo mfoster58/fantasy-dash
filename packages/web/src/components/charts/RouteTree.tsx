@@ -40,7 +40,7 @@ export default function RouteTree({ charts, gsis, pos }: { charts: ChartDb[]; gs
   const share = metric === 'share';
   const def = share ? null : ROUTE_SPEC.metrics[metric];
   const colour = (i: ChartItem<Route>) => (share ? heatColor(i.share, ROUTE_SPEC.shareMax) : pctColor(i.pct));
-  const main = (i: ChartItem<Route>) => (share ? `${Math.round(i.share * 100)}%` : def!.fmt(i.value!));
+  const main = (i: ChartItem<Route>) => (share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value));
   const small = (i: ChartItem<Route>) => (share ? `${i.volume} tgt` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} tgt` : `${i.volume} tgt · too few to rank`);
   const pool = Object.values(db.players).filter((p) => p.pos === db.players[gsis]?.pos && (p.routes?.[cov] ? Object.keys(p.routes[cov]).length : 0) > 0).length;
   const hotItem = items.find((i) => i.key === hot);

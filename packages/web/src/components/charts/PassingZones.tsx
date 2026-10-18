@@ -64,7 +64,7 @@ export default function PassingZones({ charts, gsis }: { charts: ChartDb[]; gsis
             {items.map((i) => {
               const [band, side] = i.key.split('|');
               const [lo, hi] = RANGE[band], cx = FX + SIDES.indexOf(side as (typeof SIDES)[number]) * CW + CW / 2, h = Y(lo) - Y(hi), cy = (Y(lo) + Y(hi)) / 2;
-              const main = share ? `${Math.round(i.share * 100)}%` : def!.fmt(i.value!);
+              const main = share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value);
               const sub = share ? `${i.volume} att` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} att` : `${i.volume} att · too few to rank`;
               const small = h < 70, fs = main.length > 4 ? (small ? 17 : 20) : small ? 20 : 23, ny = cy + (small ? 2 : 4), c = colour(i), ranked = share || i.ranked;
               return (
