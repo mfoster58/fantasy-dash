@@ -3,17 +3,18 @@ import { CrownIcon } from '../Icons';
 import { CardHeader } from '../draft/DraftAnalysis';
 import type { ManagerRecord } from '../../lib/managerRecords';
 
-interface Props { records: ManagerRecord[] }
+/** `tab` picks the Records tab the rows link to; the manager page's default is managers */
+interface Props { records: ManagerRecord[]; tab?: 'players' | 'managers' }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /** Every record board where the manager sits in the top three, grouped by Records sub-tab; rank one in gold. */
-export default function LeagueRecords({ records }: Props) {
+export default function LeagueRecords({ records, tab = 'managers' }: Props) {
   const firsts = records.filter((r) => r.rank === 1).length;
   const groups = new Map<string, { title: string; rows: ManagerRecord[] }>();
   for (const r of records) groups.set(r.sub, { title: r.subTitle, rows: [...(groups.get(r.sub)?.rows ?? []), r] });
   return (
-    <section className="card">
+    <section aria-label="League records" className="card">
       <CardHeader label="Record book" title="League records" aside={`${plural(firsts, 'league record')} · ${plural(records.length, 'top-three placing')}`} />
       {records.length === 0 ? <p className="px-4 py-3 text-xs text-muted">No top-three placings yet.</p> : (
         [...groups.entries()].map(([sub, g]) => (
@@ -22,7 +23,7 @@ export default function LeagueRecords({ records }: Props) {
             <ul className="divide-y divide-line">
               {g.rows.map((r) => (
                 <li key={r.boardId}>
-                  <Link to={`/records?tab=managers&sub=${r.sub}`} data-rank={r.rank}
+                  <Link to={`/records?${tab === 'managers' ? 'tab=managers&' : ''}sub=${r.sub}`} data-rank={r.rank}
                     className={`flex items-center gap-3 px-4 py-1.5 text-sm hover:bg-surface-2 ${r.rank === 1 ? 'bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]' : ''}`}>
                     <span className={`num w-5 text-center text-xs ${r.rank === 1 ? 'font-bold text-gold' : 'text-muted'}`}>{r.rank === 1 ? <CrownIcon title="League record" /> : r.rank}</span>
                     <span className="min-w-0 flex-1">
