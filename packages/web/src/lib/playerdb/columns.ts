@@ -24,6 +24,12 @@ export interface ColumnDef {
   min?: { denom: (a: Agg) => number; perWeek: number };
   /** route-based: estimated while the season's routes are */
   est?: boolean;
+  /** counting stat: shows 0 rather than – for a player who played but recorded none */
+  zeroFill?: boolean;
+  /** lower-is-better counts: a 0 is tinted (as good) only when the player had the chance, e.g. threw a pass */
+  tintZero?: (a: Agg) => boolean;
+  /** fixed colour scale instead of a percentile: −1 red, 0 yellow, 1 green; null = untinted */
+  score?: (a: Agg) => number | null;
 }
 
 /** Per-week sample minimums. */
@@ -52,7 +58,20 @@ const minDb = { denom: dropbacks, perWeek: MIN.db };
 const minSnaps = { denom: S('snaps'), perWeek: MIN.snaps };
 
 const col = (key: string, label: string, def: string, fmt: Fmt, value: ColumnDef['value'], extra: Partial<ColumnDef> = {}): ColumnDef => ({ key, label, def, fmt, value, ...extra });
-const count = (key: string, label: string, def: string, k: PlayerWeekKey, extra: Partial<ColumnDef> = {}) => col(key, label, def, 'int', sum(k), { perGame: true, ...extra });
+const count = (key: string, label: string, def: string, k: PlayerWeekKey, extra: Partial<ColumnDef> = {}) => col(key, label, def, 'int', sum(k), { perGame: true, zeroFill: true, ...extra });
+
+/** Rushing or receiving TDs: any TD is clearly green, deepening to full green at one a game. */
+const skillTdScore = (k: PlayerWeekKey) => (a: Agg): number | null => {
+  const td = a.s[k] ?? 0;
+  return a.games > 0 && td > 0 ? 0.8 + 0.2 * Math.min(td / a.games, 1) : null;
+};
+/** Passing TDs per game for a real passer (10+ attempts a game): 0 red, 1 yellow, 2 green, 3+ full green. */
+const realPasser = (a: Agg): boolean => a.games > 0 && (a.s.pa_att ?? 0) >= 10 * a.games;
+const passTdScore = (a: Agg): number | null => {
+  if (!realPasser(a)) return null;
+  const r = (a.s.pa_td ?? 0) / a.games;
+  return r <= 1 ? r - 1 : r <= 2 ? 0.8 * (r - 1) : Math.min(1, 0.8 + 0.2 * (r - 2));
+};
 
 const list: ColumnDef[] = [
   // lead
@@ -67,9 +86,9 @@ const list: ColumnDef[] = [
   col('cmpPct', 'Cmp%', 'Completions per attempt', 'pct', ratio(sum('pa_cmp'), S('pa_att')), { min: minDb }),
   count('paYds', 'Yds', 'Passing yards', 'pa_yds'),
   col('ya', 'Y/A', 'Passing yards per attempt', 'dec1', ratio(sum('pa_yds'), S('pa_att')), { min: minDb }),
-  count('paTd', 'TD', 'Passing touchdowns', 'pa_td'),
-  count('int', 'INT', 'Interceptions thrown', 'pa_int', { lowerIsBetter: true }),
-  count('sacks', 'Sk', 'Sacks taken', 'pa_sack', { lowerIsBetter: true }),
+  count('paTd', 'TD', 'Passing touchdowns', 'pa_td', { score: passTdScore }),
+  count('int', 'INT', 'Interceptions thrown', 'pa_int', { lowerIsBetter: true, tintZero: realPasser }),
+  count('sacks', 'Sk', 'Sacks taken', 'pa_sack', { lowerIsBetter: true, tintZero: realPasser }),
   col('rtg', 'Rtg', 'Passer rating, weighted by attempts', 'dec1', W('pa_rtg'), { min: minDb }),
   col('adot', 'aDOT', 'Average depth of target: passing air yards per attempt', 'dec1', ratio(sum('pa_air'), S('pa_att')), { min: minDb }),
   count('paAir', 'Air', 'Passing air yards', 'pa_air'),
@@ -87,7 +106,7 @@ const list: ColumnDef[] = [
   count('car', 'Car', 'Rushing attempts (carries)', 'ru_att'),
   count('ruYds', 'Yds', 'Rushing yards', 'ru_yds'),
   col('ypc', 'YPC', 'Rushing yards per carry', 'dec1', ratio(sum('ru_yds'), S('ru_att')), { min: minCar }),
-  count('ruTd', 'TD', 'Rushing touchdowns', 'ru_td'),
+  count('ruTd', 'TD', 'Rushing touchdowns', 'ru_td', { score: skillTdScore('ru_td') }),
   count('ruFd', 'FD', 'Rushing first downs', 'ru_fd'),
   count('ru10', '10+', 'Carries of 10 yards or more', 'ru_10'),
   count('ru20', '20+', 'Carries of 20 yards or more', 'ru_20'),
@@ -99,13 +118,13 @@ const list: ColumnDef[] = [
   col('box8', '8+ box', 'Share of carries against eight or more defenders in the box (Next Gen Stats)', 'dec1', W('ru_box8'), { min: minCar }),
   col('stuffPct', 'Stuff%', 'Carries tackled for a loss per carry', 'pct', ratio(sum('ru_tfl'), S('ru_att')), { lowerIsBetter: true, min: minCar }),
   col('ruEpa', 'Rush EPA', 'Rushing expected points added', 'dec1', sum('ru_epa')),
-  count('fum', 'Fum', 'Fumbles committed', 'fum', { lowerIsBetter: true }),
+  count('fum', 'Fum', 'Fumbles committed', 'fum', { lowerIsBetter: true, tintZero: (a) => touches(a) + S('pa_att')(a) > 0 }),
   count('ruRz', 'RZ car', 'Carries inside the red zone', 'ru_rz'),
   // receiving
   count('tgt', 'Tgt', 'Pass targets', 're_tgt'),
   count('rec', 'Rec', 'Receptions', 're_rec'),
   count('reYds', 'Yds', 'Receiving yards', 're_yds'),
-  count('reTd', 'TD', 'Receiving touchdowns', 're_td'),
+  count('reTd', 'TD', 'Receiving touchdowns', 're_td', { score: skillTdScore('re_td') }),
   count('reFd', 'FD', 'Receiving first downs', 're_fd'),
   col('catchPct', 'Catch%', 'Receptions per target', 'pct', ratio(sum('re_rec'), S('re_tgt')), { min: minTgt }),
   col('ypt', 'YPT', 'Receiving yards per target', 'dec1', ratio(sum('re_yds'), S('re_tgt')), { min: minTgt }),
@@ -115,7 +134,7 @@ const list: ColumnDef[] = [
   count('reYac', 'YAC', 'Yards after the catch', 're_yac'),
   col('yacRec', 'YAC/rec', 'Yards after the catch per reception', 'dec1', ratio(sum('re_yac'), S('re_rec')), { min: minTgt }),
   col('yacoe', 'YACOE', 'Yards after the catch over expected per reception (Next Gen Stats)', 'dec2', W('re_yacoe'), { min: minTgt }),
-  col('drops', 'Drops', 'Dropped passes', 'int', drops, { perGame: true, lowerIsBetter: true }),
+  col('drops', 'Drops', 'Dropped passes', 'int', drops, { perGame: true, zeroFill: true, lowerIsBetter: true, tintZero: (a) => S('re_tgt')(a) > 0 }),
   col('dropPct', 'Drop%', 'Drops per target', 'pct', ratio(drops, S('re_tgt')), { lowerIsBetter: true, min: minTgt }),
   count('re20', '20+', 'Receptions of 20 yards or more', 're_20'),
   col('sep', 'Sep', 'Average separation from the nearest defender at the catch point, in yards (Next Gen Stats)', 'dec2', W('re_sep'), { min: minTgt }),
@@ -126,7 +145,8 @@ const list: ColumnDef[] = [
   count('reRz', 'RZ tgt', 'Targets inside the red zone', 're_rz'),
   col('rzTgtPct', 'RZ tgt%', 'Share of the team\'s red-zone looks that were targets to him', 'pct', ratio(sum('re_rz'), (a) => a.t.rzLooks)),
   // usage
-  count('snaps', 'Snaps', 'Offensive snaps', 'snaps'),
+  count('snaps', 'Snaps', 'Offensive snaps', 'snaps', { zeroFill: false }),
+  col('touches', 'Tch', 'Touches: carries plus receptions', 'int', anySum('ru_att', 're_rec'), { perGame: true, zeroFill: true }),
   col('snapPct', 'Snap%', 'Offensive snaps per team offensive snap', 'pct', capped(ratio(sum('snaps'), S('teamSnaps'))), { min: minSnaps }),
   col('dbPg', 'DB/g', 'Dropbacks (attempts plus sacks) per game', 'dec1', ratio(dropbacks, games)),
   col('routes', 'Routes', 'Routes run: pass plays he was on the field for', 'int', routes, { perGame: true, est: true }),
@@ -141,9 +161,9 @@ const list: ColumnDef[] = [
     return tgt === null ? null : 1.5 * tgt + 0.7 * (ay ?? 0);
   }),
   col('carryPct', 'Carry%', 'Carries per team rush attempt', 'pct', ratio(sum('ru_att'), (a) => a.t.rushAtt)),
-  col('opp', 'Opp', 'Opportunities: carries plus targets', 'int', anySum('ru_att', 're_tgt'), { perGame: true }),
+  col('opp', 'Opp', 'Opportunities: carries plus targets', 'int', anySum('ru_att', 're_tgt'), { perGame: true, zeroFill: true }),
   col('oppPct', 'Opp%', 'Opportunities per team play (rush attempts plus pass attempts)', 'pct', ratio(anySum('ru_att', 're_tgt'), (a) => a.t.rushAtt + a.t.passAtt)),
-  col('rzTouches', 'RZ', 'Red-zone carries plus red-zone targets', 'int', anySum('ru_rz', 're_rz'), { perGame: true }),
+  col('rzTouches', 'RZ', 'Red-zone carries plus red-zone targets', 'int', anySum('ru_rz', 're_rz'), { perGame: true, zeroFill: true }),
   col('rzPct', 'RZ%', 'Share of the team\'s red-zone looks (carries plus targets)', 'pct', ratio(anySum('ru_rz', 're_rz'), (a) => a.t.rzLooks)),
   col('touchesPg', 'Tch/g', 'Touches (carries plus receptions) per game', 'dec1', ratio(anySum('ru_att', 're_rec'), games)),
   // fantasy
@@ -171,6 +191,7 @@ const WR_GROUPS = [
 export const TAB_GROUPS: Readonly<Record<Tab, { group: string; keys: string[] }[]>> = {
   all: [
     { group: '', keys: LEAD },
+    { group: 'Usage', keys: ['snaps', 'snapPct', 'touches'] },
     { group: 'Rushing', keys: ['car', 'ruYds', 'ruTd'] },
     { group: 'Receiving', keys: ['tgt', 'rec', 'reYds', 'reTd'] },
     { group: 'Passing', keys: ['cmp', 'att', 'paYds', 'paTd', 'int'] },
@@ -198,7 +219,7 @@ export const groupsFor = (tab: Tab): { group: string; cols: ColumnDef[] }[] => T
 export const columnsFor = (tab: Tab): ColumnDef[] => groupsFor(tab).flatMap((g) => g.cols);
 
 export function columnValue(col: ColumnDef, a: Agg, mode: Mode): number | null {
-  const v = col.value(a);
+  const v = col.value(a) ?? (col.zeroFill && a.games > 0 ? 0 : null);
   if (v === null) return null;
   if (col.perGame && mode === 'pg') return a.games > 0 ? v / a.games : null;
   return v;

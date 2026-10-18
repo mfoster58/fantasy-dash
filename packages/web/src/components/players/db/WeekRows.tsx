@@ -13,7 +13,7 @@ export default function WeekRows({ db, agg, cols, mode, span }: Props) {
     <tr data-testid="db-weeks">
       <td colSpan={span} className="bg-surface-2/50 px-3 py-2">
         <table className="w-full text-xs">
-          <thead><tr className="section-label"><th className="px-2 py-1 text-left">Wk</th><th className="px-2 py-1 text-left">Opp</th>{cols.map((c) => <th key={c.key} className="px-2 py-1 text-right">{c.label}</th>)}</tr></thead>
+          <thead><tr className="section-label"><th className="px-2 py-1 text-left">Wk</th><th className="px-2 py-1 text-left">Opp</th>{cols.map((c) => <th key={c.key} className="px-2 py-1 text-center">{c.label}</th>)}</tr></thead>
           <tbody>
             {weeks.map(({ row, a }) => (
               <tr key={row.week} data-testid="db-week" className="border-t border-line/60">

@@ -18,6 +18,7 @@ describe('column catalogue', () => {
     expect(tabPositions('all')).toEqual(['QB', 'RB', 'WR', 'TE']);
     expect(TAB_GROUPS.all.map((g) => [g.group, g.keys])).toEqual([
       ['', ['g', 'pts', 'ppg', 'posRank', 'projPlus']],
+      ['Usage', ['snaps', 'snapPct', 'touches']],
       ['Rushing', ['car', 'ruYds', 'ruTd']],
       ['Receiving', ['tgt', 'rec', 'reYds', 'reTd']],
       ['Passing', ['cmp', 'att', 'paYds', 'paTd', 'int']],
@@ -75,5 +76,17 @@ describe('columnValue', () => {
     expect(fmtValue(2.5773, 'dec2', 'total')).toBe('2.58');
     expect(fmtValue(3, 'signed1', 'total')).toBe('+3.0');
     expect(fmtValue(null, 'int', 'total')).toBe('–');
+  });
+});
+
+describe('zero fill', () => {
+  it('shows 0 for a counting stat the player had none of in games he played, and keeps rates and model values empty', () => {
+    const w1 = agg('w1');
+    expect(columnValue(COLUMNS.cmp, w1, 'total')).toBe(0);
+    expect(columnValue(COLUMNS.ruTd, w1, 'total')).toBe(0);
+    expect(columnValue(COLUMNS.cmp, w1, 'pg')).toBe(0);
+    expect(columnValue(COLUMNS.ypc, w1, 'total')).toBeNull();
+    expect(columnValue(COLUMNS.fpoe, agg('t1'), 'total')).toBeNull();
+    expect(columnValue(COLUMNS.touches, w1, 'total')).toBe(17);
   });
 });

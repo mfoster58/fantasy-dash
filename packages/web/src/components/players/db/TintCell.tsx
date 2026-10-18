@@ -7,7 +7,7 @@ export default function TintCell({ value, col, mode, tint, dim, est }: Props) {
   const text = fmtValue(value, col.fmt, col.perGame ? mode : 'total');
   const tone = col.fmt === 'signed1' && value !== null && value !== 0 ? (value > 0 ? 'text-win' : 'text-loss') : '';
   return (
-    <td data-testid={`cell-${col.key}`} className={`num whitespace-nowrap px-2 py-1.5 text-right ${dim || value === null ? 'text-muted' : tone}`} style={dim || tint === 'transparent' ? undefined : { background: tint }}>
+    <td data-testid={`cell-${col.key}`} className={`num whitespace-nowrap px-2 py-1.5 text-center ${dim || value === null ? 'text-muted' : tone}`} style={dim || tint === 'transparent' ? undefined : { background: tint }}>
       {text}{est && value !== null ? <span className="text-muted">°</span> : null}
     </td>
   );

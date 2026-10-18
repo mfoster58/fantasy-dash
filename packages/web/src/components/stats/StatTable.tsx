@@ -22,11 +22,13 @@ const UNTINTED = new Set(['seasons', 'rec', 'allPlay', 'median', 'streaks', 'clo
  */
 function standing(col: ColumnDef, rows: StatRow[], r: StatRow): number | null {
   if (UNTINTED.has(col.key)) return null;
-  const counts = (x: StatRow) => !(col.group === 'Games' && col.key.startsWith('post') && x.postGames === 0) && !(col.group === 'Playoffs' && col.key !== 'poApps' && x.poGames === 0);
+  const counts = (x: StatRow) => !(col.group === 'Games' && col.key.startsWith('post') && x.postGames === 0) && !(['poRec', 'poPct', 'poPpg'].includes(col.key) && x.poGames === 0);
   if (!counts(r)) return null;
   const vals = rows.filter(counts).map((x) => col.value(x));
   if (vals.length < 2 || vals.every((v) => v === vals[0])) return null;
   const v = col.value(r);
+  // a zero where more is better (no titles, no finals, no playoff trips) is the bottom of the scale, however many share it
+  if (col.higherBetter && v === 0) return -1;
   const better = vals.filter((x) => (col.higherBetter ? x < v : x > v)).length;
   const worse = vals.filter((x) => (col.higherBetter ? x > v : x < v)).length;
   return (better - worse) / (vals.length - 1);
