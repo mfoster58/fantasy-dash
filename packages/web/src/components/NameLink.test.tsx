@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { ManagerLink, TeamLink } from './NameLink';
+import { ManagerLink, PlayerLink, TeamLink } from './NameLink';
 
 describe('NameLink', () => {
   it('a team name opens that season\'s team page', () => {
@@ -14,5 +14,9 @@ describe('NameLink', () => {
   it('a manager name opens the career page', () => {
     render(<MemoryRouter><ManagerLink userId="a">alice</ManagerLink></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'alice' })).toHaveAttribute('href', '/managers/a');
+  });
+  it('a player name opens the player page', () => {
+    render(<MemoryRouter><PlayerLink id="4034">Christian McCaffrey</PlayerLink></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Christian McCaffrey' })).toHaveAttribute('href', '/player/4034');
   });
 });

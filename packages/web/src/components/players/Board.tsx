@@ -4,6 +4,7 @@ import type { History, PlayerDirectory } from '@fantasy-dash/core';
 import type { BoardDef, BoardRow, Direction } from '../../lib/playerBoards';
 import type { PosFilter } from '../../lib/playerLines';
 import { playerName, playerPos } from '../../lib/players';
+import { PlayerLink } from '../NameLink';
 import { AboutButton, useAbout } from '../About';
 import Avatar from '../Avatar';
 import Headshot from '../Headshot';
@@ -112,7 +113,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     {r.playerId !== null ? (
                       <>
                         <PosPill pos={playerPos(players, r.playerId)} />
-                        <span className={`truncate text-sm ${record ? 'font-semibold' : 'font-medium'}`}>{playerName(players, r.playerId)}</span>
+                        <PlayerLink id={r.playerId} className={`truncate text-sm ${record ? 'font-semibold' : 'font-medium'}`}>{playerName(players, r.playerId)}</PlayerLink>
                       </>
                     ) : (
                       <Link to={`/managers/${r.userId}`} className={`truncate text-sm hover:text-accent ${record ? 'font-semibold' : 'font-medium'}`}>{m?.displayName ?? r.userId}</Link>
@@ -158,7 +159,7 @@ export default function Board({ def, rows, players, managers, expanded, onToggle
                     <span className="min-w-0">
                       <span className="flex items-center justify-end gap-1.5">
                         <PosPill pos={playerPos(players, r.player)} />
-                        <span className="truncate text-sm font-medium">{playerName(players, r.player)}</span>
+                        <PlayerLink id={r.player} className="truncate text-sm font-medium">{playerName(players, r.player)}</PlayerLink>
                       </span>
                       {r.detail && <span className="mt-0.5 block truncate text-xs text-muted">{r.detail}</span>}
                     </span>

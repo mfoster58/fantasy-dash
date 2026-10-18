@@ -41,7 +41,7 @@ describe('PlayerDbTable', () => {
     const rows = screen.getAllByTestId('db-row');
     expect(within(rows[0]).queryByTestId('fa-tag')).toBeNull();          // Wide One is rostered
     expect(within(rows[1]).getByTestId('fa-tag')).toHaveTextContent('FA'); // Tight One is not
-    expect(within(rows[0]).queryByRole('link')).toBeNull();
+    expect(within(rows[0]).getAllByRole('link').every((a) => a.getAttribute('href')?.startsWith('/player/'))).toBe(true); // no manager link, only his page
     const pos = within(rows[0]).getByTestId('db-pos');
     expect(pos).toHaveTextContent('WR');
     expect(pos).toHaveClass('sticky');
@@ -79,16 +79,24 @@ describe('PlayerDbTable', () => {
   });
   it('expands one row at a time into its weeks', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
-    fireEvent.click(within(screen.getAllByTestId('db-row')[0]).getByTestId('db-name'));
+    fireEvent.click(within(screen.getAllByTestId('db-row')[0]).getByRole('button', { name: /^Show weeks for / }));
     let weeks = screen.getByTestId('db-weeks');
     expect(within(weeks).getAllByTestId('db-week').map((r) => r.textContent?.slice(0, 1))).toEqual(['1', '2', '3']);
     expect(within(weeks).getByTestId('db-week-total')).toHaveTextContent('50.0');
-    fireEvent.click(within(screen.getAllByTestId('db-row')[1]).getByTestId('db-name'));
+    fireEvent.click(within(screen.getAllByTestId('db-row')[1]).getByRole('button', { name: /^Show weeks for / }));
     weeks = screen.getByTestId('db-weeks');
     expect(within(weeks).getAllByTestId('db-week')).toHaveLength(3);
     expect(screen.getAllByTestId('db-weeks')).toHaveLength(1);
-    fireEvent.click(within(screen.getAllByTestId('db-row')[1]).getByTestId('db-name'));
+    fireEvent.click(within(screen.getAllByTestId('db-row')[1]).getByRole('button', { name: /^Show weeks for / }));
     expect(screen.queryByTestId('db-weeks')).toBeNull();
+  });
+  it('links each name to the player page, the chevron beside it opening the weeks', () => {
+    render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
+    const row = screen.getAllByTestId('db-row')[0];
+    const name = within(row).getByTestId('db-name').textContent!;
+    expect(within(row).getByRole('link', { name })).toHaveAttribute('href', expect.stringMatching(/^\/player\//));
+    fireEvent.click(within(row).getByRole('button', { name: `Show weeks for ${name}` }));
+    expect(screen.getByTestId('db-weeks')).toBeInTheDocument();
   });
   it('pages 25 at a time', () => {
     const db = miniDb();

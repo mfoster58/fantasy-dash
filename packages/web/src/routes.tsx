@@ -14,6 +14,8 @@ import StatsPage from './pages/StatsPage';
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
 import PlayersPage from './pages/PlayersPage';
+import PlayerPage, { type PlayerPageData } from './pages/PlayerPage';
+import { isRostered } from './lib/player/coverage';
 import { mergeSeasons } from './lib/playerdb/merge';
 import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason } from './data/load';
 
@@ -50,6 +52,14 @@ export async function playersLoader({ params }: LoaderFunctionArgs) {
   if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
   const [season, db] = await Promise.all([loadSeason(year), hasPlayerDb(year) ? loadPlayerDb(year) : Promise.resolve(null)]);
   return { season, db };
+}
+
+export async function playerLoader({ params }: LoaderFunctionArgs): Promise<PlayerPageData> {
+  const id = params.id ?? '';
+  const years = history.seasons.map((s) => s.year).filter(hasPlayerDb);
+  const [seasons, dbs] = await Promise.all([loadAllSeasons(), Promise.all(years.map(loadPlayerDb))]);
+  if (!dbs.some((d) => Object.hasOwn(d.players, id)) && !isRostered(seasons, id)) throw new Response(`No player ${id}`, { status: 404 });
+  return { id, seasons, dbs };
 }
 
 function Layout() {
@@ -92,6 +102,7 @@ export const routes: RouteObject[] = [
       { path: 'managers/:userId', loader: () => loadAllSeasons(), element: <ManagerPage /> },
       { path: 'players', loader: () => redirect(`/players/${currentSeason.year}`) },
       { path: 'players/:season', loader: playersLoader, element: <PlayersPage /> },
+      { path: 'player/:id', loader: playerLoader, element: <PlayerPage /> },
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
       { path: 'records', loader: () => loadAllSeasons(), element: <RecordsPage /> },

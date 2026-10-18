@@ -2,11 +2,13 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { PlayerDb, PlayerId, UserId } from '@fantasy-dash/core';
 import Headshot from '../../Headshot';
 import PosPill from '../../PosPill';
+import { PlayerLink } from '../../NameLink';
 import type { Agg } from '../../../lib/playerdb/aggregate';
 import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
 import { dbDirectory } from '../../../lib/playerdb/directory';
 import { columnTints } from '../../../lib/playerdb/percentile';
 import type { DbState } from '../../../lib/playerdb/url';
+import { ColumnHeaderCells, GroupHeaderCells, HeaderCell, StatCells, th } from './GridParts';
 import TintCell from './TintCell';
 import WeekRows from './WeekRows';
 
@@ -58,7 +60,6 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
   return [set, toggle];
 }
 
-const th = 'section-label whitespace-nowrap px-2 py-2 text-center';
 const lead = 'sticky bg-surface';
 
 export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
@@ -93,23 +94,14 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
           <tr>
             <th colSpan={3} className="sticky left-0 z-[3] bg-surface border-b border-line" />
             <th colSpan={leadCols.length} className="border-b border-line" />
-            {bodyGroups.map((g) => {
-              const off = collapsed.has(g.group);
-              return (
-                <th key={g.group} colSpan={off ? 1 : g.cols.length} className="section-label border-b border-l border-line px-2 py-1 text-left">
-                  <button type="button" aria-label={`${off ? 'Expand' : 'Collapse'} ${g.group}`} onClick={() => onToggleGroup(g.group)} className="hover:text-ink">{off ? '▸ ' : '▾ '}{g.group}</button>
-                </th>
-              );
-            })}
+            <GroupHeaderCells groups={bodyGroups} collapsed={collapsed} onToggleGroup={onToggleGroup} />
           </tr>
           <tr>
             <th className={`${lead} left-0 z-[3] w-10 min-w-10 border-b border-line px-2 py-2 text-left section-label`}>#</th>
             <th className={`${lead} left-10 z-[3] w-14 min-w-14 border-b border-line px-2 py-2 text-left section-label`}>Pos</th>
             <th className={`${lead} left-24 z-[3] min-w-48 border-b border-line px-2 py-2 text-left section-label`}>Player</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
-            {bodyGroups.map((g) => (collapsed.has(g.group)
-              ? <th key={g.group} className={`${th} border-b border-l border-line text-muted`}>…</th>
-              : g.cols.map((c, i) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} first={i === 0} />)))}
+            <ColumnHeaderCells groups={bodyGroups} collapsed={collapsed} title={headerTitle} arrow={sortArrow} onSort={onSort} />
           </tr>
         </thead>
         <tbody>
@@ -122,17 +114,19 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
                   <td className={`${lead} left-0 num w-10 min-w-10 border-b border-line px-2 py-1.5 text-muted`}>{i + 1}</td>
                   <td data-testid="db-pos" className={`${lead} left-10 w-14 min-w-14 border-b border-line px-2 py-1.5`}><PosPill pos={p?.pos ?? '?'} /></td>
                   <td className={`${lead} left-24 border-b border-line px-2 py-1.5`}>
-                    <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-2 whitespace-nowrap text-left hover:text-accent">
-                      <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
-                      <span data-testid="db-name" className="font-medium">{p?.name ?? a.id}</span>
+                    <span className="flex items-center gap-2 whitespace-nowrap">
+                      {/* the chevron and headshot open his weeks; the name opens his page */}
+                      <button type="button" aria-expanded={isOpen} aria-label={`Show weeks for ${p?.name ?? a.id}`} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-1.5 text-muted hover:text-accent">
+                        <span aria-hidden="true" className="w-2 text-[10px]">{isOpen ? '▾' : '▸'}</span>
+                        <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
+                      </button>
+                      <PlayerLink id={a.id} className="font-medium"><span data-testid="db-name">{p?.name ?? a.id}</span></PlayerLink>
                       <span className="text-xs text-muted">{a.team}</span>
                       {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
-                    </button>
+                    </span>
                   </td>
                   {leadCols.map((c) => cell(c, a, i))}
-                  {bodyGroups.map((g) => (collapsed.has(g.group)
-                    ? <td key={g.group} className="border-b border-l border-line" />
-                    : g.cols.map((c) => cell(c, a, i))))}
+                  <StatCells groups={bodyGroups} collapsed={collapsed} agg={a} mode={state.mode} tint={(k) => tints.get(k)?.[i] ?? 'transparent'} />
                 </tr>
                 {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} weekLabel={weekLabel} />}
               </Fragment>
@@ -147,13 +141,5 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
         </div>
       )}
     </div>
-  );
-}
-
-function HeaderCell({ col, title, arrow, onSort, first = false }: { col: ColumnDef; title: string; arrow: string; onSort: (key: string) => void; first?: boolean }) {
-  return (
-    <th scope="col" title={title} className={`${th} border-b border-line ${first ? 'border-l' : ''}`}>
-      <button type="button" onClick={() => onSort(col.key)} className="hover:text-ink">{col.label}{arrow}</button>
-    </th>
   );
 }

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import RosterBreakdown, { orderPlayers } from './RosterBreakdown';
 import { players } from '../../test/playerFixtures';
 import type { PositionGroup, PositionPlayer } from '../../lib/teamProfile';
@@ -17,7 +18,7 @@ const bench = ['w1', 't1', 'k1', 'KC', 'q1'].map((id, i) => pp(id, 'WR', 0, 0, 9
 
 describe('RosterBreakdown', () => {
   it('draws the share bar, rank chips and position cards with started-most-weeks rows, position ranks and never-started lists', () => {
-    render(<RosterBreakdown positions={groups} neverStarted={[pp('w1', 'WR', 0, 0, 9, 12)]} players={players} seasonTeams={{ q1: 'NYG' }} weeksPlayed={4} />);
+    render(<MemoryRouter><RosterBreakdown positions={groups} neverStarted={[pp('w1', 'WR', 0, 0, 9, 12)]} players={players} seasonTeams={{ q1: 'NYG' }} weeksPlayed={4} /></MemoryRouter>);
     expect(screen.getByTestId('share-QB')).toHaveTextContent('QB 60%');
     expect(screen.getByTestId('share-QB').style.width).toBe('60%');
     expect(screen.getByTestId('rank-QB')).toHaveTextContent('QB 1');
@@ -37,7 +38,7 @@ describe('RosterBreakdown', () => {
   });
 
   it('caps the never-started list at four with a show-more button', () => {
-    render(<RosterBreakdown positions={groups} neverStarted={bench} players={players} seasonTeams={{}} weeksPlayed={4} />);
+    render(<MemoryRouter><RosterBreakdown positions={groups} neverStarted={bench} players={players} seasonTeams={{}} weeksPlayed={4} /></MemoryRouter>);
     const wr = screen.getByTestId('group-WR');
     expect(within(wr).getAllByRole('listitem')).toHaveLength(4);
     fireEvent.click(within(wr).getByRole('button', { name: 'Show 1 more never started' }));
@@ -45,7 +46,7 @@ describe('RosterBreakdown', () => {
   });
 
   it('switches to points per start, showing a dash for anyone under three starts', () => {
-    render(<RosterBreakdown positions={groups} neverStarted={[]} players={players} seasonTeams={{}} weeksPlayed={4} />);
+    render(<MemoryRouter><RosterBreakdown positions={groups} neverStarted={[]} players={players} seasonTeams={{}} weeksPlayed={4} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'PPG' }));
     expect(screen.getByRole('button', { name: 'PPG' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(screen.getByTestId('group-QB')).getByText('15.00')).toBeInTheDocument();     // 60 over 4 starts
