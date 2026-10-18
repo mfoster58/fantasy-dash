@@ -13,6 +13,7 @@ describe('StatTable', () => {
     expect(names()).toEqual(['bob', 'alice', 'cara', 'dan']);
     expect(screen.getByRole('columnheader', { name: /^PPG/ })).toHaveAttribute('aria-sort', 'descending');
     expect(screen.getByText('Scoring')).toBeInTheDocument();
+    expect(screen.queryByText('Playoffs')).toBeNull();
     expect(screen.queryByRole('columnheader', { name: /Yrs/ })).toBeNull();
     expect(screen.getAllByRole('rowheader')[0].className).toContain('sticky');
   });
@@ -35,13 +36,31 @@ describe('StatTable', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
     const ppgOf = (name: string) => {
       const r = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === name)!;
-      const col = [...screen.getAllByRole('columnheader')].findIndex((h) => /^PPG/.test(h.textContent ?? '')) - 1;
+      const col = within(screen.getAllByRole('row')[1]).getAllByRole('columnheader').findIndex((h) => /^PPG/.test(h.textContent ?? '')) - 1;
       return within(r).getAllByRole('cell')[col] as HTMLElement;
     };
     expect(ppgOf('bob').getAttribute('data-tone')).toBe('good');
     expect(ppgOf('bob').style.background).toMatch(/--win/);
     expect(ppgOf('dan').getAttribute('data-tone')).toBe('bad');
     expect(ppgOf('dan').style.background).toMatch(/--loss/);
+    // red through yellow to green: the middle of the column leans on yellow
+    expect(ppgOf('cara').style.background).toMatch(/--warn/);
+  });
+  it('leaves records, streaks and the roster counts untinted', () => {
+    render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
+    const bob = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === 'bob')!;
+    // the label row, not the group row above it
+    const headers = within(screen.getAllByRole('row')[1]).getAllByRole('columnheader').map((h) => (h.textContent ?? '').replace(/ [▾▴]$/, ''));
+    for (const label of ['Rec', 'All-play', 'vs med', 'Streaks', 'Close', 'Post rec', 'Pickups', 'Wire pts']) {
+      const i = headers.indexOf(label) - 1;
+      expect(within(bob).getAllByRole('cell')[i], label).not.toHaveAttribute('data-tone');
+    }
+  });
+  it('shows a trophy per title beside the name, and the playoffs group only in all-time', () => {
+    render(<StatTable rows={statTable(league())} refs={refs} pin={null} allTime />);
+    const alice = screen.getAllByRole('row').find((x) => x.querySelector('th span.truncate')?.textContent === 'alice')!;
+    expect(within(alice).getAllByTestId('finish-champion')).toHaveLength(1);
+    expect(screen.getByText('Playoffs')).toBeInTheDocument();
   });
   it('explains every column in its header title', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
