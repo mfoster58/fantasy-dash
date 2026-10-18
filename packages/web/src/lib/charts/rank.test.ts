@@ -3,7 +3,7 @@ import { chartItems, hasChart } from './rank';
 import { LANE_SPEC, ROUTE_SPEC, SPLIT_SPEC, ZONE_SPEC } from './specs';
 
 const db = miniCharts();
-const item = <K extends string>(items: { key: K }[] | null, key: K) => items!.find((i) => i.key === key)!;
+const item = <T extends { key: string }>(items: T[] | null, key: T['key']) => items!.find((i) => i.key === key)!;
 
 describe('chartItems: routes', () => {
   it('ranks yards per target among WRs with 5+ targets on the route', () => {
