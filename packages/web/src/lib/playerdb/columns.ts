@@ -28,6 +28,8 @@ export interface ColumnDef {
   zeroFill?: boolean;
   /** lower-is-better counts: a 0 is tinted (as good) only when the player had the chance, e.g. threw a pass */
   tintZero?: (a: Agg) => boolean;
+  /** higher-is-better counts: a 0 is painted full red only when the player had the chance, e.g. a target for a receiving stat */
+  chance?: (a: Agg) => boolean;
   /** fixed colour scale instead of a percentile: −1 red, 0 yellow, 1 green; null = untinted */
   score?: (a: Agg) => number | null;
 }
@@ -58,7 +60,10 @@ const minDb = { denom: dropbacks, perWeek: MIN.db };
 const minSnaps = { denom: S('snaps'), perWeek: MIN.snaps };
 
 const col = (key: string, label: string, def: string, fmt: Fmt, value: ColumnDef['value'], extra: Partial<ColumnDef> = {}): ColumnDef => ({ key, label, def, fmt, value, ...extra });
-const count = (key: string, label: string, def: string, k: PlayerWeekKey, extra: Partial<ColumnDef> = {}) => col(key, label, def, 'int', sum(k), { perGame: true, zeroFill: true, ...extra });
+/** whether a player had the chance at a stat, by its family: a pass attempt, a carry or a target */
+const chanceFor = (k: PlayerWeekKey): ((a: Agg) => boolean) | undefined =>
+  k.startsWith('pa_') ? (a) => (a.s.pa_att ?? 0) > 0 : k.startsWith('ru_') ? (a) => (a.s.ru_att ?? 0) > 0 : k.startsWith('re_') ? (a) => (a.s.re_tgt ?? 0) > 0 : undefined;
+const count = (key: string, label: string, def: string, k: PlayerWeekKey, extra: Partial<ColumnDef> = {}) => col(key, label, def, 'int', sum(k), { perGame: true, zeroFill: true, chance: chanceFor(k), ...extra });
 
 /** Rushing or receiving TDs: any TD is clearly green, deepening to full green at one a game. */
 const skillTdScore = (k: PlayerWeekKey) => (a: Agg): number | null => {
@@ -86,7 +91,7 @@ const list: ColumnDef[] = [
   col('cmpPct', 'Cmp%', 'Completions per attempt', 'pct', ratio(sum('pa_cmp'), S('pa_att')), { min: minDb }),
   count('paYds', 'Yds', 'Passing yards', 'pa_yds'),
   col('ya', 'Y/A', 'Passing yards per attempt', 'dec1', ratio(sum('pa_yds'), S('pa_att')), { min: minDb }),
-  count('paTd', 'TD', 'Passing touchdowns', 'pa_td', { score: passTdScore }),
+  count('paTd', 'TD', 'Passing touchdowns', 'pa_td', { score: passTdScore, chance: realPasser }),
   count('int', 'INT', 'Interceptions thrown', 'pa_int', { lowerIsBetter: true, tintZero: realPasser }),
   count('sacks', 'Sk', 'Sacks taken', 'pa_sack', { lowerIsBetter: true, tintZero: realPasser }),
   col('rtg', 'Rtg', 'Passer rating, weighted by attempts', 'dec1', W('pa_rtg'), { min: minDb }),

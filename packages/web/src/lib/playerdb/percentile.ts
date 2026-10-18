@@ -32,11 +32,15 @@ export function tintFor(p: number | null, lowerIsBetter = false): string {
  */
 export function columnTints(col: ColumnDef, aggs: Agg[], mode: Mode): string[] {
   if (col.tinted === false) return aggs.map(() => 'transparent');
-  if (col.score) return aggs.map((a) => { const s = belowMin(col, a) ? null : col.score!(a); return s === null ? 'transparent' : valueColor(s * VALUE_SATURATION); });
+  // a counting stat at zero where more is better, for a player who had the chance at it, is the bottom of the scale;
+  // signed and rate columns are left to their own scale, where 0 can be the middle
+  const redZero = (a: Agg): boolean => !col.lowerIsBetter && !belowMin(col, a) && columnValue(col, a, mode) === 0 && !!col.zeroFill && (col.chance ? col.chance(a) : a.games > 0);
+  const RED = valueColor(-VALUE_SATURATION);
+  if (col.score) return aggs.map((a) => { if (redZero(a)) return RED; const s = belowMin(col, a) ? null : col.score!(a); return s === null ? 'transparent' : valueColor(s * VALUE_SATURATION); });
   const values = aggs.map((a) => {
     if (belowMin(col, a)) return null;
     const v = columnValue(col, a, mode);
     return v === 0 && col.zeroFill && !col.tintZero?.(a) ? null : v;
   });
-  return percentiles(values).map((p) => tintFor(p, col.lowerIsBetter));
+  return percentiles(values).map((p, i) => (redZero(aggs[i]) ? RED : tintFor(p, col.lowerIsBetter)));
 }
