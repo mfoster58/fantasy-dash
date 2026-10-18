@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import type { ManagerRef } from '../../lib/stats/scope';
 import { COLUMNS, type ColumnDef, type StatRow } from '../../lib/stats/table';
+import { FinishIcon } from '../Icons';
 import ManagerName from './ManagerName';
-import { markAttrs, tint, usePinHover, type Pin } from './pin';
+import { markAttrs, usePinHover, type Pin } from './pin';
 
 interface Props { rows: StatRow[]; refs: ManagerRef[]; pin: Pin; allTime: boolean }
 const PINNED_ROW = 'bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]';
+/** red through yellow to green: -1 is the worst in the column, 0 the middle, 1 the best */
+const gradient = (s: number): string => {
+  const end = s > 0 ? 'var(--win)' : 'var(--loss)';
+  const k = Math.round(Math.abs(s) * 100);
+  return `color-mix(in srgb, color-mix(in srgb, ${end} ${k}%, var(--warn)) 40%, var(--surface-2))`;
+};
 /** columns that describe rather than rank, left untinted */
-const UNTINTED = new Set(['seasons']);
+const UNTINTED = new Set(['seasons', 'rec', 'allPlay', 'median', 'streaks', 'close', 'post', 'pickups', 'waiverShare']);
 
 /**
  * Where a row sits in a column, from -1 (worst) to 1 (best), by rank so one outlier does not wash the rest out;
@@ -15,7 +22,7 @@ const UNTINTED = new Set(['seasons']);
  */
 function standing(col: ColumnDef, rows: StatRow[], r: StatRow): number | null {
   if (UNTINTED.has(col.key)) return null;
-  const counts = (x: StatRow) => !(col.group === 'Games' && col.key.startsWith('post') && x.postGames === 0);
+  const counts = (x: StatRow) => !(col.group === 'Games' && col.key.startsWith('post') && x.postGames === 0) && !(col.group === 'Playoffs' && col.key !== 'poApps' && x.poGames === 0);
   if (!counts(r)) return null;
   const vals = rows.filter(counts).map((x) => col.value(x));
   if (vals.length < 2 || vals.every((v) => v === vals[0])) return null;
@@ -29,7 +36,8 @@ function standing(col: ColumnDef, rows: StatRow[], r: StatRow): number | null {
 export default function StatTable({ rows, refs, pin, allTime }: Props) {
   const { active, hoverProps } = usePinHover(pin);
   const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'ppg', dir: 'desc' });
-  const columns = COLUMNS.filter((c) => allTime || c.group !== 'Season');
+  // seasons and the playoffs group only make sense across seasons
+  const columns = COLUMNS.filter((c) => allTime || (c.group !== 'Season' && c.group !== 'Playoffs'));
   const groups = columns.reduce<{ group: ColumnDef['group']; span: number }[]>((acc, c) => { const last = acc[acc.length - 1]; if (last && last.group === c.group) last.span += 1; else acc.push({ group: c.group, span: 1 }); return acc; }, []);
   const by = columns.find((c) => c.key === sort.key) ?? columns[0];
   const sorted = [...rows].sort((x, y) => (by.value(x) - by.value(y)) * (sort.dir === 'asc' ? 1 : -1) || (x.id < y.id ? -1 : 1));
@@ -58,13 +66,13 @@ export default function StatTable({ rows, refs, pin, allTime }: Props) {
             const rowTint = r.id === active ? PINNED_ROW : '';
             return (
               <tr key={r.id} {...markAttrs(r.id, active)} {...hoverProps(r.id)} className={`border-t border-line ${rowTint} ${active !== null && active !== r.id ? 'opacity-60' : ''}`}>
-                <th scope="row" className={`sticky left-0 z-[1] bg-surface px-2 py-1.5 text-left font-normal ${rowTint}`}><ManagerName id={r.id} refs={refs} active={active} /></th>
+                <th scope="row" className={`sticky left-0 z-[1] bg-surface px-2 py-1.5 text-left font-normal ${rowTint}`}><span className="inline-flex items-center gap-1"><ManagerName id={r.id} refs={refs} active={active} />{Array.from({ length: r.titles }, (_, i) => <FinishIcon key={i} kind="champion" size="1em" />)}</span></th>
                 {columns.map((c) => {
                   const s = standing(c, rows, r);
-                  const tone = s === null || s === 0 ? undefined : s > 0 ? 'good' : 'bad';
+                  const tone = s === null ? undefined : s > 0 ? 'good' : s < 0 ? 'bad' : 'mid';
                   return (
                     <td key={c.key} data-tone={tone} className="num whitespace-nowrap px-2 py-1.5 text-right"
-                      style={tone ? { background: tint(tone === 'good' ? 'win' : 'loss', Math.abs(s!) * 0.5) } : undefined}>{c.text(r)}</td>
+                      style={tone ? { background: gradient(s!) } : undefined}>{c.text(r)}</td>
                   );
                 })}
               </tr>
