@@ -1,5 +1,4 @@
-/** Translucency of a fully green or red cell; the draft board uses the same strength. */
-export const TINT_STRENGTH = 45;
+import { VALUE_SATURATION, valueColor } from '../draft';
 
 /** 0..1 by average rank among the non-null values (ties share a rank); a lone value sits at 0.5. */
 export function percentiles(values: (number | null)[]): (number | null)[] {
@@ -17,11 +16,9 @@ export function percentiles(values: (number | null)[]): (number | null)[] {
   return out;
 }
 
-/** Cell background for a percentile: red below the midpoint, green above, stronger towards the ends. */
+/** Cell background for a percentile on the draft board's red → yellow → green scale: yellow at the midpoint, red at the bottom, green at the top (flipped for lower-is-better). */
 export function tintFor(p: number | null, lowerIsBetter = false): string {
   if (p === null) return 'transparent';
   const s = (p - 0.5) * 2 * (lowerIsBetter ? -1 : 1);
-  const strength = Math.round(Math.abs(s) * TINT_STRENGTH * 100) / 100;
-  if (strength === 0) return 'transparent';
-  return `color-mix(in srgb, var(${s > 0 ? '--win' : '--loss'}) ${strength}%, transparent)`;
+  return valueColor(s * VALUE_SATURATION);
 }

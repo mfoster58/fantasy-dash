@@ -63,7 +63,7 @@ function Loaded({ season, db, years, onYear }: { season: Season; db: PlayerDb; y
         <p className="text-sm text-muted">Showing {shown} of {aggs.length} · weeks {state.from}–{state.to} · {db.year}{db.routesReal ? '' : ' · routes estimated'}</p>
       </div>
       <PlayerDbToolbar state={state} onChange={onChange} years={years} year={db.year} onYear={onYear} throughWeek={db.throughWeek} managers={managerList} />
-      <PlayerDbTable db={db} aggs={aggs} state={state} onSort={onSort} year={db.year} managers={season.managers} rosters={rosters} collapsed={collapsed} onToggleGroup={toggleGroup} />
+      <PlayerDbTable db={db} aggs={aggs} state={state} onSort={onSort} rosters={rosters} collapsed={collapsed} onToggleGroup={toggleGroup} />
       <details className="card px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium">Column definitions</summary>
         <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">

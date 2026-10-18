@@ -16,6 +16,12 @@ describe('column catalogue', () => {
     }
     expect(COLUMNS[DEFAULT_SORT]).toBeDefined();
     expect(tabPositions('all')).toEqual(['QB', 'RB', 'WR', 'TE']);
+    expect(TAB_GROUPS.all.map((g) => [g.group, g.keys])).toEqual([
+      ['', ['g', 'pts', 'ppg', 'posRank', 'projPlus']],
+      ['Rushing', ['car', 'ruYds', 'ruTd']],
+      ['Receiving', ['tgt', 'rec', 'reYds', 'reTd']],
+      ['Passing', ['cmp', 'att', 'paYds', 'paTd', 'int']],
+    ]);
     expect(tabPositions('te')).toEqual(['TE']);
   });
   it('every column has a definition and a format', () => {

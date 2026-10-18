@@ -8,7 +8,6 @@ import type { DbState } from '../../../lib/playerdb/url';
 import { miniDb } from '../../../test/playerDbFixtures';
 
 const base: DbState = { tab: 'wr', from: 1, to: 3, mode: 'total', roster: 'all', sort: 'pts', dir: 'desc', q: '' };
-const managers = { A: { userId: 'A', displayName: 'Alice', teamName: 'Team A', avatar: null, rosterId: 1 } };
 
 function Harness({ state: initial, collapsed = new Set<string>() }: { state: DbState; collapsed?: Set<string> }) {
   const [state, setState] = useState(initial);
@@ -16,7 +15,7 @@ function Harness({ state: initial, collapsed = new Set<string>() }: { state: DbS
   const db = miniDb();
   const aggs = aggregate(db, state.from, state.to).filter((a) => (state.tab === 'wr' ? ['WR', 'TE'] : tabPositions(state.tab)).includes(db.players[a.id].pos));
   return (
-    <PlayerDbTable db={db} aggs={aggs} state={state} year={2026} managers={managers} rosters={{ w1: 'A' }} collapsed={col}
+    <PlayerDbTable db={db} aggs={aggs} state={state} rosters={{ w1: 'A' }} collapsed={col}
       onToggleGroup={(g) => setCol((c) => { const n = new Set(c); if (n.has(g)) n.delete(g); else n.add(g); return n; })}
       onSort={(key) => setState((s) => ({ ...s, sort: key, dir: s.sort === key ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))} />
   );
@@ -34,18 +33,27 @@ describe('PlayerDbTable', () => {
     expect(names()).toEqual(['Wide Two', 'Tight One', 'Wide One']);
     expect(screen.getAllByTestId('db-row')[0]).toHaveTextContent(/^1/);
   });
-  it('shows the manager for rostered players, FA otherwise, with a sticky lead block', () => {
+  it('has no manager column, tags free agents FA, and puts the position in its own sticky column left of the player', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
+    expect(screen.queryByRole('columnheader', { name: 'Mgr' })).toBeNull();
+    const heads = screen.getAllByRole('columnheader').map((h) => h.textContent);
+    expect(heads.indexOf('Pos')).toBe(heads.indexOf('Player') - 1);
     const rows = screen.getAllByTestId('db-row');
-    expect(within(rows[0]).getByRole('link', { name: 'Team A' })).toHaveAttribute('href', '/teams/2026/A');
-    expect(within(rows[1]).getByText('FA')).toBeInTheDocument();
+    expect(within(rows[0]).queryByTestId('fa-tag')).toBeNull();          // Wide One is rostered
+    expect(within(rows[1]).getByTestId('fa-tag')).toHaveTextContent('FA'); // Tight One is not
+    expect(within(rows[0]).queryByRole('link')).toBeNull();
+    const pos = within(rows[0]).getByTestId('db-pos');
+    expect(pos).toHaveTextContent('WR');
+    expect(pos).toHaveClass('sticky');
+    expect(pos.nextElementSibling).toBe(within(rows[0]).getByTestId('db-name').closest('td'));
     expect(within(rows[0]).getByTestId('db-name').closest('td')).toHaveClass('sticky');
   });
   it('tints rate cells by percentile and leaves points untinted', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
     const rows = screen.getAllByTestId('db-row');
-    expect(within(rows[0]).getByTestId('cell-tgt').style.background).toContain('--win');   // Wide One, 26 targets
-    expect(within(rows[2]).getByTestId('cell-tgt').style.background).toContain('--loss');  // Wide Two, 10 targets
+    expect(within(rows[0]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, color-mix\(in oklch, rgb\(47, 158, 95\) 100%/); // Wide One, 26 targets: full green
+    expect(within(rows[1]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, rgb\(230, 194, 41\) 45%/);                     // Tight One, the middle: yellow
+    expect(within(rows[2]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, color-mix\(in oklch, rgb\(214, 69, 69\) 100%/); // Wide Two, 10 targets: full red
     expect(within(rows[0]).getByTestId('cell-pts').style.background).toBe('');
   });
   it('dims a rate under the sample minimum and shows a dash for a missing value', () => {
@@ -88,7 +96,7 @@ describe('PlayerDbTable', () => {
     db.rows = [...db.rows, ...many];
     for (const r of many) db.players[r.id] = { ...db.players.w1, id: r.id, name: `Extra ${r.id}` };
     const aggs = aggregate(db, 1, 3).filter((a) => db.players[a.id].pos === 'WR');
-    render(<MemoryRouter><PlayerDbTable db={db} aggs={aggs} state={base} year={2026} managers={{}} rosters={{}} collapsed={new Set()} onToggleGroup={() => {}} onSort={() => {}} /></MemoryRouter>);
+    render(<MemoryRouter><PlayerDbTable db={db} aggs={aggs} state={base} rosters={{}} collapsed={new Set()} onToggleGroup={() => {}} onSort={() => {}} /></MemoryRouter>);
     expect(screen.getAllByTestId('db-row')).toHaveLength(25);
     fireEvent.click(screen.getByRole('button', { name: 'Show 25 more' }));
     expect(screen.getAllByTestId('db-row')).toHaveLength(32);

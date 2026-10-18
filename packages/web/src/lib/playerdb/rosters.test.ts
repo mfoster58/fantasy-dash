@@ -19,6 +19,17 @@ describe('rosterMap', () => {
     ];
     expect(rosterMap(s)).toEqual({ w1: 'A', r1: 'A', t1: 'A', r2: 'B' });
   });
+  it('takes each manager from his own last game, so a team knocked out before the final keeps its roster', () => {
+    const s = season(2025, [
+      week(1, [game(2025, 1, 1, side('A', 100, [line('w1', 10)]), side('B', 90, [line('q1', 20)], [line('t1', 3)]))]),
+      week(2, [game(2025, 2, 1, side('A', 100, [line('w1', 10)], [line('r1', 5)]), side('C', 80, [line('k1', 1)]))], true), // B has no game
+    ], null, 2);
+    s.transactions = [
+      tx('1', 'free_agent', 2, 100, [['w5', 'B']], [['t1', 'B']]), // after B's last game (week 1): applied
+      tx('2', 'free_agent', 2, 110, [['w6', 'A']], []),            // week 2 is A's last game: already in A's lineup data, ignored
+    ];
+    expect(rosterMap(s)).toEqual({ w1: 'A', r1: 'A', q1: 'B', w5: 'B', k1: 'C' });
+  });
   it('is empty before any week is played, apart from transactions', () => {
     const s = season(2026, [week(1, [])], null, 0);
     s.transactions = [tx('1', 'free_agent', 1, 1, [['w1', 'A']], [])];
