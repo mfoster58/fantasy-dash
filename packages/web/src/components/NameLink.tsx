@@ -14,6 +14,11 @@ export function TeamLink({ userId, year, className = '', children, ...rest }: { 
   return <Link to={`/teams/${year}/${userId}`} className={`hover:text-accent ${className}`} {...rest}>{children}</Link>;
 }
 
+/** A player's name, opening his player page. */
+export function PlayerLink({ id, className = '', children, ...rest }: { id: string; className?: string; children: ReactNode } & Rest) {
+  return <Link to={`/player/${id}`} className={`hover:text-accent ${className}`} {...rest}>{children}</Link>;
+}
+
 /**
  * Fills its positioned parent so the whole row or card opens `to`, while the named links
  * inside it sit above with `relative z-10`. Keeps one link from nesting inside another.
