@@ -196,7 +196,7 @@ const WR_GROUPS = [
 export const TAB_GROUPS: Readonly<Record<Tab, { group: string; keys: string[] }[]>> = {
   all: [
     { group: '', keys: LEAD },
-    { group: 'Usage', keys: ['snaps', 'snapPct', 'touches'] },
+    { group: 'Usage', keys: ['snapPct', 'touches'] },
     { group: 'Rushing', keys: ['car', 'ruYds', 'ruTd'] },
     { group: 'Receiving', keys: ['tgt', 'rec', 'reYds', 'reTd'] },
     { group: 'Passing', keys: ['cmp', 'att', 'paYds', 'paTd', 'int'] },
