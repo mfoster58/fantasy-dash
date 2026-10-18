@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import PlayerPage from './PlayerPage';
 import { leagueSeasons, pick } from '../test/playerPageFixtures';
 import { miniDb } from '../test/playerDbFixtures';
+import { miniCharts } from '../test/chartFixtures';
 
 // a data router cannot initialise under jsdom (AbortSignal), so the loader hook is stubbed and the page rendered in a memory router
 let loaded: unknown;
@@ -13,8 +14,8 @@ vi.mock('../data/load', async (orig) => ({
   history: { seasons: [], managers: { A: { displayName: 'Alice', avatar: null, seasons: [2025, 2026] }, B: { displayName: 'Bob', avatar: null, seasons: [2025, 2026] } }, h2h: {}, allTime: [], topDraftValues: [], worstDraftValues: [] },
 }));
 
-function mount(id: string, seasons = leagueSeasons()) {
-  loaded = { id, seasons, dbs: [miniDb()] };
+function mount(id: string, seasons = leagueSeasons(), charts = [miniCharts()]) {
+  loaded = { id, seasons, dbs: [miniDb()], charts };
   render(<MemoryRouter initialEntries={[`/player/${id}`]}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
 }
 const section = (name: RegExp) => screen.queryByRole('region', { name });
@@ -49,5 +50,34 @@ describe('PlayerPage', () => {
     mount('t1', s);
     expect(screen.queryByText('Never rostered in this league')).toBeNull();
     expect(section(/Path through the league/)).toBeInTheDocument();
+  });
+  it('a WR gets the route tree, a TE too, between the advanced numbers and the game log', () => {
+    mount('w1');
+    const tree = section(/Route tree/)!;
+    expect(tree).toBeInTheDocument();
+    expect(section(/Run lanes/)).toBeNull();
+    expect(tree.compareDocumentPosition(section(/Game log/)!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(section(/Advanced by season/)!.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+  it('an RB gets run lanes and a route tree; a QB gets passing zones and the pressure card', () => {
+    mount('r1');
+    expect(section(/Run lanes/)).toBeInTheDocument();
+    expect(section(/Route tree/)).toBeInTheDocument();
+    mount('q1');
+    expect(section(/Passing zones/)).toBeInTheDocument();
+    expect(section(/Under pressure/)).toBeInTheDocument();
+  });
+  it('hides every card when the player has no gsis id', () => {
+    const db = miniDb();
+    db.players.w1 = { ...db.players.w1, gsisId: null };
+    loaded = { id: 'w1', seasons: leagueSeasons(), dbs: [db], charts: [miniCharts()] };
+    render(<MemoryRouter initialEntries={['/player/w1']}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
+    expect(section(/Route tree/)).toBeNull();
+  });
+  it('lists only his chart seasons in a card picker', () => {
+    const empty = { year: 2024, builtAt: '', players: {} };
+    mount('w1', leagueSeasons(), [miniCharts(2025), empty, miniCharts(2023)]);
+    const picker = within(section(/Route tree/)!).getByRole('combobox');
+    expect([...picker.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['2025', '2023']);
   });
 });

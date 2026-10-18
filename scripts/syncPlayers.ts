@@ -5,14 +5,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, PlayerDbSchema, buildPlayerDb, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
+  SleeperClient, PlayerDbSchema, ChartDbSchema, buildCharts, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
-  type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
+  type DbPos, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
 import { leagueConfig } from '../league.config';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'data', 'playerdb');
+const CHART_DIR = path.join(ROOT, 'data', 'charts');
 const args = process.argv.slice(2);
 const full = args.includes('--full');
 const dryRun = args.includes('--dry-run');
@@ -32,6 +33,7 @@ const URLS = {
   pfrPass: (y: number) => `${NFLVERSE}/pfr_advstats/advstats_week_pass_${y}.csv`,
   snaps: (y: number) => `${NFLVERSE}/snap_counts/snap_counts_${y}.csv`,
   participation: (y: number) => `${NFLVERSE}/pbp_participation/pbp_participation_${y}.csv`,
+  pbp: (y: number) => `${NFLVERSE}/pbp/play_by_play_${y}.csv.gz`,
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -176,6 +178,12 @@ async function main() {
   const leagues = chain.filter((l) => onlySeason === null || Number(l.season) === onlySeason);
   log(`Seasons: ${leagues.map((l) => l.season).join(', ')}`);
 
+  await playerDbPhase(client, leagues);
+  await chartsPhase(leagues);
+}
+
+/** Phase 1: the player database. */
+async function playerDbPhase(client: SleeperClient, leagues: SleeperLeague[]) {
   const todo = leagues.filter((l) => {
     if (l.status !== 'complete') return true;
     if (full) return true;
@@ -216,6 +224,55 @@ async function main() {
   for (const file of built) await rename(file, path.join(OUT_DIR, path.basename(file)));
   await rm(staging, { recursive: true, force: true });
   log(`Wrote ${built.length} season file(s) to ${OUT_DIR}`);
+}
+
+/** A chart file is final when it parses; finished seasons with a final file are not rebuilt. */
+function chartFileFinal(file: string): boolean {
+  if (!existsSync(file)) return false;
+  try { ChartDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); return true; } catch { return false; }
+}
+
+/** gsis → position: the season's player database first (league overrides apply), then the nflverse player list. */
+function positionsFor(year: number, nflPlayers: Record<string, string>[]): (gsis: string) => DbPos | null {
+  const m = new Map<string, DbPos>();
+  for (const r of nflPlayers) if (r.gsis_id && isDbPos(r.position)) m.set(r.gsis_id, r.position);
+  const file = path.join(OUT_DIR, `${year}.json`);
+  if (existsSync(file)) for (const p of Object.values(PlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))).players)) if (p.gsisId) m.set(p.gsisId, p.pos);
+  return (g) => m.get(g) ?? null;
+}
+
+/** Phase 2: play-by-play charts. A season without a participation or play-by-play file yet is skipped, not an error. */
+async function chartsPhase(leagues: SleeperLeague[]) {
+  const todo = leagues.filter((l) => {
+    if (full || l.status !== 'complete') return true;
+    if (chartFileFinal(path.join(CHART_DIR, `${l.season}.json`))) { log(`${l.season}: charts already built, skipping`); return false; }
+    return true;
+  });
+  if (todo.length === 0) return;
+  const staging = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-charts-')) : path.join(ROOT, '.tmp', 'charts');
+  await rm(staging, { recursive: true, force: true });
+  await mkdir(staging, { recursive: true });
+  let nflPlayers: Record<string, string>[] | null = null;
+  const built: string[] = [];
+  for (const league of todo) {
+    const year = Number(league.season);
+    const part = await fetchText(URLS.participation(year));
+    if (part === null) { log(`${year}: no participation file yet; no charts`); continue; }
+    const pbp = await fetchText(URLS.pbp(year));
+    if (pbp === null) { log(`${year}: no play-by-play file yet; no charts`); continue; }
+    nflPlayers ??= rowsOf(await requireText(URLS.players, 'nflverse player list'));
+    const db = buildCharts(parseCsv(pbp), parseCsv(part), positionsFor(year, nflPlayers), year, new Date().toISOString());
+    ChartDbSchema.parse(db);
+    log(`${year}: charts for ${Object.keys(db.players).length} players`);
+    const file = path.join(staging, `${year}.json`);
+    await writeFile(file, JSON.stringify(db));
+    built.push(file);
+  }
+  if (dryRun) { log(`Dry run: charts in ${staging}`); return; }
+  await mkdir(CHART_DIR, { recursive: true });
+  for (const file of built) await rename(file, path.join(CHART_DIR, path.basename(file)));
+  await rm(staging, { recursive: true, force: true });
+  log(`Wrote ${built.length} chart file(s) to ${CHART_DIR}`);
 }
 
 main().catch((err) => {

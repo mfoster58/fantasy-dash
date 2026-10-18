@@ -1,10 +1,11 @@
-import type { History, HistorySeason, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
+import type { ChartDb, History, HistorySeason, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
 
 // import.meta.glob keeps tsc from type-inferring multi-megabyte JSON literals.
 const historyMod = import.meta.glob<{ default: History }>('../../../../data/history.json', { eager: true });
 const playersMod = import.meta.glob<{ default: PlayerDirectory }>('../../../../data/players.json', { eager: true });
 const seasonMods = import.meta.glob<{ default: Season }>('../../../../data/seasons/*.json');
 const playerDbMods = import.meta.glob<{ default: PlayerDb }>('../../../../data/playerdb/*.json');
+const chartMods = import.meta.glob<{ default: ChartDb }>('../../../../data/charts/*.json');
 
 export const history: History = Object.values(historyMod)[0].default;
 export const players: PlayerDirectory = Object.values(playersMod)[0].default;
@@ -45,6 +46,23 @@ export function loadPlayerDb(year: number): Promise<PlayerDb> {
     if (!key) return Promise.reject(new Response(`No player data for ${year}`, { status: 404 }));
     pending = playerDbMods[key]().then((m) => m.default).catch((err) => { playerDbCache.delete(year); throw err; });
     playerDbCache.set(year, pending);
+  }
+  return pending;
+}
+
+const chartCache = new Map<number, Promise<ChartDb>>();
+const chartKey = (year: number) => Object.keys(chartMods).find((k) => k.endsWith(`/${year}.json`));
+
+/** Whether a play-by-play chart file exists for the season (none until nflverse publishes its participation file). */
+export const hasCharts = (year: number): boolean => chartKey(year) !== undefined;
+
+export function loadCharts(year: number): Promise<ChartDb> {
+  let pending = chartCache.get(year);
+  if (!pending) {
+    const key = chartKey(year);
+    if (!key) return Promise.reject(new Response(`No charts for ${year}`, { status: 404 }));
+    pending = chartMods[key]().then((m) => m.default).catch((err) => { chartCache.delete(year); throw err; });
+    chartCache.set(year, pending);
   }
   return pending;
 }

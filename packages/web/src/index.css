@@ -30,6 +30,15 @@
   --pos-TE: #e6953f;
   --pos-K: #a174ec;
   --pos-DEF: #7f8a98;
+  --field: #141b25;
+  --field-band: #232d3b;
+  --field-line: #2c3849;
+  --los: #4d7fe6;
+  --heat-0: #33435a;
+  --heat-1: #3f6aa8;
+  --heat-2: #6fa6ee;
+  --heat-3: #cfe5ff;
+  --on-chip: #11161e;
 }
 
 :root[data-theme="light"] {
@@ -54,6 +63,15 @@
   --pos-TE: #c5741d;
   --pos-K: #7f4fd1;
   --pos-DEF: #66717f;
+  --field: #eef2f7;
+  --field-band: #d9e0ea;
+  --field-line: #c6cfdb;
+  --los: #2f6fe0;
+  --heat-0: #dde6f2;
+  --heat-1: #9dbbe6;
+  --heat-2: #4f84d1;
+  --heat-3: #1d4e9e;
+  --on-chip: #ffffff;
 }
 
 @theme inline {

@@ -17,7 +17,7 @@ import PlayersPage from './pages/PlayersPage';
 import PlayerPage, { type PlayerPageData } from './pages/PlayerPage';
 import { isRostered } from './lib/player/coverage';
 import { mergeSeasons } from './lib/playerdb/merge';
-import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason } from './data/load';
+import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason, hasCharts, loadCharts } from './data/load';
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
   const year = Number(params.season);
@@ -56,10 +56,14 @@ export async function playersLoader({ params }: LoaderFunctionArgs) {
 
 export async function playerLoader({ params }: LoaderFunctionArgs): Promise<PlayerPageData> {
   const id = params.id ?? '';
-  const years = history.seasons.map((s) => s.year).filter(hasPlayerDb);
-  const [seasons, dbs] = await Promise.all([loadAllSeasons(), Promise.all(years.map(loadPlayerDb))]);
+  const years = history.seasons.map((s) => s.year);
+  const [seasons, dbs, charts] = await Promise.all([
+    loadAllSeasons(),
+    Promise.all(years.filter(hasPlayerDb).map(loadPlayerDb)),
+    Promise.all(years.filter(hasCharts).map(loadCharts)),
+  ]);
   if (!dbs.some((d) => Object.hasOwn(d.players, id)) && !isRostered(seasons, id)) throw new Response(`No player ${id}`, { status: 404 });
-  return { id, seasons, dbs };
+  return { id, seasons, dbs, charts };
 }
 
 function Layout() {
