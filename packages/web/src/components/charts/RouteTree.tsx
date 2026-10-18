@@ -17,7 +17,7 @@ const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'en
   SLANT: { p: [[0, 3], [-5.5, 8]], a: 'end', l: [-6.3, 6.6] },
   'QUICK OUT': { p: [[0, 3], [5.5, 3]], a: 'start' },
   'SHALLOW CROSS/DRAG': { p: [[0, 0], [-2, 2.5], [-11.5, 3.5]], a: 'end' },
-  'TEXAS/ANGLE': { p: [[0, 0], [2.5, 3], [-3, 6.5]], a: 'end' },
+  'TEXAS/ANGLE': { p: [[0, 0], [2.5, 3], [-3, 6.5]], a: 'end', l: [-3.6, 5] },
   WHEEL: { p: [[0, 0], [3, 1], [5.5, 4], [6, 15]], a: 'start' },
   SCREEN: { p: [[0, 0], [-1, -1.5], [-4, -2.2]], a: 'end' },
   SWING: { p: [[0, 0], [3, -1.5], [7, -0.5], [9, 1.5]], a: 'start', l: [9.8, -0.9] },
@@ -57,7 +57,7 @@ export default function RouteTree({ charts, gsis, pos }: { charts: ChartDb[]; gs
       </> : <span className="text-muted">Hover a route for its numbers.</span>}
       legend={share ? <span>Share of his targets, 0% to 20%+ · switch metric to see how he ranks among {pos}s on each route</span>
         : <span>{def!.label} percentile among {pos}s · grey = under {ROUTE_SPEC.min} targets, not ranked</span>}>
-      <div className="grid lg:grid-cols-[minmax(0,1.7fr)_minmax(15rem,1fr)]">
+      <div className="grid @4xl:grid-cols-[minmax(0,1.7fr)_minmax(15rem,1fr)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block w-full max-w-[760px] px-2 py-3" role="img" aria-label={`Route tree, ${year}`}>
           <rect x={BAND} y={Y(24)} width={W - 2 * BAND} height={H - Y(24)} style={{ fill: 'var(--field)' }} />
           {[5, 10, 15, 20].map((v) => <line key={v} x1={BAND} x2={W - BAND} y1={Y(v)} y2={Y(v)} strokeWidth={1} style={{ stroke: 'var(--field-line)' }} />)}

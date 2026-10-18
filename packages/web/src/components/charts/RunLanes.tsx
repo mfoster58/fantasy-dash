@@ -41,7 +41,7 @@ export default function RunLanes({ charts, gsis }: { charts: ChartDb[]; gsis: st
       </> : <span className="text-muted">Hover a lane for its numbers.</span>}
       legend={share ? <span>Share of his carries, 0% to 25%+</span>
         : <><span>{def!.label} percentile among RBs · grey = under {LANE_SPEC.min} carries, not ranked</span><span>Success = a carry that gained EPA</span></>}>
-      <div className="grid lg:grid-cols-[minmax(0,1.7fr)_minmax(15rem,1fr)]">
+      <div className="grid @4xl:grid-cols-[minmax(0,1.7fr)_minmax(15rem,1fr)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block w-full max-w-[760px] px-2 py-3" role="img" aria-label={`Run lanes, ${year}`}>
           <rect x={BAND} y={20} width={W - 2 * BAND} height={H - 20} style={{ fill: 'var(--field)' }} />
           <Sidelines width={W} top={20} bottom={H} band={BAND} marks={[{ y: LOS, label: 'LOS' }]} />

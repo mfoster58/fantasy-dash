@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useLoaderData } from 'react-router';
-import type { PlayerDb, PlayerId, Season } from '@fantasy-dash/core';
+import type { ChartDb, PlayerDb, PlayerId, Season } from '@fantasy-dash/core';
+import PassingZones from '../components/charts/PassingZones';
+import PressureCard from '../components/charts/PressureCard';
+import RouteTree from '../components/charts/RouteTree';
+import RunLanes from '../components/charts/RunLanes';
 import AdvancedBySeason from '../components/player/AdvancedBySeason';
 import GameLog from '../components/player/GameLog';
 import JourneyFeed from '../components/player/JourneyFeed';
@@ -19,13 +23,13 @@ import { seasonTable, summaryOf } from '../lib/player/seasons';
 import type { Tab } from '../lib/playerdb/columns';
 import { flattenLines } from '../lib/playerLines';
 
-export interface PlayerPageData { id: PlayerId; seasons: Season[]; dbs: PlayerDb[] }
+export interface PlayerPageData { id: PlayerId; seasons: Season[]; dbs: PlayerDb[]; charts: ChartDb[] }
 
 /** positions the player database covers, and the Players-table tab for each */
 const DB_TABS: Partial<Record<string, Tab>> = { QB: 'qb', RB: 'rb', WR: 'wr', TE: 'te' };
 
 export default function PlayerPage() {
-  const { id, seasons, dbs } = useLoaderData() as PlayerPageData;
+  const { id, seasons, dbs, charts } = useLoaderData() as PlayerPageData;
   const allLines = useMemo(() => flattenLines(seasons, players), [seasons]);
   const lines = useMemo(() => allLines.filter((l) => l.playerId === id).sort((a, b) => a.year - b.year || a.week - b.week), [allLines, id]);
   const bio = useMemo(() => bioOf(id, players, dbs, new Date()), [id, dbs]);
@@ -34,6 +38,8 @@ export default function PlayerPage() {
   const records = useMemo(() => (lines.length ? playerRecords(allTimeContext(seasons, players, history.managers), id, bio.pos) : []), [lines.length, seasons, id, bio.pos]);
   const dbYears = useMemo(() => dbYearsOf(dbs, id), [dbs, id]);
   const myDbs = useMemo(() => dbs.filter((d) => dbYears.includes(d.year)).sort((a, b) => a.year - b.year), [dbs, dbYears]);
+  // gsis ids are stable across seasons: take any season's
+  const gsis = useMemo(() => dbs.map((d) => d.players[id]?.gsisId).find((g): g is string => !!g) ?? null, [dbs, id]);
   const tab = DB_TABS[bio.pos];
   const newest = dbYears[dbYears.length - 1] ?? 0;
   const [pctYear, setPctYear] = useState(newest);
@@ -54,6 +60,19 @@ export default function PlayerPage() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
           {bars && <PercentileBars pos={bio.pos} bars={bars} years={dbYears} year={pctYear} onYear={setPctYear} />}
           <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />
+        </div>
+      )}
+      {gsis && (bio.pos === 'WR' || bio.pos === 'TE') && <RouteTree charts={charts} gsis={gsis} pos={bio.pos} />}
+      {gsis && bio.pos === 'RB' && (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <RunLanes charts={charts} gsis={gsis} />
+          <RouteTree charts={charts} gsis={gsis} pos="RB" />
+        </div>
+      )}
+      {gsis && bio.pos === 'QB' && (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <PassingZones charts={charts} gsis={gsis} />
+          <PressureCard charts={charts} gsis={gsis} />
         </div>
       )}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}

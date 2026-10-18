@@ -22,7 +22,7 @@ export function ChartCard({ id, title, years, year, onYear, controls, tip, legen
   id: string; title: string; years: number[]; year: number; onYear: (y: number) => void; controls: ReactNode; tip: ReactNode; legend: ReactNode; children: ReactNode;
 }) {
   return (
-    <section aria-labelledby={id} className="card overflow-hidden">
+    <section aria-labelledby={id} className="card @container overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 pb-2 pt-3">
         <div className="flex items-center gap-3">
           <h2 id={id} className="text-sm font-semibold uppercase tracking-wide">{title}</h2>

@@ -57,7 +57,7 @@ export default function PassingZones({ charts, gsis }: { charts: ChartDb[]; gsis
             const [band, side] = i.key.split('|');
             const [lo, hi] = RANGE[band], cx = FX + SIDES.indexOf(side as (typeof SIDES)[number]) * CW + CW / 2, h = Y(lo) - Y(hi), cy = (Y(lo) + Y(hi)) / 2;
             const dim = !share && !i.ranked;
-            return <ellipse key={i.key} cx={cx} cy={cy} rx={CW * 0.36} ry={Math.min(46, h * 0.42)} filter={`url(#${uid})`} opacity={dim ? 0.25 : share ? 0.35 + 0.5 * Math.min(1, i.share / ZONE_SPEC.shareMax) : 0.6} style={{ fill: colour(i) }} />;
+            return <ellipse key={i.key} cx={cx} cy={cy} rx={CW * 0.36} ry={Math.min(46, h * 0.42)} filter={`url(#${uid})`} opacity={dim ? 0.25 : share ? 0.3 + 0.32 * Math.min(1, i.share / ZONE_SPEC.shareMax) : 0.6} style={{ fill: colour(i) }} />;
           })}
           <line x1={FX} x2={FX + FW} y1={Y(0)} y2={Y(0)} strokeWidth={3} style={{ stroke: 'var(--los)' }} />
           <g className={hot ? '[&>g]:opacity-25 [&>g[data-hot=true]]:opacity-100' : ''}>
