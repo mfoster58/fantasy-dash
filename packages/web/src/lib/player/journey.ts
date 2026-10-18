@@ -49,7 +49,7 @@ function eventsOf(seasons: Season[], players: PlayerDirectory, id: PlayerId): Ev
 
 /** Every unbroken spell on one roster, newest first, with the moves that opened and closed it. */
 export function journeyOf(lines: PlayerLine[], seasons: Season[], players: PlayerDirectory, id: PlayerId): Stint[] {
-  if (!lines.length) return [];
+  if (!seasons.length) return [];
   const sorted = [...seasons].sort((a, b) => a.year - b.year);
   const newest = sorted[sorted.length - 1].year;
   const evs = eventsOf(sorted, players, id);
@@ -86,16 +86,9 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
       open = { userId: e.userId, from: e.at, to: null, moves: [asMove(e)] };
     }
   }
+  // every season's carry-over check has run, so a stint still open is on that roster now, before week 1 included
   const tail: Span | null = open;
-  if (tail) {
-    const stillThere = tail.from.year === newest || lines.some((l) => l.year === newest && l.userId === tail.userId);
-    if (stillThere) done.push({ ...tail, to: null });
-    else {
-      const lastYear = Math.max(...lines.filter((l) => l.userId === tail.userId).map((l) => l.year));
-      const s = sorted.find((x) => x.year === lastYear)!;
-      done.push({ ...tail, to: { year: s.year, week: lastWeekOf(s) } });
-    }
-  }
+  if (tail) done.push({ ...tail, to: null });
 
   const inside = (l: PlayerLine, d: Span) => { const at = { year: l.year, week: l.week }; return cmp(at, d.from) >= 0 && (d.to === null || cmp(at, d.to) <= 0); };
   const atOf = (l: PlayerLine): At => ({ year: l.year, week: l.week });
@@ -116,7 +109,7 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
   const newestLast = { year: newest, week: lastWeekOf(sorted[sorted.length - 1]) };
   for (const d of done) if (d.moves.length === 0 && d.to && cmp(d.to, newestLast) === 0) d.to = null;
 
-  return done.map((d) => {
+  return done.map((d, order) => {
     const mine = lines.filter((l) => !l.consolation && l.userId === d.userId && inside(l, d));
     const started = mine.filter((l) => l.started);
     const pts = started.reduce((n, l) => n + l.points, 0);
@@ -129,6 +122,10 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
       w: started.filter((l) => l.result === 'W').length, l: started.filter((l) => l.result === 'L').length, t: started.filter((l) => l.result === 'T').length,
       title: mine.some((l) => l.postseason && champYears.has(l.year)),
       moves: [...d.moves].sort((a, b) => cmp(b.at, a.at) || b.created - a.created),
+      order,
     };
-  }).sort((a, b) => cmp(b.from, a.from));
+  })
+    // newest first; when two start the same week (an add and drop, then a claim), the one he is still in, or that ended later, leads
+    .sort((a, b) => cmp(b.from, a.from) || Number(b.to === null) - Number(a.to === null) || (a.to && b.to ? cmp(b.to, a.to) : 0) || b.order - a.order)
+    .map(({ order: _order, ...st }) => st);
 }

@@ -42,8 +42,9 @@ export default function PlayerPage() {
   const logDb = myDbs.find((d) => d.year === logYear);
   const bars = useMemo(() => (pctDb ? percentileBars(pctDb, id) : null), [pctDb, id]);
   const logLines = useMemo(() => lines.filter((l) => l.year === logYear), [lines, logYear]);
-  const rostered = lines.length > 0;
-  const now = stints[0]?.to === null ? stints[0] : null;
+  // a draft pick or an add counts, even before he plays a week
+  const rostered = lines.length > 0 || stints.length > 0;
+  const now = stints.find((s) => s.to === null) ?? null;
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import PlayerPage from './PlayerPage';
-import { leagueSeasons } from '../test/playerPageFixtures';
+import { leagueSeasons, pick } from '../test/playerPageFixtures';
 import { miniDb } from '../test/playerDbFixtures';
 
 // a data router cannot initialise under jsdom (AbortSignal), so the loader hook is stubbed and the page rendered in a memory router
@@ -13,8 +13,8 @@ vi.mock('../data/load', async (orig) => ({
   history: { seasons: [], managers: { A: { displayName: 'Alice', avatar: null, seasons: [2025, 2026] }, B: { displayName: 'Bob', avatar: null, seasons: [2025, 2026] } }, h2h: {}, allTime: [], topDraftValues: [], worstDraftValues: [] },
 }));
 
-function mount(id: string) {
-  loaded = { id, seasons: leagueSeasons(), dbs: [miniDb()] };
+function mount(id: string, seasons = leagueSeasons()) {
+  loaded = { id, seasons, dbs: [miniDb()] };
   render(<MemoryRouter initialEntries={[`/player/${id}`]}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
 }
 const section = (name: RegExp) => screen.queryByRole('region', { name });
@@ -42,5 +42,12 @@ describe('PlayerPage', () => {
     expect(section(/Path through the league/)).toBeNull();
     expect(section(/Game log/)).toBeInTheDocument();
     expect(screen.getByText('Never rostered in this league')).toBeInTheDocument();
+  });
+  it('a drafted player who never played a week shows his path, not "Never rostered"', () => {
+    const s = leagueSeasons();
+    s[0].draft!.picks.push(pick(10, 100, 'A', 't1', false));
+    mount('t1', s);
+    expect(screen.queryByText('Never rostered in this league')).toBeNull();
+    expect(section(/Path through the league/)).toBeInTheDocument();
   });
 });

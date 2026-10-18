@@ -28,6 +28,20 @@ describe('player pages over the committed data', () => {
       }
     }
   });
+  it('gives the newest played week to the manager who had him, and lists stints newest first', () => {
+    const newest = seasons.reduce((a, b) => (a.year > b.year ? a : b));
+    const lastWeek = Math.max(0, ...newest.weeks.filter((w) => w.played).map((w) => w.week));
+    const at = newest.year * 100 + lastWeek;
+    const key = (x: { year: number; week: number }) => x.year * 100 + x.week;
+    for (const l of lines.filter((x) => x.year === newest.year && x.week === lastWeek)) {
+      const stints = journeyOf(lines.filter((x) => x.playerId === l.playerId), seasons, players, l.playerId);
+      // he may since have been dropped after that game, or claimed for a week not yet played, so the covering stint need not lead
+      const cover = stints.find((st) => key(st.from) <= at && (st.to === null || key(st.to) >= at));
+      expect(cover?.userId, `${l.playerId}`).toBe(l.userId);
+      expect(stints.every((st, i) => i === 0 || key(stints[i - 1].from) >= key(st.from)), `${l.playerId} newest first`).toBe(true);
+      expect(stints.filter((st) => st.to === null).length <= 1, `${l.playerId} one open stint`).toBe(true);
+    }
+  });
   it("builds percentile bars and a game log for a sample of each season's players", () => {
     for (const db of dbs) {
       const season = seasons.find((s) => s.year === db.year);

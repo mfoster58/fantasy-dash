@@ -1,6 +1,6 @@
 import { flattenLines } from '../playerLines';
 import { journeyOf, stintRange } from './journey';
-import { leagueSeasons, tx } from '../../test/playerPageFixtures';
+import { leagueSeasons, pick, tx } from '../../test/playerPageFixtures';
 import { line, players } from '../../test/playerFixtures';
 
 const of = (id: string, s = leagueSeasons()) => journeyOf(flattenLines(s, players).filter((l) => l.playerId === id), s, players, id);
@@ -53,6 +53,33 @@ describe('journeyOf', () => {
   it('still shows a spell on a roster with no recorded move', () => {
     const st = of('k1');
     expect(st.map((x) => [x.userId, x.from, x.to, x.moves.length])).toEqual([['B', { year: 2026, week: 1 }, { year: 2026, week: 1 }, 0]]);
+  });
+  it('puts the stint he is still in first when two managers had him in the same week', () => {
+    const s = leagueSeasons();
+    s[1].transactions.push(tx('free_agent', 1, 100, [['k1', 'A']], []), tx('free_agent', 1, 110, [], [['k1', 'A']]), tx('waiver', 1, 120, [['k1', 'B']], []));
+    expect(of('k1', s).map((x) => [x.userId, x.from, x.to])).toEqual([['B', { year: 2026, week: 1 }, null], ['A', { year: 2026, week: 1 }, { year: 2026, week: 1 }]]);
+  });
+  it('keeps a kept player on the roster between the draft and week 1', () => {
+    const s = leagueSeasons();
+    s[1].weeks = [];
+    s[1].transactions = [];
+    const [bob] = of('w1', s);
+    expect(bob).toMatchObject({ userId: 'B', to: null });
+    expect(bob.moves[0].kind).toBe('kept');
+  });
+  it('builds a stint from moves alone: added after the last played week and kept, before week 1', () => {
+    const s = leagueSeasons();
+    s[0].transactions.push(tx('free_agent', 4, 900, [['t1', 'A']], []));
+    s[1].weeks = [];
+    s[1].transactions = [];
+    s[1].draft!.picks.push(pick(9, 90, 'A', 't1', true));
+    expect(of('t1', s).map((x) => [x.userId, x.from, x.to, x.moves.map((m) => m.kind)])).toEqual([['A', { year: 2025, week: 4 }, null, ['kept', 'freeAgent']]]);
+  });
+  it('shows a drafted player who never played a week', () => {
+    const s = leagueSeasons();
+    s[0].draft!.picks.push(pick(10, 100, 'A', 't1', false));
+    s[0].transactions.push(tx('free_agent', 1, 50, [], [['t1', 'A']]));
+    expect(of('t1', s).map((x) => [x.userId, x.moves.map((m) => m.kind)])).toEqual([['A', ['dropped', 'drafted']]]);
   });
   it('is empty for a player never rostered', () => {
     expect(of('t1')).toEqual([]);
