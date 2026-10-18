@@ -16,16 +16,18 @@ export function pfrWeekly(rows: Iterable<Record<string, string>>, fields: FieldM
 
 /**
  * `${team}|${week}` → the team's offensive snaps that week, from the snap-count file: a player's offense_snaps ÷ offense_pct.
- * The max over a team-week's rows wins (a lineman at 100% gives it exactly). Fills the weeks where Sleeper has no team snaps.
+ * Read from the player with the most snaps (a lineman at 100% gives it exactly): offense_pct is rounded to the
+ * hundredth, so a bit player's 1 snap at 0.01 would read as 100. Fills the weeks where Sleeper has no team snaps.
  */
 export function snapCountTeamSnaps(rows: Iterable<Record<string, string>>): Map<string, number> {
-  const out = new Map<string, number>();
+  const best = new Map<string, { snaps: number; team: number }>();
   for (const r of rows) {
     if (r.game_type !== 'REG') continue;
     const week = Number(r.week), snaps = Number(r.offense_snaps), pct = Number(r.offense_pct);
     if (!(week >= 1 && week <= 18) || !(snaps > 0) || !(pct > 0) || !r.team) continue;
     const key = `${normalizeTeam(r.team)}|${week}`;
-    out.set(key, Math.max(out.get(key) ?? 0, Math.round(snaps / pct)));
+    const prev = best.get(key);
+    if (!prev || snaps > prev.snaps) best.set(key, { snaps, team: Math.round(snaps / pct) });
   }
-  return out;
+  return new Map([...best].map(([k, v]) => [k, v.team]));
 }

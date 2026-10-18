@@ -75,13 +75,17 @@ describe('snapCountTeamSnaps', () => {
     expect(m.get('TB|2')).toBe(65);
     expect([...m.keys()].some((k) => k.endsWith('|19'))).toBe(false);
   });
-  it('normalises team codes, keeps the max, and ignores zero percentages, zero snaps, other weeks and the postseason', () => {
+  it('normalises team codes, reads the busiest player, and ignores zero percentages, zero snaps, other weeks and the postseason', () => {
     const m = snapCountTeamSnaps([
       row('LA', '3', '66', '1.00'), row('LA', '3', '40', '0.60'), row('LA', '3', '10', '0'), row('SF', '3', '0', '0.5'),
       row('SF', '19', '60', '1'), row('SF', '0', '60', '1'), row('SF', '4', '60', '1', 'POST'),
     ]);
-    expect(m.get('LAR|3')).toBe(67);
+    expect(m.get('LAR|3')).toBe(66);
     expect([...m.keys()]).toEqual(['LAR|3']);
+  });
+  it('ignores the rounding of a bit player, whose 1 snap at 1% would read as 100', () => {
+    const m = snapCountTeamSnaps([row('ATL', '1', '1', '0.01'), row('ATL', '1', '76', '1.00'), row('ATL', '1', '3', '0.04')]);
+    expect(m.get('ATL|1')).toBe(76);
   });
 });
 

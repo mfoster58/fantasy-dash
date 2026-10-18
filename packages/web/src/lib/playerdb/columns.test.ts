@@ -18,7 +18,7 @@ describe('column catalogue', () => {
     expect(tabPositions('all')).toEqual(['QB', 'RB', 'WR', 'TE']);
     expect(TAB_GROUPS.all.map((g) => [g.group, g.keys])).toEqual([
       ['', ['g', 'pts', 'ppg', 'posRank', 'projPlus']],
-      ['Usage', ['snaps', 'snapPct', 'touches']],
+      ['Usage', ['snapPct', 'touches']],
       ['Rushing', ['car', 'ruYds', 'ruTd']],
       ['Receiving', ['tgt', 'rec', 'reYds', 'reTd']],
       ['Passing', ['cmp', 'att', 'paYds', 'paTd', 'int']],

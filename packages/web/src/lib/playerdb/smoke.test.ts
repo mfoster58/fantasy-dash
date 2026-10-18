@@ -49,6 +49,19 @@ describe('committed player databases', () => {
     }
   });
 
+  it.each(files)('%s has team snaps that match a full game: the busiest player, nearly always the QB, plays every snap unless benched or hurt', (file) => {
+    const db = load(file);
+    const top = new Map<string, { snaps: number; team: number }>();
+    for (const r of db.rows) {
+      if (r.snaps === undefined || r.teamSnaps === undefined) continue;
+      const k = `${r.team}|${r.week}`;
+      if ((top.get(k)?.snaps ?? -1) < r.snaps) top.set(k, { snaps: r.snaps, team: r.teamSnaps });
+    }
+    if (top.size === 0) return;
+    const full = [...top.values()].filter((t) => t.snaps === t.team).length;
+    expect(full / top.size, `${file} team-weeks whose busiest player played every snap`).toBeGreaterThan(0.7);
+  });
+
   it.each(files)('%s has intended air yards: WR aDOT and RACR medians are plausible', (file) => {
     const db = load(file);
     if (db.throughWeek < 3) return; // too few weeks for stable medians
