@@ -15,7 +15,7 @@ import '@testing-library/jest-dom/vitest';
 }
 
 // jsdom has no PointerEvent, so fireEvent.pointer* would drop `pointerType`; a MouseEvent carrying it is enough for our handlers.
-if (typeof window.PointerEvent === 'undefined') {
+if (typeof window !== 'undefined' && typeof window.PointerEvent === 'undefined') {
   class PointerEventShim extends MouseEvent {
     pointerType: string;
     constructor(type: string, init: PointerEventInit = {}) { super(type, init); this.pointerType = init.pointerType ?? ''; }
