@@ -20,6 +20,12 @@ export default function YprrChart({ stats, pos, estimated }: { stats: PlayerStat
       </div>
       <p className="px-4 text-sm text-muted">Volume and efficiency in one picture: further right is more routes, steeper is more yards per route.</p>
       <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label={`Routes run against receiving yards, ${pool.length} players`}>
+        {Array.from({ length: Math.floor(ym / 100) + 1 }, (_, i) => i * 100).map((t) => (
+          <g key={`y${t}`}><line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} style={{ stroke: 'var(--line)' }} /><text x={M.l - 8} y={y(t) + 4} textAnchor="end" fontSize={12} style={{ fill: 'var(--muted)' }}>{t}</text></g>
+        ))}
+        {Array.from({ length: Math.floor(xm / 50) + 1 }, (_, i) => i * 50).map((t) => (
+          <text key={`x${t}`} x={x(t)} y={H - M.b + 18} textAnchor="middle" fontSize={12} style={{ fill: 'var(--muted)' }}>{t}</text>
+        ))}
         {RAYS.map((r) => { const xe = Math.min(xm, ym / r); return (
           <g key={r}><line x1={x(0)} y1={y(0)} x2={x(xe)} y2={y(xe * r)} strokeDasharray="3 5" style={{ stroke: 'var(--muted)', strokeOpacity: 0.4 }} />
             <text x={x(xe) - 4} y={y(xe * r) + (xe < xm ? 12 : -4)} textAnchor="end" fontSize={11} style={{ fill: 'var(--muted)' }}>{r.toFixed(1)} YPRR</text></g>); })}
