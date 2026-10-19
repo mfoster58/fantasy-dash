@@ -12,7 +12,7 @@ import PercentileBars from '../components/player/PercentileBars';
 import PlayerHeader from '../components/player/PlayerHeader';
 import SeasonTable from '../components/player/SeasonTable';
 import LeagueRecords from '../components/teams/LeagueRecords';
-import { history, players } from '../data/load';
+import { currentSeason, history, players } from '../data/load';
 import { allTimeContext } from '../lib/managerRecords';
 import { bioOf } from '../lib/player/bio';
 import { dbYearsOf } from '../lib/player/coverage';
@@ -41,6 +41,7 @@ export default function PlayerPage() {
   // gsis ids are stable across seasons: take any season's
   const gsis = useMemo(() => dbs.map((d) => d.players[id]?.gsisId).find((g): g is string => !!g) ?? null, [dbs, id]);
   const tab = DB_TABS[bio.pos];
+  const current = currentSeason?.year ?? 0;
   const newest = dbYears[dbYears.length - 1] ?? 0;
   const [pctYear, setPctYear] = useState(newest);
   const [logYear, setLogYear] = useState(newest);
@@ -56,30 +57,28 @@ export default function PlayerPage() {
     <div className="space-y-6">
       <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} />
       {table.rows.length > 0 && <SeasonTable table={table} pos={bio.pos} />}
-      {tab && myDbs.length > 0 && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-          {bars && <PercentileBars pos={bio.pos} bars={bars} years={dbYears} year={pctYear} onYear={setPctYear} />}
-          <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />
-        </div>
-      )}
-      {gsis && (bio.pos === 'WR' || bio.pos === 'TE') && <RouteTree charts={charts} gsis={gsis} pos={bio.pos} />}
+      {tab && myDbs.length > 0 && <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />}
+      {gsis && (bio.pos === 'WR' || bio.pos === 'TE') && <RouteTree charts={charts} gsis={gsis} pos={bio.pos} current={current} />}
       {gsis && bio.pos === 'RB' && (
         <div className="grid gap-6 xl:grid-cols-2">
-          <RunLanes charts={charts} gsis={gsis} />
-          <RouteTree charts={charts} gsis={gsis} pos="RB" />
+          <RunLanes charts={charts} gsis={gsis} current={current} />
+          <RouteTree charts={charts} gsis={gsis} pos="RB" current={current} />
         </div>
       )}
       {gsis && bio.pos === 'QB' && (
         <div className="grid gap-6 xl:grid-cols-2">
-          <PassingZones charts={charts} gsis={gsis} />
-          <PressureCard charts={charts} gsis={gsis} />
+          <PassingZones charts={charts} gsis={gsis} current={current} />
+          <PressureCard charts={charts} gsis={gsis} current={current} />
         </div>
       )}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
-      {rostered && (
+      {(rostered || bars) && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} />
-          <LeagueRecords records={records} tab="players" />
+          {rostered && <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} id={id} />}
+          <div className="space-y-6">
+            {bars && <PercentileBars pos={bio.pos} bars={bars} years={dbYears} year={pctYear} onYear={setPctYear} />}
+            {rostered && <LeagueRecords records={records} tab="players" />}
+          </div>
         </div>
       )}
     </div>

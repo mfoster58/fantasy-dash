@@ -5,10 +5,39 @@ import { playerName } from '../players';
 export type MoveKind = 'drafted' | 'kept' | 'traded' | 'waiver' | 'freeAgent' | 'dropped' | 'commissioner';
 /** week 0 is the draft */
 export interface At { year: number; week: number }
-export interface Move { kind: MoveKind; at: At; created: number; text: string }
+/** One manager's half of a trade: who they received, and what each started for them after it that season. */
+export interface TradeSide { userId: UserId; received: { playerId: PlayerId; pts: number }[] }
+export interface Move { kind: MoveKind; at: At; created: number; text: string; trade?: TradeSide[] }
 export interface Stint { userId: UserId; teamName: string; lastYear: number; from: At; to: At | null; starts: number; pts: number; perStart: number | null; w: number; l: number; t: number; title: boolean; moves: Move[] }
 
 interface Ev extends Move { userId: UserId; acquire: boolean }
+
+/** regular season and the winners bracket; consolation games don't count */
+const counts = (tag: string | null) => tag === null || tag === 'QF' || tag === 'SF' || tag === 'Final';
+
+/** Points `userId` started `playerId` for, from `week` to the end of the season. */
+function startedFor(s: Season, userId: UserId, playerId: PlayerId, week: number): number {
+  let pts = 0;
+  for (const w of s.weeks) {
+    if (w.week < week || !w.played) continue;
+    for (const g of w.games) {
+      if (!counts(g.tag)) continue;
+      for (const sd of g.sides) if (sd.userId === userId) for (const e of sd.starters) if (e.player?.playerId === playerId) pts += e.player.points;
+    }
+  }
+  return Math.round(pts * 10) / 10;
+}
+
+/** Each manager in a trade with what they received, the side that received `first` leading. */
+function tradeSides(s: Season, adds: { playerId: PlayerId; userId: UserId }[], week: number, first: UserId): TradeSide[] {
+  const by = new Map<UserId, TradeSide>();
+  for (const a of adds) {
+    const side = by.get(a.userId) ?? { userId: a.userId, received: [] };
+    side.received.push({ playerId: a.playerId, pts: startedFor(s, a.userId, a.playerId, week) });
+    by.set(a.userId, side);
+  }
+  return [...by.values()].sort((x, y) => Number(y.userId === first) - Number(x.userId === first));
+}
 interface Span { userId: UserId; from: At; to: At | null; moves: Move[] }
 
 const cmp = (a: At, b: At) => a.year - b.year || a.week - b.week;
@@ -32,7 +61,7 @@ function eventsOf(seasons: Season[], players: PlayerDirectory, id: PlayerId): Ev
       if (t.type === 'trade' && add) {
         const from = drop?.userId;
         const got = from ? t.adds.filter((m) => m.userId === from).map((m) => playerName(players, m.playerId)) : [];
-        out.push({ at, created: t.created, kind: 'traded', userId: add.userId, acquire: true, text: from ? `Traded from ${name(from)}${got.length ? `, who got ${got.join(' + ')}` : ''}` : 'Traded' });
+        out.push({ at, created: t.created, kind: 'traded', userId: add.userId, acquire: true, text: from ? `Traded from ${name(from)}${got.length ? `, who got ${got.join(' + ')}` : ''}` : 'Traded', trade: tradeSides(s, t.adds, t.week, add.userId) });
         continue;
       }
       if (drop) out.push({ at, created: t.created, kind: t.type === 'commissioner' ? 'commissioner' : 'dropped', userId: drop.userId, acquire: false, text: t.type === 'commissioner' ? 'Moved by the commissioner' : 'Dropped' });
@@ -56,7 +85,7 @@ export function journeyOf(lines: PlayerLine[], seasons: Season[], players: Playe
   const done: Span[] = [];
   let open: Span | null = null;
   const close = (to: At) => { if (open) { done.push({ ...open, to }); open = null; } };
-  const asMove = (e: Ev): Move => ({ kind: e.kind, at: e.at, created: e.created, text: e.text });
+  const asMove = (e: Ev): Move => ({ kind: e.kind, at: e.at, created: e.created, text: e.text, ...(e.trade ? { trade: e.trade } : {}) });
 
   for (const s of sorted) {
     const carried: Span | null = open;

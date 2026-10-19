@@ -4,7 +4,7 @@ import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { LANE_LABEL, LANE_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
-import { Arrowhead, ChartCard, Chip, Seg, Sidelines, useHot } from './Field';
+import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
 
 /** gap: where he crosses the line (px from centre); tip: where the arrow ends */
 const GEO: Record<Lane, { gap: number; tip: [number, number] }> = {
@@ -17,15 +17,14 @@ const METRICS: [string, string][] = [['share', 'Carry share'], ['ypc', 'Yds/carr
 const BOXES: [Box, string][] = [['all', 'All'], ['light', 'Light box (≤6)'], ['heavy', 'Heavy box (7+)']];
 const W = 700, BAND = 30, CX = 350, LOS = 232, RB_Y = 330, H = 370;
 
-export default function RunLanes({ charts, gsis }: { charts: ChartDb[]; gsis: string }) {
-  const years = useMemo(() => charts.filter((c) => hasChart(LANE_SPEC, c, gsis)).map((c) => c.year).sort((a, b) => b - a), [charts, gsis]);
-  const [year, setYear] = useState(years[0] ?? 0);
+export default function RunLanes({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(LANE_SPEC, c, gsis), current);
   const [box, setBox] = useState<Box>('all');
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
-  const db = charts.find((c) => c.year === year) ?? charts.find((c) => c.year === years[0]);
   const items = useMemo(() => (db ? chartItems(LANE_SPEC, db, gsis, box, metric) ?? [] : []), [db, gsis, box, metric]);
-  if (!years.length || !db) return null;
+  if (!years.length) return null;
+  const empty = db ? null : { title: `No run data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his run lanes.` };
 
   const share = metric === 'share';
   const def = share ? null : LANE_SPEC.metrics[metric];
@@ -33,11 +32,11 @@ export default function RunLanes({ charts, gsis }: { charts: ChartDb[]; gsis: st
   const hotItem = items.find((i) => i.key === hot);
 
   return (
-    <ChartCard id="chart-lanes" title="Run lanes" years={years} year={year} onYear={setYear}
+    <ChartCard id="chart-lanes" title="Run lanes" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Box" options={BOXES} value={box} onChange={setBox} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{LANE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} carries, {hotItem.counts[1]} yds, {hotItem.counts[4]} TD · {Math.round(hotItem.share * 100)}% of his carries
-        {Object.entries(LANE_SPEC.metrics).map(([k, m]) => { const one = chartItems(LANE_SPEC, db, gsis, box, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
+        {Object.entries(LANE_SPEC.metrics).map(([k, m]) => { const one = chartItems(LANE_SPEC, db!, gsis, box, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
       </> : <span className="text-muted">Hover a lane for its numbers.</span>}
       legend={share ? <span>Share of his carries, 0% to 25%+</span>
         : <><span>{def!.label} percentile among RBs · grey = under {LANE_SPEC.min} carries, not ranked</span><span>Success = a carry that gained EPA</span></>}>
@@ -46,6 +45,10 @@ export default function RunLanes({ charts, gsis }: { charts: ChartDb[]; gsis: st
           <rect x={BAND} y={20} width={W - 2 * BAND} height={H - 20} style={{ fill: 'var(--field)' }} />
           <Sidelines width={W} top={20} bottom={H} band={BAND} marks={[{ y: LOS, label: 'LOS' }]} />
           <line x1={BAND} x2={W - BAND} y1={LOS} y2={LOS} strokeWidth={2} style={{ stroke: 'var(--los)' }} />
+          {!db && (Object.keys(GEO) as Lane[]).map((k) => {
+            const g = GEO[k], gap = CX + g.gap, ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * 0.55, LOS + 38] : [CX + g.gap * 0.6, LOS + 30];
+            return <path key={k} d={`M${CX},${RB_Y - 12} Q${ctrl[0]},${ctrl[1]} ${gap},${LOS} L${CX + g.tip[0]},${g.tip[1]}`} fill="none" strokeWidth={5} strokeLinecap="round" style={{ stroke: 'var(--dim)' }} />;
+          })}
           <g className={hot ? '[&>g]:opacity-15 [&>g[data-hot=true]]:opacity-100' : ''}>
             {items.map((i) => {
               const g = GEO[i.key], c = colour(i);

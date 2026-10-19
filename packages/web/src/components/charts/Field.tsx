@@ -1,4 +1,5 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import type { ChartDb } from '@fantasy-dash/core';
 import SeasonPicker from '../SeasonPicker';
 
 type HotBind = { onPointerEnter: (e: PointerEvent) => void; onPointerLeave: (e: PointerEvent) => void; onPointerDown: (e: PointerEvent) => void; onClick: () => void };
@@ -18,6 +19,20 @@ export function useHot(): [string | null, (key: string) => HotBind] {
   })];
 }
 
+/**
+ * The seasons a card offers: his chart seasons, newest first, led by the current season while its data isn't out yet.
+ * `db` is undefined for a season without data; the card then draws greyed out with a note.
+ */
+export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number) {
+  const dataYears = charts.filter(has).map((c) => c.year).sort((a, b) => b - a);
+  const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
+  const [picked, setYear] = useState<number | null>(null);
+  // a pick from another player's seasons falls back to this one's first
+  const year = picked !== null && years.includes(picked) ? picked : years[0] ?? 0;
+  const db = dataYears.includes(year) ? charts.find((c) => c.year === year) : undefined;
+  return { years, year, setYear, db, latest: dataYears[0] ?? 0 };
+}
+
 export function Seg<T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) {
   return (
     <div role="group" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-md bg-surface-2 p-0.5">
@@ -29,8 +44,10 @@ export function Seg<T extends string>({ label, options, value, onChange }: { lab
   );
 }
 
-export function ChartCard({ id, title, years, year, onYear, controls, tip, legend, children }: {
+export function ChartCard({ id, title, years, year, onYear, controls, tip, legend, children, empty = null }: {
   id: string; title: string; years: number[]; year: number; onYear: (y: number) => void; controls: ReactNode; tip: ReactNode; legend: ReactNode; children: ReactNode;
+  /** a season with no data yet: the chart greys out under this note */
+  empty?: { title: string; body: string } | null;
 }) {
   return (
     <section aria-labelledby={id} className="card @container overflow-hidden">
@@ -41,7 +58,15 @@ export function ChartCard({ id, title, years, year, onYear, controls, tip, legen
         </div>
         <div className="flex flex-wrap items-center gap-2">{controls}</div>
       </div>
-      {children}
+      <div className="relative">
+        <div className={empty ? 'pointer-events-none opacity-30 grayscale' : ''}>{children}</div>
+        {empty && (
+          <div data-testid="chart-empty" className="absolute left-1/2 top-[42%] flex w-[min(22rem,90%)] -translate-x-1/2 -translate-y-1/2 flex-col gap-1 rounded-lg border border-line bg-surface-2 px-4 py-3 text-center text-sm shadow-lg">
+            <b>{empty.title}</b>
+            <span className="text-xs text-muted">{empty.body}</span>
+          </div>
+        )}
+      </div>
       <div className="min-h-[2.5rem] border-t border-line px-4 py-2 text-xs" data-testid="chart-tip">{tip}</div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-4 py-2 text-[11px] text-muted">{legend}</div>
     </section>

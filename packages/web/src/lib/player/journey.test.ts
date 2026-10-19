@@ -15,6 +15,15 @@ describe('journeyOf', () => {
     expect(stintRange(bob)).toBe('2025 Wk 3 → now');
     expect(stintRange(alice)).toBe('2025 draft → 2025 Wk 2');
   });
+  it('a trade move carries each side: what the manager received and the points he started for them after the trade that season', () => {
+    const [bob] = of('w1');
+    const trade = bob.moves.find((m) => m.kind === 'traded')!;
+    // this page's player's new team first
+    expect(trade.trade).toEqual([
+      { userId: 'B', received: [{ playerId: 'w1', pts: 8 }] },
+      { userId: 'A', received: [{ playerId: 'r1', pts: 22 }] },
+    ]);
+  });
   it('a drop and re-add in the same week keeps one stint, listing both moves', () => {
     const [alice] = of('r1');
     expect(alice.userId).toBe('A');

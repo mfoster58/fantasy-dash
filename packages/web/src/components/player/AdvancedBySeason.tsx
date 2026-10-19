@@ -10,6 +10,12 @@ import TintCell from '../players/db/TintCell';
 
 interface Row { year: number; agg: Agg; tint: (key: string) => string }
 
+/** Season, G, PTS, PPG and RK stay put while the rest scrolls sideways */
+const FIXED_KEYS = ['g', 'pts', 'ppg', 'posRank'];
+const SEASON_W = '4.5rem';
+const LEFT: Record<string, string> = { g: '4.5rem', pts: '7.25rem', ppg: '11.25rem', posRank: '14.75rem' };
+const WIDTH: Record<string, string> = { g: '2.75rem', pts: '4rem', ppg: '3.5rem', posRank: '3rem' };
+
 /** The Players table's columns for his position, one row per season tinted against that season's position peers, then the career row. */
 export default function AdvancedBySeason({ id, dbs, tab }: { id: PlayerId; dbs: PlayerDb[]; tab: Tab }) {
   const [collapsed, toggle] = useCollapsedGroups(tab);
@@ -25,32 +31,35 @@ export default function AdvancedBySeason({ id, dbs, tab }: { id: PlayerId; dbs: 
   }), [dbs, id, groups]);
   const career = useMemo(() => (dbs.length > 1 ? aggregateAllTime(mergeSeasons(dbs)).find((a) => a.id === id) ?? null : null), [dbs, id]);
   const plain = () => 'transparent';
+  const stickOf = (key: string, under?: string) => (LEFT[key] ? { left: LEFT[key], width: WIDTH[key], under, edge: key === 'posRank' } : undefined);
   return (
-    <section aria-labelledby="pp-adv" className="card overflow-auto">
+    <section aria-labelledby="pp-adv" className="card">
       <div className="border-b border-line px-4 pb-2 pt-3"><h2 id="pp-adv" className="text-sm font-semibold uppercase tracking-wide">Advanced by season</h2></div>
+      <div className="overflow-x-auto">
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead>
-          <tr><th colSpan={1 + lead.length} className="border-b border-line" /><GroupHeaderCells groups={body} collapsed={collapsed} onToggleGroup={toggle} /></tr>
-          <tr><th scope="col" className={`${th} border-b border-line text-left`}>Season</th>{lead.map((c) => <HeaderCell key={c.key} col={c} title={c.def} />)}<ColumnHeaderCells groups={body} collapsed={collapsed} title={(c) => c.def} /></tr>
+          <tr><th colSpan={1 + FIXED_KEYS.length} className="sticky left-0 z-[2] bg-surface border-b border-line" /><th colSpan={lead.length - FIXED_KEYS.length} className="border-b border-line" /><GroupHeaderCells groups={body} collapsed={collapsed} onToggleGroup={toggle} /></tr>
+          <tr><th scope="col" className={`${th} sticky left-0 z-[2] bg-surface border-b border-line text-left`} style={{ width: SEASON_W, minWidth: SEASON_W, maxWidth: SEASON_W }}>Season</th>{lead.map((c) => <HeaderCell key={c.key} col={c} title={c.def} left={LEFT[c.key]} width={WIDTH[c.key]} />)}<ColumnHeaderCells groups={body} collapsed={collapsed} title={(c) => c.def} /></tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.year}>
-              <td className="num border-b border-line px-3 py-1.5">{r.year}</td>
-              {lead.map((c) => <TintCell key={c.key} value={columnValue(c, r.agg, 'total')} col={c} mode="total" tint={r.tint(c.key)} dim={false} est={Boolean(c.est) && r.agg.routesEst} />)}
+              <td className="num sticky left-0 z-[1] border-b border-line bg-surface px-3 py-1.5" style={{ width: SEASON_W, minWidth: SEASON_W, maxWidth: SEASON_W }}>{r.year}</td>
+              {lead.map((c) => <TintCell key={c.key} value={columnValue(c, r.agg, 'total')} col={c} mode="total" tint={r.tint(c.key)} dim={false} est={Boolean(c.est) && r.agg.routesEst} stick={stickOf(c.key)} />)}
               <StatCells groups={body} collapsed={collapsed} agg={r.agg} mode="total" tint={r.tint} />
             </tr>
           ))}
           {career && (
             <tr className="bg-surface-2 font-semibold">
-              <td className="border-b border-line px-3 py-1.5">Career</td>
+              <td className="sticky left-0 z-[1] border-b border-line bg-surface-2 px-3 py-1.5" style={{ width: SEASON_W, minWidth: SEASON_W, maxWidth: SEASON_W }}>Career</td>
               {/* a position rank across seasons means nothing */}
-              {lead.map((c) => <TintCell key={c.key} value={c.key === 'posRank' ? null : columnValue(c, career, 'total')} col={c} mode="total" tint="transparent" dim={false} est={Boolean(c.est) && career.routesEst} />)}
+              {lead.map((c) => <TintCell key={c.key} value={c.key === 'posRank' ? null : columnValue(c, career, 'total')} col={c} mode="total" tint="transparent" dim={false} est={Boolean(c.est) && career.routesEst} stick={stickOf(c.key, 'var(--surface-2)')} />)}
               <StatCells groups={body} collapsed={collapsed} agg={career} mode="total" tint={plain} />
             </tr>
           )}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }

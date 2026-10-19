@@ -7,9 +7,9 @@ export type Group = { group: string; cols: ColumnDef[] };
 export const th = 'section-label whitespace-nowrap px-2 py-2 text-center';
 
 /** A column header; a sort button when `onSort` is given, a plain label otherwise. */
-export function HeaderCell({ col, title, arrow = '', onSort, first = false }: { col: ColumnDef; title: string; arrow?: string; onSort?: (key: string) => void; first?: boolean }) {
+export function HeaderCell({ col, title, arrow = '', onSort, first = false, left, width }: { col: ColumnDef; title: string; arrow?: string; onSort?: (key: string) => void; first?: boolean; left?: string; width?: string }) {
   return (
-    <th scope="col" title={title} className={`${th} border-b border-line ${first ? 'border-l' : ''}`}>
+    <th scope="col" title={title} className={`${th} border-b border-line ${first ? 'border-l' : ''} ${left !== undefined ? 'sticky z-[2] bg-surface' : ''}`} style={left !== undefined ? { left, width, minWidth: width, maxWidth: width } : undefined}>
       {onSort ? <button type="button" onClick={() => onSort(col.key)} className="hover:text-ink">{col.label}{arrow}</button> : <>{col.label}{arrow}</>}
     </th>
   );
