@@ -1,5 +1,5 @@
 import type { DbPos } from '../playerdb/types';
-import { ROUTES, type Band, type ChartDb, type ChartPlayer, type Counts, type Lane, type Route, type Split, type Zone } from './types';
+import { ROUTES, type Band, type RzKey, type ChartDb, type ChartPlayer, type Counts, type Lane, type Route, type Split, type Zone } from './types';
 
 type Row = Record<string, string>;
 const present = (v: string | undefined): v is string => v !== undefined && v !== '' && v !== 'NA';
@@ -23,6 +23,25 @@ export function zoneOf(airYards: string, location: string): Zone | null {
   return `${band}|${location}` as Zone;
 }
 
+/** carry success under the yards-to-go rule: 40% of the distance on 1st down, 60% on 2nd, all of it on 3rd or 4th */
+export function rushSuccess(down: number, toGo: number, gained: number): boolean {
+  if (down === 1) return gained >= 0.4 * toGo;
+  if (down === 2) return gained >= 0.6 * toGo;
+  return gained >= toGo;
+}
+const rzBand = (yl: number): 'a' | 'b' | 'c' | null => (yl >= 1 && yl <= 5 ? 'a' : yl >= 6 && yl <= 10 ? 'b' : yl >= 11 && yl <= 20 ? 'c' : null);
+
+/** The weekly injury report, regular season: gsis → week → [status, injury]; IR counts as Out. */
+export function parseInjuries(rows: Iterable<Row>): ChartDb['injuries'] {
+  const out: ChartDb['injuries'] = {};
+  for (const r of rows) {
+    if (r.season_type !== 'REG' || !present(r.gsis_id) || !present(r.week)) continue;
+    const status = r.report_status === 'Injured Reserve' ? 'Out' : present(r.report_status) ? r.report_status : '';
+    (out[r.gsis_id] ??= {})[String(Number(r.week))] = [status, (present(r.report_primary_injury) ? r.report_primary_injury : present(r.practice_primary_injury) ? r.practice_primary_injury : '')];
+  }
+  return out;
+}
+
 function bump<K extends string>(table: Partial<Record<K, Counts>>, key: K, values: number[]) {
   const c = (table[key] ??= values.map(() => 0));
   values.forEach((v, i) => { c[i] += v; });
@@ -38,6 +57,9 @@ function roundAll(p: ChartPlayer) {
   if (p.lanes) for (const t of Object.values(p.lanes)) fix(t, 2);
   if (p.zones) for (const t of Object.values(p.zones)) fix(t, 3, { 6: 1 });
   if (p.splits) fix(p.splits, 4);
+  if (p.plays?.rush) p.plays.rush = p.plays.rush.map((v) => round(v, 0));
+  if (p.plays?.rz) for (const c of Object.values(p.plays.rz)) if (c) c.forEach((v, i) => { c[i] = round(v, i === 1 ? 1 : 0); });
+  if (p.plays?.qtr) p.plays.qtr = p.plays.qtr.map((v, i) => round(v, i % 2 ? 2 : 0));
 }
 
 /**
@@ -45,9 +67,10 @@ function roundAll(p: ChartPlayer) {
  * Routes for WR/TE/RB targets with a route; lanes for RB carries (not scrambles); zones and splits for QB dropbacks.
  * Blank participation fields leave a play out of that filter but keep it in `all`.
  */
-export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, posOf: (gsis: string) => DbPos | null, year: number, builtAt: string): ChartDb {
+export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, posOf: (gsis: string) => DbPos | null, year: number, builtAt: string, injuries: Iterable<Row> = []): ChartDb {
   const parts = new Map<string, Row>();
   for (const r of participation) parts.set(playKey(r.nflverse_game_id, r.play_id), r);
+  const hasPart = parts.size > 0;
   const players: Record<string, ChartPlayer> = {};
   const player = (gsis: string, allowed: DbPos[]): ChartPlayer | null => {
     const pos = players[gsis]?.pos ?? posOf(gsis);
@@ -60,7 +83,7 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
     if (p.season_type !== 'REG' || week < 1 || week > 18) continue;
     const x = parts.get(playKey(p.game_id, p.play_id));
 
-    if (present(p.receiver_player_id) && x && ROUTE_SET.has(x.route)) {
+    if (hasPart && present(p.receiver_player_id) && x && ROUTE_SET.has(x.route)) {
       const pl = player(p.receiver_player_id, ['WR', 'TE', 'RB']);
       if (pl) {
         const t = (pl.routes ??= { all: {}, man: {}, zone: {} });
@@ -71,7 +94,7 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
       }
     }
 
-    if (p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
+    if (hasPart && p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
       const lane = laneOf(p.run_location ?? '', p.run_gap ?? '');
       const pl = lane ? player(p.rusher_player_id, ['RB']) : null;
       if (pl && lane) {
@@ -82,7 +105,7 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
       }
     }
 
-    if (p.pass_attempt === '1' && present(p.passer_player_id)) {
+    if (hasPart && p.pass_attempt === '1' && present(p.passer_player_id)) {
       const pl = player(p.passer_player_id, ['QB']);
       if (pl) {
         const sack = p.sack === '1';
@@ -107,7 +130,30 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
         }
       }
     }
+
+    // play-by-play only: built with or without participation
+    if (p.two_point_attempt !== '1') {
+      if (p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
+        const pl = player(p.rusher_player_id, ['RB']);
+        if (pl) {
+          const plays = (pl.plays ??= {});
+          const gained = num(p.yards_gained);
+          bump(plays as Record<string, Counts>, 'rush', [1, rushSuccess(num(p.down), num(p.ydstogo), gained) ? 1 : 0, gained >= 10 ? 1 : 0, gained]);
+          const b = rzBand(num(p.yardline_100));
+          if (b) bump((plays.rz ??= {}), `r${b}` as RzKey, [1, num(p.rushing_yards) * 0.1 + num(p.rush_touchdown) * 6]);
+        }
+      }
+      if (p.pass_attempt === '1' && p.sack !== '1' && present(p.receiver_player_id)) {
+        const b = rzBand(num(p.yardline_100));
+        const pl = b ? player(p.receiver_player_id, ['RB']) : null;
+        if (pl && b) bump(((pl.plays ??= {}).rz ??= {}), `t${b}` as RzKey, [1, num(p.complete_pass) + num(p.receiving_yards) * 0.1 + num(p.pass_touchdown) * 6]);
+      }
+      if (p.pass_attempt === '1' && present(p.passer_player_id)) {
+        const pl = player(p.passer_player_id, ['QB']);
+        if (pl) bump((pl.plays ??= {}) as Record<string, Counts>, 'qtr', num(p.qtr) >= 4 ? [0, 0, 1, num(p.epa)] : [1, num(p.epa), 0, 0]);
+      }
+    }
   }
   for (const p of Object.values(players)) roundAll(p);
-  return { year, builtAt, players };
+  return { year, builtAt, participation: hasPart, injuries: parseInjuries(injuries), players };
 }

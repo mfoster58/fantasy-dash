@@ -3,7 +3,7 @@ import type { ChartDb } from '@fantasy-dash/core';
 /** 2025 charts for the miniDb players (gsis `00-<id>`) plus peers. Numbers chosen so percentiles are easy to read. */
 export function miniCharts(year = 2025): ChartDb {
   return {
-    year, builtAt: '2026-01-01T00:00:00.000Z',
+    year, builtAt: '2026-01-01T00:00:00.000Z', participation: true, injuries: {},
     players: {
       '00-w1': { pos: 'WR', routes: {
         all: { GO: [30, 15, 450, 9, 3], 'IN/DIG': [15, 12, 180, 4.5, 1], SLANT: [5, 4, 30, 0.5, 0] },
