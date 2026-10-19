@@ -139,7 +139,7 @@ Each view has a one-line question under its title, taken from the mockup. Exampl
 
 ## Volume trends (RB, WR, TE)
 
-A table like the mockup and Kyle M's RB Volume Trends:
+A table like the mockup and the published RB Volume Trends graphic Mathias shared:
 
 - **Window:** the season's last five scored weeks. For the current season that's weeks 1–N, with N up to 5, or the latest five once more are played.
 - **Columns:**
