@@ -69,6 +69,23 @@ The page is positional only: **QB, RB, WR and TE**. Each position has three part
 
 `ChartDbSchema` grows to match. The existing player-page charts are unchanged.
 
+### Injury report
+
+The sync downloads nflverse `injuries_{year}.csv` (`https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_{year}.csv`) for each season it builds. It stores, per player and week, the report status (Out, Doubtful, Questionable, or none) and the primary injury.
+
+- **Where it lives:** the chart file, under `ChartDb.injuries: Record<gsisId, Record<week, [status, injury]>>`, regular season only. A 404 means no injuries (logged, not an error).
+- **The latest report** is the highest week in the file. A status of IR counts as Out.
+
+### Healthy games
+
+A **healthy game** is one where `gp` is set and the game was not injury-shortened. A game is **injury-shortened** when both of these hold:
+- He played under half his usual snap share. "Usual" is the median snap share of his other games in the window or season.
+- He appears with any status on the injury report that week or the next.
+
+For the most recent scored week, when the next week's report isn't published yet, a snap share under a third of his usual counts as shortened on its own, provisionally.
+
+**Per-game averages divide by healthy games only, and count only those games' stats:** PPG, xFP/G and weighted opportunities per game. Rates are unaffected, because a short game adds few plays to them: YPRR, success %, catch rate and the rest.
+
 ### Season-to-date stats (from the player database)
 
 All are computed in `packages/web/src/lib/stats/players/`. Per player over the season's scored weeks, counting games with `gp` set:
@@ -151,14 +168,15 @@ A table like the mockup and the published RB Volume Trends graphic Mathias share
 
 - **Each cell:**
   - one mini bar per week, with the value above it
-  - a bye shown as a dotted stub, and a missed game as an empty stub
+  - a bye shown as a dotted stub, a missed game as an empty stub, and an injury-shortened game as a faint bar with a small ✚ (its value shown on hover)
   - the latest bar green if his change is up, red if down
-  - the change: the mean of his last two weeks minus the mean of the earlier weeks
+  - the change: the mean of his healthy games in the last two weeks minus the mean of his healthy earlier games; shortened and missed games don't count
 - **Trend score:** each column's change divided by that column's standard deviation of change across the pool, then averaged. It's shown as a bar and a signed number.
 - **Rows:**
   - "▲ Trending up": the top 10.
   - "▼ Trending down": the bottom 6.
-  - Pool: players with at least 3 games and minimum volume over the window. That's 25 carries + targets for RB, 15 targets for WR and 10 targets for TE.
+  - Pool: players with at least one healthy game in the last two weeks, at least two healthy earlier games, and minimum volume over the window. That's 25 carries + targets for RB, 15 targets for WR and 10 targets for TE.
+  - **Currently injured players are left out of both lists.** Anyone listed Out or Doubtful on the latest injury report is shown instead in an "Injured" line under the table, for example "David Montgomery: Out (groin)", so a drop that is really an injury isn't read as a shrinking role.
 - Each row shows the team logo, name and team, and links to the player page.
 
 ## Yards per route run, visualised (WR, TE)
@@ -187,6 +205,12 @@ On phones:
   - Quarter grouping, with overtime counted in Q4.
   - A season with no participation, which gives `participation: false` and empty split tables.
 - **Sync:** the final-file rule. A complete season without participation is not final.
+- **Injuries:**
+  - the injury-report parse, with IR counting as Out
+  - the shortened-game rule, at exactly half and a third of usual snaps, with and without a report
+  - healthy-game per-game averages
+  - the trend pool's healthy-game minimums
+  - currently Out or Doubtful players moving to the Injured line (fixtures modelled on Goedert, Montgomery and Achane in 2026)
 - **Web lib:**
   - every season stat on a fixture, including the routes-estimated fallback
   - red-zone expected points from league band averages
