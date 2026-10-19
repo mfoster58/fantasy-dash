@@ -35,7 +35,8 @@ const rzBand = (yl: number): 'a' | 'b' | 'c' | null => (yl >= 1 && yl <= 5 ? 'a'
 export function parseInjuries(rows: Iterable<Row>): ChartDb['injuries'] {
   const out: ChartDb['injuries'] = {};
   for (const r of rows) {
-    if (r.season_type !== 'REG' || !present(r.gsis_id) || !present(r.week)) continue;
+    // older files have only game_type
+    if ((r.season_type ?? r.game_type) !== 'REG' || !present(r.gsis_id) || !present(r.week)) continue;
     const status = r.report_status === 'Injured Reserve' ? 'Out' : present(r.report_status) ? r.report_status : '';
     (out[r.gsis_id] ??= {})[String(Number(r.week))] = [status, (present(r.report_primary_injury) ? r.report_primary_injury : present(r.practice_primary_injury) ? r.practice_primary_injury : '')];
   }

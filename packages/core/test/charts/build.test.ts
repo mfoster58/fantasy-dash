@@ -195,6 +195,10 @@ describe('parseInjuries', () => {
     ]);
     expect(inj).toEqual({ G1: { '3': ['Out', 'Knee'], '5': ['', 'Knee'] }, G2: { '6': ['Out', 'Groin'] } });
   });
+  it('older files have game_type instead of season_type', () => {
+    expect(parseInjuries([{ game_type: 'REG', gsis_id: 'G9', week: '1', report_status: 'Out', report_primary_injury: 'Hand', practice_primary_injury: 'Hand' }]))
+      .toEqual({ G9: { '1': ['Out', 'Hand'] } });
+  });
   it('buildCharts stores the parsed report', () => {
     const db = buildCharts([], [], () => null, 2026, 'x', [{ season_type: 'REG', gsis_id: 'G1', week: '2', report_status: 'Questionable', report_primary_injury: 'Hamstring', practice_primary_injury: '' }]);
     expect(db.injuries).toEqual({ G1: { '2': ['Questionable', 'Hamstring'] } });
