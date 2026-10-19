@@ -17,8 +17,8 @@ export function pctColor(p: number | null): string {
   return p < 50 ? `color-mix(in oklch, var(--warn) ${p * 2}%, var(--loss))` : `color-mix(in oklch, var(--win) ${(p - 50) * 2}%, var(--warn))`;
 }
 
-/** Text colour on a chip: the page ink on a dim heat chip (share under 9%), the on-chip token otherwise. */
-export const chipInk = (fill: 'heat' | 'pct', share = 1): string => (fill === 'heat' && share < 0.09 ? 'var(--ink)' : 'var(--on-chip)');
+/** Text colour on a chip: a heat chip takes its theme's low or high heat ink (under 9% share is low), a percentile chip the on-chip token. */
+export const chipInk = (fill: 'heat' | 'pct', share = 1): string => (fill === 'pct' ? 'var(--on-chip)' : share < 0.09 ? 'var(--heat-ink-low)' : 'var(--heat-ink-high)');
 
 export function ordinal(n: number): string {
   const t = n % 100;
