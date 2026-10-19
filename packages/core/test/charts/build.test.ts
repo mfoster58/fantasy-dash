@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCharts, laneOf, zoneOf, ChartDbSchema, type DbPos } from '../../src';
+import { buildCharts, laneOf, zoneOf, ChartDbSchema, parseInjuries, type DbPos } from '../../src';
 
 type Row = Record<string, string>;
 let nextPlay = 1;
@@ -112,7 +112,8 @@ describe('buildCharts: zones and splits', () => {
   });
   it('a dropback with no participation row counts only in all', () => {
     const a = qb({ air_yards: '3', pass_location: 'middle', complete_pass: '1', passing_yards: '3' });
-    const db = build([a], []);
+    const other = play({ receiver_player_id: 'W' });
+    const db = build([a, other], [part(other, { route: 'GO' })]);
     expect(db.players.Q.splits).toEqual({ all: [1, 1, 1, 3, 0, 0] });
     expect(db.players.Q.zones!.all['short|middle']![0]).toBe(1);
     expect(db.players.Q.zones!.clean).toEqual({});
@@ -120,5 +121,86 @@ describe('buildCharts: zones and splits', () => {
   it('the result parses with ChartDbSchema', () => {
     const a = qb({ air_yards: '3', pass_location: 'middle' });
     expect(() => ChartDbSchema.parse(build([a], [part(a, { was_pressure: 'FALSE' })]))).not.toThrow();
+  });
+});
+
+
+describe('buildCharts: plays (play-by-play only)', () => {
+  const rush = (f: Row) => play({ rush_attempt: '1', rusher_player_id: 'R', ...f });
+  it('success follows the yards-to-go rule at each down, exactly at the threshold', () => {
+    const plays = [
+      rush({ down: '1', ydstogo: '10', yards_gained: '4' }),   // 40%: success
+      rush({ down: '1', ydstogo: '10', yards_gained: '3' }),   // short
+      rush({ down: '2', ydstogo: '5', yards_gained: '3' }),    // 60%: success
+      rush({ down: '2', ydstogo: '5', yards_gained: '2' }),    // short
+      rush({ down: '3', ydstogo: '2', yards_gained: '2' }),    // 100%: success
+      rush({ down: '4', ydstogo: '2', yards_gained: '1' }),    // short
+    ];
+    const db = build(plays, []);
+    expect(db.players.R.plays!.rush).toEqual([6, 3, 0, 15]);
+  });
+  it('explosive at exactly 10 yards; scrambles and two-point tries are not carries', () => {
+    const db = build([
+      rush({ down: '1', ydstogo: '10', yards_gained: '10' }),
+      rush({ down: '1', ydstogo: '10', yards_gained: '9' }),
+      rush({ down: '1', ydstogo: '10', yards_gained: '30', qb_scramble: '1' }),
+      rush({ down: '', ydstogo: '0', yards_gained: '2', two_point_attempt: '1' }),
+    ], []);
+    expect(db.players.R.plays!.rush).toEqual([2, 2, 1, 19]);
+  });
+  it('red-zone bands at 1, 5, 6, 10, 11, 20 and 21, with PPR points for carries and targets', () => {
+    const db = build([
+      rush({ yardline_100: '1', rushing_yards: '1', rush_touchdown: '1' }),
+      rush({ yardline_100: '5', rushing_yards: '2' }),
+      rush({ yardline_100: '6', rushing_yards: '3' }),
+      rush({ yardline_100: '10', rushing_yards: '0' }),
+      rush({ yardline_100: '11', rushing_yards: '5' }),
+      rush({ yardline_100: '20', rushing_yards: '0' }),
+      rush({ yardline_100: '21', rushing_yards: '9' }),
+      play({ pass_attempt: '1', sack: '0', receiver_player_id: 'R', yardline_100: '8', complete_pass: '1', receiving_yards: '8', pass_touchdown: '1' }),
+    ], []);
+    expect(db.players.R.plays!.rz).toEqual({ ra: [2, 6.3], rb: [2, 0.3], rc: [2, 0.5], tb: [1, 7.8] });
+  });
+  it('QB dropbacks split into quarters 1–3 and 4 plus overtime', () => {
+    const qb = (q: string, epa: string) => play({ pass_attempt: '1', passer_player_id: 'Q', sack: '0', qtr: q, epa });
+    const db = build([qb('1', '0.5'), qb('3', '-0.25'), qb('4', '1'), qb('5', '0.5')], []);
+    expect(db.players.Q.plays!.qtr).toEqual([2, 0.25, 2, 1.5]);
+  });
+  it('with no participation file: participation false, and no routes, lanes, zones or splits', () => {
+    const db = build([
+      play({ receiver_player_id: 'W' }),
+      rush({ run_location: 'left', run_gap: 'tackle', down: '1', ydstogo: '10', yards_gained: '5' }),
+      play({ pass_attempt: '1', passer_player_id: 'Q', sack: '0', air_yards: '5', pass_location: 'left' }),
+    ], []);
+    expect(db.participation).toBe(false);
+    expect(db.players.W).toBeUndefined();
+    expect(db.players.R.lanes).toBeUndefined();
+    expect(db.players.Q.zones).toBeUndefined();
+    expect(db.players.Q.splits).toBeUndefined();
+    expect(db.players.R.plays!.rush![0]).toBe(1);
+  });
+  it('with participation: participation true', () => {
+    const a = play({ receiver_player_id: 'W' });
+    expect(build([a], [part(a, { route: 'GO' })]).participation).toBe(true);
+  });
+});
+
+describe('parseInjuries', () => {
+  it('keeps regular-season rows by gsis and week, IR as Out, a blank status as listed', () => {
+    const inj = parseInjuries([
+      { season_type: 'REG', gsis_id: 'G1', week: '3', report_status: 'Out', report_primary_injury: 'Knee', practice_primary_injury: 'Knee' },
+      { season_type: 'REG', gsis_id: 'G1', week: '5', report_status: '', report_primary_injury: '', practice_primary_injury: 'Knee' },
+      { season_type: 'REG', gsis_id: 'G2', week: '6', report_status: 'Injured Reserve', report_primary_injury: 'Groin', practice_primary_injury: '' },
+      { season_type: 'POST', gsis_id: 'G3', week: '19', report_status: 'Out', report_primary_injury: 'Ankle', practice_primary_injury: '' },
+    ]);
+    expect(inj).toEqual({ G1: { '3': ['Out', 'Knee'], '5': ['', 'Knee'] }, G2: { '6': ['Out', 'Groin'] } });
+  });
+  it('older files have game_type instead of season_type', () => {
+    expect(parseInjuries([{ game_type: 'REG', gsis_id: 'G9', week: '1', report_status: 'Out', report_primary_injury: 'Hand', practice_primary_injury: 'Hand' }]))
+      .toEqual({ G9: { '1': ['Out', 'Hand'] } });
+  });
+  it('buildCharts stores the parsed report', () => {
+    const db = buildCharts([], [], () => null, 2026, 'x', [{ season_type: 'REG', gsis_id: 'G1', week: '2', report_status: 'Questionable', report_primary_injury: 'Hamstring', practice_primary_injury: '' }]);
+    expect(db.injuries).toEqual({ G1: { '2': ['Questionable', 'Hamstring'] } });
   });
 });

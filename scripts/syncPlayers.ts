@@ -17,6 +17,7 @@ const CHART_DIR = path.join(ROOT, 'data', 'charts');
 const args = process.argv.slice(2);
 const full = args.includes('--full');
 const dryRun = args.includes('--dry-run');
+const chartsOnly = args.includes('--charts-only');
 const onlySeason = args.includes('--season') ? Number(args[args.indexOf('--season') + 1]) : null;
 const log = (msg: string) => console.log(`[sync:players] ${msg}`);
 
@@ -34,6 +35,7 @@ const URLS = {
   snaps: (y: number) => `${NFLVERSE}/snap_counts/snap_counts_${y}.csv`,
   participation: (y: number) => `${NFLVERSE}/pbp_participation/pbp_participation_${y}.csv`,
   pbp: (y: number) => `${NFLVERSE}/pbp/play_by_play_${y}.csv.gz`,
+  injuries: (y: number) => `${NFLVERSE}/injuries/injuries_${y}.csv`,
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -178,7 +180,7 @@ async function main() {
   const leagues = chain.filter((l) => onlySeason === null || Number(l.season) === onlySeason);
   log(`Seasons: ${leagues.map((l) => l.season).join(', ')}`);
 
-  await playerDbPhase(client, leagues);
+  if (!chartsOnly) await playerDbPhase(client, leagues);
   await chartsPhase(leagues);
 }
 
@@ -226,10 +228,10 @@ async function playerDbPhase(client: SleeperClient, leagues: SleeperLeague[]) {
   log(`Wrote ${built.length} season file(s) to ${OUT_DIR}`);
 }
 
-/** A chart file is final when it parses; finished seasons with a final file are not rebuilt. */
+/** A chart file is final when it parses and was built with participation; anything else is rebuilt (participation arrives after a season ends). */
 function chartFileFinal(file: string): boolean {
   if (!existsSync(file)) return false;
-  try { ChartDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); return true; } catch { return false; }
+  try { return ChartDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))).participation; } catch { return false; }
 }
 
 /** gsis → position: the season's player database first (league overrides apply), then the nflverse player list. */
@@ -256,12 +258,14 @@ async function chartsPhase(leagues: SleeperLeague[]) {
   const built: string[] = [];
   for (const league of todo) {
     const year = Number(league.season);
-    const part = await fetchText(URLS.participation(year));
-    if (part === null) { log(`${year}: no participation file yet; no charts`); continue; }
     const pbp = await fetchText(URLS.pbp(year));
     if (pbp === null) { log(`${year}: no play-by-play file yet; no charts`); continue; }
+    const part = await fetchText(URLS.participation(year));
+    if (part === null) log(`${year}: no participation file yet; building play-by-play charts only`);
+    const injuries = await fetchText(URLS.injuries(year));
+    if (injuries === null) log(`${year}: no injury report file`);
     nflPlayers ??= rowsOf(await requireText(URLS.players, 'nflverse player list'));
-    const db = buildCharts(parseCsv(pbp), parseCsv(part), positionsFor(year, nflPlayers), year, new Date().toISOString());
+    const db = buildCharts(parseCsv(pbp), part ? parseCsv(part) : [], positionsFor(year, nflPlayers), year, new Date().toISOString(), injuries ? parseCsv(injuries) : []);
     ChartDbSchema.parse(db);
     log(`${year}: charts for ${Object.keys(db.players).length} players`);
     const file = path.join(staging, `${year}.json`);

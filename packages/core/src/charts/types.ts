@@ -18,6 +18,9 @@ export type Split = (typeof SPLITS)[number];
 export type Coverage = 'all' | 'man' | 'zone';
 export type Box = 'all' | 'light' | 'heavy';
 export type Pocket = 'all' | 'clean' | 'pressured';
+/** red-zone opportunity keys: r = carry, t = target; a = yardline 1–5, b = 6–10, c = 11–20 */
+export const RZ_KEYS = ['ra', 'rb', 'rc', 'ta', 'tb', 'tc'] as const;
+export type RzKey = (typeof RZ_KEYS)[number];
 
 /**
  * A fixed-order tuple of sums.
@@ -25,6 +28,9 @@ export type Pocket = 'all' | 'clean' | 'pressured';
  * lane:  carries, yards, epa, successes (epa > 0), tds
  * zone:  attempts, completions, yards, epa, tds, ints, cpoeSum, cpoeN
  * split: dropbacks, attempts, completions, yards, epa, sacks
+ * plays.rush: carries, successes (yards-to-go rule), explosive (10+ yards), yards
+ * plays.rz:   opportunities, PPR points
+ * plays.qtr:  dropbacks Q1–3, their EPA, dropbacks Q4 + OT, their EPA
  */
 export type Counts = number[];
 
@@ -34,11 +40,17 @@ export interface ChartPlayer {
   lanes?: Record<Box, Partial<Record<Lane, Counts>>>;
   zones?: Record<Pocket, Partial<Record<Zone, Counts>>>;
   splits?: Partial<Record<Split, Counts>>;
+  /** from play-by-play alone, so present for the current season too */
+  plays?: { rush?: Counts; rz?: Partial<Record<RzKey, Counts>>; qtr?: Counts };
 }
 
 /** One season of play-by-play chart counts, keyed by gsis id. Regular season, weeks 1–18. */
 export interface ChartDb {
   year: number;
   builtAt: string;
+  /** whether the participation file existed: routes, lanes, zones and splits are only built when it did */
+  participation: boolean;
+  /** nflverse weekly injury report: gsis → week → [status (IR as Out; '' when listed without a game status), injury] */
+  injuries: Record<string, Record<string, [string, string]>>;
   players: Record<string, ChartPlayer>;
 }

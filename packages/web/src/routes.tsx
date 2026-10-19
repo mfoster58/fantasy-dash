@@ -11,6 +11,7 @@ import DraftPage from './pages/DraftPage';
 import GradingPage from './pages/GradingPage';
 import RecordsPage from './pages/RecordsPage';
 import StatsPage from './pages/StatsPage';
+import StatsPlayersPage, { type StatsPlayersData } from './pages/StatsPlayersPage';
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
 import PlayersPage from './pages/PlayersPage';
@@ -66,6 +67,12 @@ export async function playerLoader({ params }: LoaderFunctionArgs): Promise<Play
   return { id, seasons, dbs, charts };
 }
 
+export async function statsPlayersLoader(): Promise<StatsPlayersData> {
+  const years = history.seasons.map((s) => s.year);
+  const [dbs, charts] = await Promise.all([Promise.all(years.filter(hasPlayerDb).map(loadPlayerDb)), Promise.all(years.filter(hasCharts).map(loadCharts))]);
+  return { dbs, charts };
+}
+
 function Layout() {
   return (
     <div className="min-h-screen bg-bg text-ink">
@@ -111,6 +118,7 @@ export const routes: RouteObject[] = [
       { path: 'h2h', loader: () => loadAllSeasons(), element: <H2HPage /> },
       { path: 'records', loader: () => loadAllSeasons(), element: <RecordsPage /> },
       { path: 'stats', loader: () => loadAllSeasons(), element: <StatsPage /> },
+      { path: 'stats/players', loader: statsPlayersLoader, element: <StatsPlayersPage /> },
       { path: 'stats/managers', loader: ({ request }: LoaderFunctionArgs) => redirect(`/stats${new URL(request.url).search}`) },
       { path: 'history', element: <HistoryPage /> },
       { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },

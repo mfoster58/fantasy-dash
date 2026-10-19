@@ -103,7 +103,7 @@ describe('PlayerPage', () => {
     expect(section(/Route tree/)).toBeNull();
   });
   it('lists only his chart seasons in a card picker', () => {
-    const empty = { year: 2024, builtAt: '', players: {} };
+    const empty = { year: 2024, builtAt: '', participation: true, injuries: {}, players: {} };
     mount('w1', leagueSeasons(), [miniCharts(2025), empty, miniCharts(2023)]);
     const picker = within(section(/Route tree/)!).getByRole('combobox');
     // the current season leads while its data isn't out
