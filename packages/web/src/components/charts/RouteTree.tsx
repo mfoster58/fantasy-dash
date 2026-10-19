@@ -4,7 +4,7 @@ import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { ROUTE_LABEL, ROUTE_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
-import { Arrowhead, ChartCard, Chip, Seg, Sidelines, useHot } from './Field';
+import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
 
 /** Route paths in yards from the receiver (x < 0 is inside), the label anchor, and a fixed label spot where the tip would collide. */
 const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'end'; l?: [number, number] }> = {
@@ -27,32 +27,31 @@ const COVERAGES: [Coverage, string][] = [['all', 'All'], ['man', 'vs Man'], ['zo
 const W = 660, BAND = 30, OX = 365, OY = 272, SX = 12.5, SY = 10.2, H = 330;
 const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
 
-export default function RouteTree({ charts, gsis, pos }: { charts: ChartDb[]; gsis: string; pos: string }) {
-  const years = useMemo(() => charts.filter((c) => hasChart(ROUTE_SPEC, c, gsis)).map((c) => c.year).sort((a, b) => b - a), [charts, gsis]);
-  const [year, setYear] = useState(years[0] ?? 0);
+export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: ChartDb[]; gsis: string; pos: string; current?: number }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ROUTE_SPEC, c, gsis), current);
   const [cov, setCov] = useState<Coverage>('all');
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
-  const db = charts.find((c) => c.year === year) ?? charts.find((c) => c.year === years[0]);
   const items = useMemo(() => (db ? chartItems(ROUTE_SPEC, db, gsis, cov, metric) ?? [] : []), [db, gsis, cov, metric]);
-  if (!years.length || !db) return null;
+  if (!years.length) return null;
+  const empty = db ? null : { title: `No route data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his route tree.` };
 
   const share = metric === 'share';
   const def = share ? null : ROUTE_SPEC.metrics[metric];
   const colour = (i: ChartItem<Route>) => (share ? heatColor(i.share, ROUTE_SPEC.shareMax) : pctColor(i.pct));
   const main = (i: ChartItem<Route>) => (share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value));
   const small = (i: ChartItem<Route>) => (share ? `${i.volume} tgt` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} tgt` : `${i.volume} tgt · too few to rank`);
-  const pool = Object.values(db.players).filter((p) => p.pos === db.players[gsis]?.pos && (p.routes?.[cov] ? Object.keys(p.routes[cov]).length : 0) > 0).length;
+  const pool = !db ? 0 : Object.values(db.players).filter((p) => p.pos === db.players[gsis]?.pos && (p.routes?.[cov] ? Object.keys(p.routes[cov]).length : 0) > 0).length;
   const hotItem = items.find((i) => i.key === hot);
   const marks = [0, 5, 10, 15, 20].map((v) => ({ y: Y(v), label: v === 0 ? 'LOS' : `+${v}` }));
 
   return (
-    <ChartCard id="chart-routes" title="Route tree" years={years} year={year} onYear={setYear}
+    <ChartCard id="chart-routes" title="Route tree" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Coverage" options={COVERAGES} value={cov} onChange={setCov} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{ROUTE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} targets, {hotItem.counts[1]} catches, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD
         {' · '}{Math.round(hotItem.share * 100)}% of his targets
-        {Object.entries(ROUTE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ROUTE_SPEC, db, gsis, cov, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
+        {Object.entries(ROUTE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ROUTE_SPEC, db!, gsis, cov, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
         <span className="text-muted"> · ranked against {pool} {pos}s</span>
       </> : <span className="text-muted">Hover a route for its numbers.</span>}
       legend={share ? <span>Share of his targets, 0% to 20%+ · switch metric to see how he ranks among {pos}s on each route</span>
@@ -64,6 +63,9 @@ export default function RouteTree({ charts, gsis, pos }: { charts: ChartDb[]; gs
           <Sidelines width={W} top={Y(24)} bottom={H} band={BAND} marks={marks} />
           <line x1={BAND} x2={W - BAND} y1={Y(0)} y2={Y(0)} strokeWidth={2} style={{ stroke: 'var(--los)' }} />
           <line x1={X(0)} y1={Y(0)} x2={X(0)} y2={Y(12)} strokeWidth={3} strokeLinecap="round" style={{ stroke: 'var(--dim)' }} />
+          {!db && (Object.keys(SHAPES) as Route[]).map((k) => (
+            <polyline key={k} points={SHAPES[k].p.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ')} fill="none" strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" style={{ stroke: 'var(--dim)' }} />
+          ))}
           <g className={hot ? '[&>g]:opacity-15 [&>g[data-hot=true]]:opacity-100' : ''}>
             {items.map((i) => {
               const s = SHAPES[i.key], c = colour(i);

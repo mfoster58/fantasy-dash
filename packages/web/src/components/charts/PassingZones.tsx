@@ -3,7 +3,7 @@ import { SIDES, type ChartDb, type Pocket, type Zone } from '@fantasy-dash/core'
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { SPLIT_SPEC, ZONE_SPEC } from '../../lib/charts/specs';
-import { ChartCard, Chevrons, Seg, Sidelines, useHot } from './Field';
+import { ChartCard, useChartSeason, Chevrons, Seg, Sidelines, useHot } from './Field';
 
 const METRICS: [string, string][] = [['share', 'Throw share'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['epa', 'EPA/att'], ['cpoe', 'CPOE']];
 const POCKETS: [Pocket, string][] = [['all', 'All'], ['clean', 'Clean pocket'], ['pressured', 'Pressured']];
@@ -15,16 +15,15 @@ const Y = (v: number) => TOP + (35 - v) * YD, H = Y(-7) + 8;
 /** the tiles' stat for each metric: comp and ypa match, the rest show EPA per dropback */
 const TILE: Record<string, string> = { share: 'epa', cpoe: 'epa', epa: 'epa', comp: 'comp', ypa: 'ypa' };
 
-export default function PassingZones({ charts, gsis }: { charts: ChartDb[]; gsis: string }) {
-  const years = useMemo(() => charts.filter((c) => hasChart(ZONE_SPEC, c, gsis)).map((c) => c.year).sort((a, b) => b - a), [charts, gsis]);
-  const [year, setYear] = useState(years[0] ?? 0);
+export default function PassingZones({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ZONE_SPEC, c, gsis), current);
   const [pocket, setPocket] = useState<Pocket>('all');
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
-  const db = charts.find((c) => c.year === year) ?? charts.find((c) => c.year === years[0]);
   const items = useMemo(() => (db ? chartItems(ZONE_SPEC, db, gsis, pocket, metric) ?? [] : []), [db, gsis, pocket, metric]);
   const splits = useMemo(() => (db ? chartItems(SPLIT_SPEC, db, gsis, 'all', TILE[metric]) ?? [] : []), [db, gsis, metric]);
-  if (!years.length || !db) return null;
+  if (!years.length) return null;
+  const empty = db ? null : { title: `No passing data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his passing zones.` };
 
   const share = metric === 'share';
   const def = share ? null : ZONE_SPEC.metrics[metric];
@@ -34,11 +33,11 @@ export default function PassingZones({ charts, gsis }: { charts: ChartDb[]; gsis
   const uid = `zg-${year}`;
 
   return (
-    <ChartCard id="chart-zones" title="Passing zones" years={years} year={year} onYear={setYear}
+    <ChartCard id="chart-zones" title="Passing zones" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Pocket" options={POCKETS} value={pocket} onChange={setPocket} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{BAND_LABEL[hotItem.key.split('|')[0]]} {hotItem.key.split('|')[1]}</b> · {hotItem.counts[0]} att, {hotItem.counts[1]} comp, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD, {hotItem.counts[5]} INT · {Math.round(hotItem.share * 100)}% of his throws
-        {Object.entries(ZONE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ZONE_SPEC, db, gsis, pocket, k)!.find((x) => x.key === hotItem.key)!; return one.value === null ? null : <span key={k}> · {m.label} <b>{m.fmt(one.value)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
+        {Object.entries(ZONE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ZONE_SPEC, db!, gsis, pocket, k)!.find((x) => x.key === hotItem.key)!; return one.value === null ? null : <span key={k}> · {m.label} <b>{m.fmt(one.value)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
       </> : <span className="text-muted">Hover a zone for its numbers.</span>}
       legend={share ? <span>Share of his throws, 0% to 20%+ · depth is air yards, drawn to scale</span>
         : <><span>{def!.label} percentile among QBs · grey = under {ZONE_SPEC.min} throws, not ranked</span>{metric === 'cpoe' && <span>CPOE = completion % over what an average QB completes on the same throws</span>}</>}>

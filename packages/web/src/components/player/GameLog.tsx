@@ -14,6 +14,9 @@ import TintCell from '../players/db/TintCell';
 /** fantasy points and points against projection lead each week; games, PPG and rank mean nothing for one week */
 const LEAD = ['pts', 'projPlus'].map((k) => COLUMNS[k]);
 const FIXED = ['Wk', 'Opp', 'Manager', 'Status', 'Result'];
+/** Wk and Opp stay put while the rest scrolls sideways */
+const STICK_LEFT = ['0', '2.75rem'];
+const STICK_W = ['2.75rem', '3.5rem'];
 const td = 'border-b border-line px-2 py-1.5';
 
 /** The Players table for one player, one row per week, with the league week he spent on a roster to the left. */
@@ -25,16 +28,17 @@ export default function GameLog({ id, db, lines, season, tab, pos, years, onYear
   const tints = useMemo(() => weekTints(db, rows, [...lead, ...body.flatMap((g) => g.cols)], pos), [db, rows, body, pos]);
   const statSpan = lead.length + body.reduce((n, g) => n + (collapsed.has(g.group) ? 1 : g.cols.length), 0);
   return (
-    <section aria-labelledby="pp-log" className="card overflow-auto">
+    <section aria-labelledby="pp-log" className="card">
       <div className="flex items-center justify-between gap-2 border-b border-line px-4 pb-2 pt-3">
         <h2 id="pp-log" className="text-sm font-semibold uppercase tracking-wide">Game log</h2>
         <SeasonPicker years={years} value={db.year} onChange={(v) => { if (v !== 'all') onYear(v); }} />
       </div>
+      <div className="overflow-x-auto">
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead>
-          <tr><th colSpan={FIXED.length + lead.length} className="border-b border-line" /><GroupHeaderCells groups={body} collapsed={collapsed} onToggleGroup={toggle} /></tr>
+          <tr><th colSpan={2} className="sticky left-0 z-[2] bg-surface border-b border-line" /><th colSpan={FIXED.length - 2 + lead.length} className="border-b border-line" /><GroupHeaderCells groups={body} collapsed={collapsed} onToggleGroup={toggle} /></tr>
           <tr>
-            {FIXED.map((h) => <th key={h} scope="col" className={`${th} border-b border-line text-left`}>{h === 'Status' ? '' : h}</th>)}
+            {FIXED.map((h, n) => <th key={h} scope="col" className={`${th} border-b border-line text-left ${n < 2 ? 'sticky z-[2] bg-surface' : ''}`} style={n < 2 ? { left: STICK_LEFT[n], width: STICK_W[n], minWidth: STICK_W[n], maxWidth: STICK_W[n] } : undefined}>{h === 'Status' ? '' : h}</th>)}
             {lead.map((c) => <HeaderCell key={c.key} col={c} title={c.def} />)}
             <ColumnHeaderCells groups={body} collapsed={collapsed} title={(c) => c.def} />
           </tr>
@@ -45,8 +49,8 @@ export default function GameLog({ id, db, lines, season, tab, pos, years, onYear
             const name = l ? history.managers[l.userId]?.displayName ?? l.userId : '';
             const fixed = (
               <>
-                <td className={`num ${td}`}>{r.week}</td>
-                <td className={`whitespace-nowrap text-muted ${td}`}>{r.opp}</td>
+                <td className={`num sticky z-[1] bg-surface ${td}`} style={{ left: STICK_LEFT[0], width: STICK_W[0], minWidth: STICK_W[0], maxWidth: STICK_W[0] }}>{r.week}</td>
+                <td className={`sticky z-[1] whitespace-nowrap bg-surface text-muted shadow-[inset_-1px_0_0_var(--line)] ${td}`} style={{ left: STICK_LEFT[1], width: STICK_W[1], minWidth: STICK_W[1], maxWidth: STICK_W[1] }}>{r.opp}</td>
                 <td className={`whitespace-nowrap ${td}`}>
                   {l ? <span className="flex items-center gap-1.5"><Avatar avatar={history.managers[l.userId]?.avatar ?? null} name={name} size={18} /><ManagerLink userId={l.userId}>{name}</ManagerLink></span> : <span className="text-xs text-muted">FA</span>}
                 </td>
@@ -69,6 +73,7 @@ export default function GameLog({ id, db, lines, season, tab, pos, years, onYear
           })}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }

@@ -34,10 +34,10 @@
   --field-band: #232d3b;
   --field-line: #2c3849;
   --los: #4d7fe6;
-  --heat-0: #33435a;
-  --heat-1: #3f6aa8;
-  --heat-2: #6fa6ee;
-  --heat-3: #cfe5ff;
+  --heat-0: #24382d;
+  --heat-1: #2f6b48;
+  --heat-2: #4fae73;
+  --heat-3: #b8f0c8;
   --on-chip: #11161e;
 }
 
@@ -67,10 +67,10 @@
   --field-band: #d9e0ea;
   --field-line: #c6cfdb;
   --los: #2f6fe0;
-  --heat-0: #dde6f2;
-  --heat-1: #9dbbe6;
-  --heat-2: #4f84d1;
-  --heat-3: #1d4e9e;
+  --heat-0: #dcefe3;
+  --heat-1: #9fd6b2;
+  --heat-2: #3f9d63;
+  --heat-3: #1d6b3e;
   --on-chip: #ffffff;
 }
 

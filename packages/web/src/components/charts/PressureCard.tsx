@@ -3,18 +3,17 @@ import type { ChartDb, Split } from '@fantasy-dash/core';
 import { chartItems, hasChart } from '../../lib/charts/rank';
 import { ordinal, pctColor } from '../../lib/charts/scale';
 import { SPLIT_GROUPS, SPLIT_SPEC } from '../../lib/charts/specs';
-import { ChartCard, Seg, useHot } from './Field';
+import { ChartCard, useChartSeason, Seg, useHot } from './Field';
 
 const METRICS: [string, string][] = [['epa', 'EPA/dropback'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['sack', 'Sack %']];
 
-export default function PressureCard({ charts, gsis }: { charts: ChartDb[]; gsis: string }) {
-  const years = useMemo(() => charts.filter((c) => hasChart(SPLIT_SPEC, c, gsis)).map((c) => c.year).sort((a, b) => b - a), [charts, gsis]);
-  const [year, setYear] = useState(years[0] ?? 0);
+export default function PressureCard({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPLIT_SPEC, c, gsis), current);
   const [metric, setMetric] = useState('epa');
   const [hot, bind] = useHot();
-  const db = charts.find((c) => c.year === year) ?? charts.find((c) => c.year === years[0]);
   const items = useMemo(() => (db ? chartItems(SPLIT_SPEC, db, gsis, 'all', metric) ?? [] : []), [db, gsis, metric]);
-  if (!years.length || !db) return null;
+  if (!years.length) return null;
+  const empty = db ? null : { title: `No pressure data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see how he did under pressure.` };
 
   const def = SPLIT_SPEC.metrics[metric];
   const by = new Map(items.map((i) => [i.key, i]));
@@ -38,11 +37,11 @@ export default function PressureCard({ charts, gsis }: { charts: ChartDb[]; gsis
   };
 
   return (
-    <ChartCard id="chart-pressure" title="Under pressure & vs coverage" years={years} year={year} onYear={setYear}
+    <ChartCard id="chart-pressure" title="Under pressure & vs coverage" years={years} year={year} onYear={setYear} empty={empty}
       controls={<Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} />}
       tip={hotItem ? <>
         {hotItem.counts[0]} dropbacks, {hotItem.counts[1]} att, {hotItem.counts[2]} comp, {hotItem.counts[3]} yds, {hotItem.counts[5]} sacks
-        {Object.entries(SPLIT_SPEC.metrics).map(([k, m]) => { const one = chartItems(SPLIT_SPEC, db, gsis, 'all', k)!.find((x) => x.key === hotItem.key)!; return one.value === null ? null : <span key={k}> · {m.label} <b>{m.fmt(one.value)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
+        {Object.entries(SPLIT_SPEC.metrics).map(([k, m]) => { const one = chartItems(SPLIT_SPEC, db!, gsis, 'all', k)!.find((x) => x.key === hotItem.key)!; return one.value === null ? null : <span key={k}> · {m.label} <b>{m.fmt(one.value)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
       </> : <span className="text-muted">Each row ranks him only against QBs in the same situation, not against his own other rows.</span>}
       legend={<><span>{def.label} percentile among QBs in the same situation · under {SPLIT_SPEC.min} dropbacks, not ranked</span><span>Tick = his All dropbacks percentile</span>{metric === 'sack' && <span>Lower sack % ranks higher</span>}</>}>
       <ul className="px-3 py-2" aria-label="Splits">

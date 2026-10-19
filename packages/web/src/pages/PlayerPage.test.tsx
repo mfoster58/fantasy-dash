@@ -28,7 +28,7 @@ describe('PlayerPage', () => {
     for (const name of [/In this league/, /Among WRs/, /Advanced by season/, /Game log/, /Path through the league/, /League records/]) expect(section(name), String(name)).toBeInTheDocument();
     const gold = within(section(/In this league/)!).getAllByRole('row').find((r) => r.getAttribute('data-title') === 'true');
     expect(gold).toHaveTextContent('2025');
-    expect(within(section(/Path through the league/)!).getByText('Traded from Alice, who got Ricky One')).toBeInTheDocument();
+    expect(within(section(/Path through the league/)!).getByTestId('trade-card')).toBeInTheDocument();
   });
   it('kicker shows league sections only', () => {
     mount('k1');
@@ -50,6 +50,34 @@ describe('PlayerPage', () => {
     mount('t1', s);
     expect(screen.queryByText('Never rostered in this league')).toBeNull();
     expect(section(/Path through the league/)).toBeInTheDocument();
+  });
+  it('shows a trade as a swap card: each manager and what they received, this player marked', () => {
+    mount('w1');
+    const card = within(section(/Path through the league/)!).getByTestId('trade-card');
+    const sides = within(card).getAllByTestId('trade-side');
+    expect(sides.map((s) => s.textContent)).toEqual([expect.stringMatching(/Bob\s*received.*Wally One.*8\.0/), expect.stringMatching(/Alice\s*received.*Ricky One.*22\.0/)]);
+    expect(within(sides[0]).getByText('Wally One').closest('[data-me]')!.getAttribute('data-me')).toBe('true');
+    expect(within(section(/Path through the league/)!).queryByText(/who got/)).toBeNull();
+  });
+  it('orders the page: advanced numbers on their own row, then charts and the game log, then the path beside Among WRs over the records', () => {
+    mount('w1');
+    const order = [/Advanced by season/, /Route tree/, /Game log/, /Path through the league/, /Among WRs/, /League records/].map((n) => section(n)!);
+    for (let i = 1; i < order.length; i++) expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING, String(i)).toBeTruthy();
+    // its own row: not sharing a parent with Among WRs any more
+    expect(section(/Advanced by season/)!.parentElement).not.toBe(section(/Among WRs/)!.parentElement);
+  });
+  it('keeps Season, G, PTS, PPG and RK fixed in Advanced by season, and Wk and Opp in the game log', () => {
+    mount('w1');
+    const adv = section(/Advanced by season/)!;
+    const first = within(adv).getAllByRole('row')[2];
+    expect(first.querySelector('td')).toHaveClass('sticky');
+    for (const k of ['g', 'pts', 'ppg', 'posRank']) expect(within(first).getByTestId(`cell-${k}`), k).toHaveClass('sticky');
+    expect(within(first).getByTestId('cell-projPlus')).not.toHaveClass('sticky');
+    const log = section(/Game log/)!;
+    const cells = within(log).getAllByRole('row')[2].querySelectorAll('td');
+    expect(cells[0]).toHaveClass('sticky');
+    expect(cells[1]).toHaveClass('sticky');
+    expect(cells[2]).not.toHaveClass('sticky');
   });
   it('a WR gets the route tree, a TE too, between the advanced numbers and the game log', () => {
     mount('w1');
@@ -78,6 +106,7 @@ describe('PlayerPage', () => {
     const empty = { year: 2024, builtAt: '', players: {} };
     mount('w1', leagueSeasons(), [miniCharts(2025), empty, miniCharts(2023)]);
     const picker = within(section(/Route tree/)!).getByRole('combobox');
-    expect([...picker.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['2025', '2023']);
+    // the current season leads while its data isn't out
+    expect([...picker.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['2026', '2025', '2023']);
   });
 });

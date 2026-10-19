@@ -27,4 +27,16 @@ describe('RunLanes', () => {
     const { container } = render(<RunLanes charts={[miniCharts()]} gsis="00-w1" />);
     expect(container).toBeEmptyDOMElement();
   });
+  it('opens on the current season greyed out with a note until its data exists; an earlier season shows the chart', () => {
+    render(<RunLanes charts={[miniCharts()]} gsis="00-r1" current={2026} />);
+    const c = screen.getByRole('region', { name: /Run lanes/ });
+    const picker = within(c).getByRole('combobox') as HTMLSelectElement;
+    expect(picker.value).toBe('2026');
+    expect([...picker.options].map((o) => o.value)).toEqual(['2026', '2025']);
+    expect(within(c).getByTestId('chart-empty')).toHaveTextContent('No run data for 2026 yet');
+    expect(c.querySelectorAll('[data-chip], [data-main], li[data-key]')).toHaveLength(0);
+    fireEvent.change(picker, { target: { value: '2025' } });
+    expect(within(c).queryByTestId('chart-empty')).toBeNull();
+    expect(c.querySelectorAll('[data-chip], [data-main], li[data-key]').length).toBeGreaterThan(0);
+  });
 });
