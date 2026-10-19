@@ -14,6 +14,14 @@ const LINES: Record<string, { pos: 'QB' | 'RB' | 'WR' | 'TE'; team: string; name
   rLast: { pos: 'RB', team: 'CCC', name: 'Last Week Back', share: [0.85, 0.8, null, 0.8, 0.05], car: [18, 17, 0, 18, 1], tgt: [4, 4, 0, 4, 0] },
   wA:    { pos: 'WR', team: 'AAA', name: 'Wide A', share: [0.9, 0.9, 0.9, 0.9, 0.9], tgt: [8, 8, 8, 9, 9] },
   wB:    { pos: 'WR', team: 'BBB', name: 'Wide B', share: [0.85, 0.85, 0.85, 0.85, 0.85], tgt: [6, 6, 6, 6, 7] },
+  rF1: { pos: 'RB', team: 'AAA', name: 'Filler One', share: [0.5, 0.5, 0.5, 0.5, 0.5], car: [8, 8, 8, 8, 8], tgt: [2, 2, 2, 2, 2] },
+  rF2: { pos: 'RB', team: 'BBB', name: 'Filler Two', share: [0.5, 0.5, 0.5, 0.5, 0.5], car: [8, 8, 8, 8, 8], tgt: [2, 2, 2, 2, 2] },
+  rF3: { pos: 'RB', team: 'CCC', name: 'Filler Three', share: [0.5, 0.5, null, 0.5, 0.5], car: [8, 8, 0, 8, 8], tgt: [2, 2, 0, 2, 2] },
+  rF4: { pos: 'RB', team: 'AAA', name: 'Filler Four', share: [0.4, 0.4, 0.4, 0.42, 0.42], car: [7, 7, 7, 7, 7], tgt: [2, 2, 2, 2, 2] },
+  rF5: { pos: 'RB', team: 'BBB', name: 'Filler Five', share: [0.45, 0.45, 0.45, 0.44, 0.44], car: [7, 7, 7, 7, 7], tgt: [2, 2, 2, 2, 2] },
+  rF6: { pos: 'RB', team: 'AAA', name: 'Filler Six', share: [0.5, 0.5, 0.5, 0.49, 0.49], car: [7, 7, 7, 7, 7], tgt: [1, 1, 1, 1, 1] },
+  rF7: { pos: 'RB', team: 'BBB', name: 'Filler Seven', share: [0.5, 0.5, 0.5, 0.48, 0.48], car: [7, 7, 7, 7, 7], tgt: [1, 1, 1, 1, 1] },
+  rF8: { pos: 'RB', team: 'AAA', name: 'Filler Eight', share: [0.5, 0.5, 0.5, 0.47, 0.47], car: [7, 7, 7, 7, 7], tgt: [1, 1, 1, 1, 1] },
   qA:    { pos: 'QB', team: 'AAA', name: 'Quarter A', share: [1, 1, 1, 1, 1], extra: { pa_att: 30, pa_cmp: 20, pa_yds: 250, pa_td: 2, pa_int: 1, pa_sack: 2, pa_sackYds: 14, pa_epa: 4, pa_cpoe: 2, pa_aggr: 15 } },
 };
 
