@@ -15,9 +15,9 @@ describe('chart scale', () => {
     expect(pctColor(25)).toBe('color-mix(in oklch, var(--warn) 50%, var(--loss))');
     expect(pctColor(75)).toBe('color-mix(in oklch, var(--win) 50%, var(--warn))');
   });
-  it('chip ink is the page ink on a dim heat chip, the on-chip token otherwise', () => {
-    expect(chipInk('heat', 0.05)).toBe('var(--ink)');
-    expect(chipInk('heat', 0.15)).toBe('var(--on-chip)');
+  it('heat chips take the theme low and high heat ink (the scale runs muted to bright), pct chips the on-chip token', () => {
+    expect(chipInk('heat', 0.05)).toBe('var(--heat-ink-low)');
+    expect(chipInk('heat', 0.15)).toBe('var(--heat-ink-high)');
     expect(chipInk('pct')).toBe('var(--on-chip)');
   });
   it('ordinals', () => {
