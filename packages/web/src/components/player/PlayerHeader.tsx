@@ -27,7 +27,8 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
   ];
   const shown = fields.filter((f): f is [string, string] => f[1] !== null);
   return (
-    <header className="space-y-4">
+    <header className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:items-center">
+      <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Headshot players={players} id={id} size={84} />
         <div className="min-w-0">
@@ -46,8 +47,10 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
         </div>
       </div>
       {shown.length > 0 && <div className="flex flex-wrap gap-x-8 gap-y-2">{shown.map(([l, v]) => <Field key={l} label={l} value={v} />)}</div>}
+      </div>
+      {/* the league tiles sit to the right of the name, three across and two down */}
       {rostered && (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        <div data-testid="header-tiles" className="grid grid-cols-3 gap-2">
           <Tile label="Points started" value={f1(summary.ptsStarted)} />
           <Tile label="Points / start" value={f1(summary.perStart)} />
           <Tile label="Starts" value={String(summary.starts)} sub={`/ ${summary.rostered}`} />
