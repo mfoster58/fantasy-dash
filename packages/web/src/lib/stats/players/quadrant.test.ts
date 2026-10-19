@@ -17,6 +17,20 @@ describe('quadrant helpers', () => {
     expect(shortName('Amon-Ra St. Brown')).toBe('A. St. Brown');
     expect(shortName('Cher')).toBe('Cher');
   });
+  it('placeLabels never overlaps, stays within two lines of its point and inside the bounds, and drops what does not fit', () => {
+    const pile = Array.from({ length: 30 }, (_, i) => ({ x: 100 + (i % 3), y: 100, text: `Player ${i}` }));
+    const placed = placeLabels(pile, 6.4, 12, { top: 60, bottom: 140 });
+    expect(placed.length).toBeLessThan(30);
+    expect(placed.length).toBeGreaterThan(0);
+    for (const p of placed) {
+      expect(p.y).toBeGreaterThanOrEqual(60);
+      expect(p.y).toBeLessThanOrEqual(140);
+      expect(Math.abs(p.y - 100)).toBeLessThanOrEqual(24);
+    }
+    const boxes = placed.map((p) => ({ x0: p.x, x1: p.x + p.text.length * 6.4, y: p.y }));
+    const overlaps = boxes.filter((a, i) => boxes.some((b, j) => j !== i && Math.abs(a.y - b.y) < 12 && a.x0 < b.x1 && b.x0 < a.x1)).length;
+    expect(overlaps).toBe(0);
+  });
   it('placeLabels never overlaps on a crowded set, and stops after a bounded number of nudges', () => {
     const pile = Array.from({ length: 30 }, (_, i) => ({ x: 100 + (i % 3), y: 100, text: `Player ${i}` }));
     const placed = placeLabels(pile, 6.4, 12);

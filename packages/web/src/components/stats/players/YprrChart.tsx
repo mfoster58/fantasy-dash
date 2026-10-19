@@ -11,7 +11,7 @@ export default function YprrChart({ stats, pos, estimated }: { stats: PlayerStat
   const xm = Math.max(100, ...pool.map((p) => p.routes)) * 1.05, ym = Math.max(100, ...pool.map((p) => p.yds)) * 1.08;
   const x = (v: number) => M.l + (v / xm) * (W - M.l - M.r), y = (v: number) => H - M.b - (v / ym) * (H - M.t - M.b);
   const top = [...pool].sort((a, b) => b.yds - a.yds).slice(0, 22);
-  const labels = placeLabels(top.map((p) => ({ x: x(p.routes) + 15, y: y(p.yds) + 4, text: shortName(p.name) })));
+  const labels = placeLabels(top.map((p) => ({ x: x(p.routes) + 15, y: y(p.yds) + 4, text: shortName(p.name) })), 6.4, 12, { top: M.t + 12, bottom: H - M.b - 4 });
   return (
     <section aria-labelledby={`yprr-${pos}`} className="card overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3">

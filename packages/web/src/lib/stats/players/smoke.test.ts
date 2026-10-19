@@ -25,6 +25,14 @@ describe('players stats over the committed data', () => {
       }
     });
   }
+  it('2025 pins: the trends window is weeks 13–17 (week 18 unscored); Gibbs red-zone points per game', () => {
+    const db = json<PlayerDb>('playerdb/2025.json'), ch = json<ChartDb>('charts/2025.json');
+    expect(trends(db, ch, 'RB', 17).weeks).toEqual([13, 14, 15, 16, 17]);
+    const gibbs = seasonStats(db, ch).find((p) => p.name === 'Jahmyr Gibbs')!;
+    const rz = Object.values(ch.players[db.players[gibbs.id].gsisId!].plays!.rz!).reduce((s, c) => s + (c?.[1] ?? 0), 0);
+    expect(rz).toBeCloseTo(123.7, 1);
+    expect(gibbs.rzA).toBeCloseTo(123.7 / gibbs.games, 2);
+  });
   it('2026 has play-by-play counts without participation', () => {
     const ch = json<ChartDb>('charts/2026.json');
     expect(ch.participation).toBe(false);

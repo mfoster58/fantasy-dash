@@ -21,14 +21,22 @@ export function shortName(name: string): string {
   return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(' ')}` : name;
 }
 
-/** Labels to the right of their point, nudged down a line at a time (at most 8) until they clear those already placed. */
-export function placeLabels(items: { x: number; y: number; text: string }[], charW = 6.4, lineH = 12): { x: number; y: number; text: string }[] {
-  const placed: { x: number; y: number; w: number; text: string }[] = [];
+/**
+ * Labels to the right of their point. Each tries its own line, then one line below, one above, two below, two above,
+ * and takes the first slot that clears the labels already placed and stays inside the bounds; a label with no slot is dropped
+ * (its logo and tooltip remain). dy is how far it moved, for a leader line.
+ */
+export function placeLabels(items: { x: number; y: number; text: string }[], charW = 6.4, lineH = 12, bounds?: { top: number; bottom: number }): { x: number; y: number; text: string; dy: number }[] {
+  const placed: { x: number; y: number; w: number; text: string; dy: number }[] = [];
   for (const it of [...items].sort((a, b) => a.y - b.y || a.x - b.x)) {
     const w = it.text.length * charW;
-    let y = it.y;
-    for (let k = 0; k < 8 && placed.some((o) => Math.abs(o.y - y) < lineH && it.x < o.x + o.w && o.x < it.x + w); k++) y += lineH;
-    placed.push({ x: it.x, y, w, text: it.text });
+    for (const dy of [0, lineH, -lineH, 2 * lineH, -2 * lineH]) {
+      const y = it.y + dy;
+      if (bounds && (y < bounds.top || y > bounds.bottom)) continue;
+      if (placed.some((o) => Math.abs(o.y - y) < lineH && it.x < o.x + o.w && o.x < it.x + w)) continue;
+      placed.push({ x: it.x, y, w, text: it.text, dy });
+      break;
+    }
   }
-  return placed.map(({ x, y, text }) => ({ x, y, text }));
+  return placed.map(({ x, y, text, dy }) => ({ x, y, text, dy }));
 }

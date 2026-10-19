@@ -25,6 +25,9 @@ describe('trends', () => {
     const r = row('rLast');
     if (r) expect(r.cells.snap.weeks[2]).toEqual({ week: 3, state: 'bye', value: null });
   });
+  it('the window ends at the last scored week when one is given (week 18 is not scored)', () => {
+    expect(trends(statsDb(), statsCharts(), 'RB', 4).weeks).toEqual([1, 2, 3, 4]);
+  });
   it('WR columns', () => {
     expect(trends(statsDb(), statsCharts(), 'WR').columns.map((c) => c.key)).toEqual(['snap', 'route', 'tgt', 'ay', 'xfp']);
   });

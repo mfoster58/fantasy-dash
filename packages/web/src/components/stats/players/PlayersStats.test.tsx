@@ -21,6 +21,19 @@ describe('PlayersStats', () => {
     fireEvent.click(screen.getByRole('button', { name: /Success % vs explosive %/ }));
     expect(screen.getByRole('region', { name: /Success % vs explosive %/ })).toBeInTheDocument();
   });
+  it('a tooltip opened by a tap closes when the view changes', () => {
+    mount();
+    const logo = screen.getByRole('region', { name: /Expected vs actual/ }).querySelector('[data-player]')!;
+    fireEvent.pointerDown(logo, { pointerType: 'touch' });
+    fireEvent.click(logo);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Success % vs explosive %/ }));
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+  it('the trends window ends at the league\'s last scored week', () => {
+    render(<MemoryRouter initialEntries={['/stats/players']}><Routes><Route path="/stats/players" element={<PlayersStats dbs={[statsDb()]} charts={[statsCharts()]} currentYear={2026} lastWeeks={{ 2026: 4 }} />} /></Routes></MemoryRouter>);
+    expect(screen.getByRole('region', { name: /RB volume trends/ })).toHaveTextContent('weeks 1–4');
+  });
   it('a link with pos and view opens that chart', () => {
     mount('/stats/players?pos=WR&view=role');
     expect(screen.getByRole('region', { name: /Role map/ })).toBeInTheDocument();

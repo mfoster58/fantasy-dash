@@ -13,7 +13,7 @@ const POSITIONS: Pos[] = ['QB', 'RB', 'WR', 'TE'];
 const PBP_VIEWS = new Set(['clutch', 'rz', 'boom', 'ryoe']);
 
 /** Players stats: a quadrant view per position, volume trends and yards per route run. */
-export default function PlayersStats({ dbs, charts, currentYear }: { dbs: PlayerDb[]; charts: ChartDb[]; currentYear: number }) {
+export default function PlayersStats({ dbs, charts, currentYear, lastWeeks = {} }: { dbs: PlayerDb[]; charts: ChartDb[]; currentYear: number; lastWeeks?: Record<number, number> }) {
   const [params, setParams] = useSearchParams();
   const years = dbs.map((d) => d.year).sort((a, b) => b - a);
   const season = Number(params.get('season')) || (years.includes(currentYear) ? currentYear : years[0]);
@@ -23,7 +23,7 @@ export default function PlayersStats({ dbs, charts, currentYear }: { dbs: Player
   const db = dbs.find((d) => d.year === season) ?? dbs[0];
   const chart = charts.find((c) => c.year === season);
   const stats = useMemo(() => (db ? seasonStats(db, chart) : []), [db, chart]);
-  const trend = useMemo(() => (db && pos !== 'QB' ? trends(db, chart, pos) : null), [db, chart, pos]);
+  const trend = useMemo(() => (db && pos !== 'QB' ? trends(db, chart, pos, lastWeeks[db.year] ?? db.throughWeek) : null), [db, chart, pos, lastWeeks]);
   const set = (next: Record<string, string>) => setParams((p) => { const q = new URLSearchParams(p); for (const [k, v] of Object.entries(next)) q.set(k, v); return q; }, { replace: true });
   if (!db) return <p className="text-muted">No player data yet.</p>;
 
@@ -51,7 +51,7 @@ export default function PlayersStats({ dbs, charts, currentYear }: { dbs: Player
           );
         })}
       </div>
-      <QuadrantChart view={view} pool={note ? [] : viewPool(view, stats, pos)} note={note ?? (viewPool(view, stats, pos).length ? undefined : 'No data yet for this season.')} />
+      <QuadrantChart key={`${season}|${pos}|${view.id}`} view={view} pool={note ? [] : viewPool(view, stats, pos)} note={note ?? (viewPool(view, stats, pos).length ? undefined : 'No data yet for this season.')} />
       {(pos === 'WR' || pos === 'TE') && <YprrChart stats={stats} pos={pos} estimated={!db.routesReal} />}
       {trend && <TrendsTable data={trend} pos={pos as 'RB' | 'WR' | 'TE'} season={season} />}
     </div>

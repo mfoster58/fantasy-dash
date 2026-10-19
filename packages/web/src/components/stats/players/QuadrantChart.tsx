@@ -17,6 +17,9 @@ function ticks(lo: number, hi: number, n = 6): number[] {
   return out;
 }
 
+/** a formatted value, or a dash when it is missing */
+const show = (f: (v: number) => string, v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? f(v) : '–');
+
 /** One stat pairing as a quadrant chart of team logos: league-average lines, named quadrants, a trend line or an "equal" diagonal. */
 export default function QuadrantChart({ view, pool, note }: { view: View; pool: PlayerStat[]; note?: string }) {
   const [table, setTable] = useState(false);
@@ -31,7 +34,7 @@ export default function QuadrantChart({ view, pool, note }: { view: View; pool: 
     const x = lin(x0, x1, M.l, W - M.r), y = lin(y0, y1, H - M.b, M.t);
     const mx = pool.reduce((s, p) => s + xv(p), 0) / pool.length, my = pool.reduce((s, p) => s + yv(p), 0) / pool.length;
     const fit = view.diagonal ? null : fitLine(pool.map(xv), pool.map(yv));
-    const labels = placeLabels(pool.map((p) => ({ x: x(xv(p)) + 16, y: y(yv(p)) + 4, text: shortName(p.name) })));
+    const labels = placeLabels(pool.map((p) => ({ x: x(xv(p)) + 16, y: y(yv(p)) + 4, text: shortName(p.name) })), 6.4, 12, { top: M.t + 12, bottom: H - M.b - 4 });
     return { x0, x1, y0, y1, x, y, mx, my, fit, labels };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool, view]);
@@ -82,14 +85,19 @@ export default function QuadrantChart({ view, pool, note }: { view: View; pool: 
                 <TeamLogo team={p.team} x={geo.x(xv(p))} y={geo.y(yv(p))} />
               </g>
             ))}
-            {geo.labels.map((l) => <text key={`${l.text}${l.x}${l.y}`} x={l.x} y={l.y} fontSize={11} style={{ fill: 'var(--ink)', paintOrder: 'stroke', stroke: 'var(--surface)', strokeWidth: 3 }}>{l.text}</text>)}
+            {geo.labels.map((l) => (
+              <g key={`${l.text}${l.x}${l.y}`}>
+                {l.dy !== 0 && <line x1={l.x - 3} y1={l.y - 4 - l.dy} x2={l.x - 1} y2={l.y - 4} strokeWidth={1} style={{ stroke: 'var(--muted)' }} />}
+                <text x={l.x} y={l.y} fontSize={11} style={{ fill: 'var(--ink)', paintOrder: 'stroke', stroke: 'var(--surface)', strokeWidth: 3 }}>{l.text}</text>
+              </g>
+            ))}
           </svg>
           {hot && (
             <div role="tooltip" className="pointer-events-auto absolute z-10 rounded-md border border-line bg-bg px-2.5 py-1.5 text-xs shadow-lg"
               style={{ left: `${(hot.x / W) * 100}%`, top: `${(hot.y / H) * 100}%`, transform: 'translate(12px, 12px)' }}>
               <PlayerLink id={hot.p.id} className="font-semibold">{hot.p.name}</PlayerLink> <span className="text-muted">· {hot.p.team}</span>
-              <div>{view.xLabel}: <b>{view.fx(xv(hot.p))}</b></div>
-              <div>{view.yLabel}: <b>{view.fy(yv(hot.p))}</b></div>
+              <div>{view.xLabel}: <b>{show(view.fx, xv(hot.p))}</b></div>
+              <div>{view.yLabel}: <b>{show(view.fy, yv(hot.p))}</b></div>
             </div>
           )}
         </div>

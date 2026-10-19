@@ -29,9 +29,10 @@ const MIN_VOLUME: Record<TrendPos, number> = { RB: 25, WR: 15, TE: 10 };
 const avg = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
 
 /** Last two weeks against the weeks before, healthy games only, for the season's last five scored weeks. */
-export function trends(db: PlayerDb, charts: ChartDb | undefined, pos: TrendPos): Trends {
+export function trends(db: PlayerDb, charts: ChartDb | undefined, pos: TrendPos, lastWeek = db.throughWeek): Trends {
   const cols = pos === 'RB' ? RB_COLS : REC_COLS;
-  const last = db.throughWeek, weeks = Array.from({ length: Math.min(5, last) }, (_, i) => last - Math.min(5, last) + 1 + i);
+  // the league's last scored week: a finished season's week 18 is unscored and starters rest
+  const last = Math.min(db.throughWeek, lastWeek), weeks = Array.from({ length: Math.min(5, last) }, (_, i) => last - Math.min(5, last) + 1 + i);
   const lateWeeks = new Set(weeks.slice(-2));
   const states = gameStates(db, charts?.injuries);
   const tw = new Map(db.teamWeeks.map((t) => [`${t.team}|${t.week}`, t] as const));
