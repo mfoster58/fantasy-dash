@@ -26,6 +26,11 @@ describe('weekScoreRows', () => {
   it('uses projections when the week is unplayed', () => {
     expect(weekScoreRows({ ...week, played: false }, g1).map((r) => r.userId)).toEqual(['b', 'd', 'a', 'c']);
   });
+  it('ranks live points, with the pre-game projection as the track, in a live week', () => {
+    const live: Week = { week: 3, isPlayoff: false, played: false, games: [game(1, side('a', 40, 100), side('b', 60, 90))], highScore: null };
+    expect(weekScoreRows(live, undefined, true).map((r) => [r.userId, r.points, r.ceiling])).toEqual([['b', 60, 90], ['a', 40, 100]]);
+    expect(weekScoreRows(live).map((r) => [r.userId, r.points])).toEqual([['a', 100], ['b', 90]]);
+  });
 });
 
 describe('WeekScores', () => {

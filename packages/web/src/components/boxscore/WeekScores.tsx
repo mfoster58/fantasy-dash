@@ -7,6 +7,8 @@ interface Props {
   week: Week; managers: Record<UserId, Manager>; year: number;
   /** when viewing one game, its two teams are highlighted and summarised */
   game?: Game;
+  /** the live week: rank live points */
+  live?: boolean;
 }
 
 export interface WeekScoreRow {
@@ -20,18 +22,22 @@ export interface WeekScoreRow {
   rank: number;
 }
 
-/** Every team's score this week (projection when unplayed), best first, with the viewed game's two teams flagged. */
-export function weekScoreRows(week: Week, game?: Game): WeekScoreRow[] {
+/** Every team's score this week (projection when unplayed, live points in a live week), best first, with the viewed game's two teams flagged. */
+export function weekScoreRows(week: Week, game?: Game, live = false): WeekScoreRow[] {
+  const scored = week.played || live;
   const rows = week.games.flatMap((g) => g.sides.map((s) => ({
-    userId: s.userId, points: week.played ? s.points : s.projected, efficiency: s.efficiency, ceiling: week.played ? s.ceiling : s.projected, matchupId: g.matchupId, inGame: g.id === game?.id, rank: 0,
+    userId: s.userId, points: scored ? s.points : s.projected, efficiency: s.efficiency,
+    // a live week's track is the pre-game projection
+    ceiling: week.played ? s.ceiling : live ? Math.max(s.points, s.projected) : s.projected,
+    matchupId: g.matchupId, inGame: g.id === game?.id, rank: 0,
   })));
   rows.sort((a, b) => b.points - a.points || (a.userId < b.userId ? -1 : 1));
   for (const r of rows) r.rank = 1 + rows.filter((o) => o.points > r.points).length;
   return rows;
 }
 
-export default function WeekScores({ week, managers, year, game }: Props) {
-  const rows = weekScoreRows(week, game);
+export default function WeekScores({ week, managers, year, game, live = false }: Props) {
+  const rows = weekScoreRows(week, game, live);
   // Each bar's track is the team's ceiling, scaled to the week's biggest ceiling; the fill is what it actually scored.
   const max = Math.max(1, ...rows.map((r) => Math.max(r.points, r.ceiling)));
   const n = rows.length;
@@ -41,7 +47,7 @@ export default function WeekScores({ week, managers, year, game }: Props) {
     <section className="card p-5" aria-labelledby="ranked-title">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 id="ranked-title" className="section-label">Ranked</h2>
-        <span className="text-xs text-muted">Week {week.week} · {week.played ? 'score out of lineup max' : 'projected'}</span>
+        <span className="text-xs text-muted">Week {week.week} · {week.played ? 'score out of lineup max' : live ? 'live, out of projection' : 'projected'}</span>
       </div>
       <ol className="-mx-2 space-y-0.5">
         {rows.map((r) => (
@@ -82,7 +88,7 @@ export default function WeekScores({ week, managers, year, game }: Props) {
                 <div className="truncate text-xs text-muted">{name(r.userId)}</div>
                 <div className="num text-lg font-semibold leading-tight">#{r.rank} <span className="text-sm font-normal text-muted">of {n}</span></div>
                 <div className="text-xs text-muted">
-                  {r.rank === 1 ? `Highest ${week.played ? 'score' : 'projection'} of the week` : `Beats ${beats} of the other ${others} teams`}
+                  {r.rank === 1 ? `Highest ${week.played || live ? 'score' : 'projection'} of the week` : `Beats ${beats} of the other ${others} teams`}
                 </div>
               </div>
             );

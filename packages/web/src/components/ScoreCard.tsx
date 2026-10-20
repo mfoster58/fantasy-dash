@@ -6,6 +6,7 @@ import PosPill from './PosPill';
 import { fmtPct, fmtPts, fmtRecord, fmtTag } from '../lib/format';
 import { topPerformersBySide } from '../lib/metrics';
 import { playerName, playerPos, playerTeam } from '../lib/players';
+import type { GameOutlook } from '../lib/live/outlook';
 
 interface Props {
   game: Game;
@@ -17,6 +18,8 @@ interface Props {
   to: string;
   /** the season the game belongs to, for the team links */
   year: number;
+  /** the live outlook when this is the live week */
+  live?: GameOutlook;
 }
 
 type Outcome = 'won' | 'lost' | 'even';
@@ -31,20 +34,28 @@ const effColor = (e: number) => {
   return `color-mix(in srgb, ${tone} 65%, transparent)`;
 };
 
-export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year }: Props) {
-  const outcome = (side: GameSide): Outcome =>
-    !played || game.winner === null ? 'even' : game.winner === side.userId ? 'won' : 'lost';
+export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year, live }: Props) {
   const [a, b] = game.sides;
+  // a live game has started once any starter has played; it shows a winner only once every starter is done
+  const started = live ? live.status !== 'upcoming' : played;
+  const winner = live
+    ? (live.status === 'final' && a.points !== b.points ? (a.points > b.points ? a.userId : b.userId) : null)
+    : played ? game.winner : null;
+  const outcome = (side: GameSide): Outcome => (winner === null ? 'even' : winner === side.userId ? 'won' : 'lost');
+  const status = live
+    ? ({ upcoming: 'Upcoming', live: 'Live', final: 'Final' } as const)[live.status]
+    : !played ? 'Upcoming' : game.winner === null ? 'Tie' : 'Final';
+  const liveProj = (i: 0 | 1) => (live && live.status !== 'final' ? live.projected[i] : undefined);
   return (
     // the whole card opens the box score through a cover link, so the team and manager names can be links of their own
     <div className="card relative p-4 transition-colors hover:border-accent sm:p-5">
       <CoverLink to={to} label={`${teamName(a, managers[a.userId])} vs ${teamName(b, managers[b.userId])} box score`} className="rounded-xl" />
-      <Header game={game} played={played} />
+      <Header game={game} status={status} />
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4">
-        <Team side={a} manager={managers[a.userId]} played={played} outcome={outcome(a)} align="left" year={year} />
+        <Team side={a} manager={managers[a.userId]} played={started} outcome={outcome(a)} align="left" year={year} liveProj={liveProj(0)} />
         <span className="section-label self-center px-0.5 text-[12px] lowercase tracking-[0.12em]" style={{ fontVariant: 'small-caps' }}>vs</span>
-        <Team side={b} manager={managers[b.userId]} played={played} outcome={outcome(b)} align="right" year={year} />
-        {played && (
+        <Team side={b} manager={managers[b.userId]} played={started} outcome={outcome(b)} align="right" year={year} liveProj={liveProj(1)} />
+        {played && !live && (
           <div
             className="col-span-3 mt-4 grid grid-cols-subgrid"
             title="Points scored as a share of the best possible lineup"
@@ -55,7 +66,7 @@ export default function ScoreCard({ game, played, managers, players, seasonTeams
           </div>
         )}
       </div>
-      {played && (
+      {started && (
         <div className="mt-4 border-t border-line pt-3">
           <h3 className="section-label mb-2.5">Top performers</h3>
           <div className="grid gap-y-3 sm:grid-cols-2 sm:gap-x-8 [&>*+*]:max-sm:border-t [&>*+*]:max-sm:border-line [&>*+*]:max-sm:pt-3">
@@ -69,8 +80,7 @@ export default function ScoreCard({ game, played, managers, players, seasonTeams
   );
 }
 
-function Header({ game, played }: { game: Game; played: boolean }) {
-  const status = !played ? 'Upcoming' : game.winner === null ? 'Tie' : 'Final';
+function Header({ game, status }: { game: Game; status: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-xs">
       <span className="font-semibold text-accent">{game.tag ? fmtTag(game.tag) : null}</span>
@@ -79,8 +89,10 @@ function Header({ game, played }: { game: Game; played: boolean }) {
   );
 }
 
-function Team({ side, manager, played, outcome, align, year }: {
+function Team({ side, manager, played, outcome, align, year, liveProj }: {
   side: GameSide; manager?: Manager; played: boolean; outcome: Outcome; align: Align; year: number;
+  /** the projected final while the game is live */
+  liveProj?: number;
 }) {
   const right = align === 'right';
   const scoreTone = outcome === 'won' ? 'font-semibold text-ink' : outcome === 'lost' ? 'text-muted' : 'text-ink';
@@ -98,7 +110,10 @@ function Team({ side, manager, played, outcome, align, year }: {
         </div>
       </div>
       {played ? (
-        <span className={`num shrink-0 text-[28px] leading-none ${scoreTone}`}>{fmtPts(side.points)}</span>
+        <span className="num flex shrink-0 flex-col items-center text-[28px] leading-none">
+          <span className={scoreTone}>{fmtPts(side.points)}</span>
+          {liveProj !== undefined && <span className="mt-1 text-[10px] font-normal leading-none text-muted">proj {fmtPts(liveProj)}</span>}
+        </span>
       ) : (
         <span className="num flex shrink-0 flex-col items-center text-[28px] leading-none text-muted">
           {fmtPts(side.projected)}
