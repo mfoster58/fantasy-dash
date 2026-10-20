@@ -1,5 +1,7 @@
 import { Outlet, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router';
 import Nav from './components/Nav';
+import ScoreTicker from './components/ScoreTicker';
+import { LiveProvider } from './lib/live/LiveProvider';
 import ErrorPage from './pages/ErrorPage';
 import BoxScorePage from './pages/BoxScorePage';
 import ScoresPage from './pages/ScoresPage';
@@ -75,12 +77,15 @@ export async function statsPlayersLoader(): Promise<StatsPlayersData> {
 
 function Layout() {
   return (
-    <div className="min-h-screen bg-bg text-ink">
-      <Nav />
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-10">
-        <Outlet />
-      </main>
-    </div>
+    <LiveProvider>
+      <div className="min-h-screen bg-bg text-ink">
+        <ScoreTicker />
+        <Nav />
+        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-10">
+          <Outlet />
+        </main>
+      </div>
+    </LiveProvider>
   );
 }
 
