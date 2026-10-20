@@ -56,7 +56,9 @@ export function statsCharts(): ChartDb {
       '00-wA': { '6': ['Questionable', 'Ankle'] },
     },
     players: {
-      '00-rUp': { pos: 'RB', plays: { rush: [54, 27, 6, 216], rz: { ra: [4, 8], rc: [6, 3] } } },
+      '00-rUp': { pos: 'RB', plays: { rush: [54, 27, 6, 216], rz: { ra: [4, 8], rc: [6, 3] }, weeks: {
+        '1': { rush: [5, 2, 0, 15] }, '2': { rush: [5, 2, 0, 15] }, '3': { rush: [6, 2, 1, 26], rz: { rc: [6, 3] } },
+        '4': { rush: [18, 10, 2, 80], rz: { ra: [2, 4] } }, '5': { rush: [20, 11, 3, 80], rz: { ra: [2, 4] } } } } },
       '00-rDown': { pos: 'RB', plays: { rush: [68, 26, 4, 250], rz: { ra: [6, 6], tb: [2, 4] } } },
       '00-qA': { pos: 'QB', plays: { qtr: [100, 10, 40, 8] } },
     },

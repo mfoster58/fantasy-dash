@@ -34,6 +34,20 @@ describe('PlayersStats', () => {
     render(<MemoryRouter initialEntries={['/stats/players']}><Routes><Route path="/stats/players" element={<PlayersStats dbs={[statsDb()]} charts={[statsCharts()]} currentYear={2026} lastWeeks={{ 2026: 4 }} />} /></Routes></MemoryRouter>);
     expect(screen.getByRole('region', { name: /RB volume trends/ })).toHaveTextContent('weeks 1–4');
   });
+  it('has the week picker, and a range of three or more weeks becomes the trends window', () => {
+    mount('/stats/players?from=2&to=5');
+    expect(screen.getByRole('group', { name: /Week/ })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /RB volume trends/ })).toHaveTextContent('weeks 2–5');
+  });
+  it('a range under three weeks shows a note instead of trends', () => {
+    mount('/stats/players?from=4&to=5');
+    expect(screen.queryByRole('region', { name: /RB volume trends/ })).toBeNull();
+    expect(screen.getByText(/Pick at least three weeks/)).toBeInTheDocument();
+  });
+  it('coverage and pressure views say full season only when a range is picked', () => {
+    mount('/stats/players?pos=QB&view=press&from=2&to=4', [{ ...statsCharts(), participation: true }]);
+    expect(screen.getByText(/full season only/i)).toBeInTheDocument();
+  });
   it('a link with pos and view opens that chart', () => {
     mount('/stats/players?pos=WR&view=role');
     expect(screen.getByRole('region', { name: /Role map/ })).toBeInTheDocument();

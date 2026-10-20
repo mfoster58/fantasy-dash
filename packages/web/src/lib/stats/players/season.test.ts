@@ -34,6 +34,17 @@ describe('seasonStats', () => {
     expect(u.rzX).toBeCloseTo((4 * 1.4 + 6 * 0.5) / 5);
     expect(u.rzA).toBeCloseTo((8 + 3) / 5);
   });
+  it('a week range counts only those weeks, play-by-play included', () => {
+    const u = seasonStats(statsDb(), statsCharts(), { from: 4, to: 5 }).find((s) => s.id === 'rUp')!;
+    expect(u.games).toBe(2);
+    expect(u.car).toBe(38);
+    expect(u.succ).toBeCloseTo(21 / 38);
+    expect(u.expl).toBeCloseTo(5 / 38);
+    expect(u.rzA).toBeCloseTo(8 / 2);
+  });
+  it('a player with no games in the range is left out', () => {
+    expect(seasonStats(statsDb(), statsCharts(), { from: 3, to: 4 }).find((s) => s.id === 'rHurt')).toBeUndefined();
+  });
   it('routes fall back to the estimate and say so', () => {
     const w = by('wA');
     expect(w.routesEst).toBe(true);

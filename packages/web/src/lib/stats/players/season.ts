@@ -1,4 +1,4 @@
-import { RZ_KEYS, type ChartDb, type Counts, type PlayerDb, type PlayerId, type PlayerWeek } from '@fantasy-dash/core';
+import { RZ_KEYS, type ChartDb, type ChartPlayer, type Counts, type PlayCounts, type PlayerDb, type PlayerId, type PlayerWeek } from '@fantasy-dash/core';
 import { gameStates } from './health';
 
 export type Pos = 'QB' | 'RB' | 'WR' | 'TE';
@@ -19,19 +19,39 @@ const mean = (rs: PlayerWeek[], k: keyof PlayerWeek): N => { const v = rs.map((r
 const total = (t: Partial<Record<string, Counts>> | undefined): [number, number, number] =>
   Object.values(t ?? {}).reduce<[number, number, number]>((a, c) => [a[0] + (c?.[0] ?? 0), a[1] + (c?.[2] ?? 0), a[2] + (c?.[3] ?? 0)], [0, 0, 0]);
 
+export interface WeekRange { from: number; to: number }
+
+const addInto = (into: Counts | undefined, c: Counts | undefined): Counts | undefined => (c ? (into ? into.map((v, i) => v + (c[i] ?? 0)) : [...c]) : into);
+/** His play-by-play counts: the season's totals, or for a range the weeks inside it summed (none when weeks aren't stored). */
+function playsFor(c: ChartPlayer | undefined, range: WeekRange | undefined): PlayCounts | undefined {
+  const p = c?.plays;
+  if (!p || !range) return p;
+  if (!p.weeks) return undefined;
+  const out: PlayCounts = {};
+  for (const [w, x] of Object.entries(p.weeks)) {
+    const n = Number(w);
+    if (n < range.from || n > range.to) continue;
+    out.rush = addInto(out.rush, x.rush);
+    out.qtr = addInto(out.qtr, x.qtr);
+    for (const [k, v] of Object.entries(x.rz ?? {})) (out.rz ??= {})[k as keyof NonNullable<PlayCounts['rz']>] = addInto(out.rz?.[k as keyof NonNullable<PlayCounts['rz']>], v);
+  }
+  return out;
+}
+
 /** League points per red-zone opportunity for each band and type. */
-function rzAverages(charts: ChartDb | undefined): Record<string, number> {
+function rzAverages(charts: ChartDb | undefined, range: WeekRange | undefined): Record<string, number> {
   const acc: Record<string, [number, number]> = {};
-  for (const p of Object.values(charts?.players ?? {})) for (const [k, c] of Object.entries(p.plays?.rz ?? {})) if (c) { const a = (acc[k] ??= [0, 0]); a[0] += c[0]; a[1] += c[1]; }
+  for (const p of Object.values(charts?.players ?? {})) for (const [k, c] of Object.entries(playsFor(p, range)?.rz ?? {})) if (c) { const a = (acc[k] ??= [0, 0]); a[0] += c[0]; a[1] += c[1]; }
   return Object.fromEntries(Object.entries(acc).map(([k, [n, pts]]) => [k, n ? pts / n : 0]));
 }
 
 /** Season-to-date stats for every QB/RB/WR/TE with a game played. Per-game averages use healthy games only. */
-export function seasonStats(db: PlayerDb, charts: ChartDb | undefined): PlayerStat[] {
+export function seasonStats(db: PlayerDb, charts: ChartDb | undefined, range?: WeekRange): PlayerStat[] {
   const states = gameStates(db, charts?.injuries);
   const rows = new Map<PlayerId, PlayerWeek[]>();
-  for (const r of [...db.rows].sort((a, b) => a.week - b.week)) { const l = rows.get(r.id) ?? []; l.push(r); rows.set(r.id, l); }
-  const rz = rzAverages(charts);
+  for (const r of [...db.rows].sort((a, b) => a.week - b.week)) {
+    if (range && (r.week < range.from || r.week > range.to)) continue; const l = rows.get(r.id) ?? []; l.push(r); rows.set(r.id, l); }
+  const rz = rzAverages(charts, range);
   const out: PlayerStat[] = [];
   for (const [id, all] of rows) {
     const p = db.players[id];
@@ -44,9 +64,10 @@ export function seasonStats(db: PlayerDb, charts: ChartDb | undefined): PlayerSt
     const car = sum(played, 'ru_att'), tgt = sum(played, 're_tgt'), yds = sum(played, 're_yds');
     const real = played.some((r) => r.routes != null);
     const routes = real ? sum(played, 'routes') : sum(played, 'routesEst');
-    const q = c?.plays?.qtr, ru = c?.plays?.rush;
-    const rzX = c?.plays?.rz ? RZ_KEYS.reduce((s, k) => s + (c.plays!.rz![k]?.[0] ?? 0) * (rz[k] ?? 0), 0) : null;
-    const rzA = c?.plays?.rz ? RZ_KEYS.reduce((s, k) => s + (c.plays!.rz![k]?.[1] ?? 0), 0) : null;
+    const plays = playsFor(c, range);
+    const q = plays?.qtr, ru = plays?.rush;
+    const rzX = plays?.rz ? RZ_KEYS.reduce((s, k) => s + (plays.rz![k]?.[0] ?? 0) * (rz[k] ?? 0), 0) : null;
+    const rzA = plays?.rz ? RZ_KEYS.reduce((s, k) => s + (plays.rz![k]?.[1] ?? 0), 0) : null;
     const sp = c?.splits, split = (k: 'clean' | 'pressured' | 'man' | 'zone') => sp?.[k];
     const man = total(c?.routes?.man), zone = total(c?.routes?.zone);
     const hasRoutes = !!c?.routes;
