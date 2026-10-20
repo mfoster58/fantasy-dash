@@ -1,10 +1,11 @@
+/** a team photo URL, or a Sleeper account avatar id */
 interface Props { avatar: string | null; name: string; size?: number }
 
 export default function Avatar({ avatar, name, size = 32 }: Props) {
   if (avatar) {
     return (
       <img
-        src={`https://sleepercdn.com/avatars/thumbs/${avatar}`}
+        src={avatar.startsWith('https://') ? avatar : `https://sleepercdn.com/avatars/thumbs/${avatar}`}
         alt=""
         width={size}
         height={size}

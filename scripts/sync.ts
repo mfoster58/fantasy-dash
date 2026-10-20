@@ -209,6 +209,12 @@ async function main() {
   await rm(staging, { recursive: true, force: true });
   await writeAll(staging, seasons, players, history);
 
+  // data/ also holds what sync:players owns (the player database, the play-by-play charts): carry it into the new
+  // data dir, or every run deletes it and the next player sync has to rebuild every season from scratch
+  for (const keep of ['playerdb', 'charts']) {
+    const from = path.join(DATA_DIR, keep);
+    if (existsSync(from)) await rename(from, path.join(staging, keep));
+  }
   const backup = `${DATA_DIR}.old`;
   await rm(backup, { recursive: true, force: true });
   if (existsSync(DATA_DIR)) await rename(DATA_DIR, backup);

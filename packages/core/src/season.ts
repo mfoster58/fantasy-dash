@@ -65,11 +65,17 @@ export function buildManagers(
       userId,
       displayName: nameOverrides[userId] ?? user?.display_name ?? `Team ${r.roster_id}`,
       teamName: user?.metadata?.team_name ?? null,
-      avatar: user?.avatar ?? null,
+      avatar: teamPhoto(user) ?? user?.avatar ?? null,
       rosterId: r.roster_id,
     };
   }
   return managers;
+}
+
+/** The team's own uploaded photo (a full URL in the user's league metadata), when the team has one. */
+function teamPhoto(user: SleeperUser | undefined): string | null {
+  const a = user?.metadata?.avatar;
+  return typeof a === 'string' && a.startsWith('https://') ? a : null;
 }
 
 function pickStats(line: Record<string, number> | undefined): Record<string, number> {

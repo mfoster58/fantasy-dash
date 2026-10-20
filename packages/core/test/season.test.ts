@@ -48,6 +48,14 @@ describe('buildSeason (mini league)', () => {
     expect(buildSeason(miniInput(), { ub: 'Bobby' }).managers.ub.displayName).toBe('Bobby');
   });
 
+  it('uses the team photo for a manager when the team has one, the account avatar otherwise', () => {
+    const input = miniInput();
+    input.users = input.users.map((u) => (u.user_id === 'ua' ? { ...u, avatar: 'hash-a', metadata: { ...u.metadata, avatar: 'https://sleepercdn.com/uploads/team-a.jpg' } } : { ...u, avatar: 'hash-b' }));
+    const m = buildSeason(input).managers;
+    expect(m.ua.avatar).toBe('https://sleepercdn.com/uploads/team-a.jpg');
+    expect(m.ub.avatar).toBe('hash-b');
+  });
+
   it('pairs matchups into games with ids, winners and margins', () => {
     const g = wk(1).games[0];
     expect(g).toMatchObject({ id: '2024-1-1', matchupId: 1, week: 1, tag: null, winner: 'ua', margin: 10 });
