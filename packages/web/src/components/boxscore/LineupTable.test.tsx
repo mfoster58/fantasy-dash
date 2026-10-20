@@ -33,4 +33,13 @@ describe('LineupTable', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', ['a2']), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'Alpha One' })).toHaveAttribute('href', '/player/a1');
   });
+  it('shows each starter\'s NFL game state when live', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}}
+      gameOf={(id) => (id === 'a1' ? { kind: 'live', period: 3, clock: '4:12', halftime: false } : { kind: 'final' })} /></MemoryRouter>);
+    expect(screen.getAllByTestId('game-state').map((e) => e.textContent)).toEqual(['Q3 4:12', 'Final']);
+  });
+  it('shows no game state outside the live week', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
+    expect(screen.queryByTestId('game-state')).not.toBeInTheDocument();
+  });
 });

@@ -42,11 +42,11 @@ function Card({ game, season, outlook, played }: { game: Game; season: Season; o
     <Link
       to={`/scores/${season.year}/${game.week}/${game.matchupId}`}
       aria-label={`${nameOf(a, season.managers[a.userId])} vs ${nameOf(b, season.managers[b.userId])}`}
-      className="block w-56 shrink-0 snap-start space-y-1 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted transition-colors hover:border-accent"
+      className="block w-64 shrink-0 snap-start space-y-1 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-muted transition-colors hover:border-accent"
     >
       {row(a)}
       {row(b)}
-      <div className="section-label text-right text-[10px]">{status === 'final' ? 'FINAL' : status === 'upcoming' ? 'proj' : ''}</div>
+      {status !== 'live' && <div className="section-label text-right text-[10px]">{status === 'final' ? 'FINAL' : 'proj'}</div>}
     </Link>
   );
 }
