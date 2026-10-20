@@ -16,7 +16,7 @@ describe('ManagersStats', () => {
   it('opens on the current season with the cards in the agreed order, one title each, no group headings and no head-to-head grid', () => {
     mount();
     const names = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby')).map((id) => document.getElementById(id!)?.textContent);
-    expect(names).toEqual(['Standings race', 'Form', 'The numbers', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from']);
+    expect(names).toEqual(['Standings race', 'Form', 'Season stats', 'Scoring calendar', 'Consistency', 'Power rating', 'Schedule luck', 'Strength of schedule', 'Postseason form', 'Roster age', 'Draft returns by round', 'Wire activity', 'Weekly finishes', 'Where the points came from']);
     // the last row: weekly finishes beside the points' origins, each only as tall as it needs
     const finishes = card('Weekly finishes'), origins = card('Where the points came from');
     expect(finishes.parentElement).toBe(origins.parentElement);
@@ -32,7 +32,7 @@ describe('ManagersStats', () => {
     mount('/stats?pin=c');
     expect(screen.getByRole('button', { name: 'cara' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(card('Form')).getAllByRole('row')[3]).toHaveAttribute('data-pinned', 'true');
-    expect(within(card('The numbers')).getAllByRole('row').find((r) => r.textContent?.includes('cara'))).toHaveAttribute('data-pinned', 'true');
+    expect(within(card('Season stats')).getAllByRole('row').find((r) => r.textContent?.includes('cara'))).toHaveAttribute('data-pinned', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'alice' }));
     expect(screen.getByTestId('where')).toHaveTextContent('?pin=a');
     fireEvent.click(screen.getByRole('button', { name: 'alice' }));
@@ -47,7 +47,7 @@ describe('ManagersStats', () => {
     // the calendar stays, one column per season
     expect(within(card('Scoring calendar')).getAllByRole('columnheader').map((h) => h.textContent).filter(Boolean)).toEqual(['2024', '2025']);
     expect(card('Power rating')).toBeInTheDocument();
-    expect(within(card('The numbers')).getByRole('columnheader', { name: /Yrs/ })).toBeInTheDocument();
+    expect(within(card('Season stats')).getByRole('columnheader', { name: /Yrs/ })).toBeInTheDocument();
   });
   it('ignores a season that was never played and says so for a season with nothing played yet', () => {
     mount('/stats?season=1999');

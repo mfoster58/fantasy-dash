@@ -84,7 +84,7 @@ export default function ManagersStats({ seasons, players, years, currentYear }: 
         {form && <StatCard id="form" title="Form" caption="W and L squares; the dashed line is where the playoffs start; a gold dot marks the week's top score. Hover a square for the score."><FormGuide data={form} refs={refs} pin={pin} /></StatCard>}
       </Row>
       <Row cols={1}>
-        <StatCard id="table" title="The numbers" wide about={TABLE_ABOUT} caption={`Every advanced stat; click a header to rank by it. Regular season unless the column says otherwise.${through}`}><StatTable rows={table} refs={refs} pin={pin} allTime={allTime} /></StatCard>
+        <StatCard id="table" title="Season stats" wide about={TABLE_ABOUT} caption={`Every advanced stat; click a header to rank by it. Regular season unless the column says otherwise.${through}`}><StatTable rows={table} refs={refs} pin={pin} allTime={allTime} /></StatCard>
       </Row>
       <Row cols={2}>
         <StatCard id="calendar" title="Scoring calendar" caption={allTime ? 'Each season\'s points per game against that season\'s league average: greener the further above, redder below.' : 'Each week against the league average, playoffs after the dashed line: greener the further above, redder below.'}><ScoringCalendar data={calendar} refs={refs} pin={pin} bySeason={allTime} /></StatCard>

@@ -10,5 +10,6 @@ export default function StatsPlayersPage() {
   const { dbs, charts } = useLoaderData() as StatsPlayersData;
   // the league's last scored week per season, so trends skip an unscored week 18
   const lastWeeks = Object.fromEntries(history.seasons.map((s) => [s.year, s.lastScoredWeek]));
-  return <><StatsTabs /><PlayersStats dbs={dbs} charts={charts} currentYear={currentSeason.year} lastWeeks={lastWeeks} /></>;
+  const playoffStarts = Object.fromEntries(history.seasons.map((s) => [s.year, s.playoffWeekStart ?? null]));
+  return <><StatsTabs /><PlayersStats dbs={dbs} charts={charts} currentYear={currentSeason.year} lastWeeks={lastWeeks} playoffStarts={playoffStarts} /></>;
 }

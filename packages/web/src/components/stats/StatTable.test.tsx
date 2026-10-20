@@ -8,10 +8,20 @@ const refs = managerRefs(league());
 const names = () => screen.getAllByRole('row').slice(2).map((r) => within(r).getAllByRole('rowheader')[0].querySelector('span.truncate')!.textContent);
 
 describe('StatTable', () => {
-  it('starts sorted by points per game, with group headers and a sticky manager column', () => {
+  it('starts sorted by Rank (record, then points for), with the rank left of the manager', () => {
+    const rows = statTable([season2025()]);
+    render(<StatTable rows={rows} refs={refs} pin={null} allTime={false} />);
+    const byRank = [...rows].sort((x, y) => x.rank - y.rank).map((r) => refs.find((m) => m.id === r.id)!.name);
+    expect(names()).toEqual(byRank);
+    expect(screen.getByRole('columnheader', { name: /^Rank/ })).toHaveAttribute('aria-sort', 'ascending');
+    const first = screen.getAllByRole('row')[2];
+    expect(within(first).getAllByRole('cell')[0]).toHaveTextContent('1');
+    expect(first.firstElementChild!.tagName).toBe('TD');
+    expect(screen.getByRole('columnheader', { name: /^PF/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^PA$|^PA / })).toBeInTheDocument();
+  });
+  it('group headers and a sticky manager column', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);
-    expect(names()).toEqual(['bob', 'alice', 'cara', 'dan']);
-    expect(screen.getByRole('columnheader', { name: /^PPG/ })).toHaveAttribute('aria-sort', 'descending');
     expect(screen.getByText('Scoring')).toBeInTheDocument();
     expect(screen.queryByText('Playoffs')).toBeNull();
     expect(screen.queryByRole('columnheader', { name: /Yrs/ })).toBeNull();
@@ -30,7 +40,7 @@ describe('StatTable', () => {
     expect(screen.getByRole('columnheader', { name: /Yrs/ })).toBeInTheDocument();
     const cara = screen.getAllByRole('row').find((r) => r.textContent?.includes('cara'))!;
     expect(cara).toHaveAttribute('data-pinned', 'true');
-    expect(within(cara).getAllByRole('cell')[0]).toHaveTextContent('2');
+    expect(within(cara).getAllByRole('cell')[1]).toHaveTextContent('2');
   });
   it('tints every number by how it ranks in its column, green for good and red for bad', () => {
     render(<StatTable rows={statTable([season2025()])} refs={refs} pin={null} allTime={false} />);

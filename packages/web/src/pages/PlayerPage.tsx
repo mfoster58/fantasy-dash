@@ -71,6 +71,7 @@ export default function PlayerPage() {
           <PressureCard charts={charts} gsis={gsis} current={current} />
         </div>
       )}
+      {gsis && bio.pos === 'QB' && <RouteTree charts={charts} gsis={gsis} pos="QB" current={current} />}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
       {(rostered || bars) && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">

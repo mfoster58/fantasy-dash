@@ -204,3 +204,29 @@ describe('parseInjuries', () => {
     expect(db.injuries).toEqual({ G1: { '2': ['Questionable', 'Hamstring'] } });
   });
 });
+
+describe('buildCharts: QB throws by route, and play-by-play by week', () => {
+  it('credits each routed target to the passer, under all and its coverage', () => {
+    const a = play({ receiver_player_id: 'W', passer_player_id: 'Q', pass_attempt: '1', sack: '0', complete_pass: '1', receiving_yards: '12', epa: '1.5', pass_touchdown: '1' });
+    const b = play({ receiver_player_id: 'T', passer_player_id: 'Q', pass_attempt: '1', sack: '0', complete_pass: '0', receiving_yards: '0', epa: '-0.5' });
+    const db = build([a, b], [part(a, { route: 'SLANT', defense_man_zone_type: 'MAN_COVERAGE' }), part(b, { route: 'SLANT', defense_man_zone_type: 'ZONE_COVERAGE' })]);
+    expect(db.players.Q.throws!.all.SLANT).toEqual([2, 1, 12, 1, 1]);
+    expect(db.players.Q.throws!.man.SLANT).toEqual([1, 1, 12, 1.5, 1]);
+    expect(db.players.Q.throws!.zone.SLANT).toEqual([1, 0, 0, -0.5, 0]);
+  });
+  it('no throws without participation', () => {
+    const a = play({ receiver_player_id: 'W', passer_player_id: 'Q', pass_attempt: '1', sack: '0' });
+    expect(build([a], []).players.Q?.throws).toBeUndefined();
+  });
+  it('keeps the play-by-play counts per week as well as for the season', () => {
+    const rush = (week: string, gained: string) => play({ week, rush_attempt: '1', rusher_player_id: 'R', down: '1', ydstogo: '10', yards_gained: gained, yardline_100: '4', rushing_yards: gained });
+    const qb = (week: string, q: string) => play({ week, pass_attempt: '1', passer_player_id: 'Q', sack: '0', qtr: q, epa: '1' });
+    const db = build([rush('1', '5'), rush('2', '12'), rush('2', '0'), qb('1', '4'), qb('2', '1')], []);
+    expect(db.players.R.plays!.rush).toEqual([3, 2, 1, 17]);
+    expect(db.players.R.plays!.weeks!['1'].rush).toEqual([1, 1, 0, 5]);
+    expect(db.players.R.plays!.weeks!['2'].rush).toEqual([2, 1, 1, 12]);
+    expect(db.players.R.plays!.weeks!['2'].rz).toEqual({ ra: [2, 1.2] });
+    expect(db.players.Q.plays!.weeks!['1'].qtr).toEqual([0, 0, 1, 1]);
+    expect(db.players.Q.plays!.weeks!['2'].qtr).toEqual([1, 1, 0, 0]);
+  });
+});

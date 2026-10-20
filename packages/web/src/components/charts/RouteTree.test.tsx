@@ -61,8 +61,19 @@ describe('RouteTree', () => {
     fireEvent.click(go);
     expect(go.getAttribute('data-hot')).toBe('false');
   });
+  it('a QB gets his throws by route, opening on throw share, with QB metrics ranked among QBs', () => {
+    render(<RouteTree charts={[miniCharts()]} gsis="00-q1" pos="QB" />);
+    expect(within(card()).getByRole('button', { name: 'Throw share' })).toHaveAttribute('aria-pressed', 'true');
+    expect(card().querySelectorAll('[data-route]')).toHaveLength(3);
+    expect(chips()).toEqual(['54%', '5%', '41%']);   // route order: go, screen, dig
+    fireEvent.click(within(card()).getByRole('button', { name: 'Comp %' }));
+    expect(card().querySelector('[data-route="GO"]')!.getAttribute('data-pct')).toBe('100');   // 45% vs q2's 30%
+    fireEvent.mouseEnter(card().querySelector('li[data-key="GO"]')!);
+    fireEvent.pointerEnter(card().querySelector('li[data-key="GO"]')!, { pointerType: 'mouse' });
+    expect(screen.getByTestId('chart-tip')).toHaveTextContent('Go · 40 throws, 18 completions');
+  });
   it('renders nothing for a player with no route data', () => {
-    const { container } = render(<RouteTree charts={[miniCharts()]} gsis="00-q1" pos="QB" />);
+    const { container } = render(<RouteTree charts={[miniCharts()]} gsis="00-r2" pos="RB" />);
     expect(container).toBeEmptyDOMElement();
   });
   it('opens on the current season greyed out with a note until its data exists; an earlier season shows the chart', () => {
