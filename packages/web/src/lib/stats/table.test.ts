@@ -24,6 +24,17 @@ describe('statTable', () => {
     expect(a.benchLeft).toBe(50);
     expect([a.projPlus, a.dProj]).toEqual([0.5, 7.5]);
   });
+  it('totals points for and against, and ranks by record with points for breaking ties', () => {
+    const a = row(rows, 'a');
+    expect([a.pf, a.pa]).toEqual([430, 369]);
+    expect(rows.map((r) => r.rank).sort()).toEqual([1, 2, 3, 4]);
+    const share = (r: (typeof rows)[number]) => (r.w + r.t / 2) / Math.max(1, r.w + r.l + r.t);
+    const byRank = [...rows].sort((x, y) => x.rank - y.rank);
+    for (let i = 1; i < byRank.length; i++) {
+      const p = byRank[i - 1], q = byRank[i];
+      expect(share(p) > share(q) || (share(p) === share(q) && p.pf >= q.pf), `${p.id} before ${q.id}`).toBe(true);
+    }
+  });
   it('carries the roster numbers', () => {
     const a = row(rows, 'a');
     expect([a.faab, a.pickups, a.draftValue]).toEqual([13, 2, 12]);

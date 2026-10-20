@@ -9,7 +9,9 @@ import { pointOrigins, wireActivity } from './roster';
 export interface StatRow {
   id: UserId; seasons: number;
   w: number; l: number; t: number; apW: number; apL: number; apT: number; xw: number; luck: number; medW: number; medL: number; streakW: number; streakL: number;
-  ppg: number; paPg: number; highs: number; top3: number; bottom3: number; sd: number; min: number; max: number;
+  /** standings rank: record, then points for */
+  rank: number;
+  pf: number; pa: number; ppg: number; paPg: number; highs: number; top3: number; bottom3: number; sd: number; min: number; max: number;
   closeW: number; closeL: number; blowW: number; blowL: number; sos: number; postW: number; postL: number; postGames: number; postPpg: number;
   eff: number; benchLeft: number; projPlus: number; dProj: number;
   faab: number; pickups: number; waiverShare: number; draftValue: number;
@@ -31,7 +33,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 const one = (v: number) => v.toFixed(1);
 
 function blank(id: UserId): StatRow {
-  return { id, seasons: 0, w: 0, l: 0, t: 0, apW: 0, apL: 0, apT: 0, xw: 0, luck: 0, medW: 0, medL: 0, streakW: 0, streakL: 0, ppg: 0, paPg: 0, highs: 0, top3: 0, bottom3: 0, sd: 0, min: 0, max: 0, closeW: 0, closeL: 0, blowW: 0, blowL: 0, sos: 0, postW: 0, postL: 0, postGames: 0, postPpg: 0, eff: 0, benchLeft: 0, projPlus: 0, dProj: 0, faab: 0, pickups: 0, waiverShare: 0, draftValue: 0, titles: 0, runnerUps: 0, thirds: 0, poApps: 0, poW: 0, poL: 0, poGames: 0, poPpg: 0, finals: 0 };
+  return { id, seasons: 0, w: 0, l: 0, t: 0, apW: 0, apL: 0, apT: 0, xw: 0, luck: 0, medW: 0, medL: 0, streakW: 0, streakL: 0, rank: 0, pf: 0, pa: 0, ppg: 0, paPg: 0, highs: 0, top3: 0, bottom3: 0, sd: 0, min: 0, max: 0, closeW: 0, closeL: 0, blowW: 0, blowL: 0, sos: 0, postW: 0, postL: 0, postGames: 0, postPpg: 0, eff: 0, benchLeft: 0, projPlus: 0, dProj: 0, faab: 0, pickups: 0, waiverShare: 0, draftValue: 0, titles: 0, runnerUps: 0, thirds: 0, poApps: 0, poW: 0, poL: 0, poGames: 0, poPpg: 0, finals: 0 };
 }
 
 /** every advanced number per manager over the seasons given */
@@ -47,7 +49,7 @@ export function statTable(seasons: Season[]): StatRow[] {
   const origins = new Map(pointOrigins(sorted).map((r) => [r.id, r]));
   const highs = new Map<UserId, number>();
   for (const w of byWeek(reg)) { const top = Math.max(...w.games.map((g) => g.points)); for (const g of w.games) if (g.points === top) highs.set(g.userId, (highs.get(g.userId) ?? 0) + 1); }
-  return refs.map((ref) => {
+  const rows = refs.map((ref) => {
     const r = blank(ref.id);
     const mine = games.filter((g) => g.userId === ref.id).sort(chrono);
     const myReg = mine.filter((g) => !g.isPlayoff);
@@ -80,6 +82,8 @@ export function statTable(seasons: Season[]): StatRow[] {
     }
     const pts = myReg.map((g) => g.points);
     r.ppg = mean(pts);
+    r.pf = round2(pts.reduce((a, b) => a + b, 0));
+    r.pa = round2(myReg.reduce((a, g) => a + g.oppPoints, 0));
     r.paPg = mean(myReg.map((g) => g.oppPoints));
     r.highs = highs.get(ref.id) ?? 0;
     const f = finishes.get(ref.id);
@@ -107,9 +111,20 @@ export function statTable(seasons: Season[]): StatRow[] {
     r.waiverShare = o && o.total ? o.pickup / o.total : 0;
     return r;
   });
+  rankRows(rows);
+  return rows;
 }
 
 const col = (key: string, label: string, group: ColumnGroup, title: string, higherBetter: boolean, value: (r: StatRow) => number, text: (r: StatRow) => string): ColumnDef => ({ key, label, group, title, higherBetter, value, text });
+
+/** the standings rank, drawn left of the manager rather than in a group */
+export const RANK_COLUMN: ColumnDef = col('rank', 'Rank', 'Season', 'Standings rank: record first, points for breaking ties', false, (r) => r.rank, (r) => String(r.rank));
+
+/** 1 for the best record, points for breaking ties. */
+export function rankRows(rows: StatRow[]): void {
+  const pct = (r: StatRow) => share(r.w, r.l, r.t);
+  [...rows].sort((x, y) => pct(y) - pct(x) || y.pf - x.pf || (x.id < y.id ? -1 : 1)).forEach((r, i) => { r.rank = i + 1; });
+}
 
 export const COLUMNS: ColumnDef[] = [
   col('seasons', 'Yrs', 'Season', 'Seasons played', true, (r) => r.seasons, (r) => String(r.seasons)),
@@ -119,6 +134,8 @@ export const COLUMNS: ColumnDef[] = [
   col('luck', 'Luck', 'Record', 'Wins minus expected wins', true, (r) => r.luck, (r) => fmtSigned(r.luck, 1)),
   col('median', 'vs med', 'Record', 'Record against the weekly league median', true, (r) => share(r.medW, r.medL, 0), (r) => rec(r.medW, r.medL, 0)),
   col('streaks', 'Streaks', 'Record', 'Longest win and loss streaks', true, (r) => r.streakW - r.streakL, (r) => `W${r.streakW} / L${r.streakL}`),
+  col('pf', 'PF', 'Scoring', 'Points for, regular season', true, (r) => r.pf, (r) => one(r.pf)),
+  col('pa', 'PA', 'Scoring', 'Points against, regular season', false, (r) => r.pa, (r) => one(r.pa)),
   col('ppg', 'PPG', 'Scoring', 'Points per game', true, (r) => r.ppg, (r) => one(r.ppg)),
   col('paPg', 'PA/G', 'Scoring', 'Points against per game', false, (r) => r.paPg, (r) => one(r.paPg)),
   col('highs', 'Highs', 'Scoring', 'Weeks as the top scorer', true, (r) => r.highs, (r) => String(r.highs)),
