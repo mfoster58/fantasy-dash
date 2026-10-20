@@ -71,6 +71,10 @@ describe('liveWeekNumber', () => {
   it('is Sleeper\'s week when the sync has that week with games', () => {
     expect(liveWeekNumber(s(), { season: '2026', season_type: 'regular', week: 2 })).toBe(2);
   });
+  it('is null for a week the sync has already marked played', () => {
+    const done = s(); done.weeks[1] = { ...synced(), played: true };
+    expect(liveWeekNumber(done, { season: '2026', season_type: 'regular', week: 2 })).toBeNull();
+  });
   it('is null for another season, the offseason, or a week the sync lacks or has no games for', () => {
     expect(liveWeekNumber(s(), { season: '2025', season_type: 'regular', week: 2 })).toBeNull();
     expect(liveWeekNumber(s(), { season: '2026', season_type: 'off', week: 2 })).toBeNull();

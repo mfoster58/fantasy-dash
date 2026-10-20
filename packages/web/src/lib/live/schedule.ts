@@ -17,6 +17,25 @@ export function inFallbackWindow(now: number): boolean {
   }
 }
 
+const STEP_MS = 15 * 60_000;
+const WEEK_MS = 8 * 24 * 3600_000;
+
+/**
+ * When nothing is on, how long until it's worth checking again: 15 minutes before the next kickoff, or (without ESPN)
+ * when the next game window opens. Null when every game this week is over.
+ */
+export function nextWake(now: number, games: NflGame[] | null): number | null {
+  if (games) {
+    const next = Math.min(...games.filter((g) => g.state === 'pre').map((g) => Date.parse(g.kickoff) - LEAD_MS));
+    return Number.isFinite(next) ? Math.max(0, next - now) : null;
+  }
+  // windows open on the hour Eastern time, so quarter-hour steps land on each opening
+  for (let t = Math.ceil(now / STEP_MS) * STEP_MS; t <= now + WEEK_MS; t += STEP_MS) {
+    if (inFallbackWindow(t)) return t - now;
+  }
+  return null;
+}
+
 /** Poll while a game is on or about to kick off (a late kickoff still counts); fall back to the usual windows without ESPN. */
 export function shouldPoll(now: number, games: NflGame[] | null): boolean {
   if (!games) return inFallbackWindow(now);

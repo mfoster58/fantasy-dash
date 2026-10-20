@@ -7,19 +7,20 @@ const SEASON: Season = (() => {
   const s = season(2026, [week(1, [game(2026, 1, 1, side('a', 0, []), side('b', 0, []))])]);
   s.leagueId = 'L1';
   s.status = 'in_season';
+  s.weeks[0].played = false; // the live week is one the sync hasn't recorded
   return s;
 })();
 const espn = (state: string, date = '2026-10-25T17:00Z') => ({ events: [{ date, status: { period: 2, displayClock: '3:00', type: { state, name: '' } }, competitions: [{ competitors: [{ team: { abbreviation: 'KC' } }, { team: { abbreviation: 'BUF' } }] }] }] });
 
 /** a fetch that answers by URL; `fail` makes the named source fail */
-function fakeFetch(opts: { state?: string; fail?: ('sleeper' | 'espn')[] } = {}) {
+function fakeFetch(opts: { state?: string; date?: string; fail?: ('sleeper' | 'espn')[] } = {}) {
   return vi.fn(async (url: string) => {
     const bad = (opts.fail ?? []).some((f) => (f === 'espn' ? url.includes('espn') : url.includes('sleeper')));
     if (bad) return { ok: false, status: 500, json: async () => ({}) } as Response;
     const body = url.endsWith('/state/nfl') ? { season: '2026', season_type: 'regular', week: 1 }
       : url.includes('/matchups/') ? [{ roster_id: 1, matchup_id: 1, points: 12.5, custom_points: null, starters: [], players: [], players_points: {} }]
         : url.includes('/stats/') ? { p1: { pass_yd: 100 } }
-          : espn(opts.state ?? 'in');
+          : espn(opts.state ?? 'in', opts.date);
     return { ok: true, status: 200, json: async () => body } as Response;
   });
 }
@@ -135,5 +136,55 @@ describe('LiveProvider', () => {
     await flush();
     expect(read()).toMatchObject({ week: null, pts: null, polling: false });
     expect(calls(f as unknown as ReturnType<typeof fakeFetch>, '/matchups/')).toBe(0);
+  });
+});
+
+describe('LiveProvider after review', () => {
+  beforeEach(() => { vi.useFakeTimers(); Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true }); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('wakes for a later kickoff instead of going quiet (Sunday night after the late games)', async () => {
+    const f = fakeFetch({ state: 'pre', date: '2026-10-26T00:20Z' });
+    mount(f, Date.parse('2026-10-25T23:25Z'));
+    await flush();
+    expect(read().polling).toBe(false);
+    await act(async () => { await vi.advanceTimersByTimeAsync(39 * 60_000); });
+    expect(calls(f, '/matchups/')).toBe(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(calls(f, '/matchups/')).toBe(2);
+  });
+
+  it('keeps the last good NFL game states through an ESPN failure, and gives them up after three', async () => {
+    let espnCalls = 0;
+    const good = fakeFetch({ state: 'in' });
+    const f = vi.fn(async (u: string) => {
+      if (u.includes('espn') && espnCalls++ > 0) return { ok: false, status: 500, json: async () => ({}) } as Response;
+      return good(u);
+    });
+    mount(f as unknown as ReturnType<typeof fakeFetch>);
+    await flush();
+    expect(read().games).toBe(1);
+    await minute();
+    expect(read().games).toBe(1);
+    await minute();
+    await minute();
+    expect(read().games).toBeNull();
+  });
+
+  it('fetches fresh stat lines when a box score is opened again', async () => {
+    const f = fakeFetch({ state: 'post' });
+    const el = (stats: boolean) => <LiveProvider load={async () => SEASON} fetcher={f} now={() => Date.parse('2026-10-25T18:00Z')}><Probe stats={stats} /></LiveProvider>;
+    const { rerender } = render(el(true));
+    await flush();
+    await flush();
+    expect(calls(f, '/stats/')).toBe(1);
+    rerender(el(false));
+    await flush();
+    expect(read().stats).toBe(false);
+    rerender(el(true));
+    await flush();
+    await flush();
+    expect(calls(f, '/stats/')).toBe(2);
+    expect(read().stats).toBe(true);
   });
 });

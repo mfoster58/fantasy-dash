@@ -62,3 +62,11 @@ describe('gameOutlook', () => {
     expect(o.projected).toEqual([8, 20]);
   });
 });
+
+describe('gameOutlook while a game is still on', () => {
+  it('holds the win % at 99 even with no projected points left (overtime)', () => {
+    const o = gameOutlook(game(side('a', [line('a1', 100, null)]), side('b', [line('b1', 90, 20)])), () => live(5, '3:00'));
+    expect(o.status).toBe('live');
+    expect(o.win).toEqual([99, 1]);
+  });
+});

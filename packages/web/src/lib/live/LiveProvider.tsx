@@ -3,7 +3,7 @@ import type { Season, SleeperMatchup, StatMap } from '@fantasy-dash/core';
 import { currentSeason, loadSeason } from '../../data/load';
 import { parseScoreboard, scoreboardUrl, type NflGame } from './espn';
 import { liveWeekNumber, type NflStateJson } from './overlay';
-import { POLL_MS, shouldPoll } from './schedule';
+import { nextWake, POLL_MS, shouldPoll } from './schedule';
 
 const SLEEPER = 'https://api.sleeper.app/v1';
 
@@ -26,6 +26,8 @@ const LiveContext = createContext<{ data: LiveData; watchStats: () => () => void
 
 type Fetcher = (url: string) => Promise<Response>;
 const MAX_FAILURES = 3;
+/** setTimeout's longest delay */
+const MAX_DELAY = 2 ** 31 - 1;
 
 async function getJson<T>(fetcher: Fetcher, url: string): Promise<T> {
   const r = await fetcher(url);
@@ -39,7 +41,7 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
   children: ReactNode; load?: () => Promise<Season>; fetcher?: Fetcher; now?: () => number;
 }) {
   const [data, setData] = useState<LiveData>(EMPTY);
-  const r = useRef({ season: null as Season | null, games: null as NflGame[] | null, failures: 0, timer: undefined as ReturnType<typeof setTimeout> | undefined, watchers: 0, hasStats: false, stopped: false, busy: false, again: false });
+  const r = useRef({ season: null as Season | null, games: null as NflGame[] | null, failures: 0, espnFailures: 0, timer: undefined as ReturnType<typeof setTimeout> | undefined, watchers: 0, hasStats: false, stopped: false, busy: false, again: false });
   const tickRef = useRef<() => Promise<void>>(async () => {});
 
   tickRef.current = async () => {
@@ -48,10 +50,16 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
     if (s.busy) { s.again = true; return; }
     s.busy = true;
     clearTimeout(s.timer);
+    // poll every minute while games are on; otherwise sleep until the next kickoff (or game window) is near
     const schedule = (): boolean => {
-      if (s.stopped || !visible() || !shouldPoll(now(), s.games)) return false;
-      s.timer = setTimeout(() => void tickRef.current(), POLL_MS);
-      return true;
+      if (s.stopped || !visible()) return false;
+      if (shouldPoll(now(), s.games)) {
+        s.timer = setTimeout(() => void tickRef.current(), POLL_MS);
+        return true;
+      }
+      const wake = nextWake(now(), s.games);
+      if (wake !== null) s.timer = setTimeout(() => void tickRef.current(), Math.min(wake, MAX_DELAY));
+      return false;
     };
     const season = s.season;
     try {
@@ -69,10 +77,12 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
         wantStats ? getJson<StatMap>(fetcher, `${SLEEPER}/stats/nfl/regular/${season.year}/${week}`).catch(() => undefined) : Promise.resolve(undefined),
       ]);
       s.failures = 0;
-      s.games = games;
+      // a failed ESPN request keeps the last good game states; three in a row and we fall back to the game windows
+      if (games) { s.games = games; s.espnFailures = 0; } else if (++s.espnFailures >= MAX_FAILURES) s.games = null;
       if (stats) s.hasStats = true;
       const polling = schedule();
-      setData((d) => ({ ...d, week, matchups, games, stats: stats ?? (d.week === week ? d.stats : null), polling }));
+      const shown = s.games;
+      setData((d) => ({ ...d, week, matchups, games: shown, stats: stats ?? (d.week === week ? d.stats : null), polling }));
     } catch {
       // Sleeper failed: keep what we have; three in a row and we stop until the next page load
       s.failures += 1;
@@ -115,7 +125,11 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
     const s = r.current;
     s.watchers += 1;
     if (!s.hasStats) void tickRef.current();
-    return () => { s.watchers -= 1; };
+    return () => {
+      s.watchers -= 1;
+      // stats stop refreshing with no box score open, so drop them rather than show stale lines next time
+      if (s.watchers === 0) { s.hasStats = false; setData((d) => (d.stats ? { ...d, stats: null } : d)); }
+    };
   };
 
   return <LiveContext.Provider value={{ data, watchStats }}>{children}</LiveContext.Provider>;

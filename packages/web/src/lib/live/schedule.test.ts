@@ -1,5 +1,5 @@
 import type { NflGame } from './espn';
-import { inFallbackWindow, shouldPoll } from './schedule';
+import { inFallbackWindow, nextWake, shouldPoll } from './schedule';
 
 const at = (iso: string) => Date.parse(iso);
 const g = (state: NflGame['state'], kickoff: string): NflGame => ({ teams: ['KC', 'BUF'], state, period: 0, clock: '15:00', kickoff, halftime: false });
@@ -42,5 +42,19 @@ describe('inFallbackWindow (Eastern time, either side of the clock change)', () 
   });
   it('is closed midweek', () => {
     expect(inFallbackWindow(at('2026-10-21T18:00Z'))).toBe(false); // Wednesday
+  });
+});
+
+describe('nextWake', () => {
+  it('wakes 15 minutes before the next kickoff when nothing is on (Sunday night after the late games)', () => {
+    expect(nextWake(at('2026-10-25T23:25Z'), [g('post', '2026-10-25T20:25Z'), g('pre', '2026-10-26T00:20Z')])).toBe(40 * 60_000);
+  });
+  it('has nothing to wake for once every game is over', () => {
+    expect(nextWake(at('2026-10-27T12:00Z'), [g('post', '2026-10-25T17:00Z')])).toBeNull();
+    expect(nextWake(at('2026-10-27T12:00Z'), [])).toBeNull();
+  });
+  it('without ESPN, wakes when the next game window opens', () => {
+    expect(nextWake(at('2026-10-22T22:00Z'), null)).toBe(2 * 3600_000); // Thu 6pm EDT -> 8pm
+    expect(nextWake(at('2026-10-21T18:10Z'), null)).toBe(at('2026-10-23T00:00Z') - at('2026-10-21T18:10Z')); // Wed -> Thu 8pm EDT
   });
 });

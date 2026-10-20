@@ -3,10 +3,11 @@ import { pickStats, round2, type GameSide, type Manager, type PlayerLine, type S
 /** GET /v1/state/nfl, the fields we read */
 export interface NflStateJson { season: string; season_type: string; week: number }
 
-/** The week Sleeper says is on, when the synced season has it with games; otherwise nothing is live. */
+/** The week Sleeper says is on, when the synced season has it with games and hasn't recorded it yet; otherwise nothing is live. */
 export function liveWeekNumber(season: Season, state: NflStateJson | null): number | null {
   if (!state || Number(state.season) !== season.year || state.season_type !== 'regular') return null;
-  return season.weeks[state.week - 1]?.games.length ? state.week : null;
+  const week = season.weeks[state.week - 1];
+  return week?.games.length && !week.played ? state.week : null;
 }
 
 /** The week the ticker shows: the live one, else the next to play, else the last played; none once the season is over. */

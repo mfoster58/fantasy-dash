@@ -60,8 +60,8 @@ export function gameOutlook(game: Game, gameOf: (playerId: string) => PlayerGame
 
   const variance = K * (a.remaining + b.remaining);
   const diff = a.final - b.final;
-  let pa: number;
-  if (variance <= 0) pa = diff > 0 ? 100 : diff < 0 ? 0 : 50;
-  else pa = Math.max(1, Math.min(99, Math.round(phi(diff / Math.sqrt(variance)) * 100)));
+  let pa = variance > 0 ? Math.round(phi(diff / Math.sqrt(variance)) * 100) : diff > 0 ? 100 : diff < 0 ? 0 : 50;
+  // only a finished game is certain
+  if (status !== 'final') pa = Math.max(1, Math.min(99, pa));
   return { projected: [a.final, b.final], win: [pa, 100 - pa], status };
 }
