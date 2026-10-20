@@ -95,6 +95,11 @@ describe('PlayerPage', () => {
     expect(section(/Passing zones/)).toBeInTheDocument();
     expect(section(/Under pressure/)).toBeInTheDocument();
   });
+  it('a QB also gets a route tree of his throws', () => {
+    mount('q1');
+    expect(section(/Route tree/)).toBeInTheDocument();
+    expect(within(section(/Route tree/)!).getByRole('button', { name: 'Throw share' })).toBeInTheDocument();
+  });
   it('hides every card when the player has no gsis id', () => {
     const db = miniDb();
     db.players.w1 = { ...db.players.w1, gsisId: null };

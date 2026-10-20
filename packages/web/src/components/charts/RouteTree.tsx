@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ChartDb, Coverage, Route } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
-import { ROUTE_LABEL, ROUTE_SPEC } from '../../lib/charts/specs';
+import { ROUTE_LABEL, ROUTE_SPEC, THROW_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
 import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
 
@@ -23,39 +23,44 @@ const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'en
   SWING: { p: [[0, 0], [3, -1.5], [7, -0.5], [9, 1.5]], a: 'start', l: [9.8, -0.9] },
 };
 const METRICS: [string, string][] = [['share', 'Target share'], ['ypt', 'Yds/tgt'], ['catch', 'Catch %'], ['epa', 'EPA/tgt']];
+/** a QB's tree is his throws by the route his receiver ran */
+const QB_METRICS: [string, string][] = [['share', 'Throw share'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['epa', 'EPA/att']];
 const COVERAGES: [Coverage, string][] = [['all', 'All'], ['man', 'vs Man'], ['zone', 'vs Zone']];
 const W = 660, BAND = 30, OX = 365, OY = 272, SX = 12.5, SY = 10.2, H = 330;
 const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
 
 export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: ChartDb[]; gsis: string; pos: string; current?: number }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ROUTE_SPEC, c, gsis), current);
+  const qb = pos === 'QB';
+  const SPEC = qb ? THROW_SPEC : ROUTE_SPEC;
+  const words = qb ? { unit: 'att', vol: 'throws', got: 'completions', of: 'his throws' } : { unit: 'tgt', vol: 'targets', got: 'catches', of: 'his targets' };
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPEC, c, gsis), current);
   const [cov, setCov] = useState<Coverage>('all');
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
-  const items = useMemo(() => (db ? chartItems(ROUTE_SPEC, db, gsis, cov, metric) ?? [] : []), [db, gsis, cov, metric]);
+  const items = useMemo(() => (db ? chartItems(SPEC, db, gsis, cov, metric) ?? [] : []), [db, gsis, cov, metric]);
   if (!years.length) return null;
   const empty = db ? null : { title: `No route data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his route tree.` };
 
   const share = metric === 'share';
-  const def = share ? null : ROUTE_SPEC.metrics[metric];
-  const colour = (i: ChartItem<Route>) => (share ? heatColor(i.share, ROUTE_SPEC.shareMax) : pctColor(i.pct));
+  const def = share ? null : SPEC.metrics[metric];
+  const colour = (i: ChartItem<Route>) => (share ? heatColor(i.share, SPEC.shareMax) : pctColor(i.pct));
   const main = (i: ChartItem<Route>) => (share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value));
-  const small = (i: ChartItem<Route>) => (share ? `${i.volume} tgt` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} tgt` : `${i.volume} tgt · too few to rank`);
+  const small = (i: ChartItem<Route>) => (share ? `${i.volume} ${words.unit}` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} ${words.unit}` : `${i.volume} ${words.unit} · too few to rank`);
   const pool = !db ? 0 : Object.values(db.players).filter((p) => p.pos === db.players[gsis]?.pos && (p.routes?.[cov] ? Object.keys(p.routes[cov]).length : 0) > 0).length;
   const hotItem = items.find((i) => i.key === hot);
   const marks = [0, 5, 10, 15, 20].map((v) => ({ y: Y(v), label: v === 0 ? 'LOS' : `+${v}` }));
 
   return (
     <ChartCard id="chart-routes" title="Route tree" years={years} year={year} onYear={setYear} empty={empty}
-      controls={<><Seg label="Coverage" options={COVERAGES} value={cov} onChange={setCov} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
+      controls={<><Seg label="Coverage" options={COVERAGES} value={cov} onChange={setCov} /><Seg label="Metric" options={qb ? QB_METRICS : METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
-        <b>{ROUTE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} targets, {hotItem.counts[1]} catches, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD
-        {' · '}{Math.round(hotItem.share * 100)}% of his targets
-        {Object.entries(ROUTE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ROUTE_SPEC, db!, gsis, cov, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
+        <b>{ROUTE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} {words.vol}, {hotItem.counts[1]} {words.got}, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD
+        {' · '}{Math.round(hotItem.share * 100)}% of {words.of}
+        {Object.entries(SPEC.metrics).map(([k, m]) => { const one = chartItems(SPEC, db!, gsis, cov, k)!.find((x) => x.key === hotItem.key)!; return <span key={k}> · {m.label} <b>{m.fmt(one.value!)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}
         <span className="text-muted"> · ranked against {pool} {pos}s</span>
       </> : <span className="text-muted">Hover a route for its numbers.</span>}
-      legend={share ? <span>Share of his targets, 0% to 20%+ · switch metric to see how he ranks among {pos}s on each route</span>
-        : <span>{def!.label} percentile among {pos}s · grey = under {ROUTE_SPEC.min} targets, not ranked</span>}>
+      legend={share ? <span>Share of {words.of}, 0% to 20%+ · switch metric to see how he ranks among {pos}s on each route</span>
+        : <span>{def!.label} percentile among {pos}s · grey = under {SPEC.min} {words.vol}, not ranked</span>}>
       <div className="grid @4xl:grid-cols-[minmax(0,1.7fr)_minmax(15rem,1fr)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto block w-full max-w-[760px] px-2 py-3" role="img" aria-label={`Route tree, ${year}`}>
           <rect x={BAND} y={Y(24)} width={W - 2 * BAND} height={H - Y(24)} style={{ fill: 'var(--field)' }} />
@@ -92,12 +97,12 @@ export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: 
             })}
           </g>
           <circle cx={X(0)} cy={Y(0)} r={8} style={{ fill: 'var(--ink)' }} />
-          <text x={X(0)} y={Y(0) + 3} textAnchor="middle" fontSize={8.5} fontWeight={700} style={{ fill: 'var(--bg)' }}>{pos === 'RB' ? 'RB' : pos}</text>
+          <text x={X(0)} y={Y(0) + 3} textAnchor="middle" fontSize={8.5} fontWeight={700} style={{ fill: 'var(--bg)' }}>{qb ? 'WR' : pos}</text>
         </svg>
         <ChartBars hot={hot} bind={bind} rows={[...items].sort((p, q) => q.volume - p.volume).map((i) => ({
           key: i.key, label: ROUTE_LABEL[i.key], sub: share ? '' : String(i.volume),
           width: share ? (i.volume / Math.max(...items.map((x) => x.volume))) * 100 : i.pct ?? 0,
-          fill: colour(i), value: share ? `${i.volume} tgt` : def!.fmt(i.value!), rank: share ? `${Math.round(i.share * 100)}%` : i.ranked ? String(i.pct) : '–',
+          fill: colour(i), value: share ? `${i.volume} ${words.unit}` : def!.fmt(i.value!), rank: share ? `${Math.round(i.share * 100)}%` : i.ranked ? String(i.pct) : '–',
         }))} />
       </div>
     </ChartCard>

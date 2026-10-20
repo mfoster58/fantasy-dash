@@ -13,6 +13,16 @@ export const ROUTE_SPEC: ChartSpec<Route, Coverage> = {
   },
 };
 
+/** A QB's throws by the route his receiver ran, ranked among QBs. */
+export const THROW_SPEC: ChartSpec<Route, Coverage> = {
+  keys: ROUTES, table: (p) => p.throws, min: 5, sharePool: { all: 150, man: 50, zone: 50 }, shareMax: 0.2, unit: 'att',
+  metrics: {
+    comp: { label: 'Comp %', value: per(1, 0), fmt: fmtPct },
+    ypa: { label: 'Yds/att', value: per(2, 0), fmt: fmtDec1 },
+    epa: { label: 'EPA/att', value: per(3, 0), fmt: (v) => fmtSigned(v, 2) },
+  },
+};
+
 export const LANE_SPEC: ChartSpec<Lane, Box> = {
   keys: LANES, table: (p) => p.lanes, min: 10, sharePool: { all: 100, light: 30, heavy: 30 }, shareMax: 0.25, unit: 'car',
   metrics: {
