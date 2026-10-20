@@ -5,6 +5,8 @@ const tuple = (n: number) => z.array(z.number()).length(n);
 const table = <T extends readonly [string, ...string[]]>(keys: T, n: number) => z.record(z.enum(keys), tuple(n));
 const ZoneEnum = ZONES as unknown as readonly [string, ...string[]];
 
+const PlayCounts = z.object({ rush: tuple(4).optional(), rz: table(RZ_KEYS, 2).optional(), qtr: tuple(4).optional() });
+
 export const ChartDbSchema = z.object({
   year: z.number(),
   builtAt: z.string(),
@@ -16,6 +18,7 @@ export const ChartDbSchema = z.object({
     lanes: z.object({ all: table(LANES, 5), light: table(LANES, 5), heavy: table(LANES, 5) }).optional(),
     zones: z.object({ all: table(ZoneEnum, 8), clean: table(ZoneEnum, 8), pressured: table(ZoneEnum, 8) }).optional(),
     splits: table(SPLITS, 6).optional(),
-    plays: z.object({ rush: tuple(4).optional(), rz: table(RZ_KEYS, 2).optional(), qtr: tuple(4).optional() }).optional(),
+    throws: z.object({ all: table(ROUTES, 5), man: table(ROUTES, 5), zone: table(ROUTES, 5) }).optional(),
+    plays: PlayCounts.extend({ weeks: z.record(PlayCounts).optional() }).optional(),
   })),
 });

@@ -1,5 +1,5 @@
 import type { DbPos } from '../playerdb/types';
-import { ROUTES, type Band, type RzKey, type ChartDb, type ChartPlayer, type Counts, type Lane, type Route, type Split, type Zone } from './types';
+import { ROUTES, type Band, type PlayCounts, type RzKey, type ChartDb, type ChartPlayer, type Counts, type Lane, type Route, type Split, type Zone } from './types';
 
 type Row = Record<string, string>;
 const present = (v: string | undefined): v is string => v !== undefined && v !== '' && v !== 'NA';
@@ -58,9 +58,13 @@ function roundAll(p: ChartPlayer) {
   if (p.lanes) for (const t of Object.values(p.lanes)) fix(t, 2);
   if (p.zones) for (const t of Object.values(p.zones)) fix(t, 3, { 6: 1 });
   if (p.splits) fix(p.splits, 4);
-  if (p.plays?.rush) p.plays.rush = p.plays.rush.map((v) => round(v, 0));
-  if (p.plays?.rz) for (const c of Object.values(p.plays.rz)) if (c) c.forEach((v, i) => { c[i] = round(v, i === 1 ? 1 : 0); });
-  if (p.plays?.qtr) p.plays.qtr = p.plays.qtr.map((v, i) => round(v, i % 2 ? 2 : 0));
+  if (p.throws) for (const t of Object.values(p.throws)) fix(t, 3);
+  const fixPlays = (c: PlayCounts) => {
+    if (c.rush) c.rush = c.rush.map((v) => round(v, 0));
+    if (c.rz) for (const x of Object.values(c.rz)) if (x) x.forEach((v, i) => { x[i] = round(v, i === 1 ? 1 : 0); });
+    if (c.qtr) c.qtr = c.qtr.map((v, i) => round(v, i % 2 ? 2 : 0));
+  };
+  if (p.plays) { fixPlays(p.plays); for (const w of Object.values(p.plays.weeks ?? {})) fixPlays(w); }
 }
 
 /**
@@ -92,6 +96,12 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
         const cov = x.defense_man_zone_type === 'MAN_COVERAGE' ? 'man' : x.defense_man_zone_type === 'ZONE_COVERAGE' ? 'zone' : null;
         bump(t.all, x.route as Route, v);
         if (cov) bump(t[cov], x.route as Route, v);
+        const qb = present(p.passer_player_id) ? player(p.passer_player_id, ['QB']) : null;
+        if (qb) {
+          const q = (qb.throws ??= { all: {}, man: {}, zone: {} });
+          bump(q.all, x.route as Route, v);
+          if (cov) bump(q[cov], x.route as Route, v);
+        }
       }
     }
 
@@ -134,24 +144,27 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
 
     // play-by-play only: built with or without participation
     if (p.two_point_attempt !== '1') {
+      // each count goes to the season and to its week
+      const into = (pl: ChartPlayer, f: (c: PlayCounts) => void) => { const plays = (pl.plays ??= {}); f(plays); f(((plays.weeks ??= {})[String(week)] ??= {})); };
       if (p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
         const pl = player(p.rusher_player_id, ['RB']);
         if (pl) {
-          const plays = (pl.plays ??= {});
           const gained = num(p.yards_gained);
-          bump(plays as Record<string, Counts>, 'rush', [1, rushSuccess(num(p.down), num(p.ydstogo), gained) ? 1 : 0, gained >= 10 ? 1 : 0, gained]);
           const b = rzBand(num(p.yardline_100));
-          if (b) bump((plays.rz ??= {}), `r${b}` as RzKey, [1, num(p.rushing_yards) * 0.1 + num(p.rush_touchdown) * 6]);
+          into(pl, (c) => {
+            bump(c as Record<string, Counts>, 'rush', [1, rushSuccess(num(p.down), num(p.ydstogo), gained) ? 1 : 0, gained >= 10 ? 1 : 0, gained]);
+            if (b) bump((c.rz ??= {}), `r${b}` as RzKey, [1, num(p.rushing_yards) * 0.1 + num(p.rush_touchdown) * 6]);
+          });
         }
       }
       if (p.pass_attempt === '1' && p.sack !== '1' && present(p.receiver_player_id)) {
         const b = rzBand(num(p.yardline_100));
         const pl = b ? player(p.receiver_player_id, ['RB']) : null;
-        if (pl && b) bump(((pl.plays ??= {}).rz ??= {}), `t${b}` as RzKey, [1, num(p.complete_pass) + num(p.receiving_yards) * 0.1 + num(p.pass_touchdown) * 6]);
+        if (pl && b) into(pl, (c) => bump((c.rz ??= {}), `t${b}` as RzKey, [1, num(p.complete_pass) + num(p.receiving_yards) * 0.1 + num(p.pass_touchdown) * 6]));
       }
       if (p.pass_attempt === '1' && present(p.passer_player_id)) {
         const pl = player(p.passer_player_id, ['QB']);
-        if (pl) bump((pl.plays ??= {}) as Record<string, Counts>, 'qtr', num(p.qtr) >= 4 ? [0, 0, 1, num(p.epa)] : [1, num(p.epa), 0, 0]);
+        if (pl) into(pl, (c) => bump(c as Record<string, Counts>, 'qtr', num(p.qtr) >= 4 ? [0, 0, 1, num(p.epa)] : [1, num(p.epa), 0, 0]));
       }
     }
   }

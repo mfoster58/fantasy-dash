@@ -34,14 +34,18 @@ export type RzKey = (typeof RZ_KEYS)[number];
  */
 export type Counts = number[];
 
+export interface PlayCounts { rush?: Counts; rz?: Partial<Record<RzKey, Counts>>; qtr?: Counts }
+
 export interface ChartPlayer {
   pos: DbPos;
   routes?: Record<Coverage, Partial<Record<Route, Counts>>>;
   lanes?: Record<Box, Partial<Record<Lane, Counts>>>;
   zones?: Record<Pocket, Partial<Record<Zone, Counts>>>;
   splits?: Partial<Record<Split, Counts>>;
-  /** from play-by-play alone, so present for the current season too */
-  plays?: { rush?: Counts; rz?: Partial<Record<RzKey, Counts>>; qtr?: Counts };
+  /** a QB's throws by the route his receiver ran (same tuple as routes: attempts, completions, yards, epa, tds) */
+  throws?: Record<Coverage, Partial<Record<Route, Counts>>>;
+  /** from play-by-play alone, so present for the current season too; `weeks` holds the same counts per week */
+  plays?: PlayCounts & { weeks?: Record<string, PlayCounts> };
 }
 
 /** One season of play-by-play chart counts, keyed by gsis id. Regular season, weeks 1–18. */
