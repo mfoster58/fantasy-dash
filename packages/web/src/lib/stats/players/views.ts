@@ -45,3 +45,37 @@ export function viewPool(view: View, stats: PlayerStat[], pos: Pos): PlayerStat[
   const ok = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
   return stats.filter((p) => p.pos === pos && view.min(p) && ok(p[view.x]) && ok(p[view.y])).sort((a, b) => volume(b) - volume(a)).slice(0, 40);
 }
+
+export interface StatOption { key: keyof PlayerStat; label: string; fmt: Fmt }
+const o = (key: keyof PlayerStat, label: string, fmt: Fmt): StatOption => ({ key, label, fmt });
+const n0: Fmt = (v) => Math.round(v).toString();
+const FANTASY = [o('ppg', 'PPG', f1), o('xppg', 'xFP/G', f1)];
+/** The stats a custom chart can plot, per position. */
+export const STAT_OPTIONS: Record<Pos, StatOption[]> = {
+  QB: [...FANTASY, o('anya', 'ANY/A', f2), o('cpoe', 'CPOE', signed1), o('epaDb', 'EPA/dropback', signed), o('aggr', 'Tight window %', (v) => `${v.toFixed(1)}%`),
+    o('epa13', 'EPA/db Q1–3', signed), o('epa4', 'EPA/db Q4', signed), o('att', 'Attempts', n0), o('dropbacks', 'Dropbacks', n0), o('car', 'Carries', n0), o('ypc', 'Yds/carry', f1),
+    o('clean', 'EPA/db clean', signed), o('press', 'EPA/db pressured', signed), o('manEpa', 'EPA/db vs man', signed), o('zoneEpa', 'EPA/db vs zone', signed)],
+  RB: [...FANTASY, o('car', 'Carries', n0), o('tgt', 'Targets', n0), o('snapPct', 'Snap share', pct), o('wopg', 'Weighted opp/G', f1), o('ypc', 'Yds/carry', f1), o('ypt', 'Yds/target', f1),
+    o('ryoe', 'RYOE/carry', signed), o('succ', 'Success %', pct), o('expl', 'Explosive %', pct), o('rzX', 'RZ xFP/G', f1), o('rzA', 'RZ FP/G', f1), o('tgtShare', 'Target share', pct), o('yprr', 'YPRR', f2), o('catchPct', 'Catch rate', pct)],
+  WR: [],
+  TE: [],
+};
+STAT_OPTIONS.WR = [...FANTASY, o('tgt', 'Targets', n0), o('routes', 'Routes', n0), o('yds', 'Rec yards', n0), o('yprr', 'YPRR', f2), o('tprr', 'Targets/route', pct), o('fdrr', 'First downs/route', pct),
+  o('adot', 'aDOT', f1), o('sep', 'Separation', f1), o('catchPct', 'Catch rate', pct), o('tgtShare', 'Target share', pct), o('snapPct', 'Snap share', pct), o('ypt', 'Yds/target', f1),
+  o('manYpt', 'Yds/tgt vs man', f1), o('zoneYpt', 'Yds/tgt vs zone', f1)];
+STAT_OPTIONS.TE = STAT_OPTIONS.WR;
+
+const MIN: Record<Pos, (p: PlayerStat) => boolean> = { QB: (p) => p.att >= 80, RB: (p) => p.car >= 20, WR: (p) => p.tgt >= 15, TE: (p) => p.tgt >= 12 };
+
+/** A chart of any two stats: the quadrants are named from them, the pool keeps the position's minimum volume. */
+export function customView(pos: Pos, xKey: string | null, yKey: string | null): View {
+  const opts = STAT_OPTIONS[pos];
+  const x = opts.find((s) => s.key === xKey) ?? opts[0];
+  const y = opts.find((s) => s.key === yKey) ?? opts[1];
+  return {
+    id: 'custom', pos: [pos], label: `${y.label} vs ${x.label}`, question: 'Pick any two stats to plot against each other.',
+    x: x.key, y: y.key, xLabel: x.label, yLabel: y.label, fx: x.fmt, fy: y.fmt, min: MIN[pos],
+    quads: [`High ${x.label} · High ${y.label}`, `Low ${x.label} · High ${y.label}`, `High ${x.label} · Low ${y.label}`, `Low ${x.label} · Low ${y.label}`],
+  };
+}
+

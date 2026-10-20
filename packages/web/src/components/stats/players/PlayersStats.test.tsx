@@ -48,6 +48,18 @@ describe('PlayersStats', () => {
     mount('/stats/players?pos=QB&view=press&from=2&to=4', [{ ...statsCharts(), participation: true }]);
     expect(screen.getByText(/full season only/i)).toBeInTheDocument();
   });
+  it('Custom: two dropdowns pick the stats, the chart follows, and the picks go in the URL', () => {
+    mount('/stats/players?pos=RB');
+    fireEvent.click(screen.getByRole('button', { name: 'Custom' }));
+    const x = screen.getByRole('combobox', { name: 'X axis stat' }), y = screen.getByRole('combobox', { name: 'Y axis stat' });
+    fireEvent.change(x, { target: { value: 'car' } });
+    fireEvent.change(y, { target: { value: 'ppg' } });
+    expect(screen.getByRole('region', { name: 'PPG vs Carries' })).toBeInTheDocument();
+  });
+  it('a custom link opens those stats', () => {
+    mount('/stats/players?pos=WR&view=custom&x=adot&y=yprr');
+    expect(screen.getByRole('region', { name: 'YPRR vs aDOT' })).toBeInTheDocument();
+  });
   it('a link with pos and view opens that chart', () => {
     mount('/stats/players?pos=WR&view=role');
     expect(screen.getByRole('region', { name: /Role map/ })).toBeInTheDocument();

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import type { ChartDb, PlayerDb } from '@fantasy-dash/core';
 import { seasonStats, type Pos, type WeekRange } from '../../../lib/stats/players/season';
 import { trends } from '../../../lib/stats/players/trends';
-import { viewPool, viewsFor } from '../../../lib/stats/players/views';
+import { STAT_OPTIONS, customView, viewPool, viewsFor } from '../../../lib/stats/players/views';
 import WeekPicker from '../../players/db/WeekPicker';
 import SeasonPicker from '../../SeasonPicker';
 import QuadrantChart from './QuadrantChart';
@@ -25,7 +25,8 @@ export default function PlayersStats({ dbs, charts, currentYear, lastWeeks = {},
   const season = Number(params.get('season')) || (years.includes(currentYear) ? currentYear : years[0]);
   const pos = (POSITIONS.find((p) => p === params.get('pos')) ?? 'RB') as Pos;
   const views = viewsFor(pos);
-  const view = views.find((v) => v.id === params.get('view')) ?? views[0];
+  const custom = params.get('view') === 'custom';
+  const view = custom ? customView(pos, params.get('x'), params.get('y')) : views.find((v) => v.id === params.get('view')) ?? views[0];
   const db = dbs.find((d) => d.year === season) ?? dbs[0];
   const chart = charts.find((c) => c.year === season);
   const through = Math.max(1, db?.throughWeek ?? 1);
@@ -58,7 +59,7 @@ export default function PlayersStats({ dbs, charts, currentYear, lastWeeks = {},
         <div className="flex flex-wrap items-center gap-3">
           <SeasonPicker years={years} value={season} onChange={(v) => { if (v !== 'all') set({ season: String(v), from: null, to: null }); }} />
           <div role="group" aria-label="Position" className="inline-flex gap-0.5 rounded-md bg-surface-2 p-0.5">
-            {POSITIONS.map((p) => <button key={p} type="button" aria-pressed={p === pos} onClick={() => set({ pos: p, view: viewsFor(p)[0].id })} className={`rounded px-3 py-1 text-sm ${p === pos ? 'bg-line text-ink' : 'text-muted hover:text-ink'}`}>{p}</button>)}
+            {POSITIONS.map((p) => <button key={p} type="button" aria-pressed={p === pos} onClick={() => set(custom ? { pos: p, x: null, y: null } : { pos: p, view: viewsFor(p)[0].id })} className={`rounded px-3 py-1 text-sm ${p === pos ? 'bg-line text-ink' : 'text-muted hover:text-ink'}`}>{p}</button>)}
           </div>
         </div>
         <WeekPicker from={from} to={to} throughWeek={through} lastWeek={NFL_WEEKS} playoffAt={playoffStarts[season] ?? null}
@@ -75,8 +76,22 @@ export default function PlayersStats({ dbs, charts, currentYear, lastWeeks = {},
             </button>
           );
         })}
+        <button type="button" aria-pressed={custom} onClick={() => set({ view: 'custom' })}
+          className={`rounded-full border border-dashed px-3 py-1 text-xs ${custom ? 'border-win bg-[color-mix(in_srgb,var(--win)_12%,transparent)] text-ink' : 'border-line text-muted hover:text-ink'}`}>Custom</button>
       </div>
-      <QuadrantChart key={`${season}|${pos}|${view.id}|${from}|${to}`} view={view} pool={pool} note={note ?? (pool.length ? undefined : 'No data yet for this season.')} />
+      {custom && (
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          {(['x', 'y'] as const).map((axis) => (
+            <label key={axis} className="flex items-center gap-2 text-muted">{axis === 'x' ? 'X axis' : 'Y axis'}
+              <select aria-label={`${axis.toUpperCase()} axis stat`} value={String(view[axis])} onChange={(e) => set({ [axis]: e.target.value })}
+                className="rounded border border-line bg-surface px-2 py-1 text-ink">
+                {STAT_OPTIONS[pos].map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
+      )}
+      <QuadrantChart key={`${season}|${pos}|${view.id}|${String(view.x)}|${String(view.y)}|${from}|${to}`} view={view} pool={pool} note={note ?? (pool.length ? undefined : 'No data yet for this season.')} />
       {(pos === 'WR' || pos === 'TE') && <YprrChart stats={stats} pos={pos} estimated={!db.routesReal} />}
       {trend && <TrendsTable data={trend} pos={pos as 'RB' | 'WR' | 'TE'} season={season} />}
       {pos !== 'QB' && shortRange && <p className="card px-4 py-6 text-center text-sm text-muted">Pick at least three weeks to see volume trends.</p>}
