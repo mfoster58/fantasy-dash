@@ -78,7 +78,8 @@ function teamPhoto(user: SleeperUser | undefined): string | null {
   return typeof a === 'string' && a.startsWith('https://') ? a : null;
 }
 
-function pickStats(line: Record<string, number> | undefined): Record<string, number> {
+/** A raw Sleeper stat line trimmed to STAT_KEYS, zeros dropped. */
+export function pickStats(line: Record<string, number> | undefined): Record<string, number> {
   const out: Record<string, number> = {};
   if (!line) return out;
   for (const k of STAT_KEYS) {
