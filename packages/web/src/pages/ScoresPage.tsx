@@ -4,12 +4,16 @@ import ScoreCard from '../components/ScoreCard';
 import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
 import WeekScores from '../components/boxscore/WeekScores';
+import LiveDot from '../components/LiveDot';
+import { weekStatus } from '../components/ScoreTicker';
+import { useLive } from '../lib/live/LiveProvider';
 import { history, players } from '../data/load';
 
 export default function ScoresPage() {
   const season = useLoaderData() as Season;
   const { week: weekParam } = useParams();
   const navigate = useNavigate();
+  const live = useLive();
   const selected = Number(weekParam);
   const weeks = Number.isInteger(selected) ? season.weeks.filter((w) => w.week === selected) : [];
   const years = history.seasons.map((s) => s.year);
@@ -24,33 +28,38 @@ export default function ScoresPage() {
       </header>
       <WeekStrip weeks={season.weeks} selected={selected} onSelect={(w) => navigate(`/scores/${season.year}/${w}`)} />
       {weeks.length === 0 && <p className="text-sm text-muted">No week {weekParam} in {season.year}.</p>}
-      {weeks.map((wk) => (
-        <div key={wk.week} className="space-y-3">
-          {wk.games.length === 0 ? (
-            <p className="text-sm text-muted">
-              {wk.isPlayoff && !wk.played
-                ? 'Playoff matchups are set after the regular season.'
-                : 'No games scheduled.'}
-            </p>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {wk.games.map((g) => (
-                <ScoreCard
-                  key={g.id}
-                  game={g}
-                  played={wk.played}
-                  managers={season.managers}
-                  players={players}
-                  seasonTeams={season.playerTeams}
-                  to={`/scores/${season.year}/${wk.week}/${g.matchupId}`}
-                  year={season.year}
-                />
-              ))}
-              <WeekScores week={wk} managers={season.managers} year={season.year} />
-            </div>
-          )}
-        </div>
-      ))}
+      {weeks.map((raw) => {
+        const { week: wk, isLive, outlookOf } = weekStatus(season, raw, live);
+        return (
+          <div key={wk.week} className="space-y-3">
+            {isLive && <LiveDot on={live.polling} />}
+            {wk.games.length === 0 ? (
+              <p className="text-sm text-muted">
+                {wk.isPlayoff && !wk.played
+                  ? 'Playoff matchups are set after the regular season.'
+                  : 'No games scheduled.'}
+              </p>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {wk.games.map((g) => (
+                  <ScoreCard
+                    key={g.id}
+                    game={g}
+                    played={wk.played}
+                    managers={season.managers}
+                    players={players}
+                    seasonTeams={season.playerTeams}
+                    to={`/scores/${season.year}/${wk.week}/${g.matchupId}`}
+                    year={season.year}
+                    live={outlookOf(g) ?? undefined}
+                  />
+                ))}
+                <WeekScores week={wk} managers={season.managers} year={season.year} live={isLive} />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </section>
   );
 }

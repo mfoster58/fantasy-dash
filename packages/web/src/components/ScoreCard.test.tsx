@@ -97,4 +97,22 @@ describe('ScoreCard', () => {
     // the card itself still opens the box score, without nesting one link inside another
     expect(document.querySelectorAll('a a')).toHaveLength(0);
   });
+  it('shows live points, the projected final and a Live status while the game is on', () => {
+    const g = base(side('a', 64.2, [['q1', 64.2]]), side('b', 70.1, [['r1', 70.1]]), null);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" year={2026}
+      live={{ projected: [118.4, 121.0], win: [44, 56], status: 'live' }} />);
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getAllByText('64.20')[0]).toBeInTheDocument();
+    expect(screen.getByText('proj 118.40')).toBeInTheDocument();
+    expect(screen.queryByText('Efficiency')).not.toBeInTheDocument();
+    expect(screen.getByText('Top performers')).toBeInTheDocument();
+  });
+  it('calls a live game Final, with the winner in bold, once every starter is done', () => {
+    const g = base(side('a', 64.2, [['q1', 64.2]]), side('b', 70.1, [['r1', 70.1]]), null);
+    wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" year={2026}
+      live={{ projected: [64.2, 70.1], win: [0, 100], status: 'final' }} />);
+    expect(screen.getByText('Final')).toBeInTheDocument();
+    expect(screen.getAllByText('70.10')[0]).toHaveClass('font-semibold');
+    expect(screen.getAllByText('64.20')[0]).not.toHaveClass('font-semibold');
+  });
 });
