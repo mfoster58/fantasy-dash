@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import { game, line, season, side, week } from '../test/playerFixtures';
@@ -9,7 +9,9 @@ function current(): Season {
   const a = side('a', 0, [line('q1', 0)]); a.projected = 120.5; a.recordBefore = { w: 4, l: 2, t: 0 };
   const b = side('b', 0, [line('r1', 0)]); b.projected = 110; b.recordBefore = { w: 3, l: 3, t: 0 };
   const w = week(7, [game(2026, 7, 1, a, b)]); w.played = false;
-  const s = season(2026, [...Array.from({ length: 6 }, (_, i) => week(i + 1, [])), w], null, 6);
+  // week 6 is the only scored week before it
+  const done = week(6, [game(2026, 6, 1, side('a', 101.5, [line('q1', 101.5)]), side('b', 99, [line('r1', 99)]))]);
+  const s = season(2026, [...Array.from({ length: 5 }, (_, i) => week(i + 1, [])), done, w], null, 6);
   s.status = 'in_season';
   s.leagueId = 'L1';
   s.playerTeams = { q1: 'KC', r1: 'SF' };
@@ -45,18 +47,20 @@ describe('ScoreTicker', () => {
   it('shows the live week\'s matchups with live scores, the leader in bold, linking to the box score', async () => {
     await show(current(), fetcher('in'));
     const bar = screen.getByRole('region', { name: 'Scores' });
-    expect(bar).toHaveTextContent('2026 · Week 7');
+    expect(bar).toHaveTextContent('2026');
+    expect(bar).toHaveTextContent('Week 7');
     expect(within(bar).getByText('LIVE')).toBeInTheDocument();
     const card = within(bar).getByRole('link', { name: /Team Alice vs Team Bob/ });
     expect(card).toHaveAttribute('href', '/scores/2026/7/1');
     expect(card).toHaveTextContent('4-2');
+    expect(card).toHaveTextContent('Live');
     expect(within(card).getByText('70.10')).toHaveClass('font-semibold');
     expect(within(card).getByText('64.20')).not.toHaveClass('font-semibold');
   });
 
   it('marks a matchup FINAL once every starter\'s game is over', async () => {
     await show(current(), fetcher('post'));
-    expect(screen.getByRole('link', { name: /Team Alice vs Team Bob/ })).toHaveTextContent('FINAL');
+    expect(screen.getByRole('link', { name: /Team Alice vs Team Bob/ })).toHaveTextContent('Final');
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
 
@@ -64,8 +68,34 @@ describe('ScoreTicker', () => {
     await show(current(), fetcher('none'));
     const card = screen.getByRole('link', { name: /Team Alice vs Team Bob/ });
     expect(card).toHaveTextContent('120.50');
-    expect(card).toHaveTextContent('proj');
+    expect(card).toHaveTextContent('Projected');
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+  });
+
+  it('steps back and forth through the weeks with matchups, showing finals for a past week', async () => {
+    await show(current(), fetcher('in'));
+    const prev = screen.getByRole('button', { name: 'Previous week' });
+    const next = screen.getByRole('button', { name: 'Next week' });
+    expect(next).toBeDisabled();
+    fireEvent.click(prev);
+    const bar = screen.getByRole('region', { name: 'Scores' });
+    expect(bar).toHaveTextContent('Week 6');
+    expect(within(bar).queryByText('LIVE')).not.toBeInTheDocument();
+    const card = within(bar).getByRole('link', { name: /Team Alice vs Team Bob/ });
+    expect(card).toHaveAttribute('href', '/scores/2026/6/1');
+    expect(card).toHaveTextContent('Final');
+    expect(within(card).getByText('101.50')).toHaveClass('font-semibold');
+    expect(prev).toBeDisabled();
+    fireEvent.click(next);
+    expect(bar).toHaveTextContent('Week 7');
+    expect(within(bar).getByText('70.10')).toBeInTheDocument();
+  });
+
+  it('names a playoff round on its card', async () => {
+    const s = current();
+    s.weeks[6].games[0].tag = 'Final';
+    await show(s, fetcher('none'));
+    expect(screen.getByRole('link', { name: /Team Alice vs Team Bob/ })).toHaveTextContent('Championship');
   });
 
   it('is hidden once the season is complete', async () => {
