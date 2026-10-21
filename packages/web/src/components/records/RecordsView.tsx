@@ -53,7 +53,6 @@ export default function RecordsView({ seasons, players, managers, years, current
     const teamGames = allTeamGames.filter((g) => year === null || g.year === year);
     const managerSeasons = allManagerSeasons.filter((m) => year === null || m.year === year);
     const ctx: BoardContext = { lines, allLines, players, champions, lastPlaces, year, currentYear, pos, picks, xfp, transactions, playerSeasons, drafts, teamGames, managerSeasons, managers };
-    const empty = s.id === 'leaders' && year !== null && !allLines.some((l) => l.year === year) ? 'Season has not started.' : null;
     return (
       <Section
         key={s.id}
@@ -68,7 +67,6 @@ export default function RecordsView({ seasons, players, managers, years, current
         onPos={s.positions ? setPos(s.id) : undefined}
         columns={s.columns}
         seasonPicker={s.picker ? { years, value: pick, onChange: setPick(`${s.id}Season`, fallback), allTime: true } : undefined}
-        emptyMessage={empty}
         hidden={s.tab !== tab || s.id !== sub}
       />
     );

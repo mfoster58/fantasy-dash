@@ -7,7 +7,6 @@ import { filterLines, isPosFilter } from '../playerLines';
 
 /**
  * Every players-tab record board where his row ranks ≤ maxRank (ties share a rank), over all positions and then his own.
- * Leaders is skipped: those are this season's tables, not records.
  */
 export function playerRecords(ctx: BoardContext, id: PlayerId, pos: string, maxRank = 3): ManagerRecord[] {
   const out: ManagerRecord[] = [];
@@ -16,7 +15,6 @@ export function playerRecords(ctx: BoardContext, id: PlayerId, pos: string, maxR
   if (isPosFilter(pos) && pos !== 'All') passes.push({ ctx: { ...ctx, pos, lines: filterLines(ctx.lines, pos), allLines: ctx.allLines ?? ctx.lines }, suffix: pos });
   for (const pass of passes) {
     for (const sub of subTabsOf('players')) {
-      if (sub.id === 'leaders') continue;
       for (const def of boardsFor('players', sub.id)) {
         if (pass.suffix && seen.has(def.id)) continue;
         const rows = def.compute(pass.ctx);

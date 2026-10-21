@@ -43,7 +43,7 @@ describe('RecordsView', () => {
     expect(screen.queryByText(/through 2025/)).toBeNull();
     expect(screen.queryByText(/Leaderboards about/)).toBeNull();
     expect(tabs('Tabs').getAllByRole('tab').map((t) => t.textContent)).toEqual(['Players', 'Managers']);
-    expect(tabs('Sections').getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())).toEqual(['All-time', 'Moments', 'Streaks', 'Postseason', 'Leaders']);
+    expect(tabs('Sections').getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())).toEqual(['All-time', 'Moments', 'Streaks', 'Postseason']);
     expect(sub(/^All-time/)).toHaveAttribute('aria-selected', 'true');
     expect(sub(/^All-time/)).toHaveTextContent('16');
     expect(region('All-time')).toBeInTheDocument();
@@ -83,20 +83,21 @@ describe('RecordsView', () => {
     expect(firstRow('Most career points started')).toHaveTextContent('Ricky One');
     fireEvent.change(within(region('All-time')).getByRole('combobox', { name: 'Season' }), { target: { value: '2024' } });
     expect(loc()).toContain('alltimeSeason=2024');
-    fireEvent.click(sub(/^Leaders/));
-    expect(within(region('Leaders')).getByRole('combobox', { name: 'Season' })).toHaveValue('2025'); // leaders default to the current season
-    expect(firstRow('Most points')).toHaveTextContent('Quincy One');
     fireEvent.click(sub(/^All-time/));
     expect(sectionPos('All-time').getByRole('button', { name: 'RB' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(region('All-time')).getByRole('combobox', { name: 'Season' })).toHaveValue('2024');
   });
 
-  it('falls back for junk params and shows the not-started message on Leaders only', () => {
-    mount('/records?sub=leaders&leaders=XYZ&leadersSeason=1999', 2026);
-    expect(sectionPos('Leaders').getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Season has not started.')).toBeInTheDocument();
-    fireEvent.click(sub(/^Moments/));
+  it('falls back for junk params', () => {
+    mount('/records?sub=moments&moments=XYZ&momentsSeason=1999');
+    expect(sectionPos('Moments').getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Best week by a starter')).toBeInTheDocument();
+  });
+
+  it('sends the retired Leaders sub-tab to All-time', () => {
+    mount('/records?sub=leaders');
+    expect(sub(/^All-time/)).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('tab', { name: /^Leaders/ })).toBeNull();
   });
 
   it('leaves the sub-tab alone when the already selected tab is clicked again', () => {
