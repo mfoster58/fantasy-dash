@@ -151,6 +151,13 @@ html, body {
     letter-spacing: 0.08em;
     color: var(--muted);
   }
+  /* League leaders band: warm gold wash over the page background. */
+  .leaders-band {
+    border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    background:
+      radial-gradient(70% 140% at 0% 0%, color-mix(in srgb, var(--gold) 20%, transparent), transparent 60%),
+      linear-gradient(160deg, color-mix(in srgb, var(--gold) 12%, var(--bg)) 0%, var(--bg) 100%);
+  }
   /* Position tag: tinted, translucent chip. Set --pos-color inline. */
   .pos-pill {
     --pos-color: var(--muted);
