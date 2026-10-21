@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
-import { game, season, side, week } from '../../test/playerFixtures';
+import { game, season, side, standing, week } from '../../test/playerFixtures';
 import type { GameView } from '../../lib/home/view';
 import GameBanner from './GameBanner';
 import SideGame from './SideGame';
@@ -65,6 +65,24 @@ describe('GameBanner states', () => {
     const s = league();
     wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
     expect(screen.getByText('CU')).toBeInTheDocument();
+  });
+});
+
+describe('GameBanner links and ranks', () => {
+  it('lets clicks on the team photos through to the box score link', () => {
+    const s = league();
+    const { container } = wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
+    const panels = container.querySelectorAll('[data-testid="banner-photo"]');
+    expect(panels).toHaveLength(2);
+    panels.forEach((p) => expect(p).toHaveClass('pointer-events-none'));
+  });
+  it('shows no rank before any week is played', () => {
+    const s = league();
+    s.standings = [standing('b', 1, 0, 0, 0, 0, 0), standing('a', 2, 0, 0, 0, 0, 0)];
+    wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
+    const b = screen.getByRole('region', { name: 'Game of the week' });
+    expect(b).not.toHaveTextContent('1st');
+    expect(b).not.toHaveTextContent('2nd');
   });
 });
 

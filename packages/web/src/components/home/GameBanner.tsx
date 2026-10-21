@@ -2,6 +2,7 @@ import type { Game, GameSide, Season } from '@fantasy-dash/core';
 import { avatarUrl } from '../Avatar';
 import { CoverLink, TeamLink } from '../NameLink';
 import { fmtRecord } from '../../lib/format';
+import { hasRanks } from '../../lib/home/pick';
 import type { GameView } from '../../lib/home/view';
 
 const ord = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
@@ -19,7 +20,7 @@ function Panel({ season, side, right }: { season: Season; side: GameSide; right?
   const m = season.managers[side.userId];
   const cut = right ? 'polygon(0 0, 100% 0, 100% 100%, 22% 100%)' : 'polygon(0 0, 100% 0, 78% 100%, 0 100%)';
   return (
-    <div className="relative hidden w-44 shrink-0 sm:block" aria-hidden="true">
+    <div data-testid="banner-photo" className="pointer-events-none relative hidden w-44 shrink-0 sm:block" aria-hidden="true">
       {m?.avatar
         ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})`, clipPath: cut }} />
         : <div className="absolute inset-0 grid place-items-center bg-surface-2 font-display text-4xl font-bold text-muted" style={{ clipPath: cut }}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
@@ -30,7 +31,7 @@ function Panel({ season, side, right }: { season: Season; side: GameSide; right?
 
 export default function GameBanner({ game, season, view }: { game: Game; season: Season; view: GameView }) {
   const [a, b] = game.sides;
-  const rank = (u: string) => season.standings.find((r) => r.userId === u)?.rank;
+  const rank = (u: string) => (hasRanks(season) ? season.standings.find((r) => r.userId === u)?.rank : undefined);
   const team = (s: GameSide, right?: boolean) => {
     const m = season.managers[s.userId]; const r = rank(s.userId);
     return (

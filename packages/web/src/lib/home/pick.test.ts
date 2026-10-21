@@ -106,6 +106,23 @@ describe('pickGames', () => {
   });
 });
 
+describe('pickGames before any week is played', () => {
+  it('ignores the placeholder 0-0 standings order: no stakes from rank and no Top of the table', () => {
+    const w = week(1, [
+      game(2026, 1, 1, team('a', 0, 0, 0), team('b', 0, 0, 0)),
+      game(2026, 1, 2, team('c', 0, 0, 0), team('d', 0, 0, 0)),
+      game(2026, 1, 3, team('e', 0, 0, 0), team('f', 0, 0, 0)),
+    ]);
+    w.played = false;
+    // the sync ranks every team even at 0-0; e and f merely come first
+    const s = league(w, [], ['e', 'f', 'a', 'b', 'c', 'd']);
+    s.lastScoredWeek = 0;
+    const p = pickGames(s, w, null);
+    expect(p.hero?.matchupId).toBe(1);
+    expect(p.sides.map((x) => x.tag)).not.toContain('top');
+  });
+});
+
 describe('homeWeek', () => {
   it('follows the ticker in season and falls back to the last week with games once the season is over', () => {
     const s = season(2026, [week(1, [game(2026, 1, 1, team('a', 0, 0, 0), team('b', 0, 0, 0))]), week(2, [])], null, 1);

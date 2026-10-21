@@ -42,6 +42,9 @@ export function gameScore(game: Game, rankOf: (u: UserId) => number | null, team
   return recordClose * scoringClose * stakes * stakes;
 }
 
+/** Standings mean something once a regular-season week is played; before that every team is 0-0 in placeholder order. */
+export const hasRanks = (season: Season): boolean => season.weeks.some((w) => w.played && !w.isPlayoff);
+
 const combined = (g: Game) => g.sides[0].seasonPpg + g.sides[1].seasonPpg;
 const has = (g: Game, u: UserId) => g.sides.some((s) => s.userId === u);
 
@@ -70,13 +73,13 @@ function upsetGame(season: Season, week: number, games: Game[]): Game | undefine
 
 /** Game of the week and up to two tagged games, from synced results only (never projections). */
 export function pickGames(season: Season, week: Week, champion: UserId | null): Picks {
-  const ranks = new Map(season.standings.map((r) => [r.userId, r.rank]));
+  const ranks = new Map(hasRanks(season) ? season.standings.map((r) => [r.userId, r.rank]) : []);
   const rankOf = (u: UserId) => ranks.get(u) ?? null;
   const games = [...week.games].sort((x, y) => x.matchupId - y.matchupId);
   if (!games.length) return { hero: null, sides: [] };
   if (week.isPlayoff) return pickPlayoff(games, season.status === 'complete' ? COMPLETE_ORDER : PLAYOFF_ORDER, rankOf);
 
-  const teams = season.standings.length;
+  const teams = ranks.size;
   let hero = games[0]; let best = gameScore(hero, rankOf, teams);
   for (const g of games.slice(1)) {
     const s = gameScore(g, rankOf, teams);
@@ -91,7 +94,7 @@ export function pickGames(season: Season, week: Week, champion: UserId | null): 
   };
   take('upset', upsetGame(season, week.week, left));
   take('champ', champion ? left.find((g) => has(g, champion)) : undefined);
-  const first = season.standings.find((r) => r.rank === 1)?.userId;
+  const first = [...ranks].find(([, r]) => r === 1)?.[0];
   take('top', first ? left.find((g) => has(g, first)) : undefined);
   take('shootout', left.reduce<Game | undefined>((m, g) => (!m || combined(g) > combined(m) ? g : m), undefined));
   return { hero, sides };
