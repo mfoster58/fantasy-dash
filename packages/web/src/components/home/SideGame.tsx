@@ -21,9 +21,9 @@ export default function SideGame({ game, season, view, tag, champion }: { game: 
     return (
       <div className="mt-2 grid grid-cols-[24px_1fr_auto] items-center gap-2.5 text-[13px]">
         <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={24} />
-        <span className="min-w-0 truncate">
-          <TeamLink userId={s.userId} year={season.year} className="relative z-10">{teamName(season, s.userId)}</TeamLink>
-          {s.userId === champion && ' 🏆'} <span className="text-muted">{fmtRecord(s.recordBefore)}</span>
+        <span className="flex min-w-0 items-baseline gap-1">
+          <TeamLink userId={s.userId} year={season.year} className="relative z-10 truncate">{teamName(season, s.userId)}</TeamLink>
+          <span className="shrink-0 whitespace-nowrap">{s.userId === champion && '🏆 '}<span className="text-muted">{fmtRecord(s.recordBefore)}</span></span>
         </span>
         <span className={`num ${scoreTone(view, i)}`}>{view.scores[i].toFixed(1)}</span>
       </div>

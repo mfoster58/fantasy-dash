@@ -38,7 +38,7 @@ describe('TopRow', () => {
     expect(within(banner).getByRole('link', { name: 'The Window' })).toHaveAttribute('href', '/teams/2026/b');
     expect(banner).toHaveTextContent('CurryLover53 · 4-2');
     const side2 = screen.getByRole('region', { name: 'Champ watch' });
-    expect(side2).toHaveTextContent('Tuten 🏆');
+    expect(side2).toHaveTextContent(/Tuten\s*🏆/);
     expect(within(side2).getByRole('link', { name: 'My boutte hurts vs Tuten' })).toHaveAttribute('href', '/scores/2026/7/2');
   });
 });

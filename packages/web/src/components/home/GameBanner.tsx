@@ -35,7 +35,7 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
     const m = season.managers[s.userId]; const r = rank(s.userId);
     return (
       <div className={`min-w-0 ${right ? 'text-right' : ''}`}>
-        <TeamLink userId={s.userId} year={season.year} className="relative z-10 block font-display text-[27px] font-bold uppercase leading-none tracking-wide">{teamName(season, s.userId)}</TeamLink>
+        <TeamLink userId={s.userId} year={season.year} className="relative z-10 block font-display text-xl font-bold uppercase leading-none tracking-wide sm:text-[27px]">{teamName(season, s.userId)}</TeamLink>
         <div className="mt-1 text-xs text-muted">{[m?.displayName, fmtRecord(s.recordBefore), r ? ord(r) : null].filter(Boolean).join(' · ')}</div>
       </div>
     );
@@ -45,15 +45,15 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
     <section aria-label="Game of the week" className="card relative flex min-h-[196px] overflow-hidden">
       <CoverLink to={`/scores/${season.year}/${game.week}/${game.matchupId}`} label={`${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />
       <Panel season={season} side={a} />
-      <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-5">
+      <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-5 sm:gap-4 sm:px-4">
         {team(a)}
-        <div className="w-56 text-center">
-          <div className="font-display text-2xl font-bold uppercase leading-none tracking-[0.08em] text-accent">Game of the week</div>
+        <div className="w-40 text-center sm:w-56">
+          <div className="font-display text-lg font-bold uppercase leading-none tracking-[0.08em] text-accent sm:text-2xl">Game of the week</div>
           <div className="mt-2.5"><StateLabel status={view.status} /></div>
           <div className="mt-0.5 flex items-baseline justify-center gap-2.5 font-display leading-none">
-            <span className={`text-[46px] ${scoreTone(view, 0)}`}>{view.scores[0].toFixed(1)}</span>
+            <span className={`text-4xl sm:text-[46px] ${scoreTone(view, 0)}`}>{view.scores[0].toFixed(1)}</span>
             <small className="text-xs font-semibold text-muted">VS</small>
-            <span className={`text-[46px] ${scoreTone(view, 1)}`}>{view.scores[1].toFixed(1)}</span>
+            <span className={`text-4xl sm:text-[46px] ${scoreTone(view, 1)}`}>{view.scores[1].toFixed(1)}</span>
           </div>
           {view.status === 'live' && (
             <div className="mt-1 flex justify-between gap-2 text-[11px] text-muted">
