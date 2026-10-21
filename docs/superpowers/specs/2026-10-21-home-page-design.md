@@ -57,25 +57,30 @@ The state comes from `gameOutlook` (`upcoming` / `live` / `final`), the same as 
 
 ### Choosing the games
 
-The choice is worked out from the synced projections only, so it doesn't change during the week as live points come in.
+The picks use results already played, never projections. Early in the week many lineups aren't set yet, so projections would be unreliable. Because the picks only use played results, they're settled after the Tuesday sync and stay fixed all week.
 
-**Game of the week, regular season.** Each game gets a score of `closeness × stakes²`:
-- `closeness = 1 − 2·|p − 0.5|`, where `p` is the pre-game win probability from `gameOutlook` with nothing played yet
-- `stakes` is the average of `(N + 1 − rank) / N` for both teams, using current standings with N teams
+**Game of the week, regular season.** Each game gets a score of `recordClose × scoringClose × stakes²`:
+- `recordClose = 1 − |winsA − winsB| / weeksPlayed`. Teams with the same record score 1.
+- `scoringClose = 1 − 2·|p − 0.5|`, where `p` is the win probability from each team's season scoring average. It uses the same normal model as `gameOutlook`: `Φ((ppgA − ppgB) / √(K·(ppgA + ppgB)))`.
+- `stakes` is the average of `(N + 1 − rank) / N` for both teams, using current standings with N teams.
 
-Squaring stakes favours games between good teams over a coin flip between two bad ones. Ties go to the higher combined projection, then the lower matchup id. In week 7 this picks J's vs The Window.
+So a game scores well when the records are close, the teams have been scoring alike, and both teams are high in the standings. Squaring stakes favours good teams over a coin flip between two bad ones.
+
+Ties go to the higher combined scoring average, then the lower matchup id. In week 7 this picks J's (3-3, #5) vs The Window (4-2, #2) with 0.37. The next best game scores 0.16.
 
 **Tags, regular season.** Two side slots, filled in this order of priority. A game can hold only one slot and is never the game of the week. Each tag fills at most one slot, and a tag with no qualifying game is skipped.
 
-1. **Upset alert:** the projected favourite has fewer wins than the underdog. Of the games that qualify, take the one with the biggest gap in wins.
-2. **Champ on upset watch:** last season's champion (`honors.champion` of the previous season) is projected to lose. The champion's team gets 🏆 after its name.
+1. **Upset alert:** the team with fewer wins has the higher scoring average over its last three games. Of the games that qualify, take the one with the biggest gap in wins.
+2. **Champ watch:** the game of last season's champion (`honors.champion` of the previous season). The champion's team gets 🏆 after its name.
 3. **Top of the table:** the game with the #1 team.
-4. **Shootout:** the highest combined projection.
+4. **Shootout:** the highest combined scoring average.
+
+**Projected scores shown on the page** come from current lineups, not from the Tuesday sync. During the week `LiveProvider` already lays Sleeper's current starters over the synced week, so a projection updates once a manager sets their lineup. A player added since the sync has no projection and counts as 0. These numbers only feed the "Projected" display and the win % bar, never the picks.
 
 **Playoff weeks:**
 - The banner is the championship game in the final week, and the highest-seeded winners-bracket game before that.
 - The side slots are the next winners-bracket games, labelled with their bracket tag via `fmtTag`.
-- The tag colours keep their meaning: coral for upset alert, turf for the champion, sky for everything else.
+- The tag colours keep their meaning: coral for upset alert, turf for champ watch, sky for everything else.
 
 **Season complete:** the banner shows the championship final and the side slots show the third-place game and the toilet bowl. Any game that doesn't exist is left out.
 
@@ -174,7 +179,8 @@ The home page reads `useLive()` and calls `weekStatus` (moved from `ScoreTicker`
 ## Testing
 
 **`pick.ts`:**
-- week 7 2026 picks J's vs The Window as the game of the week, with Upset alert (adildo vs faraz525) and Champ on upset watch (Shivi1 vs mattygggg) beside it
+- week 7 2026 picks J's vs The Window as the game of the week, with Upset alert (ErikOdd 3-3 vs kellyk777 4-2) and Champ watch (Shivi1 vs mattygggg) beside it
+- the picks ignore projections: changing a starter's projection doesn't change them
 - tie-breaking
 - a tag with no qualifying game is skipped
 - playoff weeks and a completed season
