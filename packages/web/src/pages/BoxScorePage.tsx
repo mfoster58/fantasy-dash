@@ -7,7 +7,7 @@ import FormBlock from '../components/boxscore/FormBlock';
 import HeadToHead from '../components/boxscore/HeadToHead';
 import LineupTable from '../components/boxscore/LineupTable';
 import LiveOutlook from '../components/boxscore/LiveOutlook';
-import { weekStatus } from '../components/ScoreTicker';
+import { weekStatus } from '../lib/live/weekStatus';
 import PositionBattle from '../components/boxscore/PositionBattle';
 import { history, players } from '../data/load';
 import { fmtPpg, fmtPts, fmtRecord, fmtStreak, fmtTag } from '../lib/format';

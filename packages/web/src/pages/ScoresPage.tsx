@@ -5,7 +5,7 @@ import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
 import WeekScores from '../components/boxscore/WeekScores';
 import LiveDot from '../components/LiveDot';
-import { weekStatus } from '../components/ScoreTicker';
+import { weekStatus } from '../lib/live/weekStatus';
 import { useLive } from '../lib/live/LiveProvider';
 import { history, players } from '../data/load';
 
