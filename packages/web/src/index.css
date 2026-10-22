@@ -21,6 +21,7 @@
   --loss: #e46a6f;
   --warn: #e3a93b;
   --gold: #e3b341;
+  --slate: #8fa6c4;
   --coral: #ff8a6b;
   --dim: #4a5666;
   --silver: #b4bcc8;
@@ -57,6 +58,7 @@
   --loss: #c13d47;
   --warn: #b7791f;
   --gold: #b8860b;
+  --slate: #4f6a8f;
   --coral: #d4552f;
   --dim: #aeb8c6;
   --silver: #7c8794;
@@ -92,6 +94,7 @@
   --color-loss: var(--loss);
   --color-warn: var(--warn);
   --color-gold: var(--gold);
+  --color-slate: var(--slate);
   --color-coral: var(--coral);
   --color-dim: var(--dim);
   --color-silver: var(--silver);
@@ -153,10 +156,10 @@ html, body {
   }
   /* League leaders band: warm gold wash over the page background. */
   .leaders-band {
-    border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    border-color: color-mix(in srgb, var(--slate) 35%, transparent);
     background:
-      radial-gradient(70% 140% at 0% 0%, color-mix(in srgb, var(--gold) 20%, transparent), transparent 60%),
-      linear-gradient(160deg, color-mix(in srgb, var(--gold) 12%, var(--bg)) 0%, var(--bg) 100%);
+      radial-gradient(70% 140% at 0% 0%, color-mix(in srgb, var(--slate) 16%, transparent), transparent 60%),
+      linear-gradient(160deg, color-mix(in srgb, var(--slate) 10%, var(--surface)) 0%, var(--surface) 100%);
   }
   /* Position tag: tinted, translucent chip. Set --pos-color inline. */
   .pos-pill {

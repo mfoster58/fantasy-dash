@@ -10,7 +10,7 @@ import { playerName } from '../../lib/players';
 
 const POSITIONS: PosFilter[] = ['All', 'QB', 'RB', 'WR', 'TE'];
 const SPLITS: { id: Split; label: string }[] = [{ id: 'all', label: 'All' }, { id: 'pass', label: 'Pass' }, { id: 'rush', label: 'Rush' }, { id: 'rec', label: 'Rec' }];
-const chip = (on: boolean) => `rounded-full border px-2.5 py-0.5 font-display text-xs font-bold uppercase tracking-wider ${on ? 'border-gold bg-gold text-[var(--on-chip)]' : 'border-line text-muted hover:text-ink'}`;
+const chip = (on: boolean) => `rounded-full border px-2 py-0.5 font-display text-xs font-bold uppercase tracking-wider ${on ? 'border-slate bg-slate text-[var(--on-chip)]' : 'border-line text-muted hover:text-ink'}`;
 
 function Toggle<T extends string>({ label, options, value, onChange }: { label: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
@@ -27,8 +27,8 @@ function Column({ title, rows, season, spotlight = true, control }: { title: str
   const [lead, ...rest] = spotlight ? top : [undefined, ...top];
   return (
     <section aria-label={title} className="min-w-0">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-display text-xl font-bold uppercase leading-none tracking-[0.06em] text-gold">{title}</h3>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+        <h3 className="font-display text-xl font-bold uppercase whitespace-nowrap leading-none tracking-[0.03em] text-ink">{title}</h3>
         {control}
       </div>
       {!top.length && <p className="text-sm text-muted">No leaders yet.</p>}
@@ -48,7 +48,7 @@ function Column({ title, rows, season, spotlight = true, control }: { title: str
             <Headshot players={players} id={r!.playerId!} size={28} />
             <div className="min-w-0">
               <PlayerLink id={r!.playerId!} className="block truncate text-sm">{playerName(players, r!.playerId!)}</PlayerLink>
-              <div className="mt-1 h-1 rounded-full bg-surface-2"><div className="h-1 rounded-full bg-gold" style={{ width: `${(Math.abs(r!.value) / max) * 100}%` }} /></div>
+              <div className="mt-1 h-1 rounded-full bg-surface-2"><div className="h-1 rounded-full bg-slate" style={{ width: `${(Math.abs(r!.value) / max) * 100}%` }} /></div>
             </div>
             <span className="num text-sm">{r!.valueLabel}</span>
           </li>
@@ -66,22 +66,22 @@ export default function LeadersBand({ seasons, season }: { seasons: Season[]; se
   const [model, setModel] = useState<'fpoe' | 'xfp'>('fpoe');
   const ctx = useMemo(() => ctxOf(pos), [ctxOf, pos]);
   return (
-    <section aria-label="League leaders" className="leaders-band -mx-4 px-4 py-7 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+    <section aria-label="League leaders" className="leaders-band rounded-xl border px-4 py-6 sm:px-5">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="section-label text-gold">{season.year} · through week {season.lastScoredWeek}</div>
+          <div className="section-label">{season.year} · through week {season.lastScoredWeek}</div>
           <h2 className="font-display text-4xl font-bold uppercase leading-none">League leaders</h2>
         </div>
         <Toggle label="Position" options={POSITIONS.map((p) => ({ id: p, label: p }))} value={pos} onChange={setPos} />
       </div>
-      {/* same split as the rows above: three boards over the wide column, the model board over the 330px rail */}
-      <div className="grid gap-x-4 gap-y-6 lg:grid-cols-[1fr_330px]">
+      {/* same split as the rows above: the expected-points board starts where the 330px rail does (330px less the box padding) */}
+      <div className="grid gap-x-4 gap-y-6 lg:grid-cols-[1fr_calc(330px-1.25rem)]">
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           <Column title="Most points" rows={leadPoints(ctx)} season={season} />
           <Column title="Most yards" rows={YARD_BOARDS[yards](ctx)} season={season} control={<Toggle label="Yards split" options={SPLITS} value={yards} onChange={setYards} />} />
           <Column title="Most touchdowns" rows={TD_BOARDS[tds](ctx)} season={season} control={<Toggle label="Touchdowns split" options={SPLITS} value={tds} onChange={setTds} />} />
         </div>
-        <Column title="Beating the model" rows={MODEL_BOARDS[model](ctx, 'desc')} season={season} spotlight={false}
+        <Column title="Points over expected" rows={MODEL_BOARDS[model](ctx, 'desc')} season={season} spotlight={false}
           control={<Toggle label="Model" options={[{ id: 'fpoe' as const, label: 'FPOE' }, { id: 'xfp' as const, label: 'xFP' }]} value={model} onChange={setModel} />} />
       </div>
     </section>

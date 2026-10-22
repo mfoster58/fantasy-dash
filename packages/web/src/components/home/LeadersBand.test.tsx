@@ -40,7 +40,7 @@ describe('LeadersBand', () => {
   });
   it('offers FPOE and xFP in the model panel', () => {
     mount();
-    const panel = col('Beating the model');
+    const panel = col('Points over expected');
     expect(within(panel).getByRole('button', { name: 'FPOE' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(within(panel).getByRole('button', { name: 'xFP' }));
     expect(within(panel).getByRole('button', { name: 'xFP' })).toHaveAttribute('aria-pressed', 'true');
