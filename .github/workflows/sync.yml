@@ -2,8 +2,9 @@ name: Sync and deploy
 
 on:
   schedule:
-    # Tuesdays 11:00 UTC = 06:00 EST / 07:00 EDT, after Monday night stat corrections.
-    - cron: '0 11 * * 2'
+    # Daily 11:00 UTC = 06:00 EST / 07:00 EDT: rosters and projections stay fresh through the week,
+    # and Tuesday's run still picks up Monday night stat corrections.
+    - cron: '0 11 * * *'
   workflow_dispatch:
   push:
     branches: [main]

@@ -59,6 +59,21 @@ describe('liveWeek', () => {
     expect(w.games[0].sides[0].starters[0].player?.stats).toEqual({ pass_yd: 120, pass_att: 14 });
     expect(w.games[0].sides[0].starters[1].player?.stats).toEqual({});
   });
+  it('re-adds each side\'s projected total from the starters it now has', () => {
+    const w = liveWeek(synced(), managers, [m(1, ['q1', 'w1'], ['q1', 'r1', 'w1'], {}, 0), m(2, ['t1', '0'], ['t1'], {}, 0)], null);
+    expect(w.games[0].sides[0].projected).toBe(32); // q1 20 + w1 12
+    expect(w.games[0].sides[1].projected).toBe(9); // empty slot counts 0
+  });
+  it('scores fresh projections with the league scoring when they are loaded, including pickups the sync never saw', () => {
+    const fresh = { q1: { pass_yd: 250, pass_td: 2 }, r1: { rush_yd: 50 }, x9: { rec: 4, rec_yd: 60 } };
+    const scoring = { pass_yd: 0.04, pass_td: 4, rush_yd: 0.1, rec: 1, rec_yd: 0.1 };
+    const w = liveWeek(synced(), managers, [m(1, ['q1', 'r1'], ['q1', 'r1'], {}, 0), m(2, ['t1', 'x9'], ['t1', 'x9'], {}, 0)], null, { map: fresh, scoring });
+    const [a, b] = w.games[0].sides;
+    expect(a.starters.map((e) => e.player?.projected)).toEqual([18, 5]);
+    expect(a.projected).toBe(23);
+    expect(b.starters.map((e) => e.player?.projected)).toEqual([null, 10]); // t1 has no fresh row
+    expect(b.projected).toBe(10);
+  });
   it('leaves a side with no matching roster as synced', () => {
     const w = liveWeek(synced(), managers, [m(2, ['t1', 'k1'], ['t1', 'k1'], { t1: 3 }, 3)], null);
     expect(w.games[0].sides[0].starters[0].player?.stats).toEqual({ pass_yd: 1 });

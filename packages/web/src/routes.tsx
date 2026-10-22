@@ -3,6 +3,7 @@ import Nav from './components/Nav';
 import ScoreTicker from './components/ScoreTicker';
 import { LiveProvider } from './lib/live/LiveProvider';
 import ErrorPage from './pages/ErrorPage';
+import HomePage from './pages/HomePage';
 import BoxScorePage from './pages/BoxScorePage';
 import ScoresPage from './pages/ScoresPage';
 import StandingsPage from './pages/StandingsPage';
@@ -98,7 +99,7 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     errorElement: <ErrorPage />,
     children: [
-      { index: true, loader: () => redirect(`/scores/${currentSeason.year}/${Math.max(1, currentSeason.lastScoredWeek)}`) },
+      { index: true, loader: () => loadAllSeasons(), element: <HomePage /> },
       { path: 'scores', loader: () => redirect(`/scores/${currentSeason.year}/${Math.max(1, currentSeason.lastScoredWeek)}`) },
       {
         path: 'scores/:season',

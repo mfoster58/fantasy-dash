@@ -1,24 +1,13 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
-import type { Game, GameSide, Manager, Season, Week } from '@fantasy-dash/core';
+import type { Game, GameSide, Manager, Season } from '@fantasy-dash/core';
 import Avatar from './Avatar';
 import LiveDot from './LiveDot';
-import { players } from '../data/load';
 import { fmtPts, fmtRecord, fmtTag } from '../lib/format';
-import { playerGames } from '../lib/live/gameState';
-import { gameOutlook, type GameOutlook } from '../lib/live/outlook';
-import { liveWeek, tickerWeek } from '../lib/live/overlay';
-import { useLive, type LiveData } from '../lib/live/LiveProvider';
-import { playerTeam } from '../lib/players';
-
-/** A synced week as it stands now: live points and outlooks when it's the live week, the synced week otherwise. */
-export function weekStatus(season: Season, wk: Week, live: LiveData): { week: Week; isLive: boolean; outlookOf: (g: Game) => GameOutlook | null } {
-  const isLive = live.season?.year === season.year && live.week === wk.week && live.matchups !== null;
-  if (!isLive) return { week: wk, isLive, outlookOf: () => null };
-  const week = liveWeek(wk, season.managers, live.matchups!, live.stats);
-  const gameOf = playerGames((id) => playerTeam(players, id, season.playerTeams), live.games);
-  return { week, isLive, outlookOf: (g) => gameOutlook(g, gameOf) };
-}
+import type { GameOutlook } from '../lib/live/outlook';
+import { tickerWeek } from '../lib/live/overlay';
+import { useLive } from '../lib/live/LiveProvider';
+import { weekStatus } from '../lib/live/weekStatus';
 
 const nameOf = (s: GameSide, m?: Manager) => m?.teamName ?? m?.displayName ?? s.userId;
 

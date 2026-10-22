@@ -18,7 +18,6 @@ export const SUB_TABS: SubTab[] = [
   { id: 'moments', tab: 'players', title: 'Moments', columns: 2, picker: 'all', positions: true },
   { id: 'streaks', tab: 'players', title: 'Streaks', columns: 2, picker: null, positions: true },
   { id: 'postseason', tab: 'players', title: 'Postseason', columns: 2, picker: null, positions: true },
-  { id: 'leaders', tab: 'players', title: 'Leaders', columns: 3, picker: 'current', positions: true },
   { id: 'malltime', tab: 'managers', title: 'All-time', columns: 2, picker: null, positions: false },
   { id: 'mseasons', tab: 'managers', title: 'Seasons', columns: 2, picker: 'all', positions: false },
   { id: 'mgames', tab: 'managers', title: 'Games', columns: 2, picker: 'all', positions: false },

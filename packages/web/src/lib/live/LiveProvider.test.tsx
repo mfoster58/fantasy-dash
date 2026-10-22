@@ -20,6 +20,7 @@ function fakeFetch(opts: { state?: string; date?: string; fail?: ('sleeper' | 'e
     const body = url.endsWith('/state/nfl') ? { season: '2026', season_type: 'regular', week: 1 }
       : url.includes('/matchups/') ? [{ roster_id: 1, matchup_id: 1, points: 12.5, custom_points: null, starters: [], players: [], players_points: {} }]
         : url.includes('/stats/') ? { p1: { pass_yd: 100 } }
+          : url.includes('/projections/') ? { p1: { pass_yd: 250 } }
           : espn(opts.state ?? 'in', opts.date);
     return { ok: true, status: 200, json: async () => body } as Response;
   });
@@ -186,5 +187,44 @@ describe('LiveProvider after review', () => {
     await flush();
     expect(calls(f, '/stats/')).toBe(2);
     expect(read().stats).toBe(true);
+  });
+});
+
+describe('LiveProvider projections', () => {
+  beforeEach(() => { vi.useFakeTimers(); Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true }); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  function ProjProbe() {
+    const live = useLive();
+    return <div data-testid="proj">{JSON.stringify({ proj: live.projections?.p1?.pass_yd ?? null, polling: live.polling })}</div>;
+  }
+  const readProj = () => JSON.parse(screen.getByTestId('proj').textContent!);
+  function mountClock(f: ReturnType<typeof fakeFetch> | ((u: string) => Promise<Response>), clock: { t: number }) {
+    return render(<LiveProvider load={async () => SEASON} fetcher={f as ReturnType<typeof fakeFetch>} now={() => clock.t}><ProjProbe /></LiveProvider>);
+  }
+
+  it('fetches this week\'s projections with the first load and refreshes them at most every 15 minutes', async () => {
+    const f = fakeFetch({ state: 'in' });
+    const clock = { t: Date.parse('2026-10-25T18:00Z') };
+    mountClock(f, clock);
+    await flush();
+    expect(readProj().proj).toBe(250);
+    expect(f.mock.calls.find(([u]) => String(u).includes('/projections/'))![0]).toBe('https://api.sleeper.app/v1/projections/nfl/regular/2026/1');
+    for (let i = 0; i < 5; i++) { clock.t += 60_000; await minute(); }
+    expect(calls(f, '/projections/')).toBe(1);
+    for (let i = 0; i < 11; i++) { clock.t += 60_000; await minute(); }
+    expect(calls(f, '/projections/')).toBe(2);
+  });
+
+  it('keeps the last projections when a refresh fails, and never stops polling over them', async () => {
+    const good = fakeFetch({ state: 'in' });
+    let n = 0;
+    const f = async (u: string) => (u.includes('/projections/') && n++ > 0 ? ({ ok: false, status: 500, json: async () => ({}) } as Response) : good(u));
+    const clock = { t: Date.parse('2026-10-25T18:00Z') };
+    mountClock(f, clock);
+    await flush();
+    for (let i = 0; i < 50; i++) { clock.t += 60_000; await minute(); }
+    expect(n).toBeGreaterThan(3);
+    expect(readProj()).toEqual({ proj: 250, polling: true });
   });
 });

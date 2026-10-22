@@ -17,15 +17,19 @@ export interface LiveData {
   games: NflGame[] | null;
   /** live stat lines, only while a box score asks for them */
   stats: StatMap | null;
+  /** this week's projected stat lines, refreshed every 15 minutes; covers pickups since the sync */
+  projections: StatMap | null;
   /** a refresh is scheduled */
   polling: boolean;
 }
 
-const EMPTY: LiveData = { season: null, week: null, matchups: null, games: null, stats: null, polling: false };
+const EMPTY: LiveData = { season: null, week: null, matchups: null, games: null, stats: null, projections: null, polling: false };
 const LiveContext = createContext<{ data: LiveData; watchStats: () => () => void }>({ data: EMPTY, watchStats: () => () => {} });
 
 type Fetcher = (url: string) => Promise<Response>;
 const MAX_FAILURES = 3;
+/** Sleeper's CDN caches projections for 10 minutes; lineups and news move slower than scores */
+const PROJECTIONS_MS = 15 * 60_000;
 /** setTimeout's longest delay */
 const MAX_DELAY = 2 ** 31 - 1;
 
@@ -41,7 +45,7 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
   children: ReactNode; load?: () => Promise<Season>; fetcher?: Fetcher; now?: () => number;
 }) {
   const [data, setData] = useState<LiveData>(EMPTY);
-  const r = useRef({ season: null as Season | null, games: null as NflGame[] | null, failures: 0, espnFailures: 0, timer: undefined as ReturnType<typeof setTimeout> | undefined, watchers: 0, hasStats: false, stopped: false, busy: false, again: false });
+  const r = useRef({ season: null as Season | null, games: null as NflGame[] | null, failures: 0, espnFailures: 0, timer: undefined as ReturnType<typeof setTimeout> | undefined, watchers: 0, hasStats: false, stopped: false, busy: false, again: false, proj: null as StatMap | null, projWeek: 0, projAt: 0 });
   const tickRef = useRef<() => Promise<void>>(async () => {});
 
   tickRef.current = async () => {
@@ -67,22 +71,27 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
       const week = liveWeekNumber(season, state);
       if (week === null) {
         s.failures = 0;
-        setData((d) => ({ ...d, week: null, matchups: null, stats: null, polling: false }));
+        setData((d) => ({ ...d, week: null, matchups: null, stats: null, projections: null, polling: false }));
         return;
       }
       const wantStats = s.watchers > 0;
-      const [matchups, games, stats] = await Promise.all([
+      const wantProj = s.projWeek !== week || now() - s.projAt >= PROJECTIONS_MS;
+      const [matchups, games, stats, proj] = await Promise.all([
         getJson<SleeperMatchup[]>(fetcher, `${SLEEPER}/league/${season.leagueId}/matchups/${week}`),
         getJson<unknown>(fetcher, scoreboardUrl(season.year, week)).then(parseScoreboard).catch(() => null),
         wantStats ? getJson<StatMap>(fetcher, `${SLEEPER}/stats/nfl/regular/${season.year}/${week}`).catch(() => undefined) : Promise.resolve(undefined),
+        // a failed refresh keeps the last projections and is retried next poll; it never counts toward stopping
+        wantProj ? getJson<StatMap>(fetcher, `${SLEEPER}/projections/nfl/regular/${season.year}/${week}`).catch(() => undefined) : Promise.resolve(undefined),
       ]);
+      if (proj) { s.proj = proj; s.projWeek = week; s.projAt = now(); }
+      const projections = s.projWeek === week ? s.proj : null;
       s.failures = 0;
       // a failed ESPN request keeps the last good game states; three in a row and we fall back to the game windows
       if (games) { s.games = games; s.espnFailures = 0; } else if (++s.espnFailures >= MAX_FAILURES) s.games = null;
       if (stats) s.hasStats = true;
       const polling = schedule();
       const shown = s.games;
-      setData((d) => ({ ...d, week, matchups, games: shown, stats: stats ?? (d.week === week ? d.stats : null), polling }));
+      setData((d) => ({ ...d, week, matchups, games: shown, stats: stats ?? (d.week === week ? d.stats : null), projections, polling }));
     } catch {
       // Sleeper failed: keep what we have; three in a row and we stop until the next page load
       s.failures += 1;

@@ -8,6 +8,12 @@ const run = (path: string, params: Record<string, string> = {}) =>
 const locationOf = async (p: unknown) => ((await p) as Response).headers.get('Location');
 
 describe('routes', () => {
+  it('serves the home page at the index with every season loaded, and keeps the bare scores redirect', async () => {
+    const index = routes[0].children!.find((r) => r.index);
+    expect(index?.element).toBeTruthy();
+    expect(index?.loader).toBeTypeOf('function');
+    expect(await locationOf(run('scores'))).toMatch(new RegExp(`^/scores/${currentSeason.year}/\\d+$`));
+  });
   it('redirects the retired player stats and all-time URLs to records', () => {
     expect(RETIRED_PATHS).toEqual({ 'all-time': '/records' });
     for (const path of Object.keys(RETIRED_PATHS)) {

@@ -1,4 +1,4 @@
-import { pickStats, round2, type GameSide, type Manager, type PlayerLine, type Season, type SleeperMatchup, type StatMap, type UserId, type Week } from '@fantasy-dash/core';
+import { pickStats, round2, scoreStats, type GameSide, type Manager, type PlayerLine, type Season, type SleeperMatchup, type StatMap, type UserId, type Week } from '@fantasy-dash/core';
 
 /** GET /v1/state/nfl, the fields we read */
 export interface NflStateJson { season: string; season_type: string; week: number }
@@ -20,7 +20,10 @@ export function tickerWeek(season: Season, liveNo: number | null): Week | null {
   return last?.games.length ? last : null;
 }
 
-function overlaySide(side: GameSide, m: SleeperMatchup, stats: StatMap | null): GameSide {
+/** This week's projected stat lines from Sleeper and the league's scoring to turn them into points. */
+export interface FreshProjections { map: StatMap; scoring: Record<string, number> }
+
+function overlaySide(side: GameSide, m: SleeperMatchup, stats: StatMap | null, proj: FreshProjections | null): GameSide {
   const pp = m.players_points ?? {};
   // the sync knows every rostered player's projection; anyone added since has none
   const known = new Map<string, PlayerLine>();
@@ -28,7 +31,8 @@ function overlaySide(side: GameSide, m: SleeperMatchup, stats: StatMap | null): 
   const line = (id: string): PlayerLine => ({
     playerId: id,
     points: round2(pp[id] ?? 0),
-    projected: known.get(id)?.projected ?? null,
+    // fresh projections cover pickups since the sync; without them, the synced projection or none
+    projected: proj ? (proj.map[id] ? scoreStats(proj.map[id], proj.scoring) : null) : known.get(id)?.projected ?? null,
     stats: stats ? pickStats(stats[id]) : known.get(id)?.stats ?? {},
   });
   const liveStarters = m.starters ?? [];
@@ -43,15 +47,16 @@ function overlaySide(side: GameSide, m: SleeperMatchup, stats: StatMap | null): 
   const bench = m.players
     ? m.players.filter((id) => !starting.has(id)).map(line).sort((x, y) => y.points - x.points)
     : side.bench.filter((l) => !starting.has(l.playerId)).map((l) => line(l.playerId));
-  return { ...side, points: round2(m.custom_points ?? m.points ?? 0), starters, bench };
+  const projected = round2(starters.reduce((sum, e) => sum + (e.player?.projected ?? 0), 0));
+  return { ...side, points: round2(m.custom_points ?? m.points ?? 0), projected, starters, bench };
 }
 
 /** The synced week with Sleeper's live points, lineups and (when loaded) stat lines laid over it. */
-export function liveWeek(week: Week, managers: Record<UserId, Manager>, matchups: SleeperMatchup[], stats: StatMap | null): Week {
+export function liveWeek(week: Week, managers: Record<UserId, Manager>, matchups: SleeperMatchup[], stats: StatMap | null, proj: FreshProjections | null = null): Week {
   const byRoster = new Map(matchups.map((m) => [m.roster_id, m]));
   const sideOf = (s: GameSide): GameSide => {
     const m = byRoster.get(managers[s.userId]?.rosterId ?? -1);
-    return m ? overlaySide(s, m, stats) : s;
+    return m ? overlaySide(s, m, stats, proj) : s;
   };
   return { ...week, games: week.games.map((g) => ({ ...g, sides: [sideOf(g.sides[0]), sideOf(g.sides[1])] })) };
 }

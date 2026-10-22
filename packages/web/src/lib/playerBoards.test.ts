@@ -274,7 +274,7 @@ describe('BOARDS registry by tab and sub-tab', () => {
   });
   it('names the sub-tabs of each tab in order', () => {
     expect(subTabsOf('players').map((s) => [s.id, s.title, s.picker, s.positions])).toEqual([
-      ['alltime', 'All-time', 'all', true], ['moments', 'Moments', 'all', true], ['streaks', 'Streaks', null, true], ['postseason', 'Postseason', null, true], ['leaders', 'Leaders', 'current', true],
+      ['alltime', 'All-time', 'all', true], ['moments', 'Moments', 'all', true], ['streaks', 'Streaks', null, true], ['postseason', 'Postseason', null, true],
     ]);
     expect(subTabsOf('managers').map((s) => [s.id, s.title, s.picker, s.positions])).toEqual([
       ['malltime', 'All-time', null, false], ['mseasons', 'Seasons', 'all', false], ['mgames', 'Games', 'all', false], ['mstreaks', 'Streaks', null, false], ['mplayoffs', 'Playoffs', null, false], ['mdraft', 'Draft', 'all', false], ['mtransactions', 'Transactions', 'all', false],
