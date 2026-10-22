@@ -25,7 +25,7 @@ const games = [
   { teams: ['SF', 'SEA'] as [string, string], state: 'pre' as const, period: 0, clock: '', kickoff: '2026-10-25T20:25Z', halftime: false },
   { teams: ['MIA', 'NE'] as [string, string], state: 'in' as const, period: 2, clock: '4:00', kickoff: '2026-10-25T17:00Z', halftime: false },
 ];
-const live = (s: Season, over: Partial<LiveData> = {}): LiveData => ({ season: s, week: 7, matchups, games, stats: null, polling: true, ...over });
+const live = (s: Season, over: Partial<LiveData> = {}): LiveData => ({ season: s, week: 7, matchups, games, stats: null, projections: null, polling: true, ...over });
 
 describe('weekStatus', () => {
   it('lays live points over the live week and counts starters whose game is upcoming or in progress', () => {
@@ -36,6 +36,12 @@ describe('weekStatus', () => {
     expect(st.toPlay(st.week.games[0].sides[0])).toBe(1); // q1 final, r1 upcoming
     expect(st.toPlay(st.week.games[0].sides[1])).toBe(1); // w1 live
     expect(st.outlookOf(st.week.games[0])?.status).toBe('live');
+  });
+  it('projects from this week\'s fresh projections, scored with the league scoring', () => {
+    const s = current();
+    s.scoring = { pass_yd: 0.04 };
+    const st = weekStatus(s, s.weeks[0], live(s, { projections: { q1: { pass_yd: 250 }, r1: { pass_yd: 25 } } }));
+    expect(st.week.games[0].sides[0].projected).toBe(11);
   });
   it('hides the count when ESPN could not be read, and everything when the week is not live', () => {
     const s = current();

@@ -18,7 +18,7 @@ export interface WeekStatus {
 export function weekStatus(season: Season, wk: Week, live: LiveData): WeekStatus {
   const isLive = live.season?.year === season.year && live.week === wk.week && live.matchups !== null;
   if (!isLive) return { week: wk, isLive, outlookOf: () => null, toPlay: () => null };
-  const week = liveWeek(wk, season.managers, live.matchups!, live.stats);
+  const week = liveWeek(wk, season.managers, live.matchups!, live.stats, live.projections ? { map: live.projections, scoring: season.scoring } : null);
   const gameOf = playerGames((id) => playerTeam(players, id, season.playerTeams), live.games);
   const toPlay = (s: GameSide) => (live.games === null ? null
     : s.starters.filter((e) => e.player && ['upcoming', 'live'].includes(gameOf(e.player.playerId).kind)).length);
