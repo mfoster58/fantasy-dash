@@ -66,7 +66,7 @@ export default function LeadersBand({ seasons, season }: { seasons: Season[]; se
   const [model, setModel] = useState<'fpoe' | 'xfp'>('fpoe');
   const ctx = useMemo(() => ctxOf(pos), [ctxOf, pos]);
   return (
-    <section aria-label="League leaders" className="leaders-band rounded-xl border px-4 py-6 sm:px-5">
+    <section aria-label="League leaders" className="leaders-band blue-wash rounded-xl border px-4 py-6 sm:px-5">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="section-label">{season.year} · through week {season.lastScoredWeek}</div>
