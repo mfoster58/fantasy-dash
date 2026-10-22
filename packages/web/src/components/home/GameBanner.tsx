@@ -16,32 +16,40 @@ export function StateLabel({ status }: { status: GameView['status'] }) {
 /** neutral until final; then the winner bright and bold, the loser dimmed */
 export const scoreTone = (view: GameView, i: 0 | 1) => (view.winner === null ? 'text-ink/85' : view.winner === i ? 'font-bold text-ink' : 'text-muted');
 
-/** a photo cut on a diagonal, fading toward the cut, with a team-coloured stripe along it (the cut's 40px run over ~200px matches the stripe's 11deg) */
+/** a photo cut on a diagonal with a team-coloured stripe along the cut and a thinner gold one just inside it (the cut's 40px run over ~200px matches the stripes' 11deg) */
 function Panel({ season, side, right }: { season: Season; side: GameSide; right?: boolean }) {
   const m = season.managers[side.userId];
   const cut = right ? 'polygon(0 0, 100% 0, 100% 100%, 40px 100%)' : 'polygon(0 0, 100% 0, calc(100% - 40px) 100%, 0 100%)';
-  const fade = `linear-gradient(to ${right ? 'left' : 'right'}, #000 30%, rgb(0 0 0 / 0.08))`;
   return (
     <div data-testid="banner-photo" className="pointer-events-none relative hidden w-52 shrink-0 sm:block lg:w-64" aria-hidden="true">
-      <div className="absolute inset-0" style={{ clipPath: cut, maskImage: fade, WebkitMaskImage: fade }}>
+      <div className="absolute inset-0" style={{ clipPath: cut }}>
         {m?.avatar
           ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
           : <div className={`absolute inset-0 flex items-center bg-surface-2 px-10 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
       </div>
-      <div className={`absolute -inset-y-3 w-[5px] ${right ? 'left-[18px] skew-x-[11deg] bg-coral' : 'right-[18px] -skew-x-[11deg] bg-accent'}`} />
+      <div className={`absolute -inset-y-3 w-2 ${right ? 'left-4 skew-x-[11deg] bg-coral' : 'right-4 -skew-x-[11deg] bg-accent'}`} />
+      <div className={`absolute -inset-y-3 w-[5px] bg-gold ${right ? 'left-1 skew-x-[11deg]' : 'right-1 -skew-x-[11deg]'}`} />
     </div>
   );
 }
 
 export default function GameBanner({ game, season, view }: { game: Game; season: Season; view: GameView }) {
   const [a, b] = game.sides;
-  const rank = (u: string) => (hasRanks(season) ? season.standings.find((r) => r.userId === u)?.rank : undefined);
+  // standings are placeholders until a regular-season week is played: no rank or streak before then
+  const row = (u: string) => (hasRanks(season) ? season.standings.find((r) => r.userId === u) : undefined);
   const team = (s: GameSide, right?: boolean) => {
-    const m = season.managers[s.userId]; const r = rank(s.userId);
+    const m = season.managers[s.userId]; const r = row(s.userId);
+    const streak = r && r.streak !== '-' ? r.streak : null;
+    const bits = [<span key="rec">{fmtRecord(s.recordBefore)}</span>];
+    if (r) bits.push(<span key="rank">{ord(r.rank)}</span>);
+    if (streak) bits.push(<span key="strk" className={streak.startsWith('W') ? 'text-win' : streak.startsWith('L') ? 'text-loss' : ''}>{streak}</span>);
     return (
       <div className={`min-w-0 ${right ? 'text-right' : ''}`}>
         <TeamLink userId={s.userId} year={season.year} className="relative z-10 block font-display text-xl font-bold uppercase leading-none tracking-wide sm:text-[27px]">{teamName(season, s.userId)}</TeamLink>
-        <div className="mt-1 text-xs text-muted">{[m?.displayName, fmtRecord(s.recordBefore), r ? ord(r) : null].filter(Boolean).join(' · ')}</div>
+        {m?.displayName && <div className="mt-1.5 truncate text-sm font-medium text-ink/85 sm:text-base">{m.displayName}</div>}
+        <div data-testid={`banner-line-${s.userId}`} className="num mt-0.5 text-xs text-muted">
+          {bits.flatMap((x, i) => (i ? [<span key={`dot${i}`} aria-hidden="true"> · </span>, x] : [x]))}
+        </div>
       </div>
     );
   };
