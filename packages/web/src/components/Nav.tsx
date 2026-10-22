@@ -50,7 +50,7 @@ export default function Nav() {
   const entriesOf = (id: 'rosters' | 'managers') => (id === 'rosters' ? rosters : managers);
   const activeOf = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-bg/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex h-12 w-full max-w-[1400px] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-10">
         <NavLink to="/" className="shrink-0 whitespace-nowrap font-semibold tracking-tight" onClick={() => setOpen(false)}>{leagueConfig.name}</NavLink>
         <nav className="hidden h-full min-w-0 items-center gap-1 text-sm md:flex">

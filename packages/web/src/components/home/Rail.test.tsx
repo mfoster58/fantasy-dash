@@ -24,7 +24,7 @@ function league(): Season {
 const wrap = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('HomeStandings', () => {
-  it('every team with W, L, PF, PA and streak, a playoff cut, team links and the full table link', () => {
+  it('every team with W, L, win %, PF, PPG, PA and streak, a playoff cut, team links and the full table link', () => {
     const s = league();
     wrap(<HomeStandings season={s} />);
     const rows = screen.getAllByTestId('home-standings-row');
@@ -33,8 +33,15 @@ describe('HomeStandings', () => {
     expect(rows[0]).toHaveTextContent('mgr-a');
     expect(rows[0]).toHaveTextContent('985.2');
     expect(rows[0]).toHaveTextContent('W2');
+    expect(rows[0]).toHaveTextContent('.833');
+    expect(rows[0]).toHaveTextContent('164.2');
+    expect(screen.getByRole('columnheader', { name: 'Win%' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'PPG' })).toBeInTheDocument();
     expect(within(rows[0]).getByRole('link', { name: 'Team A' })).toHaveAttribute('href', '/teams/2026/a');
-    expect(screen.getByText('Playoff cut')).toBeInTheDocument();
+    // the same cut as the full standings table: a rule under the last playoff team, no label row
+    expect(rows[1]).toHaveAttribute('data-playoff-cut', 'true');
+    expect(rows.filter((r) => r.hasAttribute('data-playoff-cut'))).toHaveLength(1);
+    expect(screen.queryByText('Playoff cut')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Full table/ })).toHaveAttribute('href', '/standings/2026');
   });
 });

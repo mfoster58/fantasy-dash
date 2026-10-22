@@ -28,7 +28,7 @@ function Column({ title, rows, season, spotlight = true, control }: { title: str
   return (
     <section aria-label={title} className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-display text-xs font-bold uppercase tracking-[0.14em] text-gold">{title}</h3>
+        <h3 className="font-display text-xl font-bold uppercase leading-none tracking-[0.06em] text-gold">{title}</h3>
         {control}
       </div>
       {!top.length && <p className="text-sm text-muted">No leaders yet.</p>}
@@ -74,10 +74,13 @@ export default function LeadersBand({ seasons, season }: { seasons: Season[]; se
         </div>
         <Toggle label="Position" options={POSITIONS.map((p) => ({ id: p, label: p }))} value={pos} onChange={setPos} />
       </div>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-[repeat(3,1fr)_300px]">
-        <Column title="Most points" rows={leadPoints(ctx)} season={season} />
-        <Column title="Most yards" rows={YARD_BOARDS[yards](ctx)} season={season} control={<Toggle label="Yards split" options={SPLITS} value={yards} onChange={setYards} />} />
-        <Column title="Most touchdowns" rows={TD_BOARDS[tds](ctx)} season={season} control={<Toggle label="Touchdowns split" options={SPLITS} value={tds} onChange={setTds} />} />
+      {/* same split as the rows above: three boards over the wide column, the model board over the 330px rail */}
+      <div className="grid gap-x-4 gap-y-6 lg:grid-cols-[1fr_330px]">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <Column title="Most points" rows={leadPoints(ctx)} season={season} />
+          <Column title="Most yards" rows={YARD_BOARDS[yards](ctx)} season={season} control={<Toggle label="Yards split" options={SPLITS} value={yards} onChange={setYards} />} />
+          <Column title="Most touchdowns" rows={TD_BOARDS[tds](ctx)} season={season} control={<Toggle label="Touchdowns split" options={SPLITS} value={tds} onChange={setTds} />} />
+        </div>
         <Column title="Beating the model" rows={MODEL_BOARDS[model](ctx, 'desc')} season={season} spotlight={false}
           control={<Toggle label="Model" options={[{ id: 'fpoe' as const, label: 'FPOE' }, { id: 'xfp' as const, label: 'xFP' }]} value={model} onChange={setModel} />} />
       </div>
