@@ -17,7 +17,7 @@ export default function TopRow({ season, week, picks, champion }: { season: Seas
   if (!picks.hero) return null;
   const hero = shown(picks.hero);
   return (
-    <div className={`grid gap-3.5 ${picks.sides.length ? 'lg:grid-cols-[1fr_270px]' : ''}`}>
+    <div className={`grid gap-4 ${picks.sides.length ? 'lg:grid-cols-[1fr_330px]' : ''}`}>
       <GameBanner game={hero.game} season={season} view={hero.view} />
       {picks.sides.length > 0 && (
         <div className="grid gap-2.5 sm:grid-cols-2 lg:flex lg:flex-col">

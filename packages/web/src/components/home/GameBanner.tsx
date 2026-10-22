@@ -24,7 +24,7 @@ function Panel({ season, side, right }: { season: Season; side: GameSide; right?
       {m?.avatar
         ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})`, clipPath: cut }} />
         : <div className="absolute inset-0 grid place-items-center bg-surface-2 font-display text-4xl font-bold text-muted" style={{ clipPath: cut }}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
-      <div className={`absolute -inset-y-3 w-[5px] ${right ? 'left-[11%] -skew-x-[11deg] bg-coral' : 'right-[11%] skew-x-[11deg] bg-accent'}`} />
+      <div className={`absolute -inset-y-3 w-[5px] ${right ? 'left-[11%] skew-x-[11deg] bg-coral' : 'right-[11%] -skew-x-[11deg] bg-accent'}`} />
     </div>
   );
 }
@@ -43,7 +43,7 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
   };
   const winnerName = view.winner === null ? null : teamName(season, game.sides[view.winner].userId);
   return (
-    <section aria-label="Game of the week" className="card relative flex min-h-[196px] overflow-hidden">
+    <section aria-label="Game of the week" className="card relative isolate flex min-h-[196px] overflow-hidden">
       <CoverLink to={`/scores/${season.year}/${game.week}/${game.matchupId}`} label={`${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />
       <Panel season={season} side={a} />
       <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-5 sm:gap-4 sm:px-4">

@@ -30,7 +30,7 @@ export default function SideGame({ game, season, view, tag, champion }: { game: 
     );
   };
   return (
-    <section aria-label={t.label} className="card relative flex-1 px-3.5 py-3">
+    <section aria-label={t.label} className="card relative isolate flex-1 px-3.5 py-3">
       <CoverLink to={`/scores/${season.year}/${game.week}/${game.matchupId}`} label={`${teamName(season, game.sides[0].userId)} vs ${teamName(season, game.sides[1].userId)}`} />
       <div className="flex items-center justify-between">
         <span className={`font-display text-xs font-bold uppercase tracking-[0.14em] ${t.tone}`}>{t.label}</span>
