@@ -35,13 +35,21 @@ function Panel({ season, side, right }: { season: Season; side: GameSide; right?
 
 export default function GameBanner({ game, season, view }: { game: Game; season: Season; view: GameView }) {
   const [a, b] = game.sides;
-  const rank = (u: string) => (hasRanks(season) ? season.standings.find((r) => r.userId === u)?.rank : undefined);
+  // standings are placeholders until a regular-season week is played: no rank or streak before then
+  const row = (u: string) => (hasRanks(season) ? season.standings.find((r) => r.userId === u) : undefined);
   const team = (s: GameSide, right?: boolean) => {
-    const m = season.managers[s.userId]; const r = rank(s.userId);
+    const m = season.managers[s.userId]; const r = row(s.userId);
+    const streak = r && r.streak !== '-' ? r.streak : null;
+    const bits = [<span key="rec">{fmtRecord(s.recordBefore)}</span>];
+    if (r) bits.push(<span key="rank">{ord(r.rank)}</span>);
+    if (streak) bits.push(<span key="strk" className={streak.startsWith('W') ? 'text-win' : streak.startsWith('L') ? 'text-loss' : ''}>{streak}</span>);
     return (
       <div className={`min-w-0 ${right ? 'text-right' : ''}`}>
         <TeamLink userId={s.userId} year={season.year} className="relative z-10 block font-display text-xl font-bold uppercase leading-none tracking-wide sm:text-[27px]">{teamName(season, s.userId)}</TeamLink>
-        <div className="mt-1 text-xs text-muted">{[m?.displayName, fmtRecord(s.recordBefore), r ? ord(r) : null].filter(Boolean).join(' · ')}</div>
+        {m?.displayName && <div className="mt-1.5 truncate text-sm font-medium text-ink/85 sm:text-base">{m.displayName}</div>}
+        <div data-testid={`banner-line-${s.userId}`} className="num mt-0.5 text-xs text-muted">
+          {bits.flatMap((x, i) => (i ? [<span key={`dot${i}`} aria-hidden="true"> · </span>, x] : [x]))}
+        </div>
       </div>
     );
   };

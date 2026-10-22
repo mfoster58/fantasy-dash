@@ -36,7 +36,8 @@ describe('TopRow', () => {
     expect(banner).toHaveTextContent('54%');
     expect(within(banner).getByRole('link', { name: 'The Js vs The Window' })).toHaveAttribute('href', '/scores/2026/7/1');
     expect(within(banner).getByRole('link', { name: 'The Window' })).toHaveAttribute('href', '/teams/2026/b');
-    expect(banner).toHaveTextContent('CurryLover53 · 4-2');
+    expect(within(banner).getByText('CurryLover53')).toBeInTheDocument();
+    expect(banner).toHaveTextContent('4-2');
     const side2 = screen.getByRole('region', { name: 'Champ watch' });
     expect(side2).toHaveTextContent(/Tuten\s*🏆/);
     expect(within(side2).getByRole('link', { name: 'My boutte hurts vs Tuten' })).toHaveAttribute('href', '/scores/2026/7/2');
@@ -75,6 +76,17 @@ describe('GameBanner links and ranks', () => {
     const panels = container.querySelectorAll('[data-testid="banner-photo"]');
     expect(panels).toHaveLength(2);
     panels.forEach((p) => expect(p).toHaveClass('pointer-events-none'));
+  });
+  it('puts the manager on their own line and record, rank and streak on the line below', () => {
+    const s = league();
+    s.weeks.unshift({ ...week(6, []), played: true });
+    s.standings = [standing('b', 1, 4, 2, 0, 0, 0), standing('a', 2, 3, 3, 0, 0, 0)];
+    s.standings[0].streak = 'W2';
+    wrap(<GameBanner game={s.weeks[1].games[0]} season={s} view={view({})} />);
+    const b = screen.getByRole('region', { name: 'Game of the week' });
+    expect(within(b).getByText('CurryLover53')).toBeInTheDocument();
+    expect(within(b).getByText('W2')).toBeInTheDocument();
+    expect(within(b).getByTestId('banner-line-b')).toHaveTextContent(/^4-2\s*·\s*1st\s*·\s*W2$/);
   });
   it('shows no rank before any week is played', () => {
     const s = league();
