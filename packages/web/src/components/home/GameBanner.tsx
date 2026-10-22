@@ -16,14 +16,19 @@ export function StateLabel({ status }: { status: GameView['status'] }) {
 /** neutral until final; then the winner bright and bold, the loser dimmed */
 export const scoreTone = (view: GameView, i: 0 | 1) => (view.winner === null ? 'text-ink/85' : view.winner === i ? 'font-bold text-ink' : 'text-muted');
 
+/** a photo cut on a diagonal, fading toward the cut, with a team-coloured stripe along it (the cut's 40px run over ~200px matches the stripe's 11deg) */
 function Panel({ season, side, right }: { season: Season; side: GameSide; right?: boolean }) {
   const m = season.managers[side.userId];
-  const fade = `linear-gradient(to ${right ? 'left' : 'right'}, #000 15%, transparent 85%)`;
+  const cut = right ? 'polygon(0 0, 100% 0, 100% 100%, 40px 100%)' : 'polygon(0 0, 100% 0, calc(100% - 40px) 100%, 0 100%)';
+  const fade = `linear-gradient(to ${right ? 'left' : 'right'}, #000 30%, rgb(0 0 0 / 0.08))`;
   return (
-    <div data-testid="banner-photo" className={`pointer-events-none relative hidden w-52 shrink-0 sm:block lg:w-64 ${right ? '-ml-12' : '-mr-12'}`} aria-hidden="true" style={{ maskImage: fade, WebkitMaskImage: fade }}>
-      {m?.avatar
-        ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
-        : <div className={`absolute inset-0 flex items-center bg-surface-2 px-10 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
+    <div data-testid="banner-photo" className="pointer-events-none relative hidden w-52 shrink-0 sm:block lg:w-64" aria-hidden="true">
+      <div className="absolute inset-0" style={{ clipPath: cut, maskImage: fade, WebkitMaskImage: fade }}>
+        {m?.avatar
+          ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
+          : <div className={`absolute inset-0 flex items-center bg-surface-2 px-10 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
+      </div>
+      <div className={`absolute -inset-y-3 w-[5px] ${right ? 'left-[18px] skew-x-[11deg] bg-coral' : 'right-[18px] -skew-x-[11deg] bg-accent'}`} />
     </div>
   );
 }
