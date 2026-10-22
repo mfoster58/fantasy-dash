@@ -21,7 +21,7 @@ export default function HomePage() {
   return (
     <div className="space-y-5">
       {thisWeek && picks?.hero && <TopRow season={season} week={thisWeek} picks={picks} champion={champion} />}
-      <div className="grid items-start gap-4 lg:grid-cols-[1fr_330px]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_330px]">
         <HomeStandings season={season} />
         {results && results.games.length > 0 && (
           <div className="space-y-4">

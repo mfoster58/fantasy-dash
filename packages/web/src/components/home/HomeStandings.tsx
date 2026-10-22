@@ -8,10 +8,10 @@ const cell = 'num whitespace-nowrap px-3 py-2.5 text-right';
 
 export default function HomeStandings({ season }: { season: Season }) {
   return (
-    <section aria-label="Standings" className="card overflow-hidden">
+    <section aria-label="Standings" className="card flex flex-col overflow-hidden">
       <CardHead over="Regular season" title="Standings" to={`/standings/${season.year}`} link="Full table" />
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="flex-1 overflow-x-auto">
+        <table className="h-full w-full text-sm">
           <thead className="border-b border-line">
             <tr>{['#', 'Team', 'W', 'L', 'Win%', 'PF', 'PPG', 'PA', 'Strk'].map((h, i) => <th key={h} scope="col" className={`section-label px-3 py-2.5 ${i < 2 ? 'text-left' : 'text-right'}`}>{h}</th>)}</tr>
           </thead>

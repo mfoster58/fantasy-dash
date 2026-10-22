@@ -18,13 +18,12 @@ export const scoreTone = (view: GameView, i: 0 | 1) => (view.winner === null ? '
 
 function Panel({ season, side, right }: { season: Season; side: GameSide; right?: boolean }) {
   const m = season.managers[side.userId];
-  const cut = right ? 'polygon(0 0, 100% 0, 100% 100%, 22% 100%)' : 'polygon(0 0, 100% 0, 78% 100%, 0 100%)';
+  const fade = `linear-gradient(to ${right ? 'left' : 'right'}, #000 15%, transparent 85%)`;
   return (
-    <div data-testid="banner-photo" className="pointer-events-none relative hidden w-44 shrink-0 sm:block" aria-hidden="true">
+    <div data-testid="banner-photo" className={`pointer-events-none relative hidden w-52 shrink-0 sm:block lg:w-64 ${right ? '-ml-12' : '-mr-12'}`} aria-hidden="true" style={{ maskImage: fade, WebkitMaskImage: fade }}>
       {m?.avatar
-        ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})`, clipPath: cut }} />
-        : <div className="absolute inset-0 grid place-items-center bg-surface-2 font-display text-4xl font-bold text-muted" style={{ clipPath: cut }}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
-      <div className={`absolute -inset-y-3 w-[5px] ${right ? 'left-[11%] skew-x-[11deg] bg-coral' : 'right-[11%] -skew-x-[11deg] bg-accent'}`} />
+        ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
+        : <div className={`absolute inset-0 flex items-center bg-surface-2 px-10 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
     </div>
   );
 }
@@ -46,7 +45,7 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
     <section aria-label="Game of the week" className="card relative isolate flex min-h-[196px] overflow-hidden">
       <CoverLink to={`/scores/${season.year}/${game.week}/${game.matchupId}`} label={`${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />
       <Panel season={season} side={a} />
-      <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-5 sm:gap-4 sm:px-4">
+      <div className="relative grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-5 sm:gap-4 sm:px-4">
         {team(a)}
         <div className="w-40 text-center sm:w-56">
           <div className="font-display text-lg font-bold uppercase leading-none tracking-[0.08em] text-accent sm:text-2xl">Game of the week</div>
