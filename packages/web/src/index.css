@@ -154,9 +154,12 @@ html, body {
     letter-spacing: 0.08em;
     color: var(--muted);
   }
-  /* League leaders band: warm gold wash over the page background. */
+  /* League leaders box: a light-blue border to go with the wash. */
   .leaders-band {
     border-color: color-mix(in srgb, var(--slate) 45%, transparent);
+  }
+  /* Light-blue wash over the surface (leaders box, game of the week). Comes after .card so it wins. */
+  .blue-wash {
     background:
       radial-gradient(70% 140% at 0% 0%, color-mix(in srgb, var(--slate) 24%, transparent), transparent 65%),
       linear-gradient(160deg, color-mix(in srgb, var(--slate) 16%, var(--surface)) 0%, var(--surface) 100%);

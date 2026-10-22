@@ -16,7 +16,7 @@ export function StateLabel({ status }: { status: GameView['status'] }) {
 /** neutral until final; then the winner bright and bold, the loser dimmed */
 export const scoreTone = (view: GameView, i: 0 | 1) => (view.winner === null ? 'text-ink/85' : view.winner === i ? 'font-bold text-ink' : 'text-muted');
 
-/** a photo cut on a diagonal with a team-coloured stripe along the cut and a thinner gold one just inside it (the cut's 40px run over ~200px matches the stripes' 11deg) */
+/** a photo cut on a diagonal with a team-coloured stripe and a thinner gold one just inside it, both over the photo so it runs past the gold to the cut (the cut's 40px run over ~200px matches the stripes' 11deg) */
 function Panel({ season, side, right }: { season: Season; side: GameSide; right?: boolean }) {
   const m = season.managers[side.userId];
   const cut = right ? 'polygon(0 0, 100% 0, 100% 100%, 40px 100%)' : 'polygon(0 0, 100% 0, calc(100% - 40px) 100%, 0 100%)';
@@ -27,8 +27,8 @@ function Panel({ season, side, right }: { season: Season; side: GameSide; right?
           ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
           : <div className={`absolute inset-0 flex items-center bg-surface-2 px-10 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
       </div>
-      <div className={`absolute -inset-y-3 w-2 ${right ? 'left-4 skew-x-[11deg] bg-coral' : 'right-4 -skew-x-[11deg] bg-accent'}`} />
-      <div className={`absolute -inset-y-3 w-[5px] bg-gold ${right ? 'left-1 skew-x-[11deg]' : 'right-1 -skew-x-[11deg]'}`} />
+      <div className={`absolute -inset-y-3 w-2 ${right ? 'left-[38px] skew-x-[11deg] bg-coral' : 'right-[38px] -skew-x-[11deg] bg-accent'}`} />
+      <div className={`absolute -inset-y-3 w-[5px] bg-gold ${right ? 'left-[26px] skew-x-[11deg]' : 'right-[26px] -skew-x-[11deg]'}`} />
     </div>
   );
 }
@@ -55,7 +55,7 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
   };
   const winnerName = view.winner === null ? null : teamName(season, game.sides[view.winner].userId);
   return (
-    <section aria-label="Game of the week" className="card relative isolate flex min-h-[196px] overflow-hidden">
+    <section aria-label="Game of the week" className="card blue-wash relative isolate flex min-h-[196px] overflow-hidden">
       <CoverLink to={`/scores/${season.year}/${game.week}/${game.matchupId}`} label={`${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />
       <Panel season={season} side={a} />
       <div className="relative grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-5 sm:gap-4 sm:px-4">
