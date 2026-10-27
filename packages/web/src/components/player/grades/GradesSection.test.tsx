@@ -47,6 +47,11 @@ describe('GradesSection', () => {
     expect(tileOf('tgtShare')).toHaveTextContent('not ranked');
   });
 
+  it('grade cards show no question line', () => {
+    const { dbs, charts } = seasons();
+    render(<GradesSection id="wa" dbs={dbs} charts={charts} />);
+    expect(screen.queryByText('What does a target to him earn?')).toBeNull();
+  });
   it('carries the FTN credit line', () => {
     const { dbs, charts } = seasons();
     render(<GradesSection id="wa" dbs={dbs} charts={charts} />);

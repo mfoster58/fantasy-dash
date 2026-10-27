@@ -3,7 +3,7 @@ import { advancedRows, bucketsFor } from './advanced';
 
 const t = (key: string, pct: number | null, extra: Partial<GradedTile> = {}): GradedTile =>
   ({ key, label: key, text: String(pct), detail: '', pct, style: false, status: pct === null ? 'small' : 'ranked', ...extra });
-const card = (key: string, title: string, group: GradedCard['group'], tiles: GradedTile[]): GradedCard => ({ key, title, question: '', group, tiles } as GradedCard);
+const card = (key: string, title: string, group: GradedCard['group'], tiles: GradedTile[]): GradedCard => ({ key, title, group, tiles });
 /** two players: A leads usage and efficiency a, B leads efficiency b; style and unranked rows never lead */
 const A = [card('usage', 'Usage', 'Opportunity', [t('share', 90), t('adot', 80, { style: true })]), card('eff', 'Efficiency', 'Production', [t('a', 70), t('b', 20), t('c', null)])];
 const B = [card('usage', 'Usage', 'Opportunity', [t('share', 40), t('adot', 95, { style: true })]), card('eff', 'Efficiency', 'Production', [t('a', 10), t('b', 60), t('c', 50)])];

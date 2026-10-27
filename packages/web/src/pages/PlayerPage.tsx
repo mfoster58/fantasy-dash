@@ -22,6 +22,7 @@ import { playerRecords } from '../lib/player/records';
 import { seasonTable, summaryOf } from '../lib/player/seasons';
 import type { Tab } from '../lib/playerdb/columns';
 import { flattenLines } from '../lib/playerLines';
+import { compareHref, groupOf } from '../lib/compare/url';
 
 export interface PlayerPageData { id: PlayerId; seasons: Season[]; dbs: PlayerDb[]; charts: ChartDb[] }
 
@@ -41,6 +42,7 @@ export default function PlayerPage() {
   // gsis ids are stable across seasons: take any season's
   const gsis = useMemo(() => dbs.map((d) => d.players[id]?.gsisId).find((g): g is string => !!g) ?? null, [dbs, id]);
   const tab = DB_TABS[bio.pos];
+  const group = groupOf(bio.pos);
   const current = currentSeason?.year ?? 0;
   const newest = dbYears[dbYears.length - 1] ?? 0;
   const [logYear, setLogYear] = useState(newest);
@@ -52,7 +54,7 @@ export default function PlayerPage() {
 
   return (
     <div className="space-y-6">
-      <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} />
+      <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} compareHref={group && newest ? compareHref({ season: newest, pos: group, ids: [id] }) : undefined} />
       {table.rows.length > 0 && <SeasonTable table={table} pos={bio.pos} />}
       {tab && myDbs.length > 0 && <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />}
       {gsis && bio.pos === 'RB' && <RunLanes charts={charts} gsis={gsis} current={current} />}

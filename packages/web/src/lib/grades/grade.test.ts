@@ -57,6 +57,10 @@ describe('gradeCards', () => {
     expect(tile(gradeCards(db, chart, 'ra')!, 'in10Share').detail).toBe('8 of 12');
   });
 
+  it('the RB inside-10 tile reads Team carries inside the 10', () => {
+    const { db, chart } = fixture();
+    expect(tile(gradeCards(db, chart, 'ra')!, 'in10Share').label).toBe('Team carries inside the 10');
+  });
   it('a deep tile with 4 deep targets is small', () => {
     const { db, chart } = fixture();
     const t = tile(gradeCards(db, chart, 'wc')!, 'deepCatches');

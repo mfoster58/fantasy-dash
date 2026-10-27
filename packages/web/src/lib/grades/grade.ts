@@ -4,7 +4,7 @@ import { percentiles } from '../playerdb/percentile';
 import { CARDS, type CardDef, type GradeInput, type Group, type TileDef } from './defs';
 
 export interface GradedTile { key: string; label: string; text: string; detail: string; pct: number | null; style: boolean; status: 'ranked' | 'small' | 'noFtn' | 'none' }
-export interface GradedCard { key: string; title: string; question: string; group: Group; tiles: GradedTile[] }
+export interface GradedCard { key: string; title: string; group: Group; tiles: GradedTile[] }
 export interface SummaryRow { label: string; card: string; text: string; pct: number }
 
 /** Volume per week of the season needed to be ranked at all: targets, carries or dropbacks. */
@@ -79,7 +79,7 @@ export function gradeCards(db: PlayerDb, chart: ChartDb | undefined, id: PlayerI
     return { ...base, pct: Math.round((t.low ? 1 - p : p) * 100), status: 'ranked' };
   };
 
-  return cardsFor(me.pos).map((c) => ({ key: c.key, title: c.title, question: c.question, group: c.group, tiles: c.tiles.map(grade) }));
+  return cardsFor(me.pos).map((c) => ({ key: c.key, title: c.title, group: c.group, tiles: c.tiles.map(grade) }));
 }
 
 /** His four best and four worst graded tiles (style and unranked tiles left out); fewer than eight split at the 50th percentile. */

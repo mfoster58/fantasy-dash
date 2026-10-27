@@ -26,12 +26,11 @@ function Tile({ t }: { t: GradedTile }) {
   );
 }
 
-/** One question, answered in four tiles. */
+/** One card of four graded tiles. */
 export default function GradeCard({ card }: { card: GradedCard }) {
   return (
     <div data-testid="grade-card" className="card px-3.5 py-3">
-      <h3 className="text-[15px] font-semibold">{card.title}</h3>
-      <p className="mb-2.5 text-xs text-muted">{card.question}</p>
+      <h3 className="mb-2.5 text-[15px] font-semibold">{card.title}</h3>
       <div className="grid grid-cols-2 gap-1.5">{card.tiles.map((t) => <Tile key={t.key} t={t} />)}</div>
     </div>
   );

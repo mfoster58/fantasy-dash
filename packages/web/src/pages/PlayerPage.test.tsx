@@ -36,6 +36,14 @@ describe('PlayerPage', () => {
     expect(gold).toHaveTextContent('2025');
     expect(within(section(/Path through the league/)!).getByTestId('trade-card')).toBeInTheDocument();
   });
+  it('a WR page links to Compare with him in slot A', () => {
+    mount('w1');
+    expect(screen.getByRole('link', { name: 'Compare' })).toHaveAttribute('href', '/players/compare?season=2026&pos=WRTE&p=w1');
+  });
+  it('a kicker page has no Compare link', () => {
+    mount('k1');
+    expect(screen.queryByRole('link', { name: 'Compare' })).toBeNull();
+  });
   it('kicker shows league sections only', () => {
     mount('k1');
     expect(screen.getByRole('heading', { level: 1, name: /Kick One/ })).toBeInTheDocument();

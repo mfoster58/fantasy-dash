@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { PlayerId } from '@fantasy-dash/core';
 import Headshot from '../Headshot';
 import PosPill from '../PosPill';
@@ -20,7 +21,7 @@ const Tile = ({ label, value, sub }: { label: string; value: string; sub?: strin
 const f1 = (v: number | null) => (v === null ? '–' : v.toFixed(1));
 
 /** Name, trophies, position and team; who has him now; bio fields; and, for a player who was rostered, the league tiles. */
-export default function PlayerHeader({ id, bio, summary, now, managerName, rostered }: { id: PlayerId; bio: Bio; summary: Summary; now: Stint | null; managerName: string; rostered: boolean }) {
+export default function PlayerHeader({ id, bio, summary, now, managerName, rostered, compareHref }: { id: PlayerId; bio: Bio; summary: Summary; now: Stint | null; managerName: string; rostered: boolean; compareHref?: string }) {
   const fields: [string, string | null][] = [
     ['Age', bio.age === null ? null : String(bio.age)], ['Height', bio.height], ['Weight', bio.weight === null ? null : `${bio.weight} lb`],
     ['College', bio.college], ['NFL draft', bio.nflDraft],
@@ -44,6 +45,7 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
               : rostered ? 'Free agent' : 'Never rostered in this league'}
             {summary.titles.length > 0 && ` · ${summary.titles.join(', ')} champion`}
           </p>
+          {compareHref && <Link to={compareHref} className="mt-2 inline-flex rounded-md border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-muted hover:text-ink">Compare</Link>}
         </div>
       </div>
       {shown.length > 0 && <div className="flex flex-wrap gap-x-8 gap-y-2">{shown.map(([l, v]) => <Field key={l} label={l} value={v} />)}</div>}
