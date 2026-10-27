@@ -65,3 +65,6 @@ export function gameOutlook(game: Game, gameOf: (playerId: string) => PlayerGame
   if (status !== 'final') pa = Math.max(1, Math.min(99, pa));
   return { projected: [a.final, b.final], win: [pa, 100 - pa], status };
 }
+
+/** win % colour: the favourite green, the underdog red, a dead-even game neither */
+export const winTone = (mine: number, theirs: number): string => (mine > theirs ? 'var(--win)' : mine < theirs ? 'var(--loss)' : 'var(--dim)');

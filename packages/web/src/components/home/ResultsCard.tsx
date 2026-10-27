@@ -9,11 +9,12 @@ const KIND: Record<Hitter['kind'], { label: string; tone: string }> = {
   nail: { label: 'Nail-biter', tone: 'text-accent' },
 };
 
-export default function ResultsCard({ season, week }: { season: Season; week: Week }) {
+/** `live`: the week is still being played, so winners are whoever leads now */
+export default function ResultsCard({ season, week, live = false }: { season: Season; week: Week; live?: boolean }) {
   const name = (u: string) => season.managers[u]?.displayName ?? u;
   return (
     <section aria-label={`Week ${week.week}`} className="card overflow-hidden">
-      <CardHead over="Results" title={`Week ${week.week}`} to={`/scores/${season.year}/${week.week}`} link="Scores" />
+      <CardHead over={live ? 'Live' : 'Results'} title={`Week ${week.week}`} to={`/scores/${season.year}/${week.week}`} link="Scores" />
       {weekHitters(week).map((h) => {
         const m = season.managers[h.userId];
         return (

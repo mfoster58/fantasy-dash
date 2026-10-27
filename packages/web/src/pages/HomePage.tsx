@@ -7,7 +7,9 @@ import TopPerformers from '../components/home/TopPerformers';
 import TopRow from '../components/home/TopRow';
 import { currentSeason, history } from '../data/load';
 import { homeWeek, pickGames } from '../lib/home/pick';
-import { useLive } from '../lib/live/LiveProvider';
+import { scoredSoFar } from '../lib/home/results';
+import { useLive, useLiveStats } from '../lib/live/LiveProvider';
+import { weekStatus } from '../lib/live/weekStatus';
 
 export default function HomePage() {
   const seasons = useLoaderData() as Season[];
@@ -17,7 +19,10 @@ export default function HomePage() {
   const liveNo = live.season?.year === season.year ? live.week : null;
   const thisWeek = homeWeek(season, liveNo);
   const picks = thisWeek ? pickGames(season, thisWeek, champion) : null;
-  const results = season.lastScoredWeek > 0 ? season.weeks[season.lastScoredWeek - 1] : null;
+  // from the live week's first kickoff, results and top performers follow it; until then, the last week played
+  const st = thisWeek ? weekStatus(season, thisWeek, live) : null;
+  useLiveStats(!!st?.started);
+  const results = st?.started ? scoredSoFar(st.week) : season.lastScoredWeek > 0 ? season.weeks[season.lastScoredWeek - 1] : null;
   return (
     <div className="space-y-5">
       {thisWeek && picks?.hero && <TopRow season={season} week={thisWeek} picks={picks} champion={champion} />}
@@ -25,7 +30,7 @@ export default function HomePage() {
         <HomeStandings season={season} />
         {results && results.games.length > 0 && (
           <div className="space-y-4">
-            <ResultsCard season={season} week={results} />
+            <ResultsCard season={season} week={results} live={!!st?.started} />
             <TopPerformers season={season} week={results} />
           </div>
         )}

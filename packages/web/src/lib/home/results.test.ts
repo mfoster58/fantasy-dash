@@ -1,5 +1,20 @@
 import { game, line, players, side, week } from '../../test/playerFixtures';
-import { fullStatLine, topPerformers, weekHitters } from './results';
+import { fullStatLine, scoredSoFar, topPerformers, weekHitters } from './results';
+
+describe('scoredSoFar', () => {
+  it('a week in progress counts whoever leads as the winner, by the current margin; level games have none', () => {
+    const w = week(7, [game(2026, 7, 1, side('a', 0, []), side('b', 0, [])), game(2026, 7, 2, side('c', 0, []), side('d', 0, []))]);
+    w.played = false;
+    w.games[0].sides[0].points = 61.2; w.games[0].sides[1].points = 78.4;
+    w.games[1].sides[0].points = 40; w.games[1].sides[1].points = 40;
+    const now = scoredSoFar(w);
+    expect(now.games[0].winner).toBe('b');
+    expect(now.games[0].margin).toBeCloseTo(17.2, 6);
+    expect(now.games[1].winner).toBeNull();
+    expect(now.games[1].margin).toBe(0);
+    expect(weekHitters(now).map((h) => h.kind)).toEqual(['high', 'blowout', 'nail']);
+  });
+});
 
 describe('weekHitters', () => {
   const w = week(6, [
