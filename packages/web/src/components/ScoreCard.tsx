@@ -22,6 +22,8 @@ interface Props {
   live?: GameOutlook;
   /** each team's rank and streak entering the game */
   standing?: (userId: UserId) => BannerStanding | undefined;
+  /** the smaller banner, for cards set two across */
+  compact?: boolean;
 }
 
 type Align = 'left' | 'right';
@@ -35,14 +37,14 @@ const effColor = (e: number) => {
   return `color-mix(in srgb, ${tone} 65%, transparent)`;
 };
 
-export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year, live, standing }: Props) {
+export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year, live, standing, compact = false }: Props) {
   const [a, b] = game.sides;
   const view = gameView(game, live ?? null, played);
   const started = view.status !== 'upcoming';
   return (
     <div className="card min-w-0 overflow-hidden transition-colors hover:border-accent">
       <GameBanner
-        bare compact game={game} season={{ managers, year }} view={view} decimals={2} standing={standing}
+        bare compact={compact} game={game} season={{ managers, year }} view={view} decimals={2} standing={standing}
         title={game.tag ? fmtTag(game.tag) : null} to={to}
         linkLabel={`${teamName(a, managers[a.userId])} vs ${teamName(b, managers[b.userId])} box score`}
       />
