@@ -3,7 +3,8 @@ import { COLUMNS, DEFAULT_SORT, TABS, columnsFor, type Mode, type Tab } from './
 /** 'all' | 'rostered' | 'fa' | a manager's user id */
 export type RosterFilter = string;
 
-export interface DbState { tab: Tab; from: number; to: number; mode: Mode; roster: RosterFilter; sort: string; dir: 'asc' | 'desc'; q: string }
+/** team: an NFL team code or 'all'; rookies: first-year players only */
+export interface DbState { tab: Tab; from: number; to: number; mode: Mode; roster: RosterFilter; sort: string; dir: 'asc' | 'desc'; q: string; team: string; rookies: boolean }
 
 const clampWeek = (v: string | null, fallback: number, max: number): number => {
   // Number('') is 0, so blank values must fall back rather than clamp to week 1.
@@ -32,6 +33,8 @@ export function parseState(params: URLSearchParams, throughWeek: number): DbStat
     sort: sortOk ? sort : DEFAULT_SORT,
     dir: sortOk && dir === 'asc' ? 'asc' : 'desc',
     q: params.get('q') ?? '',
+    team: params.get('team') || 'all',
+    rookies: params.get('rookies') === '1',
   };
 }
 
@@ -45,5 +48,7 @@ export function serializeState(s: DbState, throughWeek: number): URLSearchParams
   if (s.sort !== DEFAULT_SORT) p.set('sort', s.sort);
   if (s.dir !== 'desc') p.set('dir', s.dir);
   if (s.q) p.set('q', s.q);
+  if (s.team !== 'all') p.set('team', s.team);
+  if (s.rookies) p.set('rookies', '1');
   return p;
 }

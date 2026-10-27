@@ -7,7 +7,7 @@ import { COLUMNS, belowMin, columnValue, tabPositions } from '../../../lib/playe
 import type { DbState } from '../../../lib/playerdb/url';
 import { miniDb } from '../../../test/playerDbFixtures';
 
-const base: DbState = { tab: 'wr', from: 1, to: 3, mode: 'total', roster: 'all', sort: 'pts', dir: 'desc', q: '' };
+const base: DbState = { tab: 'wr', from: 1, to: 3, mode: 'total', roster: 'all', sort: 'pts', dir: 'desc', q: '', team: 'all', rookies: false };
 
 function Harness({ state: initial, collapsed = new Set<string>() }: { state: DbState; collapsed?: Set<string> }) {
   const [state, setState] = useState(initial);
@@ -48,13 +48,13 @@ describe('PlayerDbTable', () => {
     expect(pos.nextElementSibling).toBe(within(rows[0]).getByTestId('db-name').closest('td'));
     expect(within(rows[0]).getByTestId('db-name').closest('td')).toHaveClass('sticky');
   });
-  it('tints rate cells by percentile and leaves points untinted', () => {
+  it('tints rate cells and points by percentile', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
     const rows = screen.getAllByTestId('db-row');
     expect(within(rows[0]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, color-mix\(in oklch, rgb\(47, 158, 95\) 100%/); // Wide One, 26 targets: full green
     expect(within(rows[1]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, rgb\(230, 194, 41\) 45%/);                     // Tight One, the middle: yellow
     expect(within(rows[2]).getByTestId('cell-tgt').style.background).toMatch(/^color-mix\(in srgb, color-mix\(in oklch, rgb\(214, 69, 69\) 100%/); // Wide Two, 10 targets: full red
-    expect(within(rows[0]).getByTestId('cell-pts').style.background).toBe('');
+    expect(within(rows[0]).getByTestId('cell-pts').style.background).toMatch(/rgb\(47, 158, 95\) 100%/); // top scorer: green
   });
   it('dims a rate under the sample minimum and shows a dash for a missing value', () => {
     render(<MemoryRouter><Harness state={{ ...base, tab: 'rb' }} /></MemoryRouter>);
@@ -153,5 +153,12 @@ describe('PlayerDbTable', () => {
     expect(screen.getByRole('button')).toHaveTextContent('Rushing');
     expect(localStorage.getItem('playerdb.collapsed.rb')).toBe('["Rushing"]');
     localStorage.clear();
+  });
+  it('keeps a row\'s colours when the table is narrowed to it: tinted against the whole pool', () => {
+    const db = miniDb();
+    const pool = aggregate(db, 1, 3).filter((a) => ['WR', 'TE'].includes(db.players[a.id].pos));
+    render(<MemoryRouter><PlayerDbTable db={db} aggs={pool.filter((a) => a.id === 'w2')} pool={pool} state={{ ...base, q: 'two' }} rosters={{}} collapsed={new Set()} onToggleGroup={() => {}} onSort={() => {}} /></MemoryRouter>);
+    // Wide Two has the fewest targets of the three: red, not the yellow a lone row would get
+    expect(screen.getByTestId('cell-tgt').style.background).toMatch(/rgb\(214, 69, 69\) 100%/);
   });
 });

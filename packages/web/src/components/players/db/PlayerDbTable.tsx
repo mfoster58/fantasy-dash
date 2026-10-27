@@ -6,7 +6,7 @@ import { PlayerLink } from '../../NameLink';
 import type { Agg } from '../../../lib/playerdb/aggregate';
 import { COLUMNS, belowMin, columnValue, groupsFor, type ColumnDef, type Tab } from '../../../lib/playerdb/columns';
 import { dbDirectory } from '../../../lib/playerdb/directory';
-import { columnTints } from '../../../lib/playerdb/percentile';
+import { poolTints } from '../../../lib/playerdb/percentile';
 import type { DbState } from '../../../lib/playerdb/url';
 import { ColumnHeaderCells, GroupHeaderCells, HeaderCell, StatCells, th } from './GridParts';
 import TintCell from './TintCell';
@@ -17,6 +17,8 @@ export const PAGE = 25;
 interface Props {
   db: PlayerDb;
   aggs: Agg[];
+  /** everyone the rows are coloured against (the position tab before any filter or search); defaults to the rows themselves */
+  pool?: Agg[];
   state: DbState;
   onSort: (key: string) => void;
   /** who holds each player now; absent = free agent */
@@ -62,7 +64,7 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
 
 const lead = 'sticky bg-surface';
 
-export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
+export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
   const [shown, setShown] = useState(PAGE);
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
@@ -75,16 +77,14 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
     [groups, collapsed],
   );
   const sorted = useMemo(() => sortAggs(aggs, state), [aggs, state]);
-  const tints = useMemo(
-    () => new Map(visibleCols.map((c) => [c.key, columnTints(c, sorted, state.mode)] as const)),
-    [sorted, visibleCols, state.mode],
-  );
+  const tints = useMemo(() => poolTints(visibleCols, pool ?? aggs, state.mode), [pool, aggs, visibleCols, state.mode]);
+  const tintOf = (key: string, id: string) => tints.get(key)?.get(id) ?? 'transparent';
   const dir = dbDirectory(db);
   const span = 3 + visibleCols.length;
   const sortArrow = (key: string) => (state.sort === key ? (state.dir === 'desc' ? ' ▾' : ' ▴') : '');
   const headerTitle = (c: ColumnDef) => (c.est && !db.routesReal ? `${c.def}. Estimated from snap share × team dropbacks until the NFL publishes participation data.` : c.def);
-  const cell = (c: ColumnDef, a: Agg, i: number) => (
-    <TintCell key={c.key} value={columnValue(c, a, state.mode)} col={c} mode={state.mode} tint={tints.get(c.key)?.[i] ?? 'transparent'} dim={belowMin(c, a)} est={Boolean(c.est) && a.routesEst} />
+  const cell = (c: ColumnDef, a: Agg) => (
+    <TintCell key={c.key} value={columnValue(c, a, state.mode)} col={c} mode={state.mode} tint={tintOf(c.key, a.id)} dim={belowMin(c, a)} est={Boolean(c.est) && a.routesEst} />
   );
 
   return (
@@ -125,8 +125,8 @@ export default function PlayerDbTable({ db, aggs, state, onSort, rosters, collap
                       {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
                     </span>
                   </td>
-                  {leadCols.map((c) => cell(c, a, i))}
-                  <StatCells groups={bodyGroups} collapsed={collapsed} agg={a} mode={state.mode} tint={(k) => tints.get(k)?.[i] ?? 'transparent'} />
+                  {leadCols.map((c) => cell(c, a))}
+                  <StatCells groups={bodyGroups} collapsed={collapsed} agg={a} mode={state.mode} tint={(k) => tintOf(k, a.id)} />
                 </tr>
                 {isOpen && <WeekRows db={db} agg={a} cols={visibleCols} mode={state.mode} span={span} weekLabel={weekLabel} />}
               </Fragment>

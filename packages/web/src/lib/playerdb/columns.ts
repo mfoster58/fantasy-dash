@@ -81,9 +81,9 @@ const passTdScore = (a: Agg): number | null => {
 const list: ColumnDef[] = [
   // lead
   col('g', 'G', 'Games played in the range', 'int', games, { tinted: false }),
-  col('pts', 'Pts', 'Fantasy points under league scoring', 'dec1', sum('pts'), { tinted: false }),
-  col('ppg', 'PPG', 'Fantasy points per game played', 'dec1', ratio(sum('pts'), games), { tinted: false }),
-  col('posRank', 'Rk', 'Rank by fantasy points among players at the position over the range', 'int', (a) => a.posRank, { tinted: false, lowerIsBetter: true }),
+  col('pts', 'Pts', 'Fantasy points under league scoring', 'dec1', sum('pts')),
+  col('ppg', 'PPG', 'Fantasy points per game played', 'dec1', ratio(sum('pts'), games)),
+  col('posRank', 'Rk', 'Rank by fantasy points among players at the position over the range', 'int', (a) => a.posRank, { lowerIsBetter: true }),
   col('projPlus', 'Proj±', 'Fantasy points minus Sleeper\'s projection, summed over weeks with a projection', 'signed1', (a) => a.projDiff),
   // passing
   count('cmp', 'Cmp', 'Completions', 'pa_cmp'),

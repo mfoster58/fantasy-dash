@@ -67,7 +67,7 @@ describe('columnValue', () => {
   it('marks route columns as estimated and lower-is-better columns', () => {
     expect(COLUMNS.yprr.est).toBe(true);
     expect(COLUMNS.int.lowerIsBetter).toBe(true);
-    expect(COLUMNS.pts.tinted).toBe(false);
+    expect(COLUMNS.g.tinted).toBe(false);
   });
   it('formats by kind, and ints as one decimal in per-game mode', () => {
     expect(fmtValue(26, 'int', 'total')).toBe('26');

@@ -1,4 +1,4 @@
-import { columnTints, percentiles, tintFor } from './percentile';
+import { columnTints, percentiles, poolTints, tintFor } from './percentile';
 import { aggregate } from './aggregate';
 import { COLUMNS } from './columns';
 import { miniDb } from '../../test/playerDbFixtures';
@@ -55,5 +55,21 @@ describe('columnTints', () => {
     const fum = at('fum');
     expect(fum('w1')).not.toBe('transparent');           // touches but no fumbles: a good zero
     expect(at('int')('r1')).toBe('transparent');         // never a real passer: his 0 INT says nothing
+  });
+});
+
+describe('poolTints', () => {
+  it('tints each player against everyone in the pool, so narrowing the rows (a search) leaves his colours alone', () => {
+    const pool = aggregate(miniDb(), 1, 3);
+    const cols = [COLUMNS.pts, COLUMNS.reYds];
+    const tints = poolTints(cols, pool, 'total');
+    const i = pool.findIndex((a) => a.id === 'w2');
+    expect(tints.get('reYds')!.get('w2')).toBe(columnTints(COLUMNS.reYds, pool, 'total')[i]);
+    // alone, he would sit at the midpoint: yellow
+    expect(tints.get('reYds')!.get('w2')).not.toBe(columnTints(COLUMNS.reYds, [pool[i]], 'total')[0]);
+  });
+  it('tints points, points per game and position rank', () => {
+    for (const k of ['pts', 'ppg', 'posRank']) expect(COLUMNS[k].tinted).not.toBe(false);
+    expect(COLUMNS.g.tinted).toBe(false);
   });
 });

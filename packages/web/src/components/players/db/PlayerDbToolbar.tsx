@@ -14,6 +14,8 @@ interface Props {
   /** first fantasy playoff week, for the gap in the week row */
   playoffAt?: number | null;
   managers: { userId: string; name: string }[];
+  /** the NFL teams in the table, for the team filter */
+  teams: string[];
 }
 
 const TAB_LABELS: Record<Tab, string> = { all: 'All', qb: 'QB', rb: 'RB', wr: 'WR', te: 'TE' };
@@ -23,7 +25,7 @@ const NFL_WEEKS = 18;
 const select = 'num rounded border border-line bg-surface px-2 py-1 text-ink';
 
 /** Position tabs, season, week range, total/per-game, roster filter and search. Everything it changes lives in the URL. */
-export default function PlayerDbToolbar({ state, onChange, years, year, onYear, throughWeek, playoffAt = null, managers }: Props) {
+export default function PlayerDbToolbar({ state, onChange, years, year, onYear, throughWeek, playoffAt = null, managers, teams }: Props) {
   const [q, setQ] = useState(state.q);
   useEffect(() => { setQ(state.q); }, [state.q]);
   useEffect(() => {
@@ -53,6 +55,14 @@ export default function PlayerDbToolbar({ state, onChange, years, year, onYear, 
             {managers.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}
           </select>
         </label>
+        <label className="flex items-center gap-2 text-muted">Team
+          <select aria-label="NFL team" value={state.team} onChange={(e) => onChange({ team: e.target.value })} className={select}>
+            <option value="all">All teams</option>
+            {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+        {/* a rookie is a first-year player in one season; across every season it means nothing */}
+        {year !== 'all' && <button type="button" aria-pressed={state.rookies} onClick={() => onChange({ rookies: !state.rookies })} className={pill(state.rookies)}>Rookies</button>}
         <input type="search" aria-label="Search players" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} className="min-w-0 flex-1 rounded border border-line bg-surface px-2 py-1 text-ink sm:max-w-56" />
       </div>
       {/* week numbers mean nothing across seasons */}
