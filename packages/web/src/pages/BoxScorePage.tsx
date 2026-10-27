@@ -14,6 +14,7 @@ import { gameView } from '../lib/home/view';
 import { playerGames } from '../lib/live/gameState';
 import { useLive, useLiveStats } from '../lib/live/LiveProvider';
 import { useNflWeek } from '../lib/live/useNflWeek';
+import { useDefenseRanks } from '../lib/matchups/useDefenseRanks';
 import { playerTeam } from '../lib/players';
 
 export default function BoxScorePage() {
@@ -24,6 +25,8 @@ export default function BoxScorePage() {
   const isLiveWeek = !!synced && live.season?.year === season.year && live.week === synced.week;
   useLiveStats(isLiveWeek);
   // any other week reads its NFL games once from ESPN, for each player's final score
+  // how kind each opponent's defense has been to each position this season
+  const matchup = useDefenseRanks(season.year);
   const pastGames = useNflWeek(season.year, Number(weekParam), !!synced && !isLiveWeek);
   const status = synced ? weekStatus(season, synced, live) : null;
   const week = status?.week;
@@ -56,7 +59,7 @@ export default function BoxScorePage() {
       {/* odds only while there's something left to decide; a final result is in the banner */}
       {outlook && outlook.status !== 'final' && <LiveOutlook outlook={outlook} />}
 
-      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} played={week.played} />
+      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} matchup={matchup ?? undefined} />
 
       {week.played && (
         <div className="grid gap-4 lg:grid-cols-2">

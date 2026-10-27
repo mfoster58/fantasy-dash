@@ -1,29 +1,41 @@
 import type { Field, NflGame } from './espn';
 
-/** Where a player's NFL game stands. `unknown` when ESPN couldn't be read. */
+/** Who a player's team plays: the opponent and whether it's at home. */
+export interface Versus { opp: string; home: boolean }
+/** A finished game from the player's side: his team's score first. */
+export interface NflResult { outcome: 'W' | 'L' | 'T'; us: number; them: number }
+
+/** Where a player's NFL game stands. `unknown` when ESPN couldn't be read. `vs` when ESPN said who's home. */
 export type PlayerGame =
-  | { kind: 'live'; period: number; clock: string; halftime: boolean; field?: Field }
-  /** `result`: "W 30-16 @ ARI" from the player's side, when ESPN gave the score */
-  | { kind: 'final'; result?: string }
-  | { kind: 'upcoming'; kickoff: string }
+  | { kind: 'live'; period: number; clock: string; halftime: boolean; field?: Field; vs?: Versus }
+  | { kind: 'final'; vs?: Versus; result?: NflResult }
+  | { kind: 'upcoming'; kickoff: string; vs?: Versus }
   | { kind: 'bye' }
   | { kind: 'unknown' };
 
-/** "W 30-16 @ ARI": win, loss or tie, the team's score first, vs at home and @ away. */
-function resultLine(team: string, g: NflGame): string | null {
+function versus(team: string, g: NflGame): Versus | null {
   const opp = g.teams.find((t) => t !== team);
-  if (!opp || !g.home || !g.score || g.score[team] === undefined || g.score[opp] === undefined) return null;
+  return opp && g.home ? { opp, home: g.home === team } : null;
+}
+
+function result(team: string, opp: string, g: NflGame): NflResult | null {
+  if (!g.score || g.score[team] === undefined || g.score[opp] === undefined) return null;
   const [us, them] = [g.score[team], g.score[opp]];
-  return `${us > them ? 'W' : us < them ? 'L' : 'T'} ${us}-${them} ${g.home === team ? 'vs' : '@'} ${opp}`;
+  return { outcome: us > them ? 'W' : us < them ? 'L' : 'T', us, them };
 }
 
 export function gameFor(team: string, games: NflGame[] | null): PlayerGame {
   if (!games) return { kind: 'unknown' };
   const g = team ? games.find((x) => x.teams.includes(team)) : undefined;
   if (!g) return { kind: 'bye' };
-  if (g.state === 'post') { const result = resultLine(team, g); return result ? { kind: 'final', result } : { kind: 'final' }; }
-  if (g.state === 'pre') return { kind: 'upcoming', kickoff: g.kickoff };
-  return { kind: 'live', period: g.period, clock: g.clock, halftime: g.halftime, ...(g.field ? { field: g.field } : {}) };
+  const vs = versus(team, g);
+  const withVs = vs ? { vs } : {};
+  if (g.state === 'post') {
+    const r = vs ? result(team, vs.opp, g) : null;
+    return { kind: 'final', ...withVs, ...(r ? { result: r } : {}) };
+  }
+  if (g.state === 'pre') return { kind: 'upcoming', kickoff: g.kickoff, ...withVs };
+  return { kind: 'live', period: g.period, clock: g.clock, halftime: g.halftime, ...(g.field ? { field: g.field } : {}), ...withVs };
 }
 
 export const playerGames = (teamOf: (id: string) => string, games: NflGame[] | null) =>
