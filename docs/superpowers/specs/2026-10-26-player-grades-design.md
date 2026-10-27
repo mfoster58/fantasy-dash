@@ -108,7 +108,7 @@ A carry excludes QB scrambles. A target is a pass attempt that is not a sack and
 
 ## Target map
 
-- It replaces `RouteTree` for WR/TE/RB in any season whose chart file has no route data. Seasons that have routes keep the route tree. The year picker on that card lists all seasons. Picking one without routes shows the target map, and a line under the title says "Route tree arrives when the season's route data is published".
+- **Changed 2026-10-27 at Mathias's request:** the target map sits beside the route tree for WR/TE/RB in every season, each card with its own season picker; an RB's run lanes go above the pair. In a season without route data, the target map carries the line "Route tree arrives when the season's route data is published", and the route tree stays greyed with its note. (It first shipped replacing the route tree in seasons without routes.)
 - Zones: depth bands behind the line / 0–9 / 10–19 / 20+, by left / middle / right, from pbp `air_yards` and `pass_location`, the same as `zoneOf`.
 - Plays filter: All · Play-action · No play-action · Motion · Screen · vs blitz · Contested (all FTN). The All filter works without FTN.
 - Metric: Target share (heat scale, 0–25%+) · Catch % · Yds/target · EPA/target. Non-share metrics are coloured by percentile among the same position in that zone. Under 3 targets in the zone shows grey.
