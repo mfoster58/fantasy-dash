@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigate, useParams } from 'react-router';
-import type { Season } from '@fantasy-dash/core';
+import { computeStandings, type Season } from '@fantasy-dash/core';
 import ScoreCard from '../components/ScoreCard';
 import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
@@ -30,6 +30,8 @@ export default function ScoresPage() {
       {weeks.length === 0 && <p className="text-sm text-muted">No week {weekParam} in {season.year}.</p>}
       {weeks.map((raw) => {
         const { week: wk, isLive, outlookOf } = weekStatus(season, raw, live);
+        // rank and streak as they stood entering the week; none before week 1
+        const entering = wk.week > 1 ? computeStandings(season.weeks.slice(0, wk.week - 1), Object.keys(season.managers), season.playoffWeekStart) : [];
         return (
           <div key={wk.week} className="space-y-3">
             {isLive && <LiveDot on={live.polling} />}
@@ -52,6 +54,7 @@ export default function ScoresPage() {
                     to={`/scores/${season.year}/${wk.week}/${g.matchupId}`}
                     year={season.year}
                     live={outlookOf(g) ?? undefined}
+                    standing={(u) => entering.find((r) => r.userId === u)}
                   />
                 ))}
                 <WeekScores week={wk} managers={season.managers} year={season.year} live={isLive} />

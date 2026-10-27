@@ -60,6 +60,12 @@ describe('ScoreCard', () => {
     expect(screen.getAllByText('90%')).toHaveLength(2);
   });
 
+  it('wears the banner: a compact banner with the team photos', () => {
+    const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a');
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
+    expect(screen.getAllByTestId('banner-photo')).toHaveLength(2);
+    expect(screen.getByText('Team A by 10.00')).toBeInTheDocument();
+  });
   it('labels a tie', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 100, [['q2', 30]]), null);
     wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
@@ -69,9 +75,9 @@ describe('ScoreCard', () => {
   it('shows projections for an upcoming game and no performers', () => {
     const g = base(side('a', 0, []), side('b', 0, []), null);
     wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" year={2025} />);
-    expect(screen.getByText('Upcoming')).toBeInTheDocument();
+    expect(screen.getByText('Projected')).toBeInTheDocument();
     expect(screen.getAllByText('100.00')).toHaveLength(2);
-    expect(screen.getAllByText('proj')).toHaveLength(2);
+    expect(screen.getByTestId('banner-win-0')).toBeInTheDocument();
     expect(screen.queryByText('Top performers')).not.toBeInTheDocument();
     expect(screen.getByText('vs')).toBeInTheDocument();
     expect(screen.queryByText('Efficiency')).not.toBeInTheDocument();
@@ -103,7 +109,7 @@ describe('ScoreCard', () => {
       live={{ projected: [118.4, 121.0], win: [44, 56], status: 'live' }} />);
     expect(screen.getByText('Live')).toBeInTheDocument();
     expect(screen.getAllByText('64.20')[0]).toBeInTheDocument();
-    expect(screen.getByText('proj 118.40')).toBeInTheDocument();
+    expect(screen.getByText('Proj 118.4')).toBeInTheDocument();
     expect(screen.queryByText('Efficiency')).not.toBeInTheDocument();
     expect(screen.getByText('Top performers')).toBeInTheDocument();
   });
@@ -112,7 +118,7 @@ describe('ScoreCard', () => {
     wrap(<ScoreCard seasonTeams={{}} game={g} played={false} managers={managers} players={players} to="/x" year={2026}
       live={{ projected: [64.2, 70.1], win: [0, 100], status: 'final' }} />);
     expect(screen.getByText('Final')).toBeInTheDocument();
-    expect(screen.getAllByText('70.10')[0]).toHaveClass('font-semibold');
-    expect(screen.getAllByText('64.20')[0]).not.toHaveClass('font-semibold');
+    expect(screen.getAllByText('70.10')[0]).toHaveClass('font-bold');
+    expect(screen.getAllByText('64.20')[0]).toHaveClass('text-muted');
   });
 });

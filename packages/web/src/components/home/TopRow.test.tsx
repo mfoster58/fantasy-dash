@@ -86,22 +86,28 @@ describe('GameBanner links and ranks', () => {
   });
   it('puts the manager on their own line and record, rank and streak on the line below', () => {
     const s = league();
-    s.weeks.unshift({ ...week(6, []), played: true });
-    s.standings = [standing('b', 1, 4, 2, 0, 0, 0), standing('a', 2, 3, 3, 0, 0, 0)];
-    s.standings[0].streak = 'W2';
-    wrap(<GameBanner game={s.weeks[1].games[0]} season={s} view={view({})} />);
+    wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} standing={(u) => (u === 'b' ? { rank: 1, streak: 'W2' } : undefined)} />);
     const b = screen.getByRole('region', { name: 'Game of the week' });
-    expect(within(b).getByText('CurryLover53')).toBeInTheDocument();
+    expect(within(b).getByRole('link', { name: 'CurryLover53' })).toHaveAttribute('href', '/managers/b');
     expect(within(b).getByText('W2')).toBeInTheDocument();
     expect(within(b).getByTestId('banner-line-b')).toHaveTextContent(/^4-2\s*·\s*1st\s*·\s*W2$/);
+    expect(within(b).getByTestId('banner-line-a')).toHaveTextContent(/^3-3$/);
   });
-  it('shows no rank before any week is played', () => {
+  it('the home banner shows no rank or streak before any week is played, and both after', () => {
     const s = league();
     s.standings = [standing('b', 1, 0, 0, 0, 0, 0), standing('a', 2, 0, 0, 0, 0, 0)];
-    wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
-    const b = screen.getByRole('region', { name: 'Game of the week' });
-    expect(b).not.toHaveTextContent('1st');
-    expect(b).not.toHaveTextContent('2nd');
+    const picks = { hero: s.weeks[0].games[0], sides: [] };
+    const { unmount } = wrap(<TopRow season={s} week={s.weeks[0]} picks={picks} champion={null} />);
+    expect(screen.getByRole('region', { name: 'Game of the week' })).not.toHaveTextContent('1st');
+    unmount();
+    s.weeks.unshift({ ...week(6, []), played: true });
+    wrap(<TopRow season={s} week={s.weeks[1]} picks={picks} champion={null} />);
+    expect(screen.getByRole('region', { name: 'Game of the week' })).toHaveTextContent('1st');
+  });
+  it('a tie says so once final', () => {
+    const s = league();
+    wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({ status: 'final', scores: [120, 120], win: null, winner: null })} />);
+    expect(screen.getByRole('region', { name: 'Game of the week' })).toHaveTextContent('Tie');
   });
 });
 
