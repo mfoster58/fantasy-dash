@@ -41,10 +41,11 @@ export function weekHitters(week: Week): Hitter[] {
 export interface Performer { playerId: PlayerId; userId: UserId; points: number; stats: Record<string, number> }
 
 /** The week's highest-scoring starters; ties by player name. */
-export function topPerformers(week: Week, players: PlayerDirectory, n = 5): Performer[] {
+/** `pos` keeps to one position; 'All' (the default) takes everyone. */
+export function topPerformers(week: Week, players: PlayerDirectory, n = 5, pos = 'All'): Performer[] {
   const all: Performer[] = [];
   for (const g of week.games) for (const s of g.sides) for (const e of s.starters) {
-    if (e.player) all.push({ playerId: e.player.playerId, userId: s.userId, points: e.player.points, stats: e.player.stats });
+    if (e.player && (pos === 'All' || players[e.player.playerId]?.position === pos)) all.push({ playerId: e.player.playerId, userId: s.userId, points: e.player.points, stats: e.player.stats });
   }
   return all
     .sort((x, y) => y.points - x.points || playerName(players, x.playerId).localeCompare(playerName(players, y.playerId)))

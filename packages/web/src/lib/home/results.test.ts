@@ -44,6 +44,13 @@ describe('topPerformers', () => {
     const top = topPerformers(week(6, [game(2026, 6, 1, a, b)]), players, 3);
     expect(top.map((p) => [p.playerId, p.userId, p.points])).toEqual([['q1', 'a', 30.7], ['r1', 'b', 20], ['w1', 'a', 20]]);
   });
+  it('can keep to one position', () => {
+    const a = side('a', 0, [line('q1', 30.7), line('w1', 20)]);
+    const b = side('b', 0, [line('r1', 20), line('k1', 5)]);
+    const w = week(6, [game(2026, 6, 1, a, b)]);
+    expect(topPerformers(w, players, 5, 'WR').map((p) => p.playerId)).toEqual(['w1']);
+    expect(topPerformers(w, players, 5, 'All').map((p) => p.playerId)).toEqual(['q1', 'r1', 'w1', 'k1']);
+  });
 });
 
 describe('fullStatLine', () => {

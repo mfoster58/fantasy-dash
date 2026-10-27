@@ -30,10 +30,10 @@ describe('ESPN scoreboard', () => {
       status: { period: 4, displayClock: '11:21', type: { state: 'in', name: 'STATUS_IN_PROGRESS' } },
       competitions: [{
         competitors: [{ homeAway: 'home', team: { id: '21', abbreviation: 'PHI' } }, { homeAway: 'away', team: { id: '28', abbreviation: 'WSH' } }],
-        situation: { possession: '28', yardLine: 11, shortDownDistanceText: '1st & 10', isRedZone: true },
+        situation: { possession: '28', yardLine: 11, shortDownDistanceText: '1st & 10', downDistanceText: '1st & 10 at PHI 11', isRedZone: true },
       }],
     };
-    expect(parseScoreboard({ events: [e] })[0].field).toEqual({ home: 'PHI', away: 'WAS', possession: 'WAS', yardLine: 11, down: '1st & 10', redZone: true });
+    expect(parseScoreboard({ events: [e] })[0].field).toEqual({ home: 'PHI', away: 'WAS', possession: 'WAS', yardLine: 11, down: '1st & 10 at PHI 11', redZone: true });
     const between = { ...e, competitions: [{ ...e.competitions[0], situation: {} }] };
     expect(parseScoreboard({ events: [between] })[0].field).toEqual({ home: 'PHI', away: 'WAS', possession: null, yardLine: null, down: null, redZone: false });
     const notStarted = { ...e, status: { period: 0, displayClock: '0:00', type: { state: 'pre', name: 'STATUS_SCHEDULED' } } };

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import { game, line, season, side, standing, week } from '../../test/playerFixtures';
@@ -75,5 +75,16 @@ describe('TopPerformers', () => {
     expect(items[0]).toHaveTextContent('30.7');
     expect(within(items[0]).getByRole('link', { name: 'Quincy One' })).toHaveAttribute('href', '/player/q1');
     expect(within(card).getByRole('link', { name: /Players/ })).toHaveAttribute('href', '/stats/players');
+  });
+  it('filters by position, saying so when nobody at that position started', () => {
+    const s = league();
+    wrap(<TopPerformers season={s} week={s.weeks[0]} />);
+    const card = screen.getByRole('region', { name: 'Week 6 top performers' });
+    fireEvent.click(within(card).getByRole('button', { name: 'WR' }));
+    expect(within(card).getByRole('button', { name: 'WR' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(card).getAllByRole('listitem').map((li) => li.textContent)).toEqual([expect.stringContaining('Wally One')]);
+    fireEvent.click(within(card).getByRole('button', { name: 'DEF' }));
+    expect(within(card).queryAllByRole('listitem')).toHaveLength(0);
+    expect(card).toHaveTextContent('No DEF started in week 6.');
   });
 });
