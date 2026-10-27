@@ -13,10 +13,10 @@ import { nextFive, playerSummary } from '../lib/compare/summary';
 import { compareHref, GROUP_LABEL, MAX_SLOTS, parseCompare, POS_GROUPS, type CompareState, type PosGroup } from '../lib/compare/url';
 import { gradeCards } from '../lib/grades/grade';
 
-export interface CompareData { years: number[]; season: number; db: PlayerDb | null; chart: ChartDb | null; schedule: Schedule | null }
+export interface CompareData { years: number[]; season: number; db: PlayerDb | null; chart: ChartDb | null; schedule: Schedule | null; scoring?: Record<string, number> }
 
 export default function ComparePage() {
-  const { years, season, db, chart, schedule } = useLoaderData() as CompareData;
+  const { years, season, db, chart, schedule, scoring } = useLoaderData() as CompareData;
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const state = useMemo(() => parseCompare(params, years, db), [params, years, db]);
@@ -25,8 +25,8 @@ export default function ComparePage() {
   const picked = useMemo(() => (db ? state.ids.map((id) => {
     const p = db.players[id];
     const summary = playerSummary(db, id, schedule);
-    return { id, name: p.name, pos: p.pos, gsis: p.gsisId, summary, next: nextFive(db, schedule, summary.team, p.pos), cards: gradeCards(db, chart ?? undefined, id) };
-  }) : []), [db, chart, schedule, state.ids]);
+    return { id, name: p.name, pos: p.pos, gsis: p.gsisId, summary, next: nextFive(db, schedule, summary.team, p.pos), cards: gradeCards(db, chart ?? undefined, id, scoring) };
+  }) : []), [db, chart, schedule, scoring, state.ids]);
 
   const lead = useMemo(() => {
     const s = picked.map((p) => p.summary);

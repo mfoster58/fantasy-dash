@@ -14,6 +14,8 @@ const VOLUME: Record<DbPos, { perWeek: number; of: (a: Agg) => number }> = {
   RB: { perWeek: 7, of: (a) => a.s.ru_att ?? 0 },
   QB: { perWeek: 15, of: (a) => (a.s.pa_att ?? 0) + (a.s.pa_sack ?? 0) },
 };
+/** Fallback when the league's scoring settings aren't to hand: PPR, 0.1 a yard, 6 a TD. */
+export const STANDARD_SCORING: Record<string, number> = { rush_yd: 0.1, rush_td: 6, rush_2pt: 2, rec: 1, rec_yd: 0.1, rec_td: 6, rec_2pt: 2 };
 /** a tile's own sample needed to be ranked */
 const TILE_MIN = 5;
 
@@ -36,7 +38,7 @@ const rankValue = (t: TileDef, x: GradeInput): number | null => {
  * His grade cards for the season, every tile ranked within his position (TE apart from WR) among players with enough volume.
  * Null when the position has no cards, he has no gsis id, or the chart file has no grade sums for him.
  */
-export function gradeCards(db: PlayerDb, chart: ChartDb | undefined, id: PlayerId): GradedCard[] | null {
+export function gradeCards(db: PlayerDb, chart: ChartDb | undefined, id: PlayerId, scoring: Record<string, number> = STANDARD_SCORING): GradedCard[] | null {
   const me = db.players[id];
   if (!me || !VOLUME[me.pos] || !me.gsisId || !chart) return null;
   const mine = chart.players[me.gsisId]?.grades;
@@ -46,23 +48,23 @@ export function gradeCards(db: PlayerDb, chart: ChartDb | undefined, id: PlayerI
   const qualifies = (a: Agg) => vol.of(a) >= vol.perWeek * a.weeks;
   // his teams' totals in the weeks he played (a game played, targeted or not), for whichever team he played them for
   const teamOf = (a: Agg): GradeInput['team'] => {
-    const t = { rzTgt: 0, in10: 0 };
+    const t = { rzTgt: 0, in10: 0, rzCar: 0 };
     for (const r of a.rows) {
       if (r.gp < 1) continue;
       const w = chart.teams?.[r.team]?.[String(r.week)];
-      if (w) { t.rzTgt += w[0]; t.in10 += w[1]; }
+      if (w) { t.rzTgt += w[0]; t.in10 += w[1]; t.rzCar += w[2] ?? 0; }
     }
     return t;
   };
   const inputOf = (a: Agg): GradeInput | null => {
     const gsis = db.players[a.id]?.gsisId;
     const g: GradeSums | undefined = gsis ? chart.players[gsis]?.grades : undefined;
-    return g ? { agg: a, g, ftn, team: teamOf(a) } : null;
+    return g ? { agg: a, g, ftn, team: teamOf(a), scoring } : null;
   };
   const aggs = aggregate(db, 1, Math.max(1, db.throughWeek));
   const meAgg = aggs.find((a) => a.id === id);
   if (!meAgg) return null;
-  const x: GradeInput = { agg: meAgg, g: mine, ftn, team: teamOf(meAgg) };
+  const x: GradeInput = { agg: meAgg, g: mine, ftn, team: teamOf(meAgg), scoring };
   const pool = aggs.filter((a) => a.id !== id && db.players[a.id]?.pos === me.pos && qualifies(a)).map(inputOf).filter((p): p is GradeInput => p !== null);
   const meQualifies = qualifies(meAgg);
 

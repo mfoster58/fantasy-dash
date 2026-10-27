@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ChartDb, PlayerDb, PlayerId } from '@fantasy-dash/core';
 import SeasonPicker from '../../SeasonPicker';
-import { GROUPS } from '../../../lib/grades/defs';
 import { gradeCards, scoutingSummary } from '../../../lib/grades/grade';
 import GradeCard from './GradeCard';
 import ScoutingSummary from './ScoutingSummary';
@@ -9,11 +8,15 @@ import ScoutingSummary from './ScoutingSummary';
 export const GRADES_CREDIT = 'Data: FTN Data via nflverse · Next Gen Stats, PFR, snap counts and play-by-play via nflverse';
 
 /** Grade cards for one season at a time, led by a scouting summary; nothing when no season has grade data for him. */
-export default function GradesSection({ id, dbs, charts }: { id: PlayerId; dbs: PlayerDb[]; charts: ChartDb[] }) {
+export default function GradesSection({ id, dbs, charts, scoringFor = () => undefined }: {
+  id: PlayerId; dbs: PlayerDb[]; charts: ChartDb[];
+  /** the league's scoring settings for a season, for the fantasy card */
+  scoringFor?: (year: number) => Record<string, number> | undefined;
+}) {
   const graded = useMemo(() => dbs
-    .map((db) => ({ year: db.year, cards: gradeCards(db, charts.find((c) => c.year === db.year), id) }))
+    .map((db) => ({ year: db.year, cards: gradeCards(db, charts.find((c) => c.year === db.year), id, scoringFor(db.year)) }))
     .filter((s): s is { year: number; cards: NonNullable<typeof s.cards> } => s.cards !== null)
-    .sort((a, b) => b.year - a.year), [dbs, charts, id]);
+    .sort((a, b) => b.year - a.year), [dbs, charts, id, scoringFor]);
   const [picked, setPicked] = useState<number | null>(null);
   const season = graded.find((s) => s.year === picked) ?? graded[0];
   const summary = useMemo(() => (season ? scoutingSummary(season.cards) : null), [season]);
@@ -26,18 +29,10 @@ export default function GradesSection({ id, dbs, charts }: { id: PlayerId; dbs: 
         <SeasonPicker years={graded.map((s) => s.year)} value={season.year} onChange={(v) => { if (v !== 'all') setPicked(v); }} />
       </div>
       <ScoutingSummary best={summary.best} worst={summary.worst} />
-      {GROUPS.map((group) => {
-        const cards = season.cards.filter((c) => c.group === group);
-        if (!cards.length) return null;
-        return (
-          <div key={group} className="space-y-2">
-            <h3 data-testid="grade-group" className="px-1 text-xs font-semibold uppercase tracking-wider text-muted">{group}</h3>
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))]">
-              {cards.map((c) => <GradeCard key={c.key} card={c} />)}
-            </div>
-          </div>
-        );
-      })}
+      {/* nine cards per position: three rows of three on wide screens */}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {season.cards.map((c) => <GradeCard key={c.key} card={c} />)}
+      </div>
       <p className="px-1 text-[11px] text-muted">{GRADES_CREDIT}</p>
     </section>
   );

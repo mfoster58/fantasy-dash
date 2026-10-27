@@ -7,17 +7,40 @@ describe('gradeCards', () => {
   it('WR cards come in the spec order and groups', () => {
     const { db, chart } = fixture();
     const cards = gradeCards(db, chart, 'wa')!;
-    expect(cards.map((c) => c.title)).toEqual(['Opportunity', 'Usage', 'Efficiency', 'Beating expectation', 'Deep threat', 'Money downs', 'Ball skills & separation']);
-    expect(cards.map((c) => c.group)).toEqual(['Opportunity', 'Opportunity', 'Production', 'Production', 'Production', 'Production', 'How he plays']);
+    expect(cards.map((c) => c.title)).toEqual(['Opportunity', 'Usage', 'Efficiency', 'Beating expectation', 'Deep threat', 'Big plays', 'Money downs', 'Ball skills & separation', 'Fantasy']);
+    expect(cards.map((c) => c.group)).toEqual(['Opportunity', 'Opportunity', 'Production', 'Production', 'Production', 'Production', 'Production', 'How he plays', 'Production']);
     expect(cards.every((c) => c.tiles.length === 4)).toBe(true);
   });
 
   it('QB and RB card sets follow the spec', () => {
     const { db, chart } = fixture();
-    expect(gradeCards(db, chart, 'qa')!.map((c) => c.title)).toEqual(['Efficiency', 'Accuracy & aggressiveness', 'Deep ball', 'Clutch & situational', 'Decision making', 'Pocket & pressure', 'Legs', 'Scheme']);
-    expect(gradeCards(db, chart, 'ra')!.map((c) => c.title)).toEqual(['Workload', 'Efficiency', 'Rushing vs expected', 'After contact', 'Receiving back', 'Fronts faced', 'Running style']);
+    expect(gradeCards(db, chart, 'qa')!.map((c) => c.title)).toEqual(['Efficiency', 'Accuracy & aggressiveness', 'Deep ball', 'Clutch & situational', 'Pocket & pressure', 'Legs', 'Decision making', 'Scheme', 'Fantasy']);
+    expect(gradeCards(db, chart, 'ra')!.map((c) => c.title)).toEqual(['Workload', 'Efficiency', 'Rushing vs expected', 'After contact', 'Receiving back', 'Money downs', 'Fronts faced', 'Running style', 'Fantasy']);
   });
 
+  it('fantasy: points per game, and the rushing share uses league scoring', () => {
+    const { db, chart } = fixture();
+    const cards = gradeCards(db, chart, 'qa', { rush_yd: 0.1, rush_td: 6 })!;
+    expect(tile(cards, 'ppg').text).toBe('20.0');
+    // 100 rushing yards and a TD = 16 of 80 points
+    expect(tile(cards, 'rushShare')).toMatchObject({ text: '20%', style: true });
+    expect(tile(gradeCards(db, chart, 'qa', { rush_yd: 0.2, rush_td: 4 })!, 'rushShare').text).toBe('30%');
+  });
+  it('RB money downs: short yardage, 3rd downs on carries and targets, team red-zone carries, TDs per touch', () => {
+    const { db, chart } = fixture();
+    const cards = gradeCards(db, chart, 'ra')!;
+    expect(tile(cards, 'shortYardage')).toMatchObject({ text: '4 / 5' });
+    expect(tile(cards, 'thirdDown')).toMatchObject({ text: '50%', detail: '4 of 8' });
+    expect(tile(cards, 'rzCarShare')).toMatchObject({ text: '56%', detail: '9 of 16' });
+    expect(tile(cards, 'tdTouch')).toMatchObject({ detail: '2 TD on 68 touches' });
+  });
+  it('WR big plays from the player database', () => {
+    const { db, chart } = fixture();
+    const cards = gradeCards(db, chart, 'wa')!;
+    expect(tile(cards, 'rec20')).toMatchObject({ text: '8', detail: '2.0 per game' });
+    expect(tile(cards, 'explosiveRate').text).toBe('20%');
+    expect(tile(cards, 'yacRec').text).toBe('4.0');
+  });
   it('a TE is ranked against TEs only', () => {
     const { db, chart } = fixture();
     // ta has the lower target share of any receiver, but the higher of the two TEs

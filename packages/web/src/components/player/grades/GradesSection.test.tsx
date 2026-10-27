@@ -13,15 +13,16 @@ const region = () => screen.getByRole('region', { name: /Grades/ });
 const tileOf = (key: string) => region().querySelector(`[data-tile="${key}"]`)!;
 
 describe('GradesSection', () => {
-  it('renders the summary, the groups in order and four tiles per card', () => {
+  it('renders the summary, then nine cards of four tiles in one grid with no section headings', () => {
     const { dbs, charts } = seasons();
     render(<GradesSection id="wa" dbs={dbs} charts={charts} />);
     expect(within(region()).getByText('Best at')).toBeInTheDocument();
     expect(within(region()).getByText('Weakest at')).toBeInTheDocument();
     expect(within(region()).getAllByTestId('summary-row')).toHaveLength(8);
-    expect(within(region()).getAllByTestId('grade-group').map((h) => h.textContent)).toEqual(['Opportunity', 'Production', 'How he plays']);
+    expect(within(region()).queryAllByTestId('grade-group')).toHaveLength(0);
     const cards = within(region()).getAllByTestId('grade-card');
-    expect(cards).toHaveLength(7);
+    expect(cards).toHaveLength(9);
+    expect(new Set(cards.map((c) => c.parentElement)).size).toBe(1);
     for (const c of cards) expect(c.querySelectorAll('[data-tile]')).toHaveLength(4);
   });
 
@@ -51,6 +52,11 @@ describe('GradesSection', () => {
     const { dbs, charts } = seasons();
     render(<GradesSection id="wa" dbs={dbs} charts={charts} />);
     expect(screen.queryByText('What does a target to him earn?')).toBeNull();
+  });
+  it("the fantasy card uses the season's league scoring", () => {
+    const { dbs, charts } = seasons();
+    render(<GradesSection id="qa" dbs={dbs} charts={charts} scoringFor={() => ({ rush_yd: 0.2, rush_td: 4 })} />);
+    expect(tileOf('rushShare')).toHaveTextContent('30%');
   });
   it('carries the FTN credit line', () => {
     const { dbs, charts } = seasons();

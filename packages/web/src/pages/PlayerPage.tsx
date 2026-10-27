@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLoaderData } from 'react-router';
 import type { ChartDb, PlayerDb, PlayerId, Season } from '@fantasy-dash/core';
 import PassingZones from '../components/charts/PassingZones';
@@ -42,6 +42,7 @@ export default function PlayerPage() {
   // gsis ids are stable across seasons: take any season's
   const gsis = useMemo(() => dbs.map((d) => d.players[id]?.gsisId).find((g): g is string => !!g) ?? null, [dbs, id]);
   const tab = DB_TABS[bio.pos];
+  const scoringFor = useCallback((y: number) => seasons.find((s) => s.year === y)?.scoring, [seasons]);
   const group = groupOf(bio.pos);
   const current = currentSeason?.year ?? 0;
   const newest = dbYears[dbYears.length - 1] ?? 0;
@@ -71,7 +72,7 @@ export default function PlayerPage() {
         </div>
       )}
       {gsis && bio.pos === 'QB' && <RouteTree charts={charts} gsis={gsis} pos="QB" current={current} />}
-      {tab && myDbs.length > 0 && <GradesSection id={id} dbs={myDbs} charts={charts} />}
+      {tab && myDbs.length > 0 && <GradesSection id={id} dbs={myDbs} charts={charts} scoringFor={scoringFor} />}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
       {rostered && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] [&>*]:min-w-0">

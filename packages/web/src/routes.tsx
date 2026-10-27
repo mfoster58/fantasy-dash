@@ -71,12 +71,13 @@ export async function compareLoader({ request }: LoaderFunctionArgs): Promise<Co
   const years = history.seasons.map((s) => s.year).filter(hasPlayerDb);
   const asked = Number(new URL(request.url).searchParams.get('season'));
   const season = years.includes(asked) ? asked : Math.max(...years);
-  const [db, chart, schedule] = await Promise.all([
+  const [db, chart, schedule, league] = await Promise.all([
     hasPlayerDb(season) ? loadPlayerDb(season) : Promise.resolve(null),
     hasCharts(season) ? loadCharts(season) : Promise.resolve(null),
     hasSchedule(season) ? loadSchedule(season) : Promise.resolve(null),
+    loadSeason(season).catch(() => null),
   ]);
-  return { years, season, db, chart, schedule };
+  return { years, season, db, chart, schedule, scoring: league?.scoring };
 }
 
 export async function playerLoader({ params }: LoaderFunctionArgs): Promise<PlayerPageData> {
