@@ -58,33 +58,36 @@ describe('LineupTable', () => {
     expect(name.compareDocumentPosition(bars[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(bars[0].compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
-  it('puts a finished player\'s NFL result under his name, above the stats, in place of "Final"', () => {
-    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}}
-      gameOf={(id) => (id === 'a1' ? { kind: 'final', result: 'L 24-27 vs CLE' } : { kind: 'final' })} /></MemoryRouter>);
+  it('puts a finished player\'s NFL result under his name: only the W or L in colour, the opponent coloured by how hard the matchup was', () => {
+    const matchup = (opp: string) => (opp === 'CLE' ? { rank: 30, of: 32, tone: 'hard' as const, perGame: 14.1 } : null);
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} matchup={matchup}
+      gameOf={(id) => (id === 'a1' ? { kind: 'final', vs: { opp: 'CLE', home: true }, result: { outcome: 'L', us: 24, them: 27 } } : { kind: 'final' })} /></MemoryRouter>);
     const result = screen.getByTestId('nfl-result');
     expect(result).toHaveTextContent('L 24-27 vs CLE');
+    expect(result).not.toHaveClass('text-loss');
+    expect(within(result).getByText('L')).toHaveClass('text-loss');
+    expect(within(result).getByText('CLE')).toHaveClass('text-loss');
+    expect(within(result).getByText('CLE')).toHaveAttribute('title', 'CLE allow the 3rd fewest points per game to QBs (14.1)');
     expect(screen.getByText('Alpha One').compareDocumentPosition(result) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByTestId('game-state').map((e) => e.textContent)).toEqual(['Final']); // only the player without a result
+  });
+  it('previews a game still to play: kickoff and opponent, coloured the same way', () => {
+    const matchup = (opp: string) => (opp === 'NYG' ? { rank: 2, of: 32, tone: 'easy' as const, perGame: 24.3 } : null);
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} matchup={matchup}
+      gameOf={(id) => (id === 'a1' ? { kind: 'upcoming', kickoff: '2026-11-01T17:00:00Z', vs: { opp: 'NYG', home: false } } : { kind: 'bye' })} /></MemoryRouter>);
+    const preview = screen.getByTestId('nfl-preview');
+    expect(preview).toHaveTextContent(/@ NYG$/);
+    expect(preview).toHaveTextContent(/Sun/);
+    expect(within(preview).getByText('NYG')).toHaveClass('text-win');
   });
   it('shows no game state outside the live week', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
     expect(screen.queryByTestId('game-state')).not.toBeInTheDocument();
   });
-  it('shows each player\'s projection under his points, and how he did against it once his game is over', () => {
+  it('shows each player\'s projection, just the number, under his points', () => {
     const withProj = (userId: string, id: string, points: number, projected: number): GameSide => ({ ...side(userId, id, []), starters: [{ slot: 'QB', player: { playerId: id, points, projected, stats: {} } }] });
     render(<MemoryRouter><LineupTable sides={[withProj('a', 'a1', 15.5, 10), withProj('b', 'b1', 8, 12.4)]} slots={['QB']} players={players} seasonTeams={{}}
-      gameOf={(id) => (id === 'a1' ? { kind: 'final', result: 'W 34-27 @ NYG' } : { kind: 'live', period: 2, clock: '3:00', halftime: false })} /></MemoryRouter>);
-    const [a, b] = screen.getAllByTestId('player-proj');
-    expect(a).toHaveTextContent(/^10\.0/);
-    expect(a).not.toHaveTextContent('proj');
-    expect(within(a).getByText('+5.5')).toHaveClass('text-win');
-    // still playing: the projection, no verdict yet
-    expect(b).toHaveTextContent(/^12\.4$/);
-    expect(b).not.toHaveTextContent('-4.4');
-  });
-  it('a played week without game states still judges every projection', () => {
-    const withProj = (userId: string, id: string, points: number, projected: number): GameSide => ({ ...side(userId, id, []), starters: [{ slot: 'QB', player: { playerId: id, points, projected, stats: {} } }] });
-    render(<MemoryRouter><LineupTable sides={[withProj('a', 'a1', 15.5, 10), withProj('b', 'b1', 8, 12.4)]} slots={['QB']} players={players} seasonTeams={{}} played /></MemoryRouter>);
-    expect(within(screen.getAllByTestId('player-proj')[1]).getByText('−4.4')).toHaveClass('text-loss');
+      gameOf={(id) => (id === 'a1' ? { kind: 'final' } : { kind: 'live', period: 2, clock: '3:00', halftime: false })} /></MemoryRouter>);
+    expect(screen.getAllByTestId('player-proj').map((e) => e.textContent)).toEqual(['10.0', '12.4']);
   });
 });
