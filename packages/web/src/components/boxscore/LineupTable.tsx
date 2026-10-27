@@ -31,10 +31,14 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
           <PlayerLink id={line.playerId}>{playerName(players, line.playerId)}</PlayerLink> <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId, seasonTeams)}</span>
         </div>
         {game?.kind === 'live' && game.field && <FieldBar field={game.field} />}
+        {game?.kind === 'final' && game.result && (
+          <div data-testid="nfl-result" className={`text-xs font-semibold ${game.result.startsWith('W') ? 'text-win' : game.result.startsWith('L') ? 'text-loss' : 'text-muted'}`}>{game.result}</div>
+        )}
         <div className="truncate text-xs text-muted">
           {(() => {
             const stats = statLine(pos, line.stats);
-            const label = game ? gameLabel(game) : null;
+            // a finished game's result line above already says it's over
+            const label = game && !(game.kind === 'final' && game.result) ? gameLabel(game) : null;
             if (!label) return stats || '-';
             // before a player has a stat, his game state stands alone
             return <>{stats && <>{stats} · </>}<span data-testid="game-state" className={on ? 'font-semibold text-accent' : ''}>{label}</span></>;

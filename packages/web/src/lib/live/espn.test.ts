@@ -39,6 +39,16 @@ describe('ESPN scoreboard', () => {
     const notStarted = { ...e, status: { period: 0, displayClock: '0:00', type: { state: 'pre', name: 'STATUS_SCHEDULED' } } };
     expect(parseScoreboard({ events: [notStarted] })[0].field).toBeNull();
   });
+  it('reads the home team and each side\'s score', () => {
+    const e = {
+      date: '2026-10-25T17:00Z',
+      status: { period: 4, displayClock: '0:00', type: { state: 'post', name: 'STATUS_FINAL' } },
+      competitions: [{ competitors: [{ homeAway: 'home', score: '27', team: { id: '5', abbreviation: 'CLE' } }, { homeAway: 'away', score: '24', team: { id: '33', abbreviation: 'BAL' } }] }],
+    };
+    const [game] = parseScoreboard({ events: [e] });
+    expect(game.home).toBe('CLE');
+    expect(game.score).toEqual({ CLE: 27, BAL: 24 });
+  });
   it('gives no games for a body it cannot read', () => {
     expect(parseScoreboard(null)).toEqual([]);
     expect(parseScoreboard({ events: [{ nope: 1 }] })).toEqual([]);
