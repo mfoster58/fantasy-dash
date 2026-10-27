@@ -63,12 +63,13 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
 
   return (
     <header data-testid="player-banner" data-team={team ? bio.nflTeam : undefined} style={style}
-      className={`relative isolate flex min-h-[230px] overflow-hidden rounded-xl border border-line ${team ? '' : 'blue-wash'}`}>
+      className={`relative isolate flex min-h-[230px] flex-col overflow-hidden rounded-xl border border-line sm:flex-row ${team ? '' : 'blue-wash'}`}>
       {team && <img aria-hidden="true" alt="" src={teamLogo(bio.nflTeam)} className="pointer-events-none absolute -right-8 top-1/2 -z-10 w-72 -translate-y-1/2 opacity-[0.07]" />}
-      <div aria-hidden="true" className="relative w-36 shrink-0 self-stretch sm:w-[390px]">
+      {/* phones: the photo and stripes are a band across the top; wider: a panel down the left */}
+      <div aria-hidden="true" className="relative h-44 w-[260px] shrink-0 sm:h-auto sm:w-[390px] sm:self-stretch">
         <Photo id={id} espnId={espnId} />
-        <div className="absolute -inset-y-3.5 right-4 w-1.5 -skew-x-[11deg] sm:right-[22px] sm:w-2" style={{ background: team ? team.stripe : 'var(--accent)' }} />
-        <div className="absolute -inset-y-3.5 right-1.5 w-1 -skew-x-[11deg] bg-gold sm:right-2.5 sm:w-[5px]" />
+        <div className="absolute -inset-y-3.5 right-[22px] w-2 -skew-x-[11deg]" style={{ background: team ? team.stripe : 'var(--accent)' }} />
+        <div className="absolute -inset-y-3.5 right-2.5 w-[5px] -skew-x-[11deg] bg-gold" />
       </div>
       <div className="grid min-w-0 flex-1 items-center gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
@@ -92,7 +93,7 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
         </div>
         {/* the league tiles, three across and two down */}
         {rostered && (
-          <div data-testid="header-tiles" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:w-[27rem]">
+          <div data-testid="header-tiles" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:w-[27rem] [&>*]:min-w-0">
             <Tile label="Points started" value={f1(summary.ptsStarted)} />
             <Tile label="Points / start" value={f1(summary.perStart)} />
             <Tile label="Starts" value={String(summary.starts)} sub={`/ ${summary.rostered}`} />
