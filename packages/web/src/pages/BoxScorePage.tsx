@@ -96,10 +96,7 @@ export default function BoxScorePage() {
       </header>
 
       {outlook && (
-        <LiveOutlook
-          outlook={outlook}
-          names={[a, b].map((s) => season.managers[s.userId]?.teamName ?? season.managers[s.userId]?.displayName ?? s.userId) as [string, string]}
-        />
+        <LiveOutlook outlook={outlook} />
       )}
 
       <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} />

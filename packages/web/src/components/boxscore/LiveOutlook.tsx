@@ -1,7 +1,7 @@
 import { winTone, type GameOutlook } from '../../lib/live/outlook';
 
 /** The live win % split as a two-colour bar. */
-export default function LiveOutlook({ outlook, names }: { outlook: GameOutlook; names: [string, string] }) {
+export default function LiveOutlook({ outlook }: { outlook: GameOutlook }) {
   const { win } = outlook;
   return (
     <section className="card p-5" aria-label="Win probability">
@@ -12,8 +12,7 @@ export default function LiveOutlook({ outlook, names }: { outlook: GameOutlook; 
         ))}
       </div>
       <div className="mt-2 flex justify-between text-sm">
-        <span><span className="num font-semibold">{win[0]}%</span> <span className="text-muted">{names[0]}</span></span>
-        <span><span className="text-muted">{names[1]}</span> <span className="num font-semibold">{win[1]}%</span></span>
+        {([0, 1] as const).map((i) => <span key={i} className="num font-semibold" style={{ color: winTone(win[i], win[1 - i]) }}>{win[i]}%</span>)}
       </div>
     </section>
   );
