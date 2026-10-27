@@ -60,6 +60,8 @@ function countTile(key: string, label: string, value: TileDef['value'], o: Opts 
 }
 const of = (n: GradeKey, d: GradeKey, tail = '') => (x: GradeInput) => `${n0(g(n)(x))} of ${n0(g(d)(x))}${tail}`;
 const fixed = (s: string) => () => s;
+/** per-route tiles: the route count, or a warning while the season's routes are estimated */
+const routeNote = (x: GradeInput) => (x.agg.routesEst ? 'est. routes' : `${n0(x.agg.routes)} routes`);
 
 const card = (key: string, title: string, group: Group, tiles: CardDef['tiles']): CardDef => ({ key, title, group, tiles });
 
@@ -68,7 +70,7 @@ const RECEIVER: CardDef[] = [
     tile('tgtShare', 'Target share', col('tgtPct'), fmtPct, (x) => `${n0(x.agg.s.re_tgt ?? 0)} targets`),
     tile('wopr', 'WOPR', col('wopr'), (v) => v.toFixed(2), fixed('targets + air yards')),
     tile('snapShare', 'Snap share', col('snapPct'), fmtPct, (x) => `${n0(x.agg.s.snaps ?? 0)} snaps`),
-    tile('tprr', 'Targets per route run', col('tprr'), (v) => v.toFixed(2), (x) => (x.agg.routesEst ? 'est. routes' : 'per route')),
+    tile('tprr', 'Targets per route run', col('tprr'), (v) => v.toFixed(2), routeNote),
   ]),
   card('usage', 'Usage', 'Opportunity', [
     tile('ayShare', 'Team air yards share', ngs('re_iayShare'), (v) => `${Math.round(v)}%`, fixed('NGS')),
@@ -77,10 +79,10 @@ const RECEIVER: CardDef[] = [
     tile('playAction', 'Play-action targets', per('paTgt', 'ftnTgt'), fmtPct, of('paTgt', 'ftnTgt'), { style: true, ftnOnly: true, denom: g('ftnTgt') }),
   ]),
   card('efficiency', 'Efficiency', 'Production', [
-    tile('ypt', 'Yards per target', per('yds', 'tgt'), fmtDec1, (x) => `${n0(g('yds')(x))} yds`),
+    tile('yprr', 'Yards per route run', col('yprr'), (v) => v.toFixed(2), routeNote),
     tile('epaTgt', 'EPA per target', per('epa', 'tgt'), signed(2), (x) => `${n0(g('tgt')(x))} targets`),
     tile('success', 'Success rate', per('succ', 'tgt'), fmtPct, of('succ', 'tgt')),
-    tile('fdTgt', 'First downs per target', per('fd', 'tgt'), fmtPct, of('fd', 'tgt')),
+    tile('fdrr', 'First downs per route run', col('fdrr'), (v) => v.toFixed(2), routeNote),
   ]),
   card('expectation', 'Beating expectation', 'Production', [
     tile('croe', 'Catch rate over expected', (x) => (g('cpN')(x) > 0 ? (g('cpRec')(x) - g('cpSum')(x)) / g('cpN')(x) : null), signedPct,
@@ -187,7 +189,7 @@ const RB: CardDef[] = [
   ]),
   card('receiving', 'Receiving back', 'Production', [
     tile('tgtShare', 'Target share', col('tgtPct'), fmtPct, (x) => `${n0(x.agg.s.re_tgt ?? 0)} targets`),
-    tile('tprr', 'Targets per route run', col('tprr'), (v) => v.toFixed(2), (x) => (x.agg.routesEst ? 'est. routes' : 'per route')),
+    tile('tprr', 'Targets per route run', col('tprr'), (v) => v.toFixed(2), routeNote),
     tile('yacoe', 'YAC over expected', per('yacOe', 'yacN'), signed(1), fixed('per catch'), { denom: g('yacN') }),
     tile('epaTgt', 'EPA per target', per('epa', 'tgt'), signed(2), (x) => `${n0(g('tgt')(x))} targets`, { denom: g('tgt') }),
   ]),

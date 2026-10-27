@@ -60,7 +60,7 @@ Positions: QB, RB, WR and TE. A TE uses the WR card set but is ranked against TE
 - *Usage: How is the offence getting him the ball?* Team air-yards share (NGS share of intended air yards, DB) · Average depth of target (S) · Targets after motion % (S, FTN) · Play-action targets % (S, FTN).
 
 **Production**
-- *Efficiency: What does a target to him earn?* Yards/target · EPA/target · Success rate · First downs per target (pbp; a first down or TD on a completed target).
+- *Efficiency* (changed 2026-10-27 at Mathias's request): Yards per route run (DB `yprr`) · EPA/target · Success rate · First downs per route run (DB `fdrr`). The per-route tiles say "est. routes" while the season's routes are estimated.
 - *Beating expectation: Does he do more than the throw gives him?* Catch rate over expected (pbp: (catches − Σcp) ÷ targets with cp) · YAC over expected (NGS, DB) · RACR (DB) · Broken tackles (PFR, DB).
 - *Deep threat: What happens when they throw it 20+?* Deep target rate (S) · Deep catches "c / t" (graded on catch %) · Deep yards · EPA per deep target. Deep means air yards ≥ 20.
 - *Money downs: Is he there when it matters?* 3rd-down conversion rate on targets · Red-zone target share (his targets inside the 20 ÷ team's) · End-zone targets (air yards ≥ yardline_100) · TD rate per target.

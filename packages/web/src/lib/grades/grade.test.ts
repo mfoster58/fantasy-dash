@@ -61,6 +61,13 @@ describe('gradeCards', () => {
     const { db, chart } = fixture();
     expect(tile(gradeCards(db, chart, 'ra')!, 'in10Share').label).toBe('Team carries inside the 10');
   });
+  it('WR efficiency is YPRR, EPA per target, success rate and FDRR, per-route tiles marked est.', () => {
+    const { db, chart } = fixture();
+    const eff = gradeCards(db, chart, 'wa')!.find((c) => c.title === 'Efficiency')!;
+    expect(eff.tiles.map((t) => t.label)).toEqual(['Yards per route run', 'EPA per target', 'Success rate', 'First downs per route run']);
+    // wa: 320 yds on 120 estimated routes
+    expect(eff.tiles[0]).toMatchObject({ text: '2.67', detail: 'est. routes' });
+  });
   it('a deep tile with 4 deep targets is small', () => {
     const { db, chart } = fixture();
     const t = tile(gradeCards(db, chart, 'wc')!, 'deepCatches');
