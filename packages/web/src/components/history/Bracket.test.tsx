@@ -61,11 +61,17 @@ describe('Bracket', () => {
     const { unmount } = render(<MemoryRouter><Bracket kind="winners" year={2025} managers={managers} games={[
       g({ round: 2, matchNo: 2, tag: 'Final', placement: 1, home: 'a', away: 'c', homePoints: 140, awayPoints: 150.75, advanced: 'c' }),
     ]} /></MemoryRouter>);
-    expect(screen.getByText('Team C').closest('[data-testid="bracket-row"]')).toHaveTextContent('Champion');
+    const champ = screen.getByText('Team C').closest('[data-testid="bracket-row"]')!;
+    expect(champ).toHaveTextContent('Champion');
+    expect(within(champ as HTMLElement).getByTestId('finish-champion')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/🏆|🚽/);
     unmount();
     render(<MemoryRouter><Bracket kind="consolation" year={2025} managers={managers} games={[
       g({ bracket: 'consolation', tag: 'Toilet Bowl', placement: 1, round: 2, home: 'a', away: 'b', homePoints: 115.94, awayPoints: 161.8, advanced: 'a' }),
     ]} /></MemoryRouter>);
-    expect(screen.getByText('Team A').closest('[data-testid="bracket-row"]')).toHaveTextContent('Last place');
+    const last = screen.getByText('Team A').closest('[data-testid="bracket-row"]')!;
+    expect(last).toHaveTextContent('Last place');
+    expect(within(last as HTMLElement).getByTestId('finish-toilet')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/🏆|🚽/);
   });
 });

@@ -1,5 +1,6 @@
 import type { Game, GameSide, Season, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { FinishIcon } from '../Icons';
 import { CoverLink, TeamLink } from '../NameLink';
 import { fmtRecord, fmtTag } from '../../lib/format';
 import type { SideTag } from '../../lib/home/pick';
@@ -23,7 +24,7 @@ export default function SideGame({ game, season, view, tag, champion }: { game: 
         <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={24} />
         <span className="flex min-w-0 items-baseline gap-1">
           <TeamLink userId={s.userId} year={season.year} className="relative z-10 truncate">{teamName(season, s.userId)}</TeamLink>
-          <span className="shrink-0 whitespace-nowrap">{s.userId === champion && '🏆 '}<span className="text-muted">{fmtRecord(s.recordBefore)}</span></span>
+          <span className="shrink-0 whitespace-nowrap">{s.userId === champion && <FinishIcon kind="champion" size="1.05em" className="mr-1" />}<span className="text-muted">{fmtRecord(s.recordBefore)}</span></span>
         </span>
         <span className={`num ${scoreTone(view, i)}`}>{view.scores[i].toFixed(1)}</span>
       </div>

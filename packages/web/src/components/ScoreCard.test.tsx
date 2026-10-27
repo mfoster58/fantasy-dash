@@ -128,4 +128,10 @@ describe('ScoreCard', () => {
     expect(screen.getAllByText('70.10')[0]).toHaveClass('font-bold');
     expect(screen.getAllByText('64.20')[0]).toHaveClass('text-muted');
   });
+  it('flags the game of the week', () => {
+    const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a');
+    const { container } = wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} featured />);
+    expect(screen.getByText('Game of the week')).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveAttribute('data-featured', 'true');
+  });
 });

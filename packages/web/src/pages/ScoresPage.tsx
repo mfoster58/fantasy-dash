@@ -5,6 +5,7 @@ import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
 import LiveDot from '../components/LiveDot';
 import { weekStatus } from '../lib/live/weekStatus';
+import { pickGames } from '../lib/home/pick';
 import { useLive } from '../lib/live/LiveProvider';
 import { history, players } from '../data/load';
 
@@ -16,6 +17,7 @@ export default function ScoresPage() {
   const selected = Number(weekParam);
   const weeks = Number.isInteger(selected) ? season.weeks.filter((w) => w.week === selected) : [];
   const years = history.seasons.map((s) => s.year);
+  const champion = history.seasons.find((s) => s.year === season.year - 1)?.honors.champion ?? null;
 
   return (
     <section className="space-y-4">
@@ -30,6 +32,8 @@ export default function ScoresPage() {
       {weeks.map((raw) => {
         const { week: wk, isLive, outlookOf } = weekStatus(season, raw, live);
         // rank and streak as they stood entering the week; none before week 1
+        // the same pick as the home page's game of the week, from the synced week
+        const featured = raw.games.length ? pickGames(season, raw, champion).hero?.id ?? null : null;
         const entering = wk.week > 1 ? computeStandings(season.weeks.slice(0, wk.week - 1), Object.keys(season.managers), season.playoffWeekStart) : [];
         return (
           <div key={wk.week} className="space-y-3">
@@ -54,6 +58,7 @@ export default function ScoresPage() {
                     year={season.year}
                     live={outlookOf(g) ?? undefined}
                     standing={(u) => entering.find((r) => r.userId === u)}
+                    featured={g.id === featured}
                   />
                 ))}
               </div>

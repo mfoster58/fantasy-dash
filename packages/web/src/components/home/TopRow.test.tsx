@@ -39,7 +39,8 @@ describe('TopRow', () => {
     expect(within(banner).getByText('CurryLover53')).toBeInTheDocument();
     expect(banner).toHaveTextContent('4-2');
     const side2 = screen.getByRole('region', { name: 'Champ watch' });
-    expect(side2).toHaveTextContent(/Tuten\s*🏆/);
+    expect(within(side2).getByTestId('finish-champion')).toBeInTheDocument();
+    expect(side2).not.toHaveTextContent('🏆');
     expect(within(side2).getByRole('link', { name: 'My boutte hurts vs Tuten' })).toHaveAttribute('href', '/scores/2026/7/2');
   });
 });

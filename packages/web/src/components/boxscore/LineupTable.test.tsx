@@ -70,4 +70,20 @@ describe('LineupTable', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
     expect(screen.queryByTestId('game-state')).not.toBeInTheDocument();
   });
+  it('shows each player\'s projection under his points, and how he did against it once his game is over', () => {
+    const withProj = (userId: string, id: string, points: number, projected: number): GameSide => ({ ...side(userId, id, []), starters: [{ slot: 'QB', player: { playerId: id, points, projected, stats: {} } }] });
+    render(<MemoryRouter><LineupTable sides={[withProj('a', 'a1', 15.5, 10), withProj('b', 'b1', 8, 12.4)]} slots={['QB']} players={players} seasonTeams={{}}
+      gameOf={(id) => (id === 'a1' ? { kind: 'final', result: 'W 34-27 @ NYG' } : { kind: 'live', period: 2, clock: '3:00', halftime: false })} /></MemoryRouter>);
+    const [a, b] = screen.getAllByTestId('player-proj');
+    expect(a).toHaveTextContent('proj 10.0');
+    expect(within(a).getByText('+5.5')).toHaveClass('text-win');
+    // still playing: the projection, no verdict yet
+    expect(b).toHaveTextContent('proj 12.4');
+    expect(b).not.toHaveTextContent('-4.4');
+  });
+  it('a played week without game states still judges every projection', () => {
+    const withProj = (userId: string, id: string, points: number, projected: number): GameSide => ({ ...side(userId, id, []), starters: [{ slot: 'QB', player: { playerId: id, points, projected, stats: {} } }] });
+    render(<MemoryRouter><LineupTable sides={[withProj('a', 'a1', 15.5, 10), withProj('b', 'b1', 8, 12.4)]} slots={['QB']} players={players} seasonTeams={{}} played /></MemoryRouter>);
+    expect(within(screen.getAllByTestId('player-proj')[1]).getByText('−4.4')).toHaveClass('text-loss');
+  });
 });
