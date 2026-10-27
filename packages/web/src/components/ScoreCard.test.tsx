@@ -60,10 +60,17 @@ describe('ScoreCard', () => {
     expect(screen.getAllByText('90%')).toHaveLength(2);
   });
 
-  it('wears the banner: a compact banner with the team photos', () => {
+  it('wears the banner: full size, with the team photos', () => {
     const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a');
     wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
     expect(screen.getAllByTestId('banner-photo')).toHaveLength(2);
+    // full size, like the home page's game of the week
+    expect(screen.getAllByTestId('banner-photo')[0]).toHaveClass('w-52');
+  });
+  it('a compact banner where cards sit two across', () => {
+    const g = base(side('a', 100, [['q1', 30]]), side('b', 90, [['q2', 30]]), 'a');
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} compact />);
+    expect(screen.getAllByTestId('banner-photo')[0]).toHaveClass('w-24');
     expect(screen.getByText('Team A by 10.00')).toBeInTheDocument();
   });
   it('labels a tie', () => {
