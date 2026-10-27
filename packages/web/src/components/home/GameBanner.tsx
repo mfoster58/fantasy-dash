@@ -93,7 +93,8 @@ export default function GameBanner({ game, season, view, title = 'Game of the we
     <section aria-label={title ?? `${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} className={`blue-wash relative isolate flex overflow-hidden ${size.box} ${bare ? '' : 'card'}`}>
       {href && <CoverLink to={href} label={linkLabel ?? `${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />}
       <Panel season={season} side={a} size={size} />
-      <div className={`relative grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:gap-4 sm:px-4 ${compact ? 'py-4' : 'py-5'}`}>
+      {/* not positioned, so it paints under the cover link: clicks on names and scores open the box score; the team and manager links sit above with z-10 */}
+      <div data-testid="banner-body" className={`grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:gap-4 sm:px-4 ${compact ? 'py-4' : 'py-5'}`}>
         {team(a)}
         <div className={`text-center ${size.center}`}>
           {title && <div className={`mb-2.5 font-display font-bold uppercase leading-none tracking-[0.08em] text-accent ${size.title}`}>{title}</div>}
