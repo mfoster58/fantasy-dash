@@ -1,8 +1,8 @@
-import type { NflGame } from './espn';
+import type { Field, NflGame } from './espn';
 
 /** Where a player's NFL game stands. `unknown` when ESPN couldn't be read. */
 export type PlayerGame =
-  | { kind: 'live'; period: number; clock: string; halftime: boolean }
+  | { kind: 'live'; period: number; clock: string; halftime: boolean; field?: Field }
   | { kind: 'final' }
   | { kind: 'upcoming'; kickoff: string }
   | { kind: 'bye' }
@@ -14,7 +14,7 @@ export function gameFor(team: string, games: NflGame[] | null): PlayerGame {
   if (!g) return { kind: 'bye' };
   if (g.state === 'post') return { kind: 'final' };
   if (g.state === 'pre') return { kind: 'upcoming', kickoff: g.kickoff };
-  return { kind: 'live', period: g.period, clock: g.clock, halftime: g.halftime };
+  return { kind: 'live', period: g.period, clock: g.clock, halftime: g.halftime, ...(g.field ? { field: g.field } : {}) };
 }
 
 export const playerGames = (teamOf: (id: string) => string, games: NflGame[] | null) =>

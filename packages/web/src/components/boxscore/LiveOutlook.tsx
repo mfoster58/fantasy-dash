@@ -1,7 +1,4 @@
-import type { GameOutlook } from '../../lib/live/outlook';
-
-/** the favourite green, the underdog red; a dead-even game neither */
-const tone = (mine: number, theirs: number) => (mine > theirs ? 'var(--win)' : mine < theirs ? 'var(--loss)' : 'var(--dim)');
+import { winTone, type GameOutlook } from '../../lib/live/outlook';
 
 /** The live win % split as a two-colour bar. */
 export default function LiveOutlook({ outlook, names }: { outlook: GameOutlook; names: [string, string] }) {
@@ -11,7 +8,7 @@ export default function LiveOutlook({ outlook, names }: { outlook: GameOutlook; 
       <h2 className="section-label mb-2">Win probability</h2>
       <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
         {([0, 1] as const).map((i) => (
-          <span key={i} data-testid={`win-${i}`} className="block h-full transition-[width] duration-700 motion-reduce:transition-none" style={{ width: `${win[i]}%`, background: tone(win[i], win[1 - i]) }} />
+          <span key={i} data-testid={`win-${i}`} className="block h-full transition-[width] duration-700 motion-reduce:transition-none" style={{ width: `${win[i]}%`, background: winTone(win[i], win[1 - i]) }} />
         ))}
       </div>
       <div className="mt-2 flex justify-between text-sm">

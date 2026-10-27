@@ -62,6 +62,13 @@ describe('GameBanner states', () => {
     expect(within(b).getByText('131.5')).toHaveClass('text-muted');
     expect(b).toHaveTextContent('The Window by 6.7');
   });
+  it('the win bar is green for the favourite and red for the underdog', () => {
+    const s = league();
+    wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({ win: [38, 62] })} />);
+    expect(screen.getByTestId('banner-win-0')).toHaveStyle({ width: '38%', background: 'var(--loss)' });
+    expect(screen.getByTestId('banner-win-1')).toHaveStyle({ width: '62%', background: 'var(--win)' });
+    expect(screen.getByText('62%')).toHaveStyle({ color: 'var(--win)' });
+  });
   it('a team without a photo gets its initials on the panel', () => {
     const s = league();
     wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);

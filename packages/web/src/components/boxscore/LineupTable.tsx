@@ -4,6 +4,7 @@ import { gameLabel, type PlayerGame } from '../../lib/live/gameState';
 import { playerName, playerPos, playerTeam, statLine } from '../../lib/players';
 import { PlayerLink } from '../NameLink';
 import Headshot from '../Headshot';
+import FieldBar from './FieldBar';
 import PosPill from '../PosPill';
 
 interface Props {
@@ -18,8 +19,11 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
 }) {
   if (!line) return <div className={`text-sm text-muted ${align === 'right' ? 'sm:text-right' : ''}`}>Empty</div>;
   const pos = playerPos(players, line.playerId);
+  const game = gameOf?.(line.playerId);
+  const on = game?.kind === 'live';
   return (
-    <div className={`flex min-w-0 items-center gap-3 ${align === 'right' ? 'sm:flex-row-reverse sm:text-right' : ''}`}>
+    // a player whose game is on is lit up, with the ball's spot in that game
+    <div data-live={on ? 'true' : undefined} className={`flex min-w-0 items-center gap-3 ${align === 'right' ? 'sm:flex-row-reverse sm:text-right' : ''} ${on ? '-mx-2 rounded-lg bg-accent/[0.07] px-2 py-1.5 ring-1 ring-accent/35' : ''}`}>
       <Headshot players={players} id={line.playerId} size={32} />
       {showPos && <PosPill pos={pos} />}
       <div className="min-w-0 flex-1">
@@ -29,12 +33,13 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
         <div className="truncate text-xs text-muted">
           {(() => {
             const stats = statLine(pos, line.stats);
-            const label = gameOf ? gameLabel(gameOf(line.playerId)) : null;
+            const label = game ? gameLabel(game) : null;
             if (!label) return stats || '-';
             // before a player has a stat, his game state stands alone
-            return <>{stats && <>{stats} · </>}<span data-testid="game-state">{label}</span></>;
+            return <>{stats && <>{stats} · </>}<span data-testid="game-state" className={on ? 'font-semibold text-accent' : ''}>{label}</span></>;
           })()}
         </div>
+        {game?.kind === 'live' && game.field && <FieldBar field={game.field} />}
       </div>
       <div className="num shrink-0 text-right text-lg font-semibold leading-none">{fmtPts(line.points)}</div>
     </div>

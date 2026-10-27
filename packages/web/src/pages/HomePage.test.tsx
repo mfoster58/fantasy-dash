@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import { game, line, season, side, standing, week } from '../test/playerFixtures';
+import type { LiveData } from '../lib/live/LiveProvider';
 import HomePage from './HomePage';
+
+let liveNow: Partial<LiveData> = {};
+vi.mock('../lib/live/LiveProvider', async (orig) => ({
+  ...(await orig<typeof import('../lib/live/LiveProvider')>()),
+  useLive: () => ({ season: null, week: null, matchups: null, games: null, stats: null, projections: null, polling: false, ...liveNow }),
+  useLiveStats: () => {},
+}));
 
 vi.mock('../data/load', async (orig) => {
   const real = await orig<typeof import('../data/load')>();
@@ -36,6 +44,26 @@ describe('HomePage', () => {
     expect(screen.getByRole('region', { name: 'Week 1' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Week 1 top performers' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'League leaders' })).toBeInTheDocument();
+  });
+  it('once the live week kicks off, results and top performers follow it live', async () => {
+    const s = league(true);
+    s.weeks[1].games[0].sides[0].starters = side('a', 0, [line('q1', 0)]).starters;
+    s.weeks[1].games[0].sides[1].starters = side('b', 0, [line('r1', 0)]).starters;
+    liveNow = {
+      season: s, week: 2, games: null, polling: true,
+      matchups: [
+        { roster_id: 1, matchup_id: 1, points: 31.5, custom_points: null, starters: ['q1'], players: ['q1'], players_points: { q1: 31.5 } },
+        { roster_id: 2, matchup_id: 1, points: 12, custom_points: null, starters: ['r1'], players: ['r1'], players_points: { r1: 12 } },
+      ],
+    };
+    try {
+      await show(s);
+      const results = screen.getByRole('region', { name: 'Week 2' });
+      expect(results).toHaveTextContent('Live');
+      expect(results).toHaveTextContent('31.50');
+      expect(screen.getByRole('region', { name: 'Week 2 top performers' })).toHaveTextContent('31.5');
+      expect(screen.queryByRole('region', { name: 'Week 1' })).toBeNull();
+    } finally { liveNow = {}; }
   });
   it('before week 1 has games: no top row and no results, standings still shown', async () => {
     const pre = league(false);

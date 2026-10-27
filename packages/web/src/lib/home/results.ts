@@ -4,6 +4,17 @@ import { playerName } from '../players';
 export interface Hitter { kind: 'high' | 'blowout' | 'nail'; userId: UserId; loser: UserId | null; value: number; matchupId: number }
 
 /** High score, blowout and nail-biter for a played week; ties to the lower matchup id. */
+/** A week in progress as it stands: whoever leads counts as the winner, by the current margin; level games have none. */
+export function scoredSoFar(week: Week): Week {
+  return {
+    ...week,
+    games: week.games.map((g) => {
+      const [a, b] = g.sides;
+      return { ...g, winner: a.points === b.points ? null : a.points > b.points ? a.userId : b.userId, margin: Math.abs(a.points - b.points) };
+    }),
+  };
+}
+
 export function weekHitters(week: Week): Hitter[] {
   const games = [...week.games].sort((x, y) => x.matchupId - y.matchupId);
   const out: Hitter[] = [];

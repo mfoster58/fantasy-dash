@@ -43,6 +43,17 @@ describe('weekStatus', () => {
     const st = weekStatus(s, s.weeks[0], live(s, { projections: { q1: { pass_yd: 250 }, r1: { pass_yd: 25 } } }));
     expect(st.week.games[0].sides[0].projected).toBe(11);
   });
+  it('the week has started once any NFL game kicks off, or, without ESPN, once anyone has points', () => {
+    const s = current();
+    const pre = games.map((g) => ({ ...g, state: 'pre' as const }));
+    const zero = matchups.map((m) => ({ ...m, points: 0, players_points: {} }));
+    expect(weekStatus(s, s.weeks[0], live(s)).started).toBe(true);
+    expect(weekStatus(s, s.weeks[0], live(s, { games: pre, matchups: zero })).started).toBe(false);
+    expect(weekStatus(s, s.weeks[0], live(s, { games: pre })).started).toBe(false);
+    expect(weekStatus(s, s.weeks[0], live(s, { games: null })).started).toBe(true);
+    expect(weekStatus(s, s.weeks[0], live(s, { games: null, matchups: zero })).started).toBe(false);
+    expect(weekStatus(s, s.weeks[0], live(s, { week: null, matchups: null })).started).toBe(false);
+  });
   it('hides the count when ESPN could not be read, and everything when the week is not live', () => {
     const s = current();
     expect(weekStatus(s, s.weeks[0], live(s, { games: null })).toPlay(s.weeks[0].games[0].sides[0])).toBeNull();

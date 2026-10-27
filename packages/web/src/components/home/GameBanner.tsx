@@ -4,6 +4,7 @@ import { CoverLink, TeamLink } from '../NameLink';
 import { fmtRecord } from '../../lib/format';
 import { hasRanks } from '../../lib/home/pick';
 import type { GameView } from '../../lib/home/view';
+import { winTone } from '../../lib/live/outlook';
 
 const ord = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 export const teamName = (season: Season, userId: string) => season.managers[userId]?.teamName ?? season.managers[userId]?.displayName ?? userId;
@@ -76,9 +77,11 @@ export default function GameBanner({ game, season, view }: { game: Game; season:
           {view.win && (
             <>
               <div className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
-                <span className="bg-accent" style={{ width: `${view.win[0]}%` }} /><span className="bg-coral" style={{ width: `${view.win[1]}%` }} />
+                {([0, 1] as const).map((i) => <span key={i} data-testid={`banner-win-${i}`} style={{ width: `${view.win![i]}%`, background: winTone(view.win![i], view.win![1 - i]) }} />)}
               </div>
-              <div className="mt-1 flex justify-between text-xs font-semibold"><span className="text-accent">{view.win[0]}%</span><span className="text-coral">{view.win[1]}%</span></div>
+              <div className="mt-1 flex justify-between text-xs font-semibold">
+                {([0, 1] as const).map((i) => <span key={i} style={{ color: winTone(view.win![i], view.win![1 - i]) }}>{view.win![i]}%</span>)}
+              </div>
             </>
           )}
           {view.status === 'final' && winnerName && <div className="mt-1 text-xs text-muted">{winnerName} by {Math.abs(view.scores[0] - view.scores[1]).toFixed(1)}</div>}

@@ -1,6 +1,20 @@
 /** ESPN's public NFL scoreboard: the only feed that says which NFL games are on, in what quarter, with what clock. */
 export type NflState = 'pre' | 'in' | 'post';
 
+/** Where the ball is in a game in progress. */
+export interface Field {
+  /** Sleeper team codes */
+  home: string;
+  away: string;
+  /** who has the ball; null between plays ESPN doesn't describe (kickoffs, breaks) */
+  possession: string | null;
+  /** yards from the home team's goal line, 0-100 */
+  yardLine: number | null;
+  /** "1st & 10" */
+  down: string | null;
+  redZone: boolean;
+}
+
 export interface NflGame {
   /** Sleeper team codes */
   teams: [string, string];
@@ -12,6 +26,8 @@ export interface NflGame {
   /** ISO kickoff time */
   kickoff: string;
   halftime: boolean;
+  /** only while the game is on */
+  field?: Field | null;
 }
 
 /** ESPN codes that differ from Sleeper's */
@@ -24,7 +40,26 @@ export const scoreboardUrl = (season: number, week: number): string =>
 interface EspnEvent {
   date?: string;
   status?: { period?: number; displayClock?: string; type?: { state?: string; name?: string } };
-  competitions?: { competitors?: { team?: { abbreviation?: string } }[] }[];
+  competitions?: {
+    competitors?: { homeAway?: string; team?: { id?: string; abbreviation?: string } }[];
+    situation?: { possession?: string; yardLine?: number; shortDownDistanceText?: string; isRedZone?: boolean };
+  }[];
+}
+
+function readField(comp: NonNullable<EspnEvent['competitions']>[number] | undefined): Field | null {
+  const teams = comp?.competitors ?? [];
+  const code = (side: string) => teams.find((c) => c.homeAway === side)?.team?.abbreviation;
+  const [home, away] = [code('home'), code('away')];
+  if (!home || !away) return null;
+  const s = comp?.situation ?? {};
+  const has = teams.find((c) => s.possession && c.team?.id === s.possession)?.team?.abbreviation;
+  return {
+    home: normTeam(home), away: normTeam(away),
+    possession: has ? normTeam(has) : null,
+    yardLine: typeof s.yardLine === 'number' ? s.yardLine : null,
+    down: s.shortDownDistanceText || null,
+    redZone: !!s.isRedZone,
+  };
 }
 
 export function parseScoreboard(json: unknown): NflGame[] {
@@ -32,7 +67,8 @@ export function parseScoreboard(json: unknown): NflGame[] {
   if (!Array.isArray(events)) return [];
   const games: NflGame[] = [];
   for (const e of events) {
-    const codes = e.competitions?.[0]?.competitors?.map((c) => c.team?.abbreviation).filter((a): a is string => !!a) ?? [];
+    const comp = e.competitions?.[0];
+    const codes = comp?.competitors?.map((c) => c.team?.abbreviation).filter((a): a is string => !!a) ?? [];
     const state = e.status?.type?.state;
     if (codes.length !== 2 || (state !== 'pre' && state !== 'in' && state !== 'post') || !e.date) continue;
     games.push({
@@ -42,6 +78,7 @@ export function parseScoreboard(json: unknown): NflGame[] {
       clock: e.status?.displayClock ?? '0:00',
       kickoff: e.date,
       halftime: e.status?.type?.name === 'STATUS_HALFTIME',
+      field: state === 'in' ? readField(comp) : null,
     });
   }
   return games;
