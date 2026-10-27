@@ -23,16 +23,9 @@ export function useHot(): [string | null, (key: string) => HotBind] {
  * The seasons a card offers: his chart seasons, newest first, led by the current season while its data isn't out yet.
  * `db` is undefined for a season without data; the card then draws greyed out with a note.
  */
-export interface SeasonControl { years: number[]; year: number; onYear: (y: number) => void }
-
-/** `control` hands the picker to a parent: the receiver card shares one between the route tree and the target map. */
-export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number, control?: SeasonControl) {
+export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number) {
   const dataYears = charts.filter(has).map((c) => c.year).sort((a, b) => b - a);
   const [picked, setYear] = useState<number | null>(null);
-  if (control) {
-    const db = dataYears.includes(control.year) ? charts.find((c) => c.year === control.year) : undefined;
-    return { years: control.years, year: control.year, setYear: control.onYear, db, latest: dataYears[0] ?? 0 };
-  }
   const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
   // a pick from another player's seasons falls back to this one's first
   const year = picked !== null && years.includes(picked) ? picked : years[0] ?? 0;

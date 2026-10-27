@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import PlayerPage from './PlayerPage';
 import { leagueSeasons, pick } from '../test/playerPageFixtures';
 import { miniDb } from '../test/playerDbFixtures';
-import { miniCharts } from '../test/chartFixtures';
+import { miniCharts, targetCharts } from '../test/chartFixtures';
 
 // a data router cannot initialise under jsdom (AbortSignal), so the loader hook is stubbed and the page rendered in a memory router
 let loaded: unknown;
@@ -20,8 +20,6 @@ function mount(id: string, seasons = leagueSeasons(), charts = [miniCharts()]) {
   render(<MemoryRouter initialEntries={[`/player/${id}`]}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
 }
 const section = (name: RegExp) => screen.queryByRole('region', { name });
-/** the WR/TE/RB chart card: the route tree, or the target map in a season without routes */
-const RECEIVER = /Route tree|Target map/;
 /** 2026 grade sums for the miniDb receivers */
 const gradesChart = (): ChartDb => ({
   year: 2026, builtAt: '', participation: false, ftn: true, injuries: {},
@@ -68,8 +66,8 @@ describe('PlayerPage', () => {
     expect(within(section(/Path through the league/)!).queryByText(/who got/)).toBeNull();
   });
   it('orders the page: advanced numbers, charts, grades, the game log, then the path beside the records', () => {
-    mount('w1', leagueSeasons(), [miniCharts(), gradesChart()]);
-    const order = [/Advanced by season/, RECEIVER, /^Grades/, /Game log/, /Path through the league/, /League records/].map((n) => section(n)!);
+    mount('w1', leagueSeasons(), [miniCharts(), gradesChart(), targetCharts()]);
+    const order = [/Advanced by season/, /Route tree/, /Target map/, /^Grades/, /Game log/, /Path through the league/, /League records/].map((n) => section(n)!);
     for (let i = 1; i < order.length; i++) expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING, String(i)).toBeTruthy();
   });
   it('has no Percentiles card any more', () => {
@@ -89,18 +87,22 @@ describe('PlayerPage', () => {
     expect(cells[1]).toHaveClass('sticky');
     expect(cells[2]).not.toHaveClass('sticky');
   });
-  it('a WR gets the receiver card (target map while the current season has no routes), between the advanced numbers and the game log', () => {
+  it('a WR gets the route tree and the target map side by side', () => {
+    mount('w1', leagueSeasons(), [miniCharts(), targetCharts()]);
+    expect(section(/Route tree/)!.parentElement).toBe(section(/Target map/)!.parentElement);
+  });
+  it('a WR gets the route tree, between the advanced numbers and the game log', () => {
     mount('w1');
-    const tree = section(RECEIVER)!;
+    const tree = section(/Route tree/)!;
     expect(tree).toBeInTheDocument();
     expect(section(/Run lanes/)).toBeNull();
     expect(tree.compareDocumentPosition(section(/Game log/)!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(section(/Advanced by season/)!.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
-  it('an RB gets run lanes and the receiver card; a QB gets passing zones and the pressure card', () => {
+  it('an RB gets run lanes and a route tree; a QB gets passing zones and the pressure card', () => {
     mount('r1');
     expect(section(/Run lanes/)).toBeInTheDocument();
-    expect(section(RECEIVER)).toBeInTheDocument();
+    expect(section(/Route tree/)).toBeInTheDocument();
     mount('q1');
     expect(section(/Passing zones/)).toBeInTheDocument();
     expect(section(/Under pressure/)).toBeInTheDocument();
@@ -115,12 +117,13 @@ describe('PlayerPage', () => {
     db.players.w1 = { ...db.players.w1, gsisId: null };
     loaded = { id: 'w1', seasons: leagueSeasons(), dbs: [db], charts: [miniCharts()] };
     render(<MemoryRouter initialEntries={['/player/w1']}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
-    expect(section(RECEIVER)).toBeNull();
+    expect(section(/Route tree/)).toBeNull();
+    expect(section(/Target map/)).toBeNull();
   });
   it('lists only his chart seasons in a card picker', () => {
     const empty = { year: 2024, builtAt: '', participation: true, injuries: {}, players: {} };
     mount('w1', leagueSeasons(), [miniCharts(2025), empty, miniCharts(2023)]);
-    const picker = within(section(RECEIVER)!).getByRole('combobox');
+    const picker = within(section(/Route tree/)!).getByRole('combobox');
     // the current season leads while its data isn't out
     expect([...picker.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['2026', '2025', '2023']);
   });

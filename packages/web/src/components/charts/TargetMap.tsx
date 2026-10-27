@@ -2,9 +2,8 @@ import { useMemo, useState } from 'react';
 import { SIDES, type ChartDb, type TargetFilter, type Zone } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { heatColor, ordinal, pctColor } from '../../lib/charts/scale';
-import { ROUTE_SPEC, TARGET_SPEC } from '../../lib/charts/specs';
-import { ChartCard, Seg, Sidelines, useChartSeason, useHot, type SeasonControl } from './Field';
-import RouteTree from './RouteTree';
+import { TARGET_SPEC } from '../../lib/charts/specs';
+import { ChartCard, Seg, Sidelines, useChartSeason, useHot } from './Field';
 
 const FILTERS: [TargetFilter, string][] = [['all', 'All'], ['pa', 'Play-action'], ['nopa', 'No play-action'], ['motion', 'Motion'], ['screen', 'Screen'], ['blitz', 'vs blitz'], ['contested', 'Contested']];
 const FTN_FILTERS = FILTERS.map(([k]) => k).filter((k) => k !== 'all');
@@ -16,9 +15,9 @@ const W = 460, SB = 34, FX = SB + 6, FW = W - 2 * FX, YD = 8, TOP = 10, CW = FW 
 const Y = (v: number) => TOP + (35 - v) * YD, H = Y(-7) + 8;
 export const FTN_CREDIT = 'Data: FTN Data via nflverse';
 
-/** Where his targets went, by depth and side, for seasons without route data; every zone's number is always shown. */
-export default function TargetMap({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: SeasonControl }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(TARGET_SPEC, c, gsis), current, control);
+/** Where his targets went, by depth and side, with FTN play filters; every zone's number is always shown. Sits beside the route tree. */
+export default function TargetMap({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(TARGET_SPEC, c, gsis), current);
   const [picked, setFilter] = useState<TargetFilter>('all');
   const noFtn = !!db && !db.ftn;
   const filter: TargetFilter = noFtn ? 'all' : picked;
@@ -48,7 +47,7 @@ export default function TargetMap({ charts, gsis, current = 0, control }: { char
         <span>{share ? 'Share of his targets, 0% to 25%+' : `${def!.label} percentile among his position in that zone · grey = under ${TARGET_SPEC.min} targets, not ranked`} · depth is air yards, drawn to scale</span>
         <span>{FTN_CREDIT}</span>
       </>}>
-      <p className="px-4 pt-2 text-xs text-muted">Route tree arrives when the season's route data is published</p>
+      {!db?.participation && <p className="px-4 pt-2 text-xs text-muted">Route tree arrives when the season's route data is published</p>}
       <div className="px-3 pt-2">
         <svg viewBox={`0 0 ${W} ${H + 26}`} className="mx-auto block w-full max-w-[560px]" role="img" aria-label={`Target map, ${year}`}>
           <defs><filter id={uid} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation={16} /></filter></defs>
@@ -85,21 +84,4 @@ export default function TargetMap({ charts, gsis, current = 0, control }: { char
       </div>
     </ChartCard>
   );
-}
-
-/**
- * The WR/TE/RB chart card: one season picker over every season he has routes or targets in (led by the current season while
- * its data isn't out); a season with routes shows the route tree, any other the target map.
- */
-export function ReceiverChart({ charts, gsis, pos, current = 0 }: { charts: ChartDb[]; gsis: string; pos: string; current?: number }) {
-  const routeYears = charts.filter((c) => hasChart(ROUTE_SPEC, c, gsis)).map((c) => c.year);
-  const dataYears = [...new Set([...routeYears, ...charts.filter((c) => hasChart(TARGET_SPEC, c, gsis)).map((c) => c.year)])].sort((a, b) => b - a);
-  const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
-  const [picked, setPicked] = useState<number | null>(null);
-  if (!years.length) return null;
-  const year = picked !== null && years.includes(picked) ? picked : years[0];
-  const control: SeasonControl = { years, year, onYear: setPicked };
-  return routeYears.includes(year)
-    ? <RouteTree charts={charts} gsis={gsis} pos={pos} current={current} control={control} />
-    : <TargetMap charts={charts} gsis={gsis} current={current} control={control} />;
 }

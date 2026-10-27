@@ -5,7 +5,7 @@ import PassingZones from '../components/charts/PassingZones';
 import PressureCard from '../components/charts/PressureCard';
 import RouteTree from '../components/charts/RouteTree';
 import RunLanes from '../components/charts/RunLanes';
-import { ReceiverChart } from '../components/charts/TargetMap';
+import TargetMap from '../components/charts/TargetMap';
 import AdvancedBySeason from '../components/player/AdvancedBySeason';
 import GameLog from '../components/player/GameLog';
 import JourneyFeed from '../components/player/JourneyFeed';
@@ -55,11 +55,11 @@ export default function PlayerPage() {
       <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} />
       {table.rows.length > 0 && <SeasonTable table={table} pos={bio.pos} />}
       {tab && myDbs.length > 0 && <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />}
-      {gsis && (bio.pos === 'WR' || bio.pos === 'TE') && <ReceiverChart charts={charts} gsis={gsis} pos={bio.pos} current={current} />}
-      {gsis && bio.pos === 'RB' && (
+      {gsis && bio.pos === 'RB' && <RunLanes charts={charts} gsis={gsis} current={current} />}
+      {gsis && (bio.pos === 'WR' || bio.pos === 'TE' || bio.pos === 'RB') && (
         <div className="grid gap-6 xl:grid-cols-2">
-          <RunLanes charts={charts} gsis={gsis} current={current} />
-          <ReceiverChart charts={charts} gsis={gsis} pos="RB" current={current} />
+          <RouteTree charts={charts} gsis={gsis} pos={bio.pos} current={current} />
+          <TargetMap charts={charts} gsis={gsis} current={current} />
         </div>
       )}
       {gsis && bio.pos === 'QB' && (

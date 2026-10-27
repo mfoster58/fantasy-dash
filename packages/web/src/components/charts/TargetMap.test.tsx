@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { miniCharts, targetCharts } from '../../test/chartFixtures';
-import TargetMap, { ReceiverChart } from './TargetMap';
+import { targetCharts } from '../../test/chartFixtures';
+import TargetMap from './TargetMap';
 
 const card = () => screen.getByRole('region', { name: /Target map/ });
 const zone = (k: string) => card().querySelector(`[data-zone="${k}"]`)!;
@@ -37,13 +37,9 @@ describe('TargetMap', () => {
   });
 });
 
-describe('ReceiverChart', () => {
-  it('a season with routes shows the route tree, one without the target map, from one picker', () => {
-    render(<ReceiverChart charts={[miniCharts(2025), targetCharts(2026)]} gsis="00-w1" pos="WR" current={2026} />);
-    expect(screen.getByRole('region', { name: /Target map/ })).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: /Route tree/ })).toBeNull();
-    fireEvent.change(within(card()).getByRole('combobox'), { target: { value: '2025' } });
-    const tree = screen.getByRole('region', { name: /Route tree/ });
-    expect([...within(tree).getByRole('combobox').querySelectorAll('option')].map((o) => o.textContent)).toEqual(['2026', '2025']);
+describe('TargetMap beside the route tree', () => {
+  it('the route-tree note shows only in a season without route data', () => {
+    render(<TargetMap charts={[{ ...targetCharts(2025), participation: true }]} gsis="00-w1" />);
+    expect(card()).not.toHaveTextContent('Route tree arrives');
   });
 });
