@@ -43,23 +43,20 @@ export function gameOutlook(game: Game, gameOf: (playerId: string) => PlayerGame
   const states: PlayerGame[] = [];
   const isDone = (g: PlayerGame) => g.kind === 'final' || g.kind === 'bye';
   const sum = (side: GameSide) => {
-    let final = 0, remaining = 0, left = 0;
+    let final = 0, remaining = 0;
     for (const e of side.starters) {
       if (!e.player) continue;
       const g = gameOf(e.player.playerId);
       states.push(g);
-      if (!isDone(g)) left++;
       const o = playerOutlook(e.player.points, e.player.projected, g);
       final += o.final;
       remaining += o.remaining;
     }
-    return { final: round2(final), remaining, left };
+    return { final: round2(final), remaining };
   };
   const [a, b] = [sum(game.sides[0]), sum(game.sides[1])];
-  const [pa0, pb0] = [game.sides[0].points, game.sides[1].points];
-  // over when nobody is left to play, or when the side behind has nobody left
-  const decided = (a.left === 0 && pa0 < pb0) || (b.left === 0 && pb0 < pa0);
-  const done = (states.length > 0 && states.every(isDone)) || decided;
+  // over only when every starter on both sides is done: a leader still playing can lose points
+  const done = states.length > 0 && states.every(isDone);
   const started = states.some((g) => g.kind === 'live' || g.kind === 'final') || game.sides.some((s) => s.points > 0);
   const status: LiveStatus = done ? 'final' : started ? 'live' : 'upcoming';
 
@@ -68,7 +65,6 @@ export function gameOutlook(game: Game, gameOf: (playerId: string) => PlayerGame
   let pa = variance > 0 ? Math.round(phi(diff / Math.sqrt(variance)) * 100) : diff > 0 ? 100 : diff < 0 ? 0 : 50;
   // only a finished game is certain
   if (status !== 'final') pa = Math.max(1, Math.min(99, pa));
-  else if (decided) pa = pa0 > pb0 ? 100 : 0;
   return { projected: [a.final, b.final], win: [pa, 100 - pa], status };
 }
 
