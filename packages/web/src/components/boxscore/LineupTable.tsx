@@ -62,8 +62,8 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
       <div className={`flex shrink-0 flex-col leading-none ${right ? 'items-start sm:items-start' : 'items-end'}`}>
         <span className="font-display text-[26px] font-semibold tabular-nums">{fmtPts(line.points)}</span>
         {line.projected !== null && (
-          <span data-testid="player-proj" className="mt-1 whitespace-nowrap font-display text-xs tabular-nums text-muted">
-            proj {line.projected.toFixed(1)}{done && <> · <Verdict points={line.points} projected={line.projected} /></>}
+          <span data-testid="player-proj" title="Projected" className="mt-1 whitespace-nowrap font-display text-sm tabular-nums text-muted">
+            {line.projected.toFixed(1)}{done && <> · <Verdict points={line.points} projected={line.projected} /></>}
           </span>
         )}
       </div>
