@@ -44,15 +44,25 @@ export function gradeCards(db: PlayerDb, chart: ChartDb | undefined, id: PlayerI
   const ftn = chart.ftn === true;
   const vol = VOLUME[me.pos];
   const qualifies = (a: Agg) => vol.of(a) >= vol.perWeek * a.weeks;
+  // his teams' totals in the weeks he played (a game played, targeted or not), for whichever team he played them for
+  const teamOf = (a: Agg): GradeInput['team'] => {
+    const t = { rzTgt: 0, in10: 0 };
+    for (const r of a.rows) {
+      if (r.gp < 1) continue;
+      const w = chart.teams?.[r.team]?.[String(r.week)];
+      if (w) { t.rzTgt += w[0]; t.in10 += w[1]; }
+    }
+    return t;
+  };
   const inputOf = (a: Agg): GradeInput | null => {
     const gsis = db.players[a.id]?.gsisId;
     const g: GradeSums | undefined = gsis ? chart.players[gsis]?.grades : undefined;
-    return g ? { agg: a, g, ftn } : null;
+    return g ? { agg: a, g, ftn, team: teamOf(a) } : null;
   };
   const aggs = aggregate(db, 1, Math.max(1, db.throughWeek));
   const meAgg = aggs.find((a) => a.id === id);
   if (!meAgg) return null;
-  const x: GradeInput = { agg: meAgg, g: mine, ftn };
+  const x: GradeInput = { agg: meAgg, g: mine, ftn, team: teamOf(meAgg) };
   const pool = aggs.filter((a) => a.id !== id && db.players[a.id]?.pos === me.pos && qualifies(a)).map(inputOf).filter((p): p is GradeInput => p !== null);
   const meQualifies = qualifies(meAgg);
 

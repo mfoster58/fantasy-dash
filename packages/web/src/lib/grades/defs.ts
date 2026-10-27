@@ -6,7 +6,8 @@ import { fmtDec1, fmtPct, fmtSigned } from '../charts/scale';
 export type Group = 'Opportunity' | 'Production' | 'How he plays';
 export const GROUPS: readonly Group[] = ['Opportunity', 'Production', 'How he plays'];
 
-export interface GradeInput { agg: Agg; g: GradeSums; ftn: boolean }
+/** `team`: his teams' red-zone targets and inside-10 carries, summed over the weeks he played for them */
+export interface GradeInput { agg: Agg; g: GradeSums; ftn: boolean; team: { rzTgt: number; in10: number } }
 
 export interface TileDef {
   key: string;
@@ -33,6 +34,8 @@ export interface CardDef { key: string; title: string; question: string; group: 
 
 const g = (k: GradeKey) => (x: GradeInput): number => x.g[k] ?? 0;
 const per = (n: GradeKey, d: GradeKey) => (x: GradeInput): number | null => { const den = x.g[d] ?? 0; return den > 0 ? (x.g[n] ?? 0) / den : null; };
+/** his share of his teams' total over the weeks he played */
+const teamShare = (k: GradeKey, t: keyof GradeInput['team']) => (x: GradeInput): number | null => (x.team[t] > 0 ? Math.min(1, (x.g[k] ?? 0) / x.team[t]) : null);
 /** a Players-table column's value over the season */
 const col = (key: string) => (x: GradeInput): number | null => columnValue(COLUMNS[key], x.agg, 'total');
 const ngs = (k: keyof Agg['w']) => (x: GradeInput): number | null => x.agg.w[k] ?? null;
@@ -94,7 +97,7 @@ const RECEIVER: CardDef[] = [
   ]),
   card('money', 'Money downs', 'Is he there when it matters?', 'Production', [
     tile('thirdDown', '3rd-down conversions', per('t3Conv', 't3'), fmtPct, of('t3Conv', 't3', ' targets'), { denom: g('t3') }),
-    tile('rzShare', 'Red-zone target share', per('rzTgt', 'teamRzTgt'), fmtPct, of('rzTgt', 'teamRzTgt'), { denom: g('teamRzTgt') }),
+    tile('rzShare', 'Red-zone target share', teamShare('rzTgt', 'rzTgt'), fmtPct, (x) => `${n0(g('rzTgt')(x))} of ${n0(x.team.rzTgt)}`, { denom: (x) => x.team.rzTgt }),
     countTile('endZone', 'End-zone targets', g('ezTgt')),
     tile('tdRate', 'TD rate', per('td', 'tgt'), fmtPct, (x) => `${n0(g('td')(x))} TD on ${n0(g('tgt')(x))} targets`),
   ]),
@@ -161,7 +164,7 @@ const RB: CardDef[] = [
   card('workload', 'Workload', 'How much of the backfield is his?', 'Opportunity', [
     tile('snapShare', 'Snap share', col('snapPct'), fmtPct, (x) => `${n0(x.agg.s.snaps ?? 0)} snaps`),
     tile('oppShare', 'Opportunity share', col('oppPct'), fmtPct, fixed('carries + targets')),
-    tile('in10Share', 'Carries inside the 10', per('in10', 'teamIn10'), fmtPct, of('in10', 'teamIn10'), { denom: g('teamIn10') }),
+    tile('in10Share', 'Carries inside the 10', teamShare('in10', 'in10'), fmtPct, (x) => `${n0(g('in10')(x))} of ${n0(x.team.in10)}`, { denom: (x) => x.team.in10 }),
     ofTile('in5Td', 'TDs on carries inside the 5', 'in5Td', 'in5'),
   ]),
   card('efficiency', 'Efficiency', 'What does a carry earn?', 'Production', [

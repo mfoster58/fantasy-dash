@@ -297,15 +297,18 @@ describe('buildCharts: grades and target maps', () => {
       tgt(g2), tgt({ ...g2, receiver_player_id: 'Z' }),
       ...[1, 2, 3, 4, 5].map(() => tgt({ ...g3, receiver_player_id: 'Z' })),
     ], []);
-    expect(db.players.W.grades).toMatchObject({ rzTgt: 2, teamRzTgt: 5 });
+    expect(db.players.W.grades).toMatchObject({ rzTgt: 2 });
+    // team totals by team and week: the page sums the weeks he played, whether or not he was targeted
+    expect(db.teams).toEqual({ AAA: { '1': [3, 0] }, CCC: { '2': [2, 0], '3': [5, 0] } });
   });
 
   it('grades: QB dropbacks, deep, situational, legs and FTN keys', () => {
     const a = play({ qb_dropback: '1', pass_attempt: '1', sack: '0', passer_player_id: 'Q', posteam: 'AAA', complete_pass: '1', passing_yards: '30', pass_touchdown: '1', touchdown: '1', td_team: 'AAA', epa: '2', success: '1', air_yards: '22', cpoe: '30', down: '3', first_down: '1', yardline_100: '15', qtr: '4', score_differential: '-3' });
     const b = play({ qb_dropback: '1', pass_attempt: '1', sack: '1', passer_player_id: 'Q', posteam: 'AAA', yards_gained: '-7', epa: '-1.5', success: '0', down: '1', yardline_100: '50', qtr: '1', score_differential: '0' });
-    const c = play({ qb_dropback: '1', pass_attempt: '0', rush_attempt: '1', qb_scramble: '1', passer_player_id: 'Q', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '9', epa: '0.8', success: '1', first_down: '1', down: '2', yardline_100: '60', qtr: '2', score_differential: '0' });
+    const c = play({ qb_dropback: '1', pass_attempt: '0', rush_attempt: '1', qb_scramble: '1', passer_player_id: '', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '9', epa: '0.8', success: '1', first_down: '1', down: '2', yardline_100: '60', qtr: '2', score_differential: '0' });
     const d = play({ rush_attempt: '1', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '3', epa: '0.3', first_down: '0' });
-    const g = build([a, b, c, d], [], [
+    const kneel = play({ qb_kneel: '1', rush_attempt: '1', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '-1', epa: '-0.5', yardline_100: '5' });
+    const g = build([a, b, c, d, kneel], [], [
       ftnRow(a, { is_interception_worthy: 'FALSE', read_thrown: '1', is_catchable_ball: 'TRUE', is_play_action: 'TRUE', n_blitzers: '2', is_drop: 'FALSE' }),
       ftnRow(b, { is_qb_fault_sack: 'TRUE', n_blitzers: '0', read_thrown: '0' }),
     ]).players.Q.grades!;
@@ -325,7 +328,15 @@ describe('buildCharts: grades and target maps', () => {
     const c2 = carry({ run_location: 'middle', yards_gained: '0', epa: '-0.4', success: '0', yardline_100: '4' });
     const c3 = carry({ run_location: 'right', run_gap: 'tackle', yards_gained: '4', epa: '0.6', success: '1', touchdown: '1', rush_touchdown: '1', td_team: 'AAA', yardline_100: '4' });
     const g = build([c1, c2, c3], [], [ftnRow(c1, { n_defense_box: '6', is_rpo: 'TRUE' }), ftnRow(c2, { n_defense_box: '8' })]).players.R.grades!;
-    expect(g).toMatchObject({ car: 3, carYds: 16, carEpa: 1.2, carSucc: 2, carFd: 2, explosive: 1, stuffed: 1, in10: 2, in5: 2, in5Td: 1, outside: 1, ftnCar: 2, boxN: 2, boxSum: 14, lightCar: 1, lightYds: 12, heavyCar: 1, heavyYds: 0, rpo: 1, teamIn10: 2 });
+    expect(g).toMatchObject({ car: 3, carYds: 16, carEpa: 1.2, carSucc: 2, carFd: 2, explosive: 1, stuffed: 1, in10: 2, in5: 2, in5Td: 1, outside: 1, ftnCar: 2, boxN: 2, boxSum: 14, lightCar: 1, lightYds: 12, heavyCar: 1, heavyYds: 0, rpo: 1 });
+  });
+
+  it('team totals: inside-10 carries without kneels, nflverse team codes normalised', () => {
+    const db = build([
+      carry({ yardline_100: '4' }), carry({ yardline_100: '9', posteam: 'LA', game_id: '2025_01_LA_BBB' }),
+      play({ qb_kneel: '1', rush_attempt: '1', rusher_player_id: 'Q', posteam: 'AAA', yardline_100: '3' }),
+    ], []);
+    expect(db.teams).toEqual({ AAA: { '1': [0, 1] }, LAR: { '1': [0, 1] } });
   });
 
   it('targets: zones by FTN filter; a target without an FTN row is only in all', () => {

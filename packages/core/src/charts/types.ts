@@ -29,11 +29,10 @@ export type TargetFilter = (typeof TARGET_FILTERS)[number];
 /**
  * Season sums behind the grade cards, by name. Receiver keys are per target; QB keys per dropback unless named;
  * rusher keys per carry (scrambles excluded). ftn* count only plays FTN charted, and every FTN rate divides by them.
- * teamRzTgt and teamIn10 are his teams' totals in the games he played for them.
  */
 export const GRADE_KEYS = [
   'tgt', 'rec', 'yds', 'epa', 'succ', 'fd', 'td', 'cpN', 'cpSum', 'cpRec', 'yacN', 'yacOe',
-  'deep', 'deepRec', 'deepYds', 'deepEpa', 't3', 't3Conv', 'rzTgt', 'ezTgt', 'teamRzTgt', 'teamIn10',
+  'deep', 'deepRec', 'deepYds', 'deepEpa', 't3', 't3Conv', 'rzTgt', 'ezTgt',
   'ftnTgt', 'catchable', 'drops', 'contested', 'contestedRec', 'created', 'motionTgt', 'paTgt', 'screenTgt',
   'db', 'dbEpa', 'dbSucc', 'att', 'sacks', 'sackYds', 'passYds', 'passTd', 'int',
   'deepAtt', 'deepCmp', 'deepAttEpa', 'deepCpoeSum', 'deepCpoeN',
@@ -84,6 +83,8 @@ export interface ChartDb {
   participation: boolean;
   /** whether FTN charting rows were joined (optional: files built before FTN lack it) */
   ftn?: boolean;
+  /** per team (player-database code) and week: [red-zone targets, inside-10 carries], the denominators of the share tiles */
+  teams?: Record<string, Record<string, [number, number]>>;
   /** nflverse weekly injury report: gsis → week → [status (IR as Out; '' when listed without a game status), injury] */
   injuries: Record<string, Record<string, [string, string]>>;
   players: Record<string, ChartPlayer>;

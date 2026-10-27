@@ -1,3 +1,4 @@
+import { normalizeTeam } from '../playerdb/crosswalk';
 import type { DbPos } from '../playerdb/types';
 import { ROUTES, type Band, type GradeKey, type GradeSums, type TargetFilter, type PlayCounts, type RzKey, type ChartDb, type ChartPlayer, type Counts, type Lane, type Route, type Split, type Zone } from './types';
 
@@ -73,20 +74,17 @@ const yes = (v: string | undefined) => v === 'TRUE';
 type Credit = (gsis: string, allowed: DbPos[]) => ChartPlayer | null;
 
 /** One play's contribution to the grade sums, target maps and team totals. Two-point tries never reach here. */
-function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: Map<string, { rzTgt: number; in10: number }>, games: Map<ChartPlayer, Set<string>>) {
+function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: NonNullable<ChartDb['teams']>) {
   const add = (g: GradeSums, k: GradeKey, v = 1) => { g[k] = (g[k] ?? 0) + v; };
-  const team = `${p.game_id}|${p.posteam}`;
-  const t = teams.get(team) ?? { rzTgt: 0, in10: 0 };
-  teams.set(team, t);
-  const played = (pl: ChartPlayer) => { let s = games.get(pl); if (!s) games.set(pl, (s = new Set())); s.add(team); };
+  // the team's red-zone targets and inside-10 carries this week, under the player database's team code
+  const t = present(p.posteam) ? ((teams[normalizeTeam(p.posteam)] ??= {})[String(num(p.week))] ??= [0, 0]) : [0, 0];
   const yl = num(p.yardline_100), epa = num(p.epa), td = p.touchdown === '1' && (!present(p.td_team) || p.td_team === p.posteam);
   const moved = p.first_down === '1' || td;
 
   if (p.pass_attempt === '1' && p.sack !== '1' && present(p.receiver_player_id)) {
-    if (yl >= 1 && yl <= 20) t.rzTgt++;
+    if (yl >= 1 && yl <= 20) t[0]++;
     const pl = player(p.receiver_player_id, ['WR', 'TE', 'RB']);
     if (pl) {
-      played(pl);
       const g = (pl.grades ??= {}), comp = p.complete_pass === '1', yds = num(p.receiving_yards), ay = num(p.air_yards);
       add(g, 'tgt'); add(g, 'yds', yds); add(g, 'epa', epa);
       if (comp) add(g, 'rec');
@@ -126,10 +124,11 @@ function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: Map<string
     }
   }
 
-  if (p.qb_dropback === '1' && present(p.passer_player_id)) {
-    const pl = player(p.passer_player_id, ['QB']);
+  // scrambles carry no passer_player_id: the scrambler is the rusher
+  const passer = present(p.passer_player_id) ? p.passer_player_id : p.qb_scramble === '1' && present(p.rusher_player_id) ? p.rusher_player_id : p.passer_id;
+  if (p.qb_dropback === '1' && present(passer)) {
+    const pl = player(passer, ['QB']);
     if (pl) {
-      played(pl);
       const g = (pl.grades ??= {}), sack = p.sack === '1', att = p.pass_attempt === '1' && !sack, comp = p.complete_pass === '1';
       add(g, 'db'); add(g, 'dbEpa', epa);
       if (p.success === '1') add(g, 'dbSucc');
@@ -165,19 +164,18 @@ function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: Map<string
     }
   }
 
-  if (p.rush_attempt === '1' && present(p.rusher_player_id)) {
+  // kneels are not runs
+  if (p.rush_attempt === '1' && p.qb_kneel !== '1' && present(p.rusher_player_id)) {
     const scramble = p.qb_scramble === '1';
-    if (!scramble && yl >= 1 && yl <= 10) t.in10++;
+    if (!scramble && yl >= 1 && yl <= 10) t[1]++;
     const qb = player(p.rusher_player_id, ['QB']);
     if (qb) {
-      played(qb);
       const g = (qb.grades ??= {});
       if (scramble) { add(g, 'scr'); add(g, 'scrYds', num(p.yards_gained)); } else { add(g, 'drun'); add(g, 'drunEpa', epa); }
       if (moved) add(g, 'rushFd');
     }
     const pl = scramble ? null : player(p.rusher_player_id, ['RB']);
     if (pl) {
-      played(pl);
       const g = (pl.grades ??= {}), yds = num(p.yards_gained);
       add(g, 'car'); add(g, 'carYds', yds); add(g, 'carEpa', epa);
       if (p.success === '1') add(g, 'carSucc');
@@ -219,15 +217,14 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
     return (players[gsis] ??= { pos });
   };
 
-  const teams = new Map<string, { rzTgt: number; in10: number }>();
-  const games = new Map<ChartPlayer, Set<string>>();
+  const teams: NonNullable<ChartDb['teams']> = {};
 
   for (const p of pbp) {
     const week = num(p.week);
     if (p.season_type !== 'REG' || week < 1 || week > 18) continue;
     const x = parts.get(playKey(p.game_id, p.play_id));
     const f = charted.get(playKey(p.game_id, p.play_id));
-    if (p.two_point_attempt !== '1') gradePlay(p, f, player, teams, games);
+    if (p.two_point_attempt !== '1') gradePlay(p, f, player, teams);
 
     if (hasPart && present(p.receiver_player_id) && x && ROUTE_SET.has(x.route)) {
       const pl = player(p.receiver_player_id, ['WR', 'TE', 'RB']);
@@ -310,11 +307,6 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
       }
     }
   }
-  // team red-zone targets and inside-10 carries over the games he played, for whichever team he played them for
-  for (const [pl, set] of games) {
-    const g = (pl.grades ??= {});
-    for (const k of set) { const t = teams.get(k); if (t) { g.teamRzTgt = (g.teamRzTgt ?? 0) + t.rzTgt; g.teamIn10 = (g.teamIn10 ?? 0) + t.in10; } }
-  }
   for (const p of Object.values(players)) roundAll(p);
-  return { year, builtAt, participation: hasPart, ftn: charted.size > 0, injuries: parseInjuries(injuries), players };
+  return { year, builtAt, participation: hasPart, ftn: charted.size > 0, teams, injuries: parseInjuries(injuries), players };
 }

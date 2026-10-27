@@ -8,7 +8,7 @@ const rows = (id: string, team: string, weeks: number[], season: Partial<PlayerW
 
 const recv = (tgt: number, g: GradeSums = {}): GradeSums => ({
   tgt, rec: tgt * 0.6, yds: tgt * 8, epa: tgt * 0.2, succ: tgt / 2, fd: tgt / 3, td: 2, cpN: tgt, cpSum: tgt * 0.6, cpRec: tgt * 0.6,
-  deep: 6, deepRec: 3, deepYds: 150, deepEpa: 3, t3: 8, t3Conv: 4, rzTgt: 5, ezTgt: 3, teamRzTgt: 20,
+  deep: 6, deepRec: 3, deepYds: 150, deepEpa: 3, t3: 8, t3Conv: 4, rzTgt: 5, ezTgt: 3,
   ftnTgt: tgt, catchable: tgt * 0.8, drops: 2, contested: 6, contestedRec: 3, created: 1, motionTgt: tgt / 2, paTgt: tgt / 5, ...g,
 });
 
@@ -37,9 +37,11 @@ export function gradeFixture(ftn = true): { db: PlayerDb; chart: ChartDb } {
     ],
   };
   const qbSums = (dbs: number, g: GradeSums = {}): GradeSums => ({ db: dbs, dbEpa: dbs * 0.05, dbSucc: dbs / 2, att: dbs - 8, sacks: 8, sackYds: 50, passYds: 900, passTd: 6, int: 2, deepAtt: 10, deepCmp: 4, deepAttEpa: 2, deepCpoeSum: 20, deepCpoeN: 10, t3Db: 20, t3DbConv: 8, rzDb: 15, rzTd: 5, q4Db: 30, q4Epa: 1, trailDb: 40, trailEpa: 2, scr: 6, scrYds: 40, drun: 5, drunEpa: 1, rushFd: 4, ftnDb: dbs, ftnAtt: dbs - 8, iw: 3, readN: 100, firstRead: 60, throwaway: 4, faultSack: 2, catchableThrown: 90, recDrops: 5, paDb: 25, paEpa: 3, blitzDb: 30, blitzEpa: -2, noBlitzDb: 98, noBlitzEpa: 6, ...g });
-  const rbSums = (car: number): GradeSums => ({ car, carYds: car * 4, carEpa: 1, carSucc: car / 2, carFd: car / 4, explosive: 6, stuffed: 8, in10: 8, in5: 6, in5Td: 3, outside: 10, teamIn10: 12, ftnCar: car, boxN: car, boxSum: car * 7, lightCar: 20, lightYds: 100, heavyCar: 10, heavyYds: 30, rpo: 4, tgt: 10, epa: 2, yacN: 6, yacOe: 3 });
+  const rbSums = (car: number): GradeSums => ({ car, carYds: car * 4, carEpa: 1, carSucc: car / 2, carFd: car / 4, explosive: 6, stuffed: 8, in10: 8, in5: 6, in5Td: 3, outside: 10, ftnCar: car, boxN: car, boxSum: car * 7, lightCar: 20, lightYds: 100, heavyCar: 10, heavyYds: 30, rpo: 4, tgt: 10, epa: 2, yacN: 6, yacOe: 3 });
   const chart: ChartDb = {
     year: 2026, builtAt: '2026-10-27T00:00:00.000Z', participation: false, ftn, injuries: {},
+    // each team: 5 red-zone targets and 3 inside-10 carries a week
+    teams: { TB: Object.fromEntries(WEEKS.map((w) => [String(w), [5, 3] as [number, number]])), KC: Object.fromEntries(WEEKS.map((w) => [String(w), [5, 3] as [number, number]])) },
     players: {
       '00-wa': { pos: 'WR', grades: recv(40, { drops: 1, catchable: 30, deepYds: 300 }) },
       '00-wb': { pos: 'WR', grades: recv(30, { drops: 3, catchable: 20, deepYds: 200 }) },

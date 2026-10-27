@@ -49,6 +49,14 @@ describe('gradeCards', () => {
     expect(wa.pct).toBe(0);
   });
 
+  it('red-zone share divides by his teams\' totals over every week he played, targeted or not', () => {
+    const { db, chart } = fixture();
+    // wa played all four weeks for TB, wb only weeks 1-2
+    expect(tile(gradeCards(db, chart, 'wa')!, 'rzShare').detail).toBe('5 of 20');
+    expect(tile(gradeCards(db, chart, 'wb')!, 'rzShare').detail).toBe('5 of 10');
+    expect(tile(gradeCards(db, chart, 'ra')!, 'in10Share').detail).toBe('8 of 12');
+  });
+
   it('a deep tile with 4 deep targets is small', () => {
     const { db, chart } = fixture();
     const t = tile(gradeCards(db, chart, 'wc')!, 'deepCatches');
