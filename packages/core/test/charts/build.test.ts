@@ -10,7 +10,9 @@ const part = (p: Row, f: Row): Row => ({ nflverse_game_id: p.game_id, play_id: S
 
 const POS: Record<string, DbPos> = { W: 'WR', T: 'TE', R: 'RB', Q: 'QB' };
 const posOf = (g: string) => POS[g] ?? null;
-const build = (plays: Row[], parts: Row[]) => buildCharts(plays, parts, posOf, 2025, '2026-01-01T00:00:00.000Z');
+const build = (plays: Row[], parts: Row[], ftn: Row[] = []) => buildCharts(plays, parts, posOf, 2025, '2026-01-01T00:00:00.000Z', [], ftn);
+/** the FTN charting row for a play */
+const ftnRow = (p: Row, f: Row): Row => ({ nflverse_game_id: p.game_id, nflverse_play_id: String(Math.trunc(Number(p.play_id))), ...f });
 
 describe('laneOf / zoneOf', () => {
   it('maps run location and gap to a lane', () => {
@@ -80,6 +82,41 @@ describe('buildCharts: lanes', () => {
     expect(db.players.R.lanes!.light.RE).toBeUndefined();
     expect(db.players.R.lanes!.heavy.RE).toBeUndefined();
     expect(db.players.W?.lanes).toBeUndefined();
+  });
+});
+
+describe('buildCharts: without participation, and FTN', () => {
+  const carry = (f: Row = {}) => play({ rush_attempt: '1', rusher_player_id: 'R', run_location: 'left', run_gap: 'tackle', yards_gained: '4', ...f });
+  it('without participation, lanes and zones are built from play-by-play under all', () => {
+    const q = play({ pass_attempt: '1', passer_player_id: 'Q', sack: '0', air_yards: '5', pass_location: 'left' });
+    const db = build([carry(), q], []);
+    expect(db.players.R.lanes!.all.LT![0]).toBe(1);
+    expect(db.players.Q.zones!.all['short|left']![0]).toBe(1);
+    expect(db.players.Q.zones!.clean).toEqual({});
+    expect(db.players.Q.zones!.pressured).toEqual({});
+    expect(db.players.Q.splits).toBeUndefined();
+  });
+  it('the box split falls back to FTN n_defense_box; a box of 0 goes only into all', () => {
+    const a = carry(), b = carry(), c = carry();
+    const db = build([a, b, c], [], [ftnRow(a, { n_defense_box: '6' }), ftnRow(b, { n_defense_box: '8' }), ftnRow(c, { n_defense_box: '0' })]);
+    const l = db.players.R.lanes!;
+    expect(l.all.LT![0]).toBe(3);
+    expect(l.light.LT![0]).toBe(1);
+    expect(l.heavy.LT![0]).toBe(1);
+  });
+  it('the participation box wins over FTN', () => {
+    const a = carry();
+    const db = build([a], [part(a, { defenders_in_box: '8' })], [ftnRow(a, { n_defense_box: '6' })]);
+    expect(db.players.R.lanes!.heavy.LT![0]).toBe(1);
+    expect(db.players.R.lanes!.light.LT).toBeUndefined();
+  });
+  it('ftn is true only with FTN rows; old JSON without the flag still parses', () => {
+    const a = carry();
+    expect(build([a], []).ftn).toBe(false);
+    expect(build([a], [], [ftnRow(a, { n_defense_box: '7' })]).ftn).toBe(true);
+    const old = { ...build([a], []) } as Record<string, unknown>;
+    delete old.ftn;
+    expect(() => ChartDbSchema.parse(old)).not.toThrow();
   });
 });
 
@@ -166,17 +203,18 @@ describe('buildCharts: plays (play-by-play only)', () => {
     const db = build([qb('1', '0.5'), qb('3', '-0.25'), qb('4', '1'), qb('5', '0.5')], []);
     expect(db.players.Q.plays!.qtr).toEqual([2, 0.25, 2, 1.5]);
   });
-  it('with no participation file: participation false, and no routes, lanes, zones or splits', () => {
+  it('with no participation file: participation false; lanes and zones from play-by-play, no routes, splits or throws', () => {
     const db = build([
       play({ receiver_player_id: 'W' }),
       rush({ run_location: 'left', run_gap: 'tackle', down: '1', ydstogo: '10', yards_gained: '5' }),
       play({ pass_attempt: '1', passer_player_id: 'Q', sack: '0', air_yards: '5', pass_location: 'left' }),
     ], []);
     expect(db.participation).toBe(false);
-    expect(db.players.W).toBeUndefined();
-    expect(db.players.R.lanes).toBeUndefined();
-    expect(db.players.Q.zones).toBeUndefined();
+    expect(db.players.W?.routes).toBeUndefined();
+    expect(db.players.R.lanes!.all.LT![0]).toBe(1);
+    expect(db.players.Q.zones!.all['short|left']![0]).toBe(1);
     expect(db.players.Q.splits).toBeUndefined();
+    expect(db.players.Q.throws).toBeUndefined();
     expect(db.players.R.plays!.rush![0]).toBe(1);
   });
   it('with participation: participation true', () => {

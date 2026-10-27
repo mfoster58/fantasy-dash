@@ -72,9 +72,11 @@ function roundAll(p: ChartPlayer) {
  * Routes for WR/TE/RB targets with a route; lanes for RB carries (not scrambles); zones and splits for QB dropbacks.
  * Blank participation fields leave a play out of that filter but keep it in `all`.
  */
-export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, posOf: (gsis: string) => DbPos | null, year: number, builtAt: string, injuries: Iterable<Row> = []): ChartDb {
+export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, posOf: (gsis: string) => DbPos | null, year: number, builtAt: string, injuries: Iterable<Row> = [], ftn: Iterable<Row> = []): ChartDb {
   const parts = new Map<string, Row>();
   for (const r of participation) parts.set(playKey(r.nflverse_game_id, r.play_id), r);
+  const charted = new Map<string, Row>();
+  for (const r of ftn) charted.set(playKey(r.nflverse_game_id, r.nflverse_play_id), r);
   const hasPart = parts.size > 0;
   const players: Record<string, ChartPlayer> = {};
   const player = (gsis: string, allowed: DbPos[]): ChartPlayer | null => {
@@ -87,6 +89,7 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
     const week = num(p.week);
     if (p.season_type !== 'REG' || week < 1 || week > 18) continue;
     const x = parts.get(playKey(p.game_id, p.play_id));
+    const f = charted.get(playKey(p.game_id, p.play_id));
 
     if (hasPart && present(p.receiver_player_id) && x && ROUTE_SET.has(x.route)) {
       const pl = player(p.receiver_player_id, ['WR', 'TE', 'RB']);
@@ -105,23 +108,24 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
       }
     }
 
-    if (hasPart && p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
+    if (p.rush_attempt === '1' && p.qb_scramble !== '1' && present(p.rusher_player_id)) {
       const lane = laneOf(p.run_location ?? '', p.run_gap ?? '');
       const pl = lane ? player(p.rusher_player_id, ['RB']) : null;
       if (pl && lane) {
         const t = (pl.lanes ??= { all: {}, light: {}, heavy: {} });
         const v = [1, num(p.yards_gained), num(p.epa), num(p.epa) > 0 ? 1 : 0, num(p.rush_touchdown)];
         bump(t.all, lane, v);
-        if (present(x?.defenders_in_box)) bump(t[Number(x.defenders_in_box) <= 6 ? 'light' : 'heavy'], lane, v);
+        // participation's box count, else FTN's (0 there means not charted)
+        const box = present(x?.defenders_in_box) ? Number(x.defenders_in_box) : num(f?.n_defense_box) > 0 ? num(f?.n_defense_box) : null;
+        if (box !== null) bump(t[box <= 6 ? 'light' : 'heavy'], lane, v);
       }
     }
 
-    if (hasPart && p.pass_attempt === '1' && present(p.passer_player_id)) {
+    if (p.pass_attempt === '1' && present(p.passer_player_id)) {
       const pl = player(p.passer_player_id, ['QB']);
       if (pl) {
         const sack = p.sack === '1';
         const pocket = x?.was_pressure === 'TRUE' ? 'pressured' : x?.was_pressure === 'FALSE' ? 'clean' : null;
-        const s = (pl.splits ??= {});
         const keys: Split[] = ['all'];
         if (pocket) keys.push(pocket);
         if (present(x?.number_of_pass_rushers)) keys.push(Number(x.number_of_pass_rushers) >= 5 ? 'blitz' : 'noblitz');
@@ -130,7 +134,7 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
         if (x && ['COVER_0', 'COVER_1', 'COVER_2', 'COVER_3', 'COVER_4', 'COVER_6'].includes(x.defense_coverage_type)) keys.push(x.defense_coverage_type as Split);
         if (present(x?.time_to_throw)) keys.push(Number(x.time_to_throw) < 2.5 ? 'quick' : 'hold');
         const sv = [1, sack ? 0 : 1, sack ? 0 : num(p.complete_pass), sack ? 0 : num(p.passing_yards), num(p.epa), sack ? 1 : 0];
-        for (const k of keys) bump(s, k, sv);
+        if (hasPart) for (const k of keys) bump((pl.splits ??= {}), k, sv);
         const zone = sack ? null : zoneOf(p.air_yards ?? '', p.pass_location ?? '');
         if (zone) {
           const z = (pl.zones ??= { all: {}, clean: {}, pressured: {} });
@@ -169,5 +173,5 @@ export function buildCharts(pbp: Iterable<Row>, participation: Iterable<Row>, po
     }
   }
   for (const p of Object.values(players)) roundAll(p);
-  return { year, builtAt, participation: hasPart, injuries: parseInjuries(injuries), players };
+  return { year, builtAt, participation: hasPart, ftn: charted.size > 0, injuries: parseInjuries(injuries), players };
 }

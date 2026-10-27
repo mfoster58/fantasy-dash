@@ -52,8 +52,10 @@ export interface ChartPlayer {
 export interface ChartDb {
   year: number;
   builtAt: string;
-  /** whether the participation file existed: routes, lanes, zones and splits are only built when it did */
+  /** whether the participation file existed: routes, splits and throws need it; lanes and zones are built from play-by-play without it */
   participation: boolean;
+  /** whether FTN charting rows were joined (optional: files built before FTN lack it) */
+  ftn?: boolean;
   /** nflverse weekly injury report: gsis → week → [status (IR as Out; '' when listed without a game status), injury] */
   injuries: Record<string, Record<string, [string, string]>>;
   players: Record<string, ChartPlayer>;

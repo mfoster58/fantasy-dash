@@ -11,6 +11,7 @@ export const ChartDbSchema = z.object({
   year: z.number(),
   builtAt: z.string(),
   participation: z.boolean(),
+  ftn: z.boolean().optional(),
   injuries: z.record(z.record(z.tuple([z.string(), z.string()]))),
   players: z.record(z.object({
     pos: z.enum(['QB', 'RB', 'WR', 'TE']),

@@ -36,6 +36,7 @@ const URLS = {
   participation: (y: number) => `${NFLVERSE}/pbp_participation/pbp_participation_${y}.csv`,
   pbp: (y: number) => `${NFLVERSE}/pbp/play_by_play_${y}.csv.gz`,
   injuries: (y: number) => `${NFLVERSE}/injuries/injuries_${y}.csv`,
+  ftn: (y: number) => `${NFLVERSE}/ftn_charting/ftn_charting_${y}.csv`,
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -231,7 +232,8 @@ async function playerDbPhase(client: SleeperClient, leagues: SleeperLeague[]) {
 /** A chart file is final when it parses and was built with participation; anything else is rebuilt (participation arrives after a season ends). */
 function chartFileFinal(file: string): boolean {
   if (!existsSync(file)) return false;
-  try { return ChartDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))).participation; } catch { return false; }
+  // a file built before the FTN join has no ftn flag: rebuild it once
+  try { const db = ChartDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); return db.participation && db.ftn !== undefined; } catch { return false; }
 }
 
 /** gsis → position: the season's player database first (league overrides apply), then the nflverse player list. */
@@ -264,8 +266,10 @@ async function chartsPhase(leagues: SleeperLeague[]) {
     if (part === null) log(`${year}: no participation file yet; building play-by-play charts only`);
     const injuries = await fetchText(URLS.injuries(year));
     if (injuries === null) log(`${year}: no injury report file`);
+    const ftn = await fetchText(URLS.ftn(year));
+    if (ftn === null) log(`${year}: no FTN charting file`);
     nflPlayers ??= rowsOf(await requireText(URLS.players, 'nflverse player list'));
-    const db = buildCharts(parseCsv(pbp), part ? parseCsv(part) : [], positionsFor(year, nflPlayers), year, new Date().toISOString(), injuries ? parseCsv(injuries) : []);
+    const db = buildCharts(parseCsv(pbp), part ? parseCsv(part) : [], positionsFor(year, nflPlayers), year, new Date().toISOString(), injuries ? parseCsv(injuries) : [], ftn ? parseCsv(ftn) : []);
     ChartDbSchema.parse(db);
     log(`${year}: charts for ${Object.keys(db.players).length} players`);
     const file = path.join(staging, `${year}.json`);
