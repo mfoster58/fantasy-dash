@@ -98,7 +98,6 @@ export default function BoxScorePage() {
       {outlook && (
         <LiveOutlook
           outlook={outlook}
-          pregame={[a.projected, b.projected]}
           names={[a, b].map((s) => season.managers[s.userId]?.teamName ?? season.managers[s.userId]?.displayName ?? s.userId) as [string, string]}
         />
       )}
