@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router';
-import { render as rtlRender, screen } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen, within } from '@testing-library/react';
 import type { Manager, StandingRow } from '@fantasy-dash/core';
 import StandingsTable from './StandingsTable';
 
@@ -50,5 +50,28 @@ describe('StandingsTable', () => {
     render(<StandingsTable rows={[]} managers={{}} playoffTeams={6} year={2025} />);
     expect(screen.getByText('All-Play')).toHaveAttribute('title', expect.stringContaining('every other team'));
     expect(screen.getByText('Eff')).toHaveAttribute('title', expect.stringContaining('max points'));
+  });
+  it('sorts by a column header, biggest first, again for the other way, and back to rank', () => {
+    const rows = [row('a', 1, 6, 2, { pf: 900 }), row('b', 2, 4, 4, { pf: 1100 }), row('c', 3, 1, 7, { pf: 1000 })];
+    render(<StandingsTable rows={rows} managers={managers} playoffTeams={2} year={2025} />);
+    const order = () => screen.getAllByTestId('standings-row').map((r) => within(r).getAllByRole('link')[0].textContent);
+    expect(order()).toEqual(['Team A', 'bob', 'Team C']);
+    expect(screen.getByRole('columnheader', { name: '#' })).toHaveAttribute('aria-sort', 'ascending');
+    fireEvent.click(screen.getByRole('button', { name: 'PF' }));
+    expect(order()).toEqual(['bob', 'Team C', 'Team A']);
+    expect(screen.getByRole('columnheader', { name: 'PF' })).toHaveAttribute('aria-sort', 'descending');
+    // the playoff cut only means something in rank order
+    expect(document.querySelector('[data-playoff-cut]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'PF' }));
+    expect(order()).toEqual(['Team A', 'Team C', 'bob']);
+    fireEvent.click(screen.getByRole('button', { name: '#' }));
+    expect(order()).toEqual(['Team A', 'bob', 'Team C']);
+    expect(document.querySelector('[data-playoff-cut]')).not.toBeNull();
+  });
+  it('sorts streaks by length, wins above losses', () => {
+    const rows = [row('a', 1, 6, 2, { streak: 'L1' }), row('b', 2, 4, 4, { streak: 'W3' }), row('c', 3, 1, 7, { streak: 'L4' })];
+    render(<StandingsTable rows={rows} managers={managers} playoffTeams={2} year={2025} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Strk' }));
+    expect(screen.getAllByTestId('standings-row').map((r) => within(r).getAllByRole('link')[0].textContent)).toEqual(['bob', 'Team A', 'Team C']);
   });
 });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Manager, StandingRow, UserId } from '@fantasy-dash/core';
 import Avatar from './Avatar';
 import { ManagerLink, TeamLink } from './NameLink';
@@ -24,23 +25,47 @@ const headers: { key: string; label: string; title?: string; left?: boolean }[] 
 
 const cell = 'num whitespace-nowrap px-3 py-2.5 text-right';
 
+/** "W3" -> 3, "L2" -> -2, "-" -> 0: wins above losses, longer runs further out */
+const streakValue = (s: string) => (s.startsWith('W') ? 1 : s.startsWith('L') ? -1 : 0) * (Number(s.slice(1)) || 0);
+
+/** What each column sorts on. Rank and team read top-down; every number puts the biggest first. */
+const sortValue: Record<string, (r: StandingRow, name: string) => number | string> = {
+  rank: (r) => r.rank, team: (_, name) => name.toLowerCase(), w: (r) => r.w, l: (r) => r.l, t: (r) => r.t, pct: (r) => r.winPct,
+  pf: (r) => r.pf, pa: (r) => r.pa, ppg: (r) => r.ppg, max: (r) => r.maxPoints, eff: (r) => r.efficiency,
+  strk: (r) => streakValue(r.streak), ap: (r) => r.allPlay.pct,
+};
+const ascendingFirst = new Set(['rank', 'team']);
+
 export default function StandingsTable({ rows, managers, playoffTeams, year }: Props) {
+  const [sort, setSort] = useState<{ key: string; asc: boolean }>({ key: 'rank', asc: true });
+  const name = (r: StandingRow) => managers[r.userId]?.teamName ?? managers[r.userId]?.displayName ?? r.userId;
+  const sorted = [...rows].sort((x, y) => {
+    const [a, b] = [sortValue[sort.key](x, name(x)), sortValue[sort.key](y, name(y))];
+    const c = typeof a === 'string' ? a.localeCompare(b as string) : a - (b as number);
+    return (sort.asc ? c : -c) || x.rank - y.rank;
+  });
+  const byRank = sort.key === 'rank' && sort.asc;
+  const pick = (key: string) => setSort((s) => (s.key === key ? { key, asc: !s.asc } : { key, asc: ascendingFirst.has(key) }));
   return (
     <div className="card overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="border-b border-line">
           <tr>
             {headers.map((h) => (
-              <th key={h.key} scope="col" title={h.title} className={`section-label whitespace-nowrap px-3 py-2.5 ${h.key === 'rank' ? 'w-10 pl-4 pr-1' : ''} ${h.key === 'team' ? 'w-[32%] min-w-56' : ''} ${h.left ? 'text-left' : 'text-right'}`}>
-                {h.label}
+              <th key={h.key} scope="col" aria-sort={sort.key === h.key ? (sort.asc ? 'ascending' : 'descending') : undefined} className={`section-label whitespace-nowrap px-3 py-2.5 ${h.key === 'rank' ? 'w-10 pl-4 pr-1' : ''} ${h.key === 'team' ? 'w-[32%] min-w-56' : ''} ${h.left ? 'text-left' : 'text-right'}`}>
+                <button type="button" title={h.title} onClick={() => pick(h.key)} className={`inline-flex items-center gap-0.5 uppercase hover:text-ink ${sort.key === h.key ? 'text-ink' : ''}`}>
+                  {h.label}
+                  {sort.key === h.key && <span aria-hidden="true" className="text-[9px]">{sort.asc ? '▲' : '▼'}</span>}
+                </button>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => {
+          {sorted.map((r, i) => {
             const m = managers[r.userId];
-            const cut = i === playoffTeams - 1 && i < rows.length - 1;
+            // the playoff cut only means something in rank order
+            const cut = byRank && i === playoffTeams - 1 && i < rows.length - 1;
             const streakTone = r.streak.startsWith('W') ? 'text-win' : r.streak.startsWith('L') ? 'text-loss' : 'text-muted';
             return (
               <tr
