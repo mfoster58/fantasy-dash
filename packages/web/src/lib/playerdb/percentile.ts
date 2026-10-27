@@ -44,3 +44,14 @@ export function columnTints(col: ColumnDef, aggs: Agg[], mode: Mode): string[] {
   });
   return percentiles(values).map((p, i) => (redZero(aggs[i]) ? RED : tintFor(p, col.lowerIsBetter)));
 }
+
+/**
+ * Tints for every column, each player measured against the whole pool (his position tab) rather than the rows on show,
+ * so a search or a filter narrows the table without recolouring it. Looked up by column key, then player id.
+ */
+export function poolTints(cols: ColumnDef[], pool: Agg[], mode: Mode): Map<string, Map<string, string>> {
+  return new Map(cols.map((c) => {
+    const t = columnTints(c, pool, mode);
+    return [c.key, new Map(pool.map((a, i) => [a.id, t[i]] as const))] as const;
+  }));
+}

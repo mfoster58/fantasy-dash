@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { Draft, DraftPick } from '@fantasy-dash/core';
 import { BOARDS, boardsFor } from '../../playerBoards';
 import { mctx } from './shared.test';
-import { mdBestClass, mdBust, mdFirstRound, mdLate, mdSteal, mdWorstClass } from './draft';
+import { mdBestClass, mdBust, mdFirstRound, mdLate, mdRookies, mdSteal, mdWorstClass } from './draft';
 
 const pick = (round: number, pickNo: number, userId: string, playerId: string, value: number | null): DraftPick =>
   ({ round, pickNo, slot: pickNo, userId, playerId, isKeeper: false, posDraftRank: null, seasonPoints: 0, gamesPlayed: 0, ppg: null, healthy: false, pointsOverBaseline: null, redraftPos: null, contribution: null, earnedPick: null, value, tradedTo: null });
@@ -42,7 +42,18 @@ describe('manager draft boards', () => {
     expect(BOARDS.find((b) => b.id === 'mdFirstRound')!.empty!(base)).toMatch(/two complete seasons/);
   });
   it('is registered in order, the single-pick boards offering a position dropdown', () => {
-    expect(boardsFor('managers', 'mdraft').map((b) => b.id)).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdFirstRound']);
+    expect(boardsFor('managers', 'mdraft').map((b) => b.id)).toEqual(['mdBestClass', 'mdWorstClass', 'mdSteal', 'mdBust', 'mdLate', 'mdRookies', 'mdFirstRound']);
     expect(boardsFor('managers', 'mdraft').filter((b) => b.positions).map((b) => b.id)).toEqual(['mdSteal', 'mdBust']);
+  });
+  it('counts the rookies each manager drafted in one draft, keepers aside', () => {
+    // yearsExp is today's (2025): a rookie of 2024 has 1 year, of 2025 none
+    const rookie = (id: string, yearsExp: number) => ({ id, name: id, firstName: id, lastName: '', position: 'WR', team: 'KC', yearsExp, birthDate: null });
+    const players = { ...ctx.players, q1: rookie('q1', 1), w1: rookie('w1', 1), r1: rookie('r1', 4), t1: rookie('t1', 1), k1: rookie('k1', 1), KC: rookie('KC', 1) };
+    const rows = mdRookies({ ...ctx, players });
+    expect(rows.map((r) => [r.userId, r.meta, r.value, r.valueLabel, r.detail, r.to])).toEqual([
+      ['a', '2024', 2, '2', '2 of 2 picks', '/draft/2024?team=a'],
+      ['b', '2024', 2, '2', '2 of 3 picks', '/draft/2024?team=b'],
+    ]);
+    expect(BOARDS.find((b) => b.id === 'mdRookies')).toMatchObject({ sub: 'mdraft', title: 'Most rookies drafted' });
   });
 });

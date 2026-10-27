@@ -7,7 +7,8 @@ import SeasonPicker from '../components/SeasonPicker';
 import { history } from '../data/load';
 import { aggregate } from '../lib/playerdb/aggregate';
 import { aggregateAllTime, weekLabel, type SeasonSpan } from '../lib/playerdb/merge';
-import { COLUMNS, groupsFor, tabPositions } from '../lib/playerdb/columns';
+import { COLUMNS, groupsFor } from '../lib/playerdb/columns';
+import { filterAggs, tabPool } from '../lib/playerdb/filter';
 import { rosterMap } from '../lib/playerdb/rosters';
 import { parseState, serializeState, type DbState } from '../lib/playerdb/url';
 
@@ -45,19 +46,11 @@ function Loaded({ season, db, spans, years, onYear }: { season: Season; db: Play
   const allAggs = useMemo(() => (spans ? aggregateAllTime({ db, spans }) : aggregate(db, state.from, state.to)), [db, spans, state.from, state.to]);
   const labelWeek = useMemo(() => (spans ? (w: number) => { const l = weekLabel(spans, w); return `'${String(l.year).slice(-2)} W${l.week}`; } : undefined), [spans]);
   const range = spans ? `All-time · ${spans[0]?.year}–${spans[spans.length - 1]?.year}` : `weeks ${state.from}–${state.to} · ${db.year}`;
-  const aggs = useMemo(() => {
-    const positions = tabPositions(state.tab);
-    const q = state.q.trim().toLowerCase();
-    return allAggs.filter((a) => {
-      const p = db.players[a.id];
-      if (!p || !positions.includes(p.pos)) return false;
-      const owner = rosters[a.id];
-      if (state.roster === 'rostered' && !owner) return false;
-      if (state.roster === 'fa' && owner) return false;
-      if (state.roster !== 'all' && state.roster !== 'rostered' && state.roster !== 'fa' && owner !== state.roster) return false;
-      return !q || p.name.toLowerCase().includes(q);
-    });
-  }, [allAggs, db, state.tab, state.roster, state.q, rosters]);
+  const now = years[years.length - 1];
+  // every row is coloured against its whole position tab, so the filters and search below never recolour it
+  const pool = useMemo(() => tabPool(allAggs, db, state), [allAggs, db, state]);
+  const aggs = useMemo(() => filterAggs(allAggs, db, state, rosters, now), [allAggs, db, state, rosters, now]);
+  const teams = useMemo(() => [...new Set(pool.map((a) => a.team).filter(Boolean))].sort(), [pool]);
   const shown = Math.min(PAGE, aggs.length);
 
   return (
@@ -66,8 +59,8 @@ function Loaded({ season, db, spans, years, onYear }: { season: Season; db: Play
         <h1 className="text-2xl font-semibold tracking-tight">Players</h1>
         <p className="text-sm text-muted">Showing {shown} of {aggs.length} · {range}{db.routesReal ? '' : ' · routes estimated'}</p>
       </div>
-      <PlayerDbToolbar state={state} onChange={onChange} years={years} year={spans ? 'all' : db.year} onYear={onYear} throughWeek={db.throughWeek} playoffAt={season.playoffWeekStart} managers={managerList} />
-      <PlayerDbTable db={db} aggs={aggs} state={state} onSort={onSort} rosters={rosters} collapsed={collapsed} onToggleGroup={toggleGroup} weekLabel={labelWeek} />
+      <PlayerDbToolbar state={state} onChange={onChange} years={years} year={spans ? 'all' : db.year} onYear={onYear} throughWeek={db.throughWeek} playoffAt={season.playoffWeekStart} managers={managerList} teams={teams} />
+      <PlayerDbTable db={db} aggs={aggs} pool={pool} state={state} onSort={onSort} rosters={rosters} collapsed={collapsed} onToggleGroup={toggleGroup} weekLabel={labelWeek} />
       <details className="card px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium">Column definitions</summary>
         <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,7 +68,7 @@ function Loaded({ season, db, spans, years, onYear }: { season: Season; db: Play
             <div key={c.key} className="flex gap-2"><dt className="num shrink-0 font-medium">{c.label}</dt><dd className="text-muted">{c.def}{c.est && !db.routesReal ? (spans ? ' (estimated in seasons without tracking data)' : ' (estimated this season)') : ''}</dd></div>
           ))}
         </dl>
-        <p className="mt-3 text-muted">Rates are summed numerators over summed denominators across the chosen weeks. Cells are tinted by percentile among the rows shown; a rate under its sample minimum (targets 3, carries 5, routes 10, dropbacks 12, snaps 10 per week) is greyed. xFP is refitted every sync, so early-season values move until the sample settles.</p>
+        <p className="mt-3 text-muted">Rates are summed numerators over summed denominators across the chosen weeks. Cells are tinted by percentile among every player in the position tab, whatever the filters or search; a rate under its sample minimum (targets 3, carries 5, routes 10, dropbacks 12, snaps 10 per week) is greyed. xFP is refitted every sync, so early-season values move until the sample settles.</p>
       </details>
     </div>
   );

@@ -62,3 +62,27 @@ export const mdFirstRound = (ctx: BoardContext): BoardRow[] => {
     .map(([userId, ps]) => ({ userId, ps, value: round1(ps.reduce((t, y) => t + y.p.value, 0) / ps.length), latestYear: Math.max(...ps.map((y) => y.year)), latestWeek: 0 }));
   return withTone(rank(items).map((i) => ({ key: i.userId, playerId: null, value: i.value, valueLabel: signed(i.value), meta: careerMeta(i.ps.map((y) => y.year)), detail: plural(i.ps.length, 'first-round pick'), userId: i.userId, to: null })));
 };
+
+/**
+ * Rookies a manager took in one draft, keepers aside. The directory holds today's years in the league,
+ * so a rookie of that draft has as many years as seasons have passed since (counting from the latest draft).
+ */
+export const mdRookies = (ctx: BoardContext): BoardRow[] => {
+  const years = Object.keys(ctx.drafts).map(Number);
+  const now = Math.max(...years);
+  const groups = new Map<string, { year: number; userId: UserId; rookies: number; picks: number }>();
+  for (const [y, d] of Object.entries(ctx.drafts)) {
+    const year = Number(y);
+    if (!d || !inYear(ctx, year)) continue;
+    for (const p of d.picks) {
+      if (p.isKeeper) continue;
+      const k = `${year}|${p.userId}`;
+      const g = groups.get(k) ?? { year, userId: p.userId, rookies: 0, picks: 0 };
+      g.picks++;
+      if (ctx.players[p.playerId]?.yearsExp === now - year) g.rookies++;
+      groups.set(k, g);
+    }
+  }
+  const items = [...groups.values()].filter((g) => g.rookies > 0).map((g) => ({ g, userId: g.userId, value: g.rookies, latestYear: g.year, latestWeek: 0 }));
+  return rank(items).map((i) => ({ key: `${i.g.year}-${i.g.userId}`, playerId: null, value: i.value, valueLabel: String(i.value), meta: String(i.g.year), detail: `${i.g.rookies} of ${plural(i.g.picks, 'pick')}`, userId: i.userId, to: boardLink(i.g.year, i.g.userId) }));
+};
