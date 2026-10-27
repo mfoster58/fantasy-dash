@@ -38,6 +38,19 @@ describe('LineupTable', () => {
       gameOf={(id) => (id === 'a1' ? { kind: 'live', period: 3, clock: '4:12', halftime: false } : { kind: 'final' })} /></MemoryRouter>);
     expect(screen.getAllByTestId('game-state').map((e) => e.textContent)).toEqual(['Q3 4:12', 'Final']);
   });
+  it('highlights players whose game is on, with the ball\'s spot on a field bar and the logo of the team that has it', () => {
+    const field = { home: 'KC', away: 'BUF', possession: 'BUF', yardLine: 11, down: '1st & 10', redZone: true };
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}}
+      gameOf={(id) => (id === 'a1' ? { kind: 'live', period: 4, clock: '11:21', halftime: false, field } : { kind: 'final' })} /></MemoryRouter>);
+    const bars = screen.getAllByTestId('field-bar');
+    expect(bars).toHaveLength(1);
+    expect(screen.getByText('Alpha One').closest('[data-live]')).toHaveAttribute('data-live', 'true');
+    expect(screen.getByText('Bravo One').closest('[data-live]')).toBeNull();
+    // the away end zone on the left, the home one on the right: KC 11 is 89% of the way across
+    expect(within(bars[0]).getByTestId('ball')).toHaveStyle({ left: '89%' });
+    expect(within(bars[0]).getByRole('img', { name: 'BUF ball' })).toHaveAttribute('src', expect.stringContaining('/buf.png'));
+    expect(bars[0]).toHaveTextContent('1st & 10');
+  });
   it('shows no game state outside the live week', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
     expect(screen.queryByTestId('game-state')).not.toBeInTheDocument();

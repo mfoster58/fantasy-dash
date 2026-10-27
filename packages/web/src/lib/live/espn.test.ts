@@ -20,9 +20,24 @@ describe('ESPN scoreboard', () => {
       event('SF', 'LAR', 'in', 2, '0:00', '2026-10-25T17:00Z', 'STATUS_HALFTIME'),
       event('BUF', 'MIA', 'pre', 0, '0:00', '2026-10-26T00:20Z', 'STATUS_SCHEDULED'),
     ] });
-    expect(games[0]).toEqual({ teams: ['KC', 'WAS'], state: 'in', period: 3, clock: '4:12', kickoff: '2026-10-25T17:00Z', halftime: false });
+    expect(games[0]).toEqual({ teams: ['KC', 'WAS'], state: 'in', period: 3, clock: '4:12', kickoff: '2026-10-25T17:00Z', halftime: false, field: null });
     expect(games[1].halftime).toBe(true);
     expect(games[2].state).toBe('pre');
+  });
+  it('reads where the ball is and who has it in a game in progress', () => {
+    const e = {
+      date: '2026-10-27T00:15Z',
+      status: { period: 4, displayClock: '11:21', type: { state: 'in', name: 'STATUS_IN_PROGRESS' } },
+      competitions: [{
+        competitors: [{ homeAway: 'home', team: { id: '21', abbreviation: 'PHI' } }, { homeAway: 'away', team: { id: '28', abbreviation: 'WSH' } }],
+        situation: { possession: '28', yardLine: 11, shortDownDistanceText: '1st & 10', isRedZone: true },
+      }],
+    };
+    expect(parseScoreboard({ events: [e] })[0].field).toEqual({ home: 'PHI', away: 'WAS', possession: 'WAS', yardLine: 11, down: '1st & 10', redZone: true });
+    const between = { ...e, competitions: [{ ...e.competitions[0], situation: {} }] };
+    expect(parseScoreboard({ events: [between] })[0].field).toEqual({ home: 'PHI', away: 'WAS', possession: null, yardLine: null, down: null, redZone: false });
+    const notStarted = { ...e, status: { period: 0, displayClock: '0:00', type: { state: 'pre', name: 'STATUS_SCHEDULED' } } };
+    expect(parseScoreboard({ events: [notStarted] })[0].field).toBeNull();
   });
   it('gives no games for a body it cannot read', () => {
     expect(parseScoreboard(null)).toEqual([]);

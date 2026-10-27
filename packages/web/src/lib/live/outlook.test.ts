@@ -11,6 +11,22 @@ const side = (userId: string, lines: PlayerLine[]): GameSide => ({
 });
 const game = (a: GameSide, b: GameSide): Game => ({ id: '2026-8-1', matchupId: 1, week: 8, tag: null, sides: [a, b], winner: null, margin: 0 });
 
+describe('gameOutlook: decided games', () => {
+  const done = (playerId: string, points: number) => line(playerId, points, 10);
+  it('is final once the side behind has nobody left to play, even with the leader still playing', () => {
+    const g = game(side('a', [done('a1', 159.9), line('a2', 12, 15)]), side('b', [done('b1', 135.6)]));
+    const o = gameOutlook(g, (id) => (id === 'a2' ? live(4, '11:21') : { kind: 'final' }));
+    expect(o.status).toBe('final');
+    expect(o.win).toEqual([100, 0]);
+  });
+  it('stays live while the side behind still has someone to play, or when level', () => {
+    const behindPlaying = game(side('a', [done('a1', 155.6)]), side('b', [line('b1', 109.2, 20)]));
+    expect(gameOutlook(behindPlaying, (id) => (id === 'b1' ? live(4, '11:21') : { kind: 'final' })).status).toBe('live');
+    const level = game(side('a', [done('a1', 100)]), side('b', [line('b1', 100, 20)]));
+    expect(gameOutlook(level, (id) => (id === 'b1' ? live(4, '11:21') : { kind: 'final' })).status).toBe('live');
+  });
+});
+
 describe('phi', () => {
   it('is the standard normal CDF', () => {
     expect(phi(0)).toBeCloseTo(0.5, 6);
