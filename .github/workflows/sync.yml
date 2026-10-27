@@ -5,6 +5,12 @@ on:
     # Daily 11:00 UTC = 06:00 EST / 07:00 EDT: rosters and projections stay fresh through the week,
     # and Tuesday's run still picks up Monday night stat corrections.
     - cron: '0 11 * * *'
+    # About an hour after each game block ends (times in UTC, late enough for EST and EDT; GitHub may run them later):
+    # Sunday early games, Sunday late games, then Thursday night, Sunday night and Monday night.
+    # The run after Monday night counts the week as soon as ESPN has every game final.
+    - cron: '45 21 * * 0'
+    - cron: '0 1 * * 1'
+    - cron: '30 5 * * 1,2,5'
   workflow_dispatch:
   push:
     branches: [main]
