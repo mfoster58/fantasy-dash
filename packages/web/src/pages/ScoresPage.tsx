@@ -3,7 +3,6 @@ import { computeStandings, type Season } from '@fantasy-dash/core';
 import ScoreCard from '../components/ScoreCard';
 import SeasonPicker from '../components/SeasonPicker';
 import WeekStrip from '../components/WeekStrip';
-import WeekScores from '../components/boxscore/WeekScores';
 import LiveDot from '../components/LiveDot';
 import { weekStatus } from '../lib/live/weekStatus';
 import { useLive } from '../lib/live/LiveProvider';
@@ -42,7 +41,7 @@ export default function ScoresPage() {
                   : 'No games scheduled.'}
               </p>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4">
                 {wk.games.map((g) => (
                   <ScoreCard
                     key={g.id}
@@ -57,7 +56,6 @@ export default function ScoresPage() {
                     standing={(u) => entering.find((r) => r.userId === u)}
                   />
                 ))}
-                <WeekScores week={wk} managers={season.managers} year={season.year} live={isLive} />
               </div>
             )}
           </div>

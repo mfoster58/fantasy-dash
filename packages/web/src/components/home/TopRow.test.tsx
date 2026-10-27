@@ -83,6 +83,8 @@ describe('GameBanner links and ranks', () => {
     const panels = container.querySelectorAll('[data-testid="banner-photo"]');
     expect(panels).toHaveLength(2);
     panels.forEach((p) => expect(p).toHaveClass('pointer-events-none'));
+    // the names and scores stay out of the stacking order so a click on them reaches the box score link
+    expect(container.querySelector('[data-testid="banner-body"]')).not.toHaveClass('relative');
   });
   it('puts the manager on their own line and record, rank and streak on the line below', () => {
     const s = league();

@@ -6,7 +6,7 @@ import ErrorPage from './pages/ErrorPage';
 import HomePage from './pages/HomePage';
 import BoxScorePage from './pages/BoxScorePage';
 import ScoresPage from './pages/ScoresPage';
-import StandingsPage from './pages/StandingsPage';
+import StandingsPage, { type StandingsData } from './pages/StandingsPage';
 import H2HPage from './pages/H2HPage';
 import HistoryPage from './pages/HistoryPage';
 import SeasonReviewPage from './pages/SeasonReviewPage';
@@ -22,6 +22,14 @@ import PlayerPage, { type PlayerPageData } from './pages/PlayerPage';
 import { isRostered } from './lib/player/coverage';
 import { mergeSeasons } from './lib/playerdb/merge';
 import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason, hasCharts, loadCharts } from './data/load';
+
+/** The season, plus the last finished one before it when the season's bracket isn't set yet: its bracket shows where each seed goes. */
+export async function standingsLoader(args: LoaderFunctionArgs): Promise<StandingsData> {
+  const season = await seasonLoader(args);
+  if (season.brackets.winners.some((g) => g.home !== null)) return { season, template: null };
+  const prior = history.seasons.filter((s) => s.year < season.year && s.status === 'complete').map((s) => s.year).sort((a, b) => b - a)[0];
+  return { season, template: prior === undefined ? null : await loadSeason(prior) };
+}
 
 export async function seasonLoader({ params }: LoaderFunctionArgs) {
   const year = Number(params.season);
@@ -111,7 +119,7 @@ export const routes: RouteObject[] = [
       { path: 'scores/:season/:week', loader: seasonLoader, element: <ScoresPage /> },
       { path: 'scores/:season/:week/:matchupId', loader: seasonLoader, element: <BoxScorePage /> },
       { path: 'standings', loader: () => redirect(`/standings/${currentSeason.year}`) },
-      { path: 'standings/:season', loader: seasonLoader, element: <StandingsPage /> },
+      { path: 'standings/:season', loader: standingsLoader, element: <StandingsPage /> },
       { path: 'teams', loader: () => redirect(`/teams/${currentSeason.year}`) },
       { path: 'teams/:season', loader: topTeamLoader },
       { path: 'teams/:season/:userId', loader: teamsLoader, element: <TeamPage /> },
