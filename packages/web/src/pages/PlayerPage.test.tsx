@@ -44,6 +44,11 @@ describe('PlayerPage', () => {
     mount('k1');
     expect(screen.queryByRole('link', { name: 'Compare' })).toBeNull();
   });
+  it("the header shows this season's position rank and the team banner", () => {
+    mount('w1');
+    expect(screen.getByTestId('tile-posrank')).toHaveTextContent('Pos rank · 2026WR1');
+    expect(screen.getByTestId('player-banner')).toHaveAttribute('data-team', 'MIA');
+  });
   it('kicker shows league sections only', () => {
     mount('k1');
     expect(screen.getByRole('heading', { level: 1, name: /Kick One/ })).toBeInTheDocument();

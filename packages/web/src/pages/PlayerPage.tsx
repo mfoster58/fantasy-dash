@@ -22,6 +22,7 @@ import { playerRecords } from '../lib/player/records';
 import { seasonTable, summaryOf } from '../lib/player/seasons';
 import type { Tab } from '../lib/playerdb/columns';
 import { flattenLines } from '../lib/playerLines';
+import { aggregate } from '../lib/playerdb/aggregate';
 import { compareHref, groupOf } from '../lib/compare/url';
 
 export interface PlayerPageData { id: PlayerId; seasons: Season[]; dbs: PlayerDb[]; charts: ChartDb[] }
@@ -42,6 +43,14 @@ export default function PlayerPage() {
   // gsis ids are stable across seasons: take any season's
   const gsis = useMemo(() => dbs.map((d) => d.players[id]?.gsisId).find((g): g is string => !!g) ?? null, [dbs, id]);
   const tab = DB_TABS[bio.pos];
+  // ids are stable across seasons: take any season's
+  const espnId = useMemo(() => dbs.map((d) => d.players[id]?.espnId).find((e): e is string => !!e) ?? null, [dbs, id]);
+  // his rank at his position by points in the current season's player database
+  const posRank = useMemo(() => {
+    const db = dbs.find((d) => d.year === (currentSeason?.year ?? 0));
+    const rank = db?.players[id] ? aggregate(db, 1, Math.max(1, db.throughWeek)).find((a) => a.id === id)?.posRank : null;
+    return db && rank ? { label: `${db.players[id].pos}${rank}`, year: db.year } : null;
+  }, [dbs, id]);
   const scoringFor = useCallback((y: number) => seasons.find((s) => s.year === y)?.scoring, [seasons]);
   const group = groupOf(bio.pos);
   const current = currentSeason?.year ?? 0;
@@ -55,7 +64,7 @@ export default function PlayerPage() {
 
   return (
     <div className="space-y-6">
-      <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} compareHref={group && newest ? compareHref({ season: newest, pos: group, ids: [id] }) : undefined} />
+      <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} compareHref={group && newest ? compareHref({ season: newest, pos: group, ids: [id] }) : undefined} espnId={espnId} posRank={posRank} />
       {table.rows.length > 0 && <SeasonTable table={table} pos={bio.pos} />}
       {tab && myDbs.length > 0 && <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />}
       {gsis && bio.pos === 'RB' && <RunLanes charts={charts} gsis={gsis} current={current} />}
