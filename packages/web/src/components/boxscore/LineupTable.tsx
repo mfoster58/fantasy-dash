@@ -30,6 +30,7 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
         <div className="truncate text-sm font-medium">
           <PlayerLink id={line.playerId}>{playerName(players, line.playerId)}</PlayerLink> <span className="text-xs font-normal text-muted">{playerTeam(players, line.playerId, seasonTeams)}</span>
         </div>
+        {game?.kind === 'live' && game.field && <FieldBar field={game.field} />}
         <div className="truncate text-xs text-muted">
           {(() => {
             const stats = statLine(pos, line.stats);
@@ -39,7 +40,6 @@ function PlayerCell({ line, players, seasonTeams, align, showPos = false, gameOf
             return <>{stats && <>{stats} · </>}<span data-testid="game-state" className={on ? 'font-semibold text-accent' : ''}>{label}</span></>;
           })()}
         </div>
-        {game?.kind === 'live' && game.field && <FieldBar field={game.field} />}
       </div>
       <div className="num shrink-0 text-right text-lg font-semibold leading-none">{fmtPts(line.points)}</div>
     </div>

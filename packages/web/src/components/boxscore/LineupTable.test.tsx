@@ -39,7 +39,7 @@ describe('LineupTable', () => {
     expect(screen.getAllByTestId('game-state').map((e) => e.textContent)).toEqual(['Q3 4:12', 'Final']);
   });
   it('highlights players whose game is on, with the ball\'s spot on a field bar and the logo of the team that has it', () => {
-    const field = { home: 'KC', away: 'BUF', possession: 'BUF', yardLine: 11, down: '1st & 10', redZone: true };
+    const field = { home: 'KC', away: 'BUF', possession: 'BUF', yardLine: 11, down: '1st & 10 at KC 11', redZone: true };
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}}
       gameOf={(id) => (id === 'a1' ? { kind: 'live', period: 4, clock: '11:21', halftime: false, field } : { kind: 'final' })} /></MemoryRouter>);
     const bars = screen.getAllByTestId('field-bar');
@@ -49,7 +49,14 @@ describe('LineupTable', () => {
     // the away end zone on the left, the home one on the right: KC 11 is 89% of the way across
     expect(within(bars[0]).getByTestId('ball')).toHaveStyle({ left: '89%' });
     expect(within(bars[0]).getByRole('img', { name: 'BUF ball' })).toHaveAttribute('src', expect.stringContaining('/buf.png'));
-    expect(bars[0]).toHaveTextContent('1st & 10');
+    expect(bars[0]).toHaveTextContent('1st & 10 at KC 11');
+    // yard lines every 10 yards between the goal lines
+    expect(within(bars[0]).getAllByTestId('yard-line')).toHaveLength(9);
+    // right under the name, above the stat line
+    const name = screen.getByText('Alpha One');
+    const state = screen.getAllByTestId('game-state')[0];
+    expect(name.compareDocumentPosition(bars[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bars[0].compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
   it('shows no game state outside the live week', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);

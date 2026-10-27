@@ -10,7 +10,7 @@ export interface Field {
   possession: string | null;
   /** yards from the home team's goal line, 0-100 */
   yardLine: number | null;
-  /** "1st & 10" */
+  /** "1st & 10 at PHI 44" */
   down: string | null;
   redZone: boolean;
 }
@@ -42,7 +42,7 @@ interface EspnEvent {
   status?: { period?: number; displayClock?: string; type?: { state?: string; name?: string } };
   competitions?: {
     competitors?: { homeAway?: string; team?: { id?: string; abbreviation?: string } }[];
-    situation?: { possession?: string; yardLine?: number; shortDownDistanceText?: string; isRedZone?: boolean };
+    situation?: { possession?: string; yardLine?: number; downDistanceText?: string; shortDownDistanceText?: string; isRedZone?: boolean };
   }[];
 }
 
@@ -57,7 +57,7 @@ function readField(comp: NonNullable<EspnEvent['competitions']>[number] | undefi
     home: normTeam(home), away: normTeam(away),
     possession: has ? normTeam(has) : null,
     yardLine: typeof s.yardLine === 'number' ? s.yardLine : null,
-    down: s.shortDownDistanceText || null,
+    down: s.downDistanceText || s.shortDownDistanceText || null,
     redZone: !!s.isRedZone,
   };
 }
