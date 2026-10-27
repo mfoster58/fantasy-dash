@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { SIDES, type ChartDb, type TargetFilter, type Zone } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
+import { CHART_CONTROLS, type ChartControl } from '../../lib/charts/controls';
 import { heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { TARGET_SPEC } from '../../lib/charts/specs';
 import { ChartCard, Seg, Sidelines, useChartSeason, useHot } from './Field';
 
-const FILTERS: [TargetFilter, string][] = [['all', 'All'], ['pa', 'Play-action'], ['nopa', 'No play-action'], ['motion', 'Motion'], ['screen', 'Screen'], ['blitz', 'vs blitz'], ['contested', 'Contested']];
+const FILTERS = CHART_CONTROLS.targets.filters as [TargetFilter, string][];
 const FTN_FILTERS = FILTERS.map(([k]) => k).filter((k) => k !== 'all');
-const METRICS: [string, string][] = [['share', 'Target share'], ['catch', 'Catch %'], ['ypt', 'Yds/target'], ['epa', 'EPA/target']];
+const METRICS = CHART_CONTROLS.targets.metrics;
 /** depth range in yards for each band, to scale: 7 behind the line to 35 past it */
 const RANGE: Record<string, [number, number]> = { deep: [20, 35], mid: [10, 20], short: [0, 10], blos: [-7, 0] };
 const BAND_LABEL: Record<string, string> = { deep: '20+ yds', mid: '10–19', short: '0–9', blos: 'Behind the line' };
@@ -16,12 +17,13 @@ const Y = (v: number) => TOP + (35 - v) * YD, H = Y(-7) + 8;
 export const FTN_CREDIT = 'Data: FTN Data via nflverse';
 
 /** Where his targets went, by depth and side, with FTN play filters; every zone's number is always shown. Sits beside the route tree. */
-export default function TargetMap({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(TARGET_SPEC, c, gsis), current);
+export default function TargetMap({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: ChartControl }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(TARGET_SPEC, c, gsis), current, control?.year);
   const [picked, setFilter] = useState<TargetFilter>('all');
   const noFtn = !!db && !db.ftn;
-  const filter: TargetFilter = noFtn ? 'all' : picked;
-  const [metric, setMetric] = useState('share');
+  const filter: TargetFilter = noFtn ? 'all' : (control?.filter as TargetFilter | undefined) ?? picked;
+  const [metricPicked, setMetric] = useState('share');
+  const metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(TARGET_SPEC, db, gsis, filter, metric) ?? [] : []), [db, gsis, filter, metric]);
   if (!years.length) return null;
@@ -34,7 +36,7 @@ export default function TargetMap({ charts, gsis, current = 0 }: { charts: Chart
   const uid = `tg-${year}`;
 
   return (
-    <ChartCard id="chart-targets" title="Target map" years={years} year={year} onYear={setYear} empty={empty}
+    <ChartCard id={control ? `chart-targets-${gsis}` : 'chart-targets'} bare={!!control} title="Target map" years={years} year={year} onYear={setYear} empty={empty}
       controls={<>
         <Seg label="Plays" options={FILTERS} value={filter} onChange={setFilter} disabled={noFtn ? FTN_FILTERS : []} disabledTitle="No FTN charting for this season" />
         <Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} />

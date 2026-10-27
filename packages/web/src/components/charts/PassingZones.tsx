@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { SIDES, type ChartDb, type Pocket, type Zone } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
+import { CHART_CONTROLS, type ChartControl } from '../../lib/charts/controls';
 import { heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { SPLIT_SPEC, ZONE_SPEC } from '../../lib/charts/specs';
 import { ChartCard, useChartSeason, Chevrons, Seg, Sidelines, useHot } from './Field';
 
-const METRICS: [string, string][] = [['share', 'Throw share'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['epa', 'EPA/att'], ['cpoe', 'CPOE']];
-const POCKETS: [Pocket, string][] = [['all', 'All'], ['clean', 'Clean pocket'], ['pressured', 'Pressured']];
+const METRICS = CHART_CONTROLS.zones.metrics;
+const POCKETS = CHART_CONTROLS.zones.filters as [Pocket, string][];
 /** depth range in yards for each band, to scale: 7 behind the line to 35 past it */
 const RANGE: Record<string, [number, number]> = { deep: [20, 35], mid: [10, 20], short: [0, 10], blos: [-7, 0] };
 const BAND_LABEL: Record<string, string> = { deep: '20+ yds', mid: '10–19', short: '0–9', blos: 'Behind the line' };
@@ -15,13 +16,14 @@ const Y = (v: number) => TOP + (35 - v) * YD, H = Y(-7) + 8;
 /** the tiles' stat for each metric: comp and ypa match, the rest show EPA per dropback */
 const TILE: Record<string, string> = { share: 'epa', cpoe: 'epa', epa: 'epa', comp: 'comp', ypa: 'ypa' };
 
-export default function PassingZones({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ZONE_SPEC, c, gsis), current);
+export default function PassingZones({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: ChartControl }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ZONE_SPEC, c, gsis), current, control?.year);
   const [picked, setPocket] = useState<Pocket>('all');
   // without participation there is no pressure data: only All
   const noPocket = !!db && !db.participation;
-  const pocket: Pocket = noPocket ? 'all' : picked;
-  const [metric, setMetric] = useState('share');
+  const pocket: Pocket = noPocket ? 'all' : (control?.filter as Pocket | undefined) ?? picked;
+  const [metricPicked, setMetric] = useState('share');
+  const metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(ZONE_SPEC, db, gsis, pocket, metric) ?? [] : []), [db, gsis, pocket, metric]);
   const splits = useMemo(() => (db ? chartItems(SPLIT_SPEC, db, gsis, 'all', TILE[metric]) ?? [] : []), [db, gsis, metric]);
@@ -36,7 +38,7 @@ export default function PassingZones({ charts, gsis, current = 0 }: { charts: Ch
   const uid = `zg-${year}`;
 
   return (
-    <ChartCard id="chart-zones" title="Passing zones" years={years} year={year} onYear={setYear} empty={empty}
+    <ChartCard id={control ? `chart-zones-${gsis}` : 'chart-zones'} bare={!!control} title="Passing zones" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Pocket" options={POCKETS} value={pocket} onChange={setPocket} disabled={noPocket ? ['clean', 'pressured'] : []} disabledTitle="No pressure data for this season yet" /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{BAND_LABEL[hotItem.key.split('|')[0]]} {hotItem.key.split('|')[1]}</b> · {hotItem.counts[0]} att, {hotItem.counts[1]} comp, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD, {hotItem.counts[5]} INT · {Math.round(hotItem.share * 100)}% of his throws

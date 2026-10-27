@@ -23,9 +23,11 @@ export function useHot(): [string | null, (key: string) => HotBind] {
  * The seasons a card offers: his chart seasons, newest first, led by the current season while its data isn't out yet.
  * `db` is undefined for a season without data; the card then draws greyed out with a note.
  */
-export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number) {
+/** `fixed`: the compare page's season; the card then shows only that one. */
+export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number, fixed?: number) {
   const dataYears = charts.filter(has).map((c) => c.year).sort((a, b) => b - a);
   const [picked, setYear] = useState<number | null>(null);
+  if (fixed !== undefined) return { years: [fixed], year: fixed, setYear, db: dataYears.includes(fixed) ? charts.find((c) => c.year === fixed) : undefined, latest: dataYears[0] ?? 0 };
   const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
   // a pick from another player's seasons falls back to this one's first
   const year = picked !== null && years.includes(picked) ? picked : years[0] ?? 0;
@@ -48,8 +50,10 @@ export function Seg<T extends string>({ label, options, value, onChange, disable
   );
 }
 
-export function ChartCard({ id, title, years, year, onYear, controls, tip, legend, children, empty = null }: {
+export function ChartCard({ id, title, years, year, onYear, controls, tip, legend, children, empty = null, bare = false }: {
   id: string; title: string; years: number[]; year: number; onYear: (y: number) => void; controls: ReactNode; tip: ReactNode; legend: ReactNode; children: ReactNode;
+  /** controlled from outside: no season picker and no controls */
+  bare?: boolean;
   /** a season with no data yet: the chart greys out under this note */
   empty?: { title: string; body: string } | null;
 }) {
@@ -58,9 +62,9 @@ export function ChartCard({ id, title, years, year, onYear, controls, tip, legen
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 pb-2 pt-3">
         <div className="flex items-center gap-3">
           <h2 id={id} className="text-sm font-semibold uppercase tracking-wide">{title}</h2>
-          <SeasonPicker years={years} value={year} onChange={(v) => { if (v !== 'all') onYear(v); }} />
+          {!bare && <SeasonPicker years={years} value={year} onChange={(v) => { if (v !== 'all') onYear(v); }} />}
         </div>
-        <div className="flex flex-wrap items-center gap-2">{controls}</div>
+        {!bare && <div className="flex flex-wrap items-center gap-2">{controls}</div>}
       </div>
       <div className="relative">
         <div className={empty ? 'pointer-events-none opacity-30 grayscale' : ''}>{children}</div>

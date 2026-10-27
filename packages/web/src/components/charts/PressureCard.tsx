@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { ChartDb, Split } from '@fantasy-dash/core';
 import { chartItems, hasChart } from '../../lib/charts/rank';
+import { CHART_CONTROLS, type ChartControl } from '../../lib/charts/controls';
 import { ordinal, pctColor } from '../../lib/charts/scale';
 import { SPLIT_GROUPS, SPLIT_SPEC } from '../../lib/charts/specs';
 import { ChartCard, useChartSeason, Seg, useHot } from './Field';
 
-const METRICS: [string, string][] = [['epa', 'EPA/dropback'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['sack', 'Sack %']];
+const METRICS = CHART_CONTROLS.pressure.metrics;
 
-export default function PressureCard({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPLIT_SPEC, c, gsis), current);
-  const [metric, setMetric] = useState('epa');
+export default function PressureCard({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: ChartControl }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPLIT_SPEC, c, gsis), current, control?.year);
+  const [metricPicked, setMetric] = useState('epa');
+  const metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(SPLIT_SPEC, db, gsis, 'all', metric) ?? [] : []), [db, gsis, metric]);
   if (!years.length) return null;
@@ -37,7 +39,7 @@ export default function PressureCard({ charts, gsis, current = 0 }: { charts: Ch
   };
 
   return (
-    <ChartCard id="chart-pressure" title="Under pressure & vs coverage" years={years} year={year} onYear={setYear} empty={empty}
+    <ChartCard id={control ? `chart-pressure-${gsis}` : 'chart-pressure'} bare={!!control} title="Under pressure & vs coverage" years={years} year={year} onYear={setYear} empty={empty}
       controls={<Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} />}
       tip={hotItem ? <>
         {hotItem.counts[0]} dropbacks, {hotItem.counts[1]} att, {hotItem.counts[2]} comp, {hotItem.counts[3]} yds, {hotItem.counts[5]} sacks

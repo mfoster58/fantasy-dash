@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ChartDb, Coverage, Route } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
+import { CHART_CONTROLS, type ChartControl } from '../../lib/charts/controls';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { ROUTE_LABEL, ROUTE_SPEC, THROW_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
@@ -22,20 +23,21 @@ const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'en
   SCREEN: { p: [[0, 0], [-1, -1.5], [-4, -2.2]], a: 'end' },
   SWING: { p: [[0, 0], [3, -1.5], [7, -0.5], [9, 1.5]], a: 'start', l: [9.8, -0.9] },
 };
-const METRICS: [string, string][] = [['share', 'Target share'], ['ypt', 'Yds/tgt'], ['catch', 'Catch %'], ['epa', 'EPA/tgt']];
+const METRICS = CHART_CONTROLS.routes.metrics;
 /** a QB's tree is his throws by the route his receiver ran */
-const QB_METRICS: [string, string][] = [['share', 'Throw share'], ['comp', 'Comp %'], ['ypa', 'Yds/att'], ['epa', 'EPA/att']];
-const COVERAGES: [Coverage, string][] = [['all', 'All'], ['man', 'vs Man'], ['zone', 'vs Zone']];
+const QB_METRICS = CHART_CONTROLS.throws.metrics;
+const COVERAGES = CHART_CONTROLS.routes.filters as [Coverage, string][];
 const W = 660, BAND = 30, OX = 365, OY = 272, SX = 12.5, SY = 10.2, H = 330;
 const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
 
-export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: ChartDb[]; gsis: string; pos: string; current?: number }) {
+export default function RouteTree({ charts, gsis, pos, current = 0, control }: { charts: ChartDb[]; gsis: string; pos: string; current?: number; control?: ChartControl }) {
   const qb = pos === 'QB';
   const SPEC = qb ? THROW_SPEC : ROUTE_SPEC;
   const words = qb ? { unit: 'att', vol: 'throws', got: 'completions', of: 'his throws' } : { unit: 'tgt', vol: 'targets', got: 'catches', of: 'his targets' };
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPEC, c, gsis), current);
-  const [cov, setCov] = useState<Coverage>('all');
-  const [metric, setMetric] = useState('share');
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPEC, c, gsis), current, control?.year);
+  const [covPicked, setCov] = useState<Coverage>('all');
+  const [metricPicked, setMetric] = useState('share');
+  const cov = (control?.filter as Coverage | undefined) ?? covPicked, metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(SPEC, db, gsis, cov, metric) ?? [] : []), [db, gsis, cov, metric]);
   if (!years.length) return null;
@@ -51,7 +53,7 @@ export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: 
   const marks = [0, 5, 10, 15, 20].map((v) => ({ y: Y(v), label: v === 0 ? 'LOS' : `+${v}` }));
 
   return (
-    <ChartCard id="chart-routes" title="Route tree" years={years} year={year} onYear={setYear} empty={empty}
+    <ChartCard id={control ? `chart-routes-${gsis}` : 'chart-routes'} bare={!!control} title="Route tree" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Coverage" options={COVERAGES} value={cov} onChange={setCov} /><Seg label="Metric" options={qb ? QB_METRICS : METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{ROUTE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} {words.vol}, {hotItem.counts[1]} {words.got}, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD

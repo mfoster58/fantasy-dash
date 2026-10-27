@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Box, ChartDb, Lane } from '@fantasy-dash/core';
 import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
+import { CHART_CONTROLS, type ChartControl } from '../../lib/charts/controls';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { LANE_LABEL, LANE_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
@@ -13,14 +14,15 @@ const GEO: Record<Lane, { gap: number; tip: [number, number] }> = {
   RG: { gap: 21, tip: [78, 128] }, RT: { gap: 62, tip: [165, 78] }, RE: { gap: 158, tip: [245, 150] },
 };
 const LINE: [string, number, boolean][] = [['TE', -118, true], ['LT', -82, false], ['LG', -41, false], ['C', 0, false], ['RG', 41, false], ['RT', 82, false], ['TE', 118, true]];
-const METRICS: [string, string][] = [['share', 'Carry share'], ['ypc', 'Yds/carry'], ['succ', 'Success %'], ['epa', 'EPA/carry']];
-const BOXES: [Box, string][] = [['all', 'All'], ['light', 'Light box (≤6)'], ['heavy', 'Heavy box (7+)']];
+const METRICS = CHART_CONTROLS.lanes.metrics;
+const BOXES = CHART_CONTROLS.lanes.filters as [Box, string][];
 const W = 700, BAND = 30, CX = 350, LOS = 232, RB_Y = 330, H = 370;
 
-export default function RunLanes({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(LANE_SPEC, c, gsis), current);
-  const [box, setBox] = useState<Box>('all');
-  const [metric, setMetric] = useState('share');
+export default function RunLanes({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: ChartControl }) {
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(LANE_SPEC, c, gsis), current, control?.year);
+  const [boxPicked, setBox] = useState<Box>('all');
+  const [metricPicked, setMetric] = useState('share');
+  const box = (control?.filter as Box | undefined) ?? boxPicked, metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(LANE_SPEC, db, gsis, box, metric) ?? [] : []), [db, gsis, box, metric]);
   if (!years.length) return null;
@@ -32,7 +34,7 @@ export default function RunLanes({ charts, gsis, current = 0 }: { charts: ChartD
   const hotItem = items.find((i) => i.key === hot);
 
   return (
-    <ChartCard id="chart-lanes" title="Run lanes" years={years} year={year} onYear={setYear} empty={empty}
+    <ChartCard id={control ? `chart-lanes-${gsis}` : 'chart-lanes'} bare={!!control} title="Run lanes" years={years} year={year} onYear={setYear} empty={empty}
       controls={<><Seg label="Box" options={BOXES} value={box} onChange={setBox} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{LANE_LABEL[hotItem.key]}</b> · {hotItem.counts[0]} carries, {hotItem.counts[1]} yds, {hotItem.counts[4]} TD · {Math.round(hotItem.share * 100)}% of his carries
