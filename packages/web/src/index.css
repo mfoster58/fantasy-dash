@@ -24,6 +24,11 @@
   --slate: #8fd0ff;
   --coral: #ff8a6b;
   --dim: #4a5666;
+  /* compare-page player colours, slots A–D */
+  --slot-0: #5aa9e6;
+  --slot-1: #e98a5b;
+  --slot-2: #b18be8;
+  --slot-3: #e5c15a;
   --silver: #b4bcc8;
   --bronze: #c98a4b;
   --pos-QB: #e45d5d;
@@ -47,6 +52,10 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
+  --slot-0: #2a7fc4;
+  --slot-1: #c5612e;
+  --slot-2: #7f55c9;
+  --slot-3: #a8820f;
   --bg: #f3f5f8;
   --surface: #ffffff;
   --surface-2: #e9edf2;

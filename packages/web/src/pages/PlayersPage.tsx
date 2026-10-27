@@ -3,6 +3,7 @@ import { useLoaderData, useNavigate, useSearchParams } from 'react-router';
 import type { PlayerDb, Season } from '@fantasy-dash/core';
 import PlayerDbToolbar from '../components/players/db/PlayerDbToolbar';
 import PlayerDbTable, { PAGE, useCollapsedGroups } from '../components/players/db/PlayerDbTable';
+import PlayersTabs from '../components/compare/PlayersTabs';
 import SeasonPicker from '../components/SeasonPicker';
 import { history } from '../data/load';
 import { aggregate } from '../lib/playerdb/aggregate';
@@ -24,7 +25,7 @@ export default function PlayersPage() {
   if (!db) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-semibold tracking-tight">Players</h1><SeasonPicker years={years} value={season.year} onChange={onYear} allTime /></div>
+        <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight">Players</h1><PlayersTabs active="database" season={season.year} /></div><SeasonPicker years={years} value={season.year} onChange={onYear} allTime /></div>
         <p className="card px-4 py-6 text-sm text-muted">No player data yet for {season.year}</p>
       </div>
     );
@@ -56,7 +57,7 @@ function Loaded({ season, db, spans, years, onYear }: { season: Season; db: Play
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Players</h1>
+        <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight">Players</h1><PlayersTabs active="database" season={season.year} /></div>
         <p className="text-sm text-muted">Showing {shown} of {aggs.length} · {range}{db.routesReal ? '' : ' · routes estimated'}</p>
       </div>
       <PlayerDbToolbar state={state} onChange={onChange} years={years} year={spans ? 'all' : db.year} onYear={onYear} throughWeek={db.throughWeek} playoffAt={season.playoffWeekStart} managers={managerList} teams={teams} />

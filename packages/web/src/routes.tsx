@@ -18,10 +18,11 @@ import StatsPlayersPage, { type StatsPlayersData } from './pages/StatsPlayersPag
 import TeamPage from './pages/TeamPage';
 import ManagerPage from './pages/ManagerPage';
 import PlayersPage from './pages/PlayersPage';
+import ComparePage, { type CompareData } from './pages/ComparePage';
 import PlayerPage, { type PlayerPageData } from './pages/PlayerPage';
 import { isRostered } from './lib/player/coverage';
 import { mergeSeasons } from './lib/playerdb/merge';
-import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason, hasCharts, loadCharts } from './data/load';
+import { currentSeason, hasPlayerDb, history, loadAllSeasons, loadPlayerDb, loadSeason, hasCharts, loadCharts, hasSchedule, loadSchedule } from './data/load';
 
 /** The season, plus the last finished one before it when the season's bracket isn't set yet: its bracket shows where each seed goes. */
 export async function standingsLoader(args: LoaderFunctionArgs): Promise<StandingsData> {
@@ -64,6 +65,18 @@ export async function playersLoader({ params }: LoaderFunctionArgs) {
   if (!history.seasons.some((s) => s.year === year)) throw new Response(`No season ${params.season}`, { status: 404 });
   const [season, db] = await Promise.all([loadSeason(year), hasPlayerDb(year) ? loadPlayerDb(year) : Promise.resolve(null)]);
   return { season, db };
+}
+
+export async function compareLoader({ request }: LoaderFunctionArgs): Promise<CompareData> {
+  const years = history.seasons.map((s) => s.year).filter(hasPlayerDb);
+  const asked = Number(new URL(request.url).searchParams.get('season'));
+  const season = years.includes(asked) ? asked : Math.max(...years);
+  const [db, chart, schedule] = await Promise.all([
+    hasPlayerDb(season) ? loadPlayerDb(season) : Promise.resolve(null),
+    hasCharts(season) ? loadCharts(season) : Promise.resolve(null),
+    hasSchedule(season) ? loadSchedule(season) : Promise.resolve(null),
+  ]);
+  return { years, season, db, chart, schedule };
 }
 
 export async function playerLoader({ params }: LoaderFunctionArgs): Promise<PlayerPageData> {
@@ -126,6 +139,7 @@ export const routes: RouteObject[] = [
       { path: 'managers', loader: () => redirect(`/managers/${history.allTime[0].userId}`) },
       { path: 'managers/:userId', loader: () => loadAllSeasons(), element: <ManagerPage /> },
       { path: 'players', loader: () => redirect(`/players/${currentSeason.year}`) },
+      { path: 'players/compare', loader: compareLoader, element: <ComparePage /> },
       { path: 'players/:season', loader: playersLoader, element: <PlayersPage /> },
       { path: 'player/:id', loader: playerLoader, element: <PlayerPage /> },
       ...Object.entries(RETIRED_PATHS).map(([path, to]) => ({ path, loader: () => redirect(to) })),
