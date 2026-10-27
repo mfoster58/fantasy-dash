@@ -4,7 +4,7 @@ import { defenseRanks } from '../matchups/difficulty';
 export interface GameRow { week: number; opp: string; home: boolean | null; pts: number }
 export interface PlayerSummary {
   games: number; total: number; avg: number | null; floor: number | null; ceil: number | null;
-  /** standard deviation over the average; null without games or with a zero average */
+  /** standard deviation over the average; null under three games or with an average of zero or less */
   cv: number | null;
   /** weekly points in 5-point bins, [0,5) … [40,45), then 45+; negatives in the first */
   bins: number[];
@@ -16,6 +16,7 @@ export interface PlayerSummary {
 export interface NextGame { week: number; opp: string | null; home: boolean; tone: 'easy' | 'mid' | 'hard' | null; rank: number | null; of: number | null }
 
 export const BIN_COUNT = 10;
+const MIN_CV_GAMES = 3;
 const LAST_WEEK = 18;
 
 const homeOf = (schedule: Schedule | null, week: number, team: string): boolean | null => {
@@ -38,7 +39,8 @@ export function playerSummary(db: PlayerDb, id: string, schedule: Schedule | nul
     games, total, avg,
     floor: games ? sorted[games >= 5 ? 1 : 0] : null,
     ceil: games ? sorted[games >= 5 ? games - 2 : games - 1] : null,
-    cv: avg && sd !== null ? sd / avg : null,
+    // a spread needs a few games, and a ratio over a zero or negative average means nothing
+    cv: games >= MIN_CV_GAMES && avg !== null && avg > 0 && sd !== null ? sd / avg : null,
     bins,
     last5: played.slice(-5).reverse().map((r) => ({ week: r.week, opp: r.opp ?? '', home: homeOf(schedule, r.week, r.team), pts: r.pts! })),
     team: rows[rows.length - 1]?.team ?? '',

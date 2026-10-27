@@ -33,7 +33,12 @@ describe('playerSummary', () => {
     expect(s.bins).toEqual([2, 1, 0, 0, 0, 0, 0, 0, 1, 2]);
   });
   it('cv is the standard deviation over the average', () => {
-    expect(playerSummary(dbWith([10, 20]), 'x', null).cv).toBeCloseTo(5 / 15, 5);
+    expect(playerSummary(dbWith([10, 20, 30]), 'x', null).cv).toBeCloseTo(Math.sqrt(200 / 3) / 20, 5);
+  });
+  it('cv needs three games and a positive average, so one game is never the steadiest', () => {
+    expect(playerSummary(dbWith([12]), 'x', null).cv).toBeNull();
+    expect(playerSummary(dbWith([10, 20]), 'x', null).cv).toBeNull();
+    expect(playerSummary(dbWith([-2, -1, 0]), 'x', null).cv).toBeNull();
   });
   it('no games: zeros and nulls, no NaN', () => {
     const s = playerSummary(dbWith([null, null]), 'x', null);

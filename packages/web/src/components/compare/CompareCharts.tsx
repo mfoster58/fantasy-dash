@@ -32,7 +32,11 @@ export default function CompareCharts({ group, players, chart }: { group: PosGro
   const [metric, setMetric] = useState(ctl.metrics[0][0]);
   const pick = (k: ChartKind) => { setKind(k); setFilter('all'); setMetric(CHART_CONTROLS[k].metrics[0][0]); };
   const m = ctl.metrics.some(([k]) => k === metric) ? metric : ctl.metrics[0][0];
-  const control: ChartControl = { year: chart?.year ?? 0, filter, metric: m };
+  // filters the season can't answer: pocket and coverage need participation, the play filters need FTN, the box split either
+  const needs = kind === 'targets' ? chart?.ftn : kind === 'lanes' ? chart?.participation || chart?.ftn : chart?.participation;
+  const disabled = chart && !needs ? ctl.filters.map(([k]) => k).filter((k) => k !== 'all') : [];
+  const f = disabled.includes(filter) ? 'all' : filter;
+  const control: ChartControl = { year: chart?.year ?? 0, filter: f, metric: m };
 
   return (
     <section aria-labelledby="cmp-charts" className="card space-y-3 p-4">
@@ -41,7 +45,7 @@ export default function CompareCharts({ group, players, chart }: { group: PosGro
         <Seg label="Chart" options={kinds.map((k) => [k, CHART_CONTROLS[k].label] as [ChartKind, string])} value={kind} onChange={pick} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {ctl.filterLabel && <Seg label={ctl.filterLabel} options={ctl.filters} value={filter} onChange={setFilter} />}
+        {ctl.filterLabel && <Seg label={ctl.filterLabel} options={ctl.filters} value={f} onChange={setFilter} disabled={disabled} disabledTitle={kind === 'targets' ? 'No FTN charting for this season' : 'No pressure or coverage data for this season yet'} />}
         <Seg label="Metric" options={ctl.metrics} value={m} onChange={setMetric} />
       </div>
       {!chart ? <p className="text-sm text-muted">No chart data for this season yet.</p> : (
