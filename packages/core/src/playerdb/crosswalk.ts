@@ -15,6 +15,8 @@ export interface NameHint { name: string; pos: string; team: string | null }
 export interface Crosswalk {
   gsisOf(sleeperId: string, hint: NameHint): string | null;
   pfrOf(sleeperId: string, hint: NameHint): string | null;
+  /** ESPN's id, for the transparent headshots; the id file only */
+  espnOf(sleeperId: string): string | null;
 }
 
 const present = (v: string | undefined): string | null => (v && v !== 'NA' ? v : null);
@@ -47,11 +49,13 @@ export function buildCrosswalk(
 ): Crosswalk {
   const gsis = new Map<string, string>();
   const pfr = new Map<string, string>();
+  const espn = new Map<string, string>();
   for (const r of ids) {
     const sid = present(r.sleeper_id);
     if (!sid) continue;
     const g = present(r.gsis_id); if (g) gsis.set(sid, g);
     const p = present(r.pfr_id); if (p) pfr.set(sid, p);
+    const e = present(r.espn_id); if (e) espn.set(sid, e);
   }
   const gsisNames = new NameIndex();
   for (const r of nflPlayers) if (r.gsis_id && r.display_name) gsisNames.add(r.display_name, r.position ?? '', r.latest_team ?? '', r.gsis_id);
@@ -60,5 +64,6 @@ export function buildCrosswalk(
   return {
     gsisOf: (sid, hint) => gsis.get(sid) ?? gsisNames.find(hint),
     pfrOf: (sid, hint) => pfr.get(sid) ?? pfrNames.find(hint),
+    espnOf: (sid) => espn.get(sid) ?? null,
   };
 }

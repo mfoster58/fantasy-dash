@@ -68,7 +68,7 @@ export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
         const gsisId = crosswalk.gsisOf(raw.player_id, hint);
         const meta = gsisId ? input.nflPlayers.get(gsisId) : undefined;
         p = {
-          id: raw.player_id, gsisId, pfrId: crosswalk.pfrOf(raw.player_id, hint), name: hint.name, pos, teams: [],
+          id: raw.player_id, gsisId, pfrId: crosswalk.pfrOf(raw.player_id, hint), espnId: crosswalk.espnOf(raw.player_id), name: hint.name, pos, teams: [],
           birthDate: meta?.birthDate ?? (/^\d{4}-\d{2}-\d{2}$/.test(dir?.birth_date ?? '') ? dir!.birth_date! : null),
           yearsExp: typeof dir?.years_exp === 'number' ? dir.years_exp : null,
           draft: meta?.draft ?? null, college: meta?.college ?? null, height: meta?.height ?? null, weight: meta?.weight ?? null,

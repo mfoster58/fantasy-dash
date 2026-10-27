@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { buildCrosswalk, normalizeName, normalizeTeam } from '../../src/playerdb/crosswalk';
 
 const ids = [
-  { sleeper_id: '12514', gsis_id: '00-0040129', pfr_id: 'EgbuEm01', name: 'Emeka Egbuka', position: 'WR', team: 'TBB' },
-  { sleeper_id: '4034', gsis_id: '00-0033280', pfr_id: 'NA', name: 'Christian McCaffrey', position: 'RB', team: 'SFO' },
-  { sleeper_id: 'NA', gsis_id: '00-0099999', pfr_id: 'NoboNo01', name: 'Nobody', position: 'QB', team: 'FA' },
+  { sleeper_id: '12514', gsis_id: '00-0040129', pfr_id: 'EgbuEm01', espn_id: '4890973', name: 'Emeka Egbuka', position: 'WR', team: 'TBB' },
+  { sleeper_id: '4034', gsis_id: '00-0033280', pfr_id: 'NA', espn_id: 'NA', name: 'Christian McCaffrey', position: 'RB', team: 'SFO' },
+  { sleeper_id: 'NA', gsis_id: '00-0099999', pfr_id: 'NoboNo01', espn_id: 'NA', name: 'Nobody', position: 'QB', team: 'FA' },
 ];
 const nflPlayers = [
   { gsis_id: '00-0033280', display_name: 'Christian McCaffrey', position: 'RB', latest_team: 'SF' },
@@ -42,6 +42,11 @@ describe('buildCrosswalk', () => {
   it('falls back to name and position only when that pair is unique', () => {
     expect(cw.gsisOf('999', { name: 'Odell Beckham', pos: 'WR', team: 'MIA' })).toBe('00-0012345');
     expect(cw.gsisOf('999', { name: 'Mike Williams', pos: 'WR', team: 'MIA' })).toBeNull();
+  });
+  it('ESPN ids come from the id file only', () => {
+    expect(cw.espnOf('12514')).toBe('4890973');
+    expect(cw.espnOf('4034')).toBeNull();
+    expect(cw.espnOf('999')).toBeNull();
   });
   it('returns null for a miss', () => {
     expect(cw.gsisOf('999', { name: 'Unknown Guy', pos: 'TE', team: 'KC' })).toBeNull();

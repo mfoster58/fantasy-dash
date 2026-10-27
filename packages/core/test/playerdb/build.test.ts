@@ -25,7 +25,7 @@ function input(over: Partial<PlayerDbInput> = {}): PlayerDbInput {
       dup: { player_id: 'dup', full_name: 'No Map', position: 'WR', team: 'TB' },
       q1: { player_id: 'q1', full_name: 'Quarter One', position: 'QB', team: 'TB' },
     },
-    crosswalk: { gsisOf: (id) => ({ w1: '00-1', w2: '00-2', q1: '00-q' }[id] ?? null), pfrOf: (id) => ({ w1: 'WideOn01' }[id] ?? null) },
+    crosswalk: { gsisOf: (id) => ({ w1: '00-1', w2: '00-2', q1: '00-q' }[id] ?? null), pfrOf: (id) => ({ w1: 'WideOn01' }[id] ?? null), espnOf: (id) => ({ w1: '4430878' }[id] ?? null) },
     byGsis: new Map([['00-1|1', { re_epa: 2.5, re_yac: 99, re_sep: 3.1 }], ['00-q|1', { pa_epa: 4, pa_sack: 7 }]]),
     byPfr: new Map([['WideOn01|1', { re_bt: 1, re_rtg: 100 }]]),
     nflPlayers: new Map([['00-1', { birthDate: '2002-10-14', draft: { year: 2025, round: 1, pick: 19 }, college: 'Ohio State', height: 73, weight: 205 }]]),
@@ -111,8 +111,8 @@ describe('buildPlayerDb', () => {
     expect(real.teamWeeks.find((t) => t.team === 'TB' && t.week === 1)!.passPlays).toBe(35);
   });
   it('builds player meta from the directory, the crosswalk and the nflverse biography', () => {
-    expect(db.players.w1).toEqual({ id: 'w1', gsisId: '00-1', pfrId: 'WideOn01', name: 'Wide One', pos: 'WR', teams: ['TB'], birthDate: '2002-10-14', yearsExp: 1, draft: { year: 2025, round: 1, pick: 19 }, college: 'Ohio State', height: 73, weight: 205 });
-    expect(db.players.w2).toMatchObject({ gsisId: '00-2', pfrId: null, draft: null, birthDate: null });
+    expect(db.players.w1).toEqual({ id: 'w1', gsisId: '00-1', pfrId: 'WideOn01', espnId: '4430878', name: 'Wide One', pos: 'WR', teams: ['TB'], birthDate: '2002-10-14', yearsExp: 1, draft: { year: 2025, round: 1, pick: 19 }, college: 'Ohio State', height: 73, weight: 205 });
+    expect(db.players.w2).toMatchObject({ gsisId: '00-2', pfrId: null, espnId: null, draft: null, birthDate: null });
     expect(db.players).not.toHaveProperty('k1');
     expect(db.players).not.toHaveProperty('inj');
   });

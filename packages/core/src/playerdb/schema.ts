@@ -14,7 +14,7 @@ const PlayerWeek = z.object({ id: z.string(), week: z.number().int().min(1), tea
   });
 
 const DbPlayer = z.object({
-  id: z.string(), gsisId: z.string().nullable(), pfrId: z.string().nullable(), name: z.string(), pos: Pos,
+  id: z.string(), gsisId: z.string().nullable(), pfrId: z.string().nullable(), espnId: z.string().nullable().optional(), name: z.string(), pos: Pos,
   teams: z.array(z.string()), birthDate: z.string().nullable(), yearsExp: z.number().nullable(),
   draft: z.object({ year: z.number(), round: z.number(), pick: z.number() }).nullable(),
   college: z.string().nullable(), height: z.number().nullable(), weight: z.number().nullable(),

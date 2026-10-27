@@ -30,6 +30,8 @@ export interface DbPlayer {
   id: PlayerId;
   gsisId: string | null;
   pfrId: string | null;
+  /** ESPN's id, for headshots; optional because files built before it lack it */
+  espnId?: string | null;
   name: string;
   pos: DbPos;
   /** every team he had a row for this season, in week order */
