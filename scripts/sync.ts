@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds, trimPlayerSeasons, weekTeams,
-  SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2,
+  SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2, espnScoreboardUrl, scoredThrough, weekFinished,
   type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type SleeperTransaction, type StatMap,
 } from '@fantasy-dash/core';
 import { leagueConfig } from '../league.config';
@@ -36,6 +36,23 @@ function pickIds(map: StatMap, ids: Set<string>): StatMap {
   const out: StatMap = {};
   for (const id of ids) if (map[id]) out[id] = map[id];
   return out;
+}
+
+/**
+ * Counts a week as scored the moment its last NFL game ends (ESPN), not a day or two later when Sleeper bumps
+ * last_scored_leg. Every sync re-reads every week, so later stat corrections still land.
+ */
+async function withFinishedWeek(league: SleeperLeague): Promise<SleeperLeague> {
+  if (league.status !== 'in_season' && league.status !== 'post_season') return league;
+  const leg = league.settings.last_scored_leg ?? 0;
+  const through = await scoredThrough(leg, async (week) => {
+    const r = await fetch(espnScoreboardUrl(Number(league.season), week));
+    if (!r.ok) throw new Error(`ESPN ${r.status}`);
+    return weekFinished(await r.json());
+  });
+  if (through === leg) return league;
+  log(`  ${league.season} week ${through}: every NFL game is final; counting it before Sleeper does (last_scored_leg ${leg})`);
+  return { ...league, settings: { ...league.settings, last_scored_leg: through } };
 }
 
 async function fetchSeason(client: SleeperClient, league: SleeperLeague, players: PlayerDirectory): Promise<Season> {
@@ -181,7 +198,7 @@ async function main() {
   const seasons: Season[] = [];
   for (const league of leagues) {
     log(`Season ${league.season} (${league.league_id}, ${league.status})`);
-    seasons.push(await fetchSeason(client, league, fullPlayers));
+    seasons.push(await fetchSeason(client, await withFinishedWeek(league), fullPlayers));
   }
   seasons.sort((a, b) => a.year - b.year);
 

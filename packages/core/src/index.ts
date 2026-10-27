@@ -15,3 +15,4 @@ export * from './playerdb';
 export * from './charts';
 
 export * from './schema';
+export * from './nflWeek';
