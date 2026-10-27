@@ -58,6 +58,14 @@ describe('LineupTable', () => {
     expect(name.compareDocumentPosition(bars[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(bars[0].compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+  it('puts a finished player\'s NFL result under his name, above the stats, in place of "Final"', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}}
+      gameOf={(id) => (id === 'a1' ? { kind: 'final', result: 'L 24-27 vs CLE' } : { kind: 'final' })} /></MemoryRouter>);
+    const result = screen.getByTestId('nfl-result');
+    expect(result).toHaveTextContent('L 24-27 vs CLE');
+    expect(screen.getByText('Alpha One').compareDocumentPosition(result) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByTestId('game-state').map((e) => e.textContent)).toEqual(['Final']); // only the player without a result
+  });
   it('shows no game state outside the live week', () => {
     render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
     expect(screen.queryByTestId('game-state')).not.toBeInTheDocument();

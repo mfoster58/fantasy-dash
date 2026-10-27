@@ -11,6 +11,14 @@ describe('gameFor', () => {
     expect(gameFor('SF', games)).toEqual({ kind: 'final' });
     expect(gameFor('MIA', games)).toEqual({ kind: 'upcoming', kickoff: '2026-10-25T17:00Z' });
   });
+  it('gives a finished game its result from the player\'s side: W/L/T, his team\'s score first, vs at home and @ away', () => {
+    const done = (home: string, away: string, hs: number, as: number): NflGame => ({ ...g([home, away], 'post', 4, '0:00'), home, score: { [home]: hs, [away]: as } });
+    const finals = [done('CLE', 'BAL', 27, 24), done('ARI', 'SEA', 16, 30), done('NYG', 'DAL', 20, 20)];
+    expect(gameFor('BAL', finals)).toEqual({ kind: 'final', result: 'L 24-27 @ CLE' });
+    expect(gameFor('CLE', finals)).toEqual({ kind: 'final', result: 'W 27-24 vs BAL' });
+    expect(gameFor('SEA', finals)).toEqual({ kind: 'final', result: 'W 30-16 @ ARI' });
+    expect(gameFor('NYG', finals)).toEqual({ kind: 'final', result: 'T 20-20 vs DAL' });
+  });
   it('is a bye for a team with no game or a player with no team, and unknown without ESPN', () => {
     expect(gameFor('NYJ', games)).toEqual({ kind: 'bye' });
     expect(gameFor('', games)).toEqual({ kind: 'bye' });

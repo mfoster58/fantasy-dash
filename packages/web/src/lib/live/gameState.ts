@@ -3,16 +3,25 @@ import type { Field, NflGame } from './espn';
 /** Where a player's NFL game stands. `unknown` when ESPN couldn't be read. */
 export type PlayerGame =
   | { kind: 'live'; period: number; clock: string; halftime: boolean; field?: Field }
-  | { kind: 'final' }
+  /** `result`: "W 30-16 @ ARI" from the player's side, when ESPN gave the score */
+  | { kind: 'final'; result?: string }
   | { kind: 'upcoming'; kickoff: string }
   | { kind: 'bye' }
   | { kind: 'unknown' };
+
+/** "W 30-16 @ ARI": win, loss or tie, the team's score first, vs at home and @ away. */
+function resultLine(team: string, g: NflGame): string | null {
+  const opp = g.teams.find((t) => t !== team);
+  if (!opp || !g.home || !g.score || g.score[team] === undefined || g.score[opp] === undefined) return null;
+  const [us, them] = [g.score[team], g.score[opp]];
+  return `${us > them ? 'W' : us < them ? 'L' : 'T'} ${us}-${them} ${g.home === team ? 'vs' : '@'} ${opp}`;
+}
 
 export function gameFor(team: string, games: NflGame[] | null): PlayerGame {
   if (!games) return { kind: 'unknown' };
   const g = team ? games.find((x) => x.teams.includes(team)) : undefined;
   if (!g) return { kind: 'bye' };
-  if (g.state === 'post') return { kind: 'final' };
+  if (g.state === 'post') { const result = resultLine(team, g); return result ? { kind: 'final', result } : { kind: 'final' }; }
   if (g.state === 'pre') return { kind: 'upcoming', kickoff: g.kickoff };
   return { kind: 'live', period: g.period, clock: g.clock, halftime: g.halftime, ...(g.field ? { field: g.field } : {}) };
 }

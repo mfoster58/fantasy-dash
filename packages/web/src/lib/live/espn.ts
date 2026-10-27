@@ -28,6 +28,10 @@ export interface NflGame {
   halftime: boolean;
   /** only while the game is on */
   field?: Field | null;
+  /** Sleeper code of the home team */
+  home?: string;
+  /** points by Sleeper team code */
+  score?: Record<string, number>;
 }
 
 /** ESPN codes that differ from Sleeper's */
@@ -41,9 +45,20 @@ interface EspnEvent {
   date?: string;
   status?: { period?: number; displayClock?: string; type?: { state?: string; name?: string } };
   competitions?: {
-    competitors?: { homeAway?: string; team?: { id?: string; abbreviation?: string } }[];
+    competitors?: { homeAway?: string; score?: string; team?: { id?: string; abbreviation?: string } }[];
     situation?: { possession?: string; yardLine?: number; downDistanceText?: string; shortDownDistanceText?: string; isRedZone?: boolean };
   }[];
+}
+
+function readScore(comp: NonNullable<EspnEvent['competitions']>[number] | undefined): Pick<NflGame, 'home' | 'score'> {
+  const teams = comp?.competitors ?? [];
+  const home = teams.find((c) => c.homeAway === 'home')?.team?.abbreviation;
+  const score: Record<string, number> = {};
+  for (const c of teams) {
+    const n = Number(c.score);
+    if (c.team?.abbreviation && c.score !== undefined && c.score !== '' && Number.isFinite(n)) score[normTeam(c.team.abbreviation)] = n;
+  }
+  return { ...(home ? { home: normTeam(home) } : {}), ...(Object.keys(score).length === 2 ? { score } : {}) };
 }
 
 function readField(comp: NonNullable<EspnEvent['competitions']>[number] | undefined): Field | null {
@@ -79,6 +94,7 @@ export function parseScoreboard(json: unknown): NflGame[] {
       kickoff: e.date,
       halftime: e.status?.type?.name === 'STATUS_HALFTIME',
       field: state === 'in' ? readField(comp) : null,
+      ...readScore(comp),
     });
   }
   return games;
