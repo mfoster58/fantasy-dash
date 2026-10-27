@@ -24,6 +24,8 @@ interface Props {
   standing?: (userId: UserId) => BannerStanding | undefined;
   /** the smaller banner, for cards set two across */
   compact?: boolean;
+  /** the week's game of the week: tagged and lit up */
+  featured?: boolean;
 }
 
 type Align = 'left' | 'right';
@@ -37,15 +39,15 @@ const effColor = (e: number) => {
   return `color-mix(in srgb, ${tone} 65%, transparent)`;
 };
 
-export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year, live, standing, compact = false }: Props) {
+export default function ScoreCard({ game, played, managers, players, seasonTeams, to, year, live, standing, compact = false, featured = false }: Props) {
   const [a, b] = game.sides;
   const view = gameView(game, live ?? null, played);
   const started = view.status !== 'upcoming';
   return (
-    <div className="card min-w-0 overflow-hidden transition-colors hover:border-accent">
+    <div data-featured={featured ? 'true' : undefined} className={`card min-w-0 overflow-hidden transition-colors hover:border-accent ${featured ? 'border-accent/70 shadow-[0_0_44px_-14px_var(--accent)] ring-1 ring-accent/50' : ''}`}>
       <GameBanner
         bare compact={compact} game={game} season={{ managers, year }} view={view} decimals={2} standing={standing}
-        title={game.tag ? fmtTag(game.tag) : null} to={to}
+        title={featured ? 'Game of the week' : game.tag ? fmtTag(game.tag) : null} to={to}
         linkLabel={`${teamName(a, managers[a.userId])} vs ${teamName(b, managers[b.userId])} box score`}
       />
       {played && !live && (

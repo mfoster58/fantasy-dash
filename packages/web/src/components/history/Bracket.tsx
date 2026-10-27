@@ -1,5 +1,6 @@
 import type { BracketGame, BracketKind, Manager, UserId } from '@fantasy-dash/core';
 import Avatar from '../Avatar';
+import { FinishIcon } from '../Icons';
 import { CoverLink, TeamLink } from '../NameLink';
 import { fmtTag } from '../../lib/format';
 
@@ -34,7 +35,7 @@ type Tone = 'plain' | 'gold' | 'coral';
 function Row({ id, points, won, crown, managers, year, seed, big }: {
   id: UserId | null; points: number | null; won: boolean; managers: Record<UserId, Manager>; year: number; seed?: number;
   /** "Champion" or "Last place", on the side that earned it */
-  crown: { label: string; tone: string } | null;
+  crown: { label: string; tone: string; kind: 'champion' | 'toilet' } | null;
   big: boolean;
 }) {
   const m = id ? managers[id] : undefined;
@@ -48,7 +49,7 @@ function Row({ id, points, won, crown, managers, year, seed, big }: {
         {id
           ? <TeamLink userId={id} year={year} className={`relative z-10 line-clamp-2 font-display font-bold uppercase leading-tight tracking-wide ${big ? 'text-lg' : 'text-[15px]'} ${won ? 'text-ink' : 'text-ink/85'}`}>{teamOf(id, managers)}</TeamLink>
           : <span className="block font-display text-[15px] font-semibold uppercase tracking-wide text-muted">TBD</span>}
-        {crown && <span className={`block font-display text-[11px] font-bold uppercase tracking-[0.16em] ${crown.tone}`}>{crown.label}</span>}
+        {crown && <span className={`flex items-center gap-1 font-display text-[11px] font-bold uppercase tracking-[0.16em] ${crown.tone}`}><FinishIcon kind={crown.kind} size="1.15em" />{crown.label}</span>}
       </span>
       {won && <span className="sr-only">winner</span>}
       <span className={`shrink-0 font-display tabular-nums ${big ? 'text-2xl' : 'text-lg'} ${won ? 'font-bold text-ink' : 'text-ink/80'}`}>{points === null ? '' : points.toFixed(2)}</span>
@@ -61,8 +62,8 @@ function Game({ g, kind, managers, year, seeds, tone = 'plain', title, icon, sid
   tone?: Tone;
   /** a heading inside the card: the final's name, or a placement game's */
   title?: string;
-  /** an emoji before the title */
-  icon?: string;
+  /** an icon before the title */
+  icon?: React.ReactNode;
   /** which way the line to the next round runs */
   side?: 'left' | 'right';
 }) {
@@ -71,7 +72,7 @@ function Game({ g, kind, managers, year, seeds, tone = 'plain', title, icon, sid
   const crown = (s: 'home' | 'away') => {
     const id = s === 'home' ? g.home : g.away;
     if (g.placement !== 1 || !id || g.advanced !== id) return null;
-    return kind === 'winners' ? { label: '🏆 Champion', tone: 'text-gold' } : { label: '🚽 Last place', tone: 'text-coral' };
+    return kind === 'winners' ? { label: 'Champion', tone: 'text-gold', kind: 'champion' as const } : { label: 'Last place', tone: 'text-coral', kind: 'toilet' as const };
   };
   const frame = tone === 'gold'
     ? 'border-gold/60 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--gold)_22%,var(--surface))_0%,var(--surface)_70%)] shadow-[0_0_40px_-12px_color-mix(in_srgb,var(--gold)_55%,transparent)]'
@@ -86,7 +87,7 @@ function Game({ g, kind, managers, year, seeds, tone = 'plain', title, icon, sid
       <div className={`relative isolate overflow-hidden rounded-xl border ${frame} ${g.gameId ? 'transition-colors hover:border-accent' : ''}`}>
         {g.gameId && <CoverLink to={`/scores/${year}/${g.week}/${matchupId}`} label={`${fmtTag(g.tag)}: ${teamOf(g.home, managers)} vs ${teamOf(g.away, managers)} box score`} />}
         {title && (
-          <div className={`px-3 pt-2.5 font-display font-bold uppercase leading-none tracking-[0.12em] ${tone === 'gold' ? 'text-xl text-gold' : tone === 'coral' ? 'text-xl text-coral' : 'text-xs text-muted'}`}>{icon && <span aria-hidden="true" className="mr-1.5">{icon}</span>}{title}</div>
+          <div className={`px-3 pt-2.5 font-display font-bold uppercase leading-none tracking-[0.12em] ${tone === 'gold' ? 'text-xl text-gold' : tone === 'coral' ? 'text-xl text-coral' : 'text-xs text-muted'}`}>{icon && <span className="mr-1.5 inline-flex align-[-0.1em]">{icon}</span>}{title}</div>
         )}
         <Row id={g.home} points={g.homePoints} won={wonBy(g, kind, 'home')} crown={crown('home')} managers={managers} year={year} seed={g.home ? seeds?.[g.home] : undefined} big={big} />
         <div className="mx-3 h-px bg-line/70" />
@@ -136,7 +137,7 @@ export default function Bracket({ games, kind, managers, year, seeds }: Props) {
           <div data-testid="bracket-center" className="flex flex-col">
             <ColumnTitle>{final ? (kind === 'winners' ? 'Final' : 'Final round') : ''}</ColumnTitle>
             <div className="flex flex-1 flex-col justify-center">
-              {final && <Game g={final} kind={kind} managers={managers} year={year} seeds={seeds} tone={center} icon={kind === 'winners' ? '🏆' : '🚽'} title={fmtTag(final.tag)} />}
+              {final && <Game g={final} kind={kind} managers={managers} year={year} seeds={seeds} tone={center} icon={<FinishIcon kind={kind === 'winners' ? 'champion' : 'toilet'} size="1em" />} title={fmtTag(final.tag)} />}
             </div>
           </div>
           <div data-testid="bracket-right" className="contents">

@@ -13,6 +13,7 @@ import { fmtTag } from '../lib/format';
 import { gameView } from '../lib/home/view';
 import { playerGames } from '../lib/live/gameState';
 import { useLive, useLiveStats } from '../lib/live/LiveProvider';
+import { useNflWeek } from '../lib/live/useNflWeek';
 import { playerTeam } from '../lib/players';
 
 export default function BoxScorePage() {
@@ -22,12 +23,15 @@ export default function BoxScorePage() {
   const synced = season.weeks[Number(weekParam) - 1];
   const isLiveWeek = !!synced && live.season?.year === season.year && live.week === synced.week;
   useLiveStats(isLiveWeek);
+  // any other week reads its NFL games once from ESPN, for each player's final score
+  const pastGames = useNflWeek(season.year, Number(weekParam), !!synced && !isLiveWeek);
   const status = synced ? weekStatus(season, synced, live) : null;
   const week = status?.week;
   const game = week?.games.find((g) => g.matchupId === Number(matchupId));
   if (!status || !week || !game) return <p className="text-muted">No such game.</p>;
   const outlook = status.outlookOf(game);
-  const gameOf = status.isLive ? playerGames((id) => playerTeam(players, id, season.playerTeams), live.games) : undefined;
+  const teamOf = (id: string) => playerTeam(players, id, season.playerTeams);
+  const gameOf = status.isLive ? playerGames(teamOf, live.games) : pastGames ? playerGames(teamOf, pastGames) : undefined;
 
   const [a, b] = game.sides;
   const series = history.h2h[h2hKey(a.userId, b.userId)];
@@ -52,7 +56,7 @@ export default function BoxScorePage() {
       {/* odds only while there's something left to decide; a final result is in the banner */}
       {outlook && outlook.status !== 'final' && <LiveOutlook outlook={outlook} />}
 
-      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} />
+      <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} played={week.played} />
 
       {week.played && (
         <div className="grid gap-4 lg:grid-cols-2">
