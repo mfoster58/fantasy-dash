@@ -6,7 +6,7 @@ export const NGS_RECEIVING_FIELDS: FieldMap = {
 };
 export const NGS_RUSHING_FIELDS: FieldMap = {
   efficiency: 'ru_eff', percent_attempts_gte_eight_defenders: 'ru_box8', avg_time_to_los: 'ru_tlos',
-  expected_rush_yards: 'ru_xyds', rush_yards_over_expected: 'ru_ryoe', rush_yards_over_expected_per_att: 'ru_ryoeAtt',
+  expected_rush_yards: 'ru_xyds', rush_yards_over_expected: 'ru_ryoe', rush_yards_over_expected_per_att: 'ru_ryoeAtt', rush_pct_over_expected: 'ru_pctOe',
 };
 export const NGS_PASSING_FIELDS: FieldMap = {
   avg_time_to_throw: 'pa_ttt', avg_intended_air_yards: 'pa_iay', avg_completed_air_yards: 'pa_cay', aggressiveness: 'pa_aggr',

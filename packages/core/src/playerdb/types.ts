@@ -14,7 +14,7 @@ export const PLAYER_WEEK_KEYS = [
   'ru_att', 'ru_yds', 'ru_td', 'ru_fd', 'ru_rz', 'ru_bt', 'ru_yac', 'ru_tfl', 'ru_40', 'ru_2pt',
   'ru_epa', 'ru_10', 'ru_20',
   'ru_ybc', 'ru_yacPfr',
-  'ru_xyds', 'ru_ryoe', 'ru_ryoeAtt', 'ru_eff', 'ru_box8', 'ru_tlos',
+  'ru_xyds', 'ru_ryoe', 'ru_ryoeAtt', 'ru_eff', 'ru_box8', 'ru_tlos', 'ru_pctOe',
   're_tgt', 're_rec', 're_yds', 're_td', 're_fd', 're_air', 're_yac', 're_drop', 're_rz', 're_20', 're_40', 're_2pt',
   're_epa', 're_racr', 're_tgtShare', 're_ayShare', 're_wopr',
   're_cush', 're_sep', 're_iay', 're_iayShare', 're_xyac', 're_yacoe',

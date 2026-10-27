@@ -25,7 +25,7 @@ export interface Agg {
 /** Per-game rates from NGS, PFR and Sleeper, averaged with these weights. */
 export const WEIGHTED: Partial<Record<PlayerWeekKey, PlayerWeekKey>> = {
   re_cush: 're_tgt', re_sep: 're_tgt', re_iay: 're_tgt', re_iayShare: 're_tgt', re_xyac: 're_rec', re_yacoe: 're_rec', re_rtg: 're_tgt',
-  ru_ryoeAtt: 'ru_att', ru_eff: 'ru_att', ru_box8: 'ru_att', ru_tlos: 'ru_att',
+  ru_ryoeAtt: 'ru_att', ru_eff: 'ru_att', ru_box8: 'ru_att', ru_tlos: 'ru_att', ru_pctOe: 'ru_att',
   pa_ttt: 'pa_att', pa_iay: 'pa_att', pa_cay: 'pa_att', pa_aggr: 'pa_att', pa_ays: 'pa_att', pa_xcmp: 'pa_att', pa_cpoe: 'pa_att', pa_rtg: 'pa_att',
 };
 /** Source rates the table recomputes from sums instead. */

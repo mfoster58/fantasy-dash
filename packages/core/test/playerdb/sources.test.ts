@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseCsv } from '../../src/playerdb/csv';
 import { nflverseTeamAirYards, nflverseWeekly } from '../../src/playerdb/sources/nflverse';
-import { NGS_RECEIVING_FIELDS, ngsWeekly } from '../../src/playerdb/sources/ngs';
+import { NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, ngsWeekly } from '../../src/playerdb/sources/ngs';
 import { PFR_REC_FIELDS, SNAP_FIELDS, pfrWeekly, snapCountTeamSnaps } from '../../src/playerdb/sources/pfr';
 import { nflPlayerMeta } from '../../src/playerdb/sources/players';
 
@@ -54,6 +54,13 @@ describe('ngsWeekly', () => {
     expect(wk1.re_yacoe).toBeCloseTo(1.176, 3);
     expect([...m.keys()].every((k) => k.startsWith(EGBUKA))).toBe(true);
     expect(ngsWeekly(fixture('ngs_receiving.csv'), 2025, NGS_RECEIVING_FIELDS).size).toBe(1);
+  });
+});
+
+describe('ngsWeekly rushing', () => {
+  it('maps the share of carries over expected', () => {
+    const m = ngsWeekly([{ season: '2026', season_type: 'REG', week: '1', player_gsis_id: '00-x', rush_pct_over_expected: '0.32' }], 2026, NGS_RUSHING_FIELDS);
+    expect(m.get('00-x|1')!.ru_pctOe).toBe(0.32);
   });
 });
 

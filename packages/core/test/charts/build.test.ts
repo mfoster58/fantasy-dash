@@ -268,3 +268,83 @@ describe('buildCharts: QB throws by route, and play-by-play by week', () => {
     expect(db.players.Q.plays!.weeks!['2'].qtr).toEqual([1, 1, 0, 0]);
   });
 });
+
+describe('buildCharts: grades and target maps', () => {
+  const tgt = (f: Row) => play({ pass_attempt: '1', sack: '0', receiver_player_id: 'W', passer_player_id: 'Q', posteam: 'AAA', ...f });
+  const carry = (f: Row) => play({ rush_attempt: '1', rusher_player_id: 'R', posteam: 'AAA', ...f });
+
+  it('grades: receiver sums, deep, money downs, catch over expected', () => {
+    const db = build([
+      tgt({ complete_pass: '1', receiving_yards: '25', epa: '1.5', success: '1', first_down: '1', cp: '0.4', yards_after_catch: '5', xyac_mean_yardage: '3', air_yards: '20', pass_location: 'left', down: '3', yardline_100: '40' }),
+      tgt({ complete_pass: '0', receiving_yards: '0', epa: '-0.5', success: '0', first_down: '0', cp: '0.8', air_yards: '12', pass_location: 'middle', down: '1', yardline_100: '12' }),
+      tgt({ complete_pass: '1', receiving_yards: '8', epa: '0.7', success: '1', first_down: '0', touchdown: '1', pass_touchdown: '1', td_team: 'AAA', cp: 'NA', yards_after_catch: '2', xyac_mean_yardage: 'NA', air_yards: '6', pass_location: 'right', down: '2', yardline_100: '8' }),
+    ], []);
+    expect(db.players.W.grades).toMatchObject({ tgt: 3, rec: 2, yds: 33, epa: 1.7, succ: 2, fd: 2, td: 1, cpN: 2, cpSum: 1.2, cpRec: 1, yacN: 1, yacOe: 2, deep: 1, deepRec: 1, deepYds: 25, deepEpa: 1.5, t3: 1, t3Conv: 1, rzTgt: 2, ezTgt: 1 });
+  });
+
+  it('grades: FTN rates count only FTN-covered targets', () => {
+    const a = tgt({ air_yards: '5', pass_location: 'left' }), b = tgt({ air_yards: '5', pass_location: 'left' });
+    const g = build([a, b], [], [ftnRow(a, { is_drop: 'TRUE', is_catchable_ball: 'TRUE' })]).players.W.grades!;
+    expect(g).toMatchObject({ tgt: 2, ftnTgt: 1, drops: 1, catchable: 1 });
+  });
+
+  it('grades: team red-zone share follows the games he played, across a trade', () => {
+    const g1 = { game_id: '2025_01_AAA_BBB', posteam: 'AAA', yardline_100: '10' };
+    const g2 = { game_id: '2025_02_CCC_DDD', posteam: 'CCC', yardline_100: '10', week: '2' };
+    const g3 = { game_id: '2025_03_CCC_EEE', posteam: 'CCC', yardline_100: '10', week: '3' };
+    const db = build([
+      tgt(g1), tgt({ ...g1, receiver_player_id: 'Z' }), tgt({ ...g1, receiver_player_id: 'Z' }),
+      tgt(g2), tgt({ ...g2, receiver_player_id: 'Z' }),
+      ...[1, 2, 3, 4, 5].map(() => tgt({ ...g3, receiver_player_id: 'Z' })),
+    ], []);
+    expect(db.players.W.grades).toMatchObject({ rzTgt: 2, teamRzTgt: 5 });
+  });
+
+  it('grades: QB dropbacks, deep, situational, legs and FTN keys', () => {
+    const a = play({ qb_dropback: '1', pass_attempt: '1', sack: '0', passer_player_id: 'Q', posteam: 'AAA', complete_pass: '1', passing_yards: '30', pass_touchdown: '1', touchdown: '1', td_team: 'AAA', epa: '2', success: '1', air_yards: '22', cpoe: '30', down: '3', first_down: '1', yardline_100: '15', qtr: '4', score_differential: '-3' });
+    const b = play({ qb_dropback: '1', pass_attempt: '1', sack: '1', passer_player_id: 'Q', posteam: 'AAA', yards_gained: '-7', epa: '-1.5', success: '0', down: '1', yardline_100: '50', qtr: '1', score_differential: '0' });
+    const c = play({ qb_dropback: '1', pass_attempt: '0', rush_attempt: '1', qb_scramble: '1', passer_player_id: 'Q', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '9', epa: '0.8', success: '1', first_down: '1', down: '2', yardline_100: '60', qtr: '2', score_differential: '0' });
+    const d = play({ rush_attempt: '1', rusher_player_id: 'Q', posteam: 'AAA', yards_gained: '3', epa: '0.3', first_down: '0' });
+    const g = build([a, b, c, d], [], [
+      ftnRow(a, { is_interception_worthy: 'FALSE', read_thrown: '1', is_catchable_ball: 'TRUE', is_play_action: 'TRUE', n_blitzers: '2', is_drop: 'FALSE' }),
+      ftnRow(b, { is_qb_fault_sack: 'TRUE', n_blitzers: '0', read_thrown: '0' }),
+    ]).players.Q.grades!;
+    expect(g).toMatchObject({
+      db: 3, dbEpa: 1.3, dbSucc: 2, att: 1, sacks: 1, sackYds: 7, passYds: 30, passTd: 1,
+      deepAtt: 1, deepCmp: 1, deepAttEpa: 2, deepCpoeSum: 30, deepCpoeN: 1,
+      t3Db: 1, t3DbConv: 1, rzDb: 1, rzTd: 1, q4Db: 1, q4Epa: 2, trailDb: 1, trailEpa: 2,
+      scr: 1, scrYds: 9, drun: 1, drunEpa: 0.3, rushFd: 1,
+      ftnDb: 2, ftnAtt: 1, readN: 1, firstRead: 1, catchableThrown: 1, faultSack: 1, paDb: 1, paEpa: 2, blitzDb: 1, blitzEpa: 2, noBlitzDb: 1, noBlitzEpa: -1.5,
+    });
+    expect(g.iw ?? 0).toBe(0);
+    expect(g.int ?? 0).toBe(0);
+  });
+
+  it('grades: rusher keys incl. box split and outside runs', () => {
+    const c1 = carry({ run_location: 'left', run_gap: 'end', yards_gained: '12', epa: '1', success: '1', first_down: '1', yardline_100: '30' });
+    const c2 = carry({ run_location: 'middle', yards_gained: '0', epa: '-0.4', success: '0', yardline_100: '4' });
+    const c3 = carry({ run_location: 'right', run_gap: 'tackle', yards_gained: '4', epa: '0.6', success: '1', touchdown: '1', rush_touchdown: '1', td_team: 'AAA', yardline_100: '4' });
+    const g = build([c1, c2, c3], [], [ftnRow(c1, { n_defense_box: '6', is_rpo: 'TRUE' }), ftnRow(c2, { n_defense_box: '8' })]).players.R.grades!;
+    expect(g).toMatchObject({ car: 3, carYds: 16, carEpa: 1.2, carSucc: 2, carFd: 2, explosive: 1, stuffed: 1, in10: 2, in5: 2, in5Td: 1, outside: 1, ftnCar: 2, boxN: 2, boxSum: 14, lightCar: 1, lightYds: 12, heavyCar: 1, heavyYds: 0, rpo: 1, teamIn10: 2 });
+  });
+
+  it('targets: zones by FTN filter; a target without an FTN row is only in all', () => {
+    const a = tgt({ air_yards: '5', pass_location: 'left', complete_pass: '1', receiving_yards: '7', epa: '0.5' });
+    const b = tgt({ air_yards: '25', pass_location: 'right' });
+    const t = build([a, b], [], [ftnRow(a, { is_play_action: 'TRUE' })]).players.W.targets!;
+    expect(t.all!['short|left']).toEqual([1, 1, 7, 0.5, 0]);
+    expect(t.all!['deep|right']![0]).toBe(1);
+    expect(t.pa!['short|left']![0]).toBe(1);
+    expect(t.pa!['deep|right']).toBeUndefined();
+    expect(t.nopa?.['short|left']).toBeUndefined();
+  });
+
+  it('old chart JSON without grades or targets still parses; new output parses', () => {
+    const a = tgt({ air_yards: '5', pass_location: 'left' });
+    const db = build([a], [], [ftnRow(a, { is_motion: 'TRUE' })]);
+    expect(() => ChartDbSchema.parse(db)).not.toThrow();
+    const old = JSON.parse(JSON.stringify(db));
+    for (const p of Object.values(old.players) as Record<string, unknown>[]) { delete p.grades; delete p.targets; }
+    expect(() => ChartDbSchema.parse(old)).not.toThrow();
+  });
+});

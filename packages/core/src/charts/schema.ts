@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LANES, ROUTES, RZ_KEYS, SPLITS, ZONES } from './types';
+import { GRADE_KEYS, LANES, ROUTES, RZ_KEYS, SPLITS, TARGET_FILTERS, ZONES } from './types';
 
 const tuple = (n: number) => z.array(z.number()).length(n);
 const table = <T extends readonly [string, ...string[]]>(keys: T, n: number) => z.record(z.enum(keys), tuple(n));
@@ -20,6 +20,8 @@ export const ChartDbSchema = z.object({
     zones: z.object({ all: table(ZoneEnum, 8), clean: table(ZoneEnum, 8), pressured: table(ZoneEnum, 8) }).optional(),
     splits: table(SPLITS, 6).optional(),
     throws: z.object({ all: table(ROUTES, 5), man: table(ROUTES, 5), zone: table(ROUTES, 5) }).optional(),
+    targets: z.record(z.enum(TARGET_FILTERS), table(ZoneEnum, 5)).optional(),
+    grades: z.record(z.enum(GRADE_KEYS), z.number()).optional(),
     plays: PlayCounts.extend({ weeks: z.record(PlayCounts).optional() }).optional(),
   })),
 });

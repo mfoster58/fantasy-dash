@@ -22,6 +22,30 @@ export type Pocket = 'all' | 'clean' | 'pressured';
 export const RZ_KEYS = ['ra', 'rb', 'rc', 'ta', 'tb', 'tc'] as const;
 export type RzKey = (typeof RZ_KEYS)[number];
 
+/** target-map filters, from FTN charting except all */
+export const TARGET_FILTERS = ['all', 'pa', 'nopa', 'motion', 'screen', 'blitz', 'contested'] as const;
+export type TargetFilter = (typeof TARGET_FILTERS)[number];
+
+/**
+ * Season sums behind the grade cards, by name. Receiver keys are per target; QB keys per dropback unless named;
+ * rusher keys per carry (scrambles excluded). ftn* count only plays FTN charted, and every FTN rate divides by them.
+ * teamRzTgt and teamIn10 are his teams' totals in the games he played for them.
+ */
+export const GRADE_KEYS = [
+  'tgt', 'rec', 'yds', 'epa', 'succ', 'fd', 'td', 'cpN', 'cpSum', 'cpRec', 'yacN', 'yacOe',
+  'deep', 'deepRec', 'deepYds', 'deepEpa', 't3', 't3Conv', 'rzTgt', 'ezTgt', 'teamRzTgt', 'teamIn10',
+  'ftnTgt', 'catchable', 'drops', 'contested', 'contestedRec', 'created', 'motionTgt', 'paTgt', 'screenTgt',
+  'db', 'dbEpa', 'dbSucc', 'att', 'sacks', 'sackYds', 'passYds', 'passTd', 'int',
+  'deepAtt', 'deepCmp', 'deepAttEpa', 'deepCpoeSum', 'deepCpoeN',
+  't3Db', 't3DbConv','rzDb', 'rzTd', 'q4Db', 'q4Epa', 'trailDb', 'trailEpa',
+  'scr', 'scrYds', 'drun', 'drunEpa', 'rushFd',
+  'ftnDb', 'ftnAtt', 'iw', 'readN', 'firstRead', 'throwaway', 'faultSack', 'catchableThrown', 'recDrops', 'paDb', 'paEpa', 'blitzDb', 'blitzEpa', 'noBlitzDb', 'noBlitzEpa',
+  'car', 'carYds', 'carEpa', 'carSucc', 'carFd', 'explosive', 'stuffed', 'in10', 'in5', 'in5Td', 'outside',
+  'ftnCar', 'boxN', 'boxSum', 'lightCar', 'lightYds', 'heavyCar', 'heavyYds', 'rpo',
+] as const;
+export type GradeKey = (typeof GRADE_KEYS)[number];
+export type GradeSums = Partial<Record<GradeKey, number>>;
+
 /**
  * A fixed-order tuple of sums.
  * route: targets, catches, yards, epa, tds
@@ -44,6 +68,10 @@ export interface ChartPlayer {
   splits?: Partial<Record<Split, Counts>>;
   /** a QB's throws by the route his receiver ran (same tuple as routes: attempts, completions, yards, epa, tds) */
   throws?: Record<Coverage, Partial<Record<Route, Counts>>>;
+  /** targets by zone for each target-map filter (same tuple as routes) */
+  targets?: Partial<Record<TargetFilter, Partial<Record<Zone, Counts>>>>;
+  /** season sums for the grade cards */
+  grades?: GradeSums;
   /** from play-by-play alone, so present for the current season too; `weeks` holds the same counts per week */
   plays?: PlayCounts & { weeks?: Record<string, PlayCounts> };
 }
