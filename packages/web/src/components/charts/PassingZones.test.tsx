@@ -1,11 +1,18 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { miniCharts } from '../../test/chartFixtures';
+import { miniCharts, targetCharts } from '../../test/chartFixtures';
 import PassingZones from './PassingZones';
 
 const card = () => screen.getByRole('region', { name: /Passing zones/ });
 const zone = (k: string) => card().querySelector(`[data-zone="${k}"]`)!;
 
 describe('PassingZones', () => {
+  it('without participation, Clean and Pressured are disabled and All shows zones', () => {
+    render(<PassingZones charts={[targetCharts()]} gsis="00-q1" current={2026} />);
+    expect(within(card()).getByRole('button', { name: 'Clean pocket' })).toBeDisabled();
+    expect(within(card()).getByRole('button', { name: 'Pressured' })).toBeDisabled();
+    expect(zone('short|right').querySelector('[data-main]')!.textContent).toBe('100%');
+    expect(screen.queryByTestId('chart-empty')).toBeNull();
+  });
   it('opens on throw share; the main number is the share', () => {
     render(<PassingZones charts={[miniCharts()]} gsis="00-q1" />);
     expect(zone('short|right').querySelector('[data-main]')!.textContent).toBe('51%');

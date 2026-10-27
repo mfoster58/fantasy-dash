@@ -23,22 +23,33 @@ export function useHot(): [string | null, (key: string) => HotBind] {
  * The seasons a card offers: his chart seasons, newest first, led by the current season while its data isn't out yet.
  * `db` is undefined for a season without data; the card then draws greyed out with a note.
  */
-export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number) {
+export interface SeasonControl { years: number[]; year: number; onYear: (y: number) => void }
+
+/** `control` hands the picker to a parent: the receiver card shares one between the route tree and the target map. */
+export function useChartSeason(charts: ChartDb[], has: (c: ChartDb) => boolean, current: number, control?: SeasonControl) {
   const dataYears = charts.filter(has).map((c) => c.year).sort((a, b) => b - a);
-  const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
   const [picked, setYear] = useState<number | null>(null);
+  if (control) {
+    const db = dataYears.includes(control.year) ? charts.find((c) => c.year === control.year) : undefined;
+    return { years: control.years, year: control.year, setYear: control.onYear, db, latest: dataYears[0] ?? 0 };
+  }
+  const years = dataYears.length && current > dataYears[0] ? [current, ...dataYears] : dataYears;
   // a pick from another player's seasons falls back to this one's first
   const year = picked !== null && years.includes(picked) ? picked : years[0] ?? 0;
   const db = dataYears.includes(year) ? charts.find((c) => c.year === year) : undefined;
   return { years, year, setYear, db, latest: dataYears[0] ?? 0 };
 }
 
-export function Seg<T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) {
+export function Seg<T extends string>({ label, options, value, onChange, disabled = [], disabledTitle }: {
+  label: string; options: [T, string][]; value: T; onChange: (v: T) => void;
+  /** options that can't be picked this season, with the reason as a tooltip */
+  disabled?: T[]; disabledTitle?: string;
+}) {
   return (
     <div role="group" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-md bg-surface-2 p-0.5">
       {options.map(([v, text]) => (
-        <button key={v} type="button" aria-pressed={v === value} onClick={() => onChange(v)}
-          className={`rounded px-2.5 py-0.5 text-xs ${v === value ? 'bg-line text-ink' : 'text-muted hover:text-ink'}`}>{text}</button>
+        <button key={v} type="button" aria-pressed={v === value} onClick={() => onChange(v)} disabled={disabled.includes(v)} title={disabled.includes(v) ? disabledTitle : undefined}
+          className={`rounded px-2.5 py-0.5 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${v === value ? 'bg-line text-ink' : 'text-muted enabled:hover:text-ink'}`}>{text}</button>
       ))}
     </div>
   );

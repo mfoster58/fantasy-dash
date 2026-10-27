@@ -30,3 +30,19 @@ export function miniCharts(year = 2025): ChartDb {
     },
   };
 }
+
+/** A season with no routes yet: target maps from play-by-play and FTN, QB zones without pocket splits. */
+export function targetCharts(year = 2026, ftn = true): ChartDb {
+  return {
+    year, builtAt: '2026-10-27T00:00:00.000Z', participation: false, ftn, injuries: {},
+    players: {
+      '00-w1': { pos: 'WR', targets: {
+        all: { 'short|left': [10, 7, 80, 2, 1], 'deep|right': [6, 3, 120, 3, 1], 'mid|middle': [4, 3, 50, 1, 0] },
+        pa: { 'short|left': [3, 3, 30, 1, 0] },
+        nopa: { 'short|left': [7, 4, 50, 1, 1], 'deep|right': [6, 3, 120, 3, 1], 'mid|middle': [4, 3, 50, 1, 0] } } },
+      '00-w2': { pos: 'WR', targets: { all: { 'short|left': [20, 10, 100, -1, 0], 'deep|right': [2, 1, 30, 0.5, 0], 'mid|middle': [8, 6, 90, 2, 1] } } },
+      '00-x3': { pos: 'WR', targets: { all: { 'short|left': [5, 5, 60, 2, 0] } } },
+      '00-q1': { pos: 'QB', zones: { all: { 'short|right': [80, 64, 600, 12, 5, 1, 40, 80] }, clean: {}, pressured: {} } },
+    },
+  };
+}

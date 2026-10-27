@@ -17,7 +17,10 @@ const TILE: Record<string, string> = { share: 'epa', cpoe: 'epa', epa: 'epa', co
 
 export default function PassingZones({ charts, gsis, current = 0 }: { charts: ChartDb[]; gsis: string; current?: number }) {
   const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(ZONE_SPEC, c, gsis), current);
-  const [pocket, setPocket] = useState<Pocket>('all');
+  const [picked, setPocket] = useState<Pocket>('all');
+  // without participation there is no pressure data: only All
+  const noPocket = !!db && !db.participation;
+  const pocket: Pocket = noPocket ? 'all' : picked;
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
   const items = useMemo(() => (db ? chartItems(ZONE_SPEC, db, gsis, pocket, metric) ?? [] : []), [db, gsis, pocket, metric]);
@@ -34,7 +37,7 @@ export default function PassingZones({ charts, gsis, current = 0 }: { charts: Ch
 
   return (
     <ChartCard id="chart-zones" title="Passing zones" years={years} year={year} onYear={setYear} empty={empty}
-      controls={<><Seg label="Pocket" options={POCKETS} value={pocket} onChange={setPocket} /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
+      controls={<><Seg label="Pocket" options={POCKETS} value={pocket} onChange={setPocket} disabled={noPocket ? ['clean', 'pressured'] : []} disabledTitle="No pressure data for this season yet" /><Seg label="Metric" options={METRICS} value={metric} onChange={setMetric} /></>}
       tip={hotItem ? <>
         <b>{BAND_LABEL[hotItem.key.split('|')[0]]} {hotItem.key.split('|')[1]}</b> · {hotItem.counts[0]} att, {hotItem.counts[1]} comp, {hotItem.counts[2]} yds, {hotItem.counts[4]} TD, {hotItem.counts[5]} INT · {Math.round(hotItem.share * 100)}% of his throws
         {Object.entries(ZONE_SPEC.metrics).map(([k, m]) => { const one = chartItems(ZONE_SPEC, db!, gsis, pocket, k)!.find((x) => x.key === hotItem.key)!; return one.value === null ? null : <span key={k}> · {m.label} <b>{m.fmt(one.value)}</b>{one.ranked ? ` (${ordinal(one.pct!)})` : ''}</span>; })}

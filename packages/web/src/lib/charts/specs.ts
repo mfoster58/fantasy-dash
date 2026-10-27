@@ -1,4 +1,4 @@
-import { LANES, ROUTES, SPLITS, ZONES, type Box, type Coverage, type Lane, type Pocket, type Route, type Split, type Zone } from '@fantasy-dash/core';
+import { LANES, ROUTES, SPLITS, ZONES, type Box, type Coverage, type Lane, type Pocket, type Route, type Split, type TargetFilter, type Zone } from '@fantasy-dash/core';
 import type { ChartSpec } from './rank';
 import { fmtDec1, fmtPct, fmtSigned } from './scale';
 
@@ -39,6 +39,19 @@ export const ZONE_SPEC: ChartSpec<Zone, Pocket> = {
     ypa: { label: 'Yds/att', value: per(2, 0), fmt: fmtDec1 },
     epa: { label: 'EPA/att', value: per(3, 0), fmt: (v) => fmtSigned(v, 2) },
     cpoe: { label: 'CPOE', value: per(6, 7), fmt: (v) => fmtSigned(v, 1) },
+  },
+};
+
+/** A receiver's targets by zone, filtered by FTN play type; for seasons without route data. */
+export const TARGET_SPEC: ChartSpec<Zone, TargetFilter> = {
+  keys: ZONES,
+  // filters FTN never tagged him on are simply missing
+  table: (p) => p.targets as Record<TargetFilter, Partial<Record<Zone, number[]>>> | undefined,
+  min: 3, sharePool: { all: 20, pa: 5, nopa: 5, motion: 5, screen: 3, blitz: 5, contested: 3 }, shareMax: 0.25, unit: 'tgt',
+  metrics: {
+    catch: { label: 'Catch %', value: per(1, 0), fmt: fmtPct },
+    ypt: { label: 'Yds/target', value: per(2, 0), fmt: fmtDec1 },
+    epa: { label: 'EPA/target', value: per(3, 0), fmt: (v) => fmtSigned(v, 2) },
   },
 };
 

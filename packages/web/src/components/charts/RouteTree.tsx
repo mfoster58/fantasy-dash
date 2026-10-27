@@ -4,7 +4,7 @@ import { chartItems, hasChart, type ChartItem } from '../../lib/charts/rank';
 import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { ROUTE_LABEL, ROUTE_SPEC, THROW_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
-import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
+import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot, type SeasonControl } from './Field';
 
 /** Route paths in yards from the receiver (x < 0 is inside), the label anchor, and a fixed label spot where the tip would collide. */
 const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'end'; l?: [number, number] }> = {
@@ -29,11 +29,11 @@ const COVERAGES: [Coverage, string][] = [['all', 'All'], ['man', 'vs Man'], ['zo
 const W = 660, BAND = 30, OX = 365, OY = 272, SX = 12.5, SY = 10.2, H = 330;
 const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
 
-export default function RouteTree({ charts, gsis, pos, current = 0 }: { charts: ChartDb[]; gsis: string; pos: string; current?: number }) {
+export default function RouteTree({ charts, gsis, pos, current = 0, control }: { charts: ChartDb[]; gsis: string; pos: string; current?: number; control?: SeasonControl }) {
   const qb = pos === 'QB';
   const SPEC = qb ? THROW_SPEC : ROUTE_SPEC;
   const words = qb ? { unit: 'att', vol: 'throws', got: 'completions', of: 'his throws' } : { unit: 'tgt', vol: 'targets', got: 'catches', of: 'his targets' };
-  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPEC, c, gsis), current);
+  const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(SPEC, c, gsis), current, control);
   const [cov, setCov] = useState<Coverage>('all');
   const [metric, setMetric] = useState('share');
   const [hot, bind] = useHot();
