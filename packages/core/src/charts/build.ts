@@ -77,7 +77,7 @@ type Credit = (gsis: string, allowed: DbPos[]) => ChartPlayer | null;
 function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: NonNullable<ChartDb['teams']>) {
   const add = (g: GradeSums, k: GradeKey, v = 1) => { g[k] = (g[k] ?? 0) + v; };
   // the team's red-zone targets and inside-10 carries this week, under the player database's team code
-  const t = present(p.posteam) ? ((teams[normalizeTeam(p.posteam)] ??= {})[String(num(p.week))] ??= [0, 0]) : [0, 0];
+  const t = present(p.posteam) ? ((teams[normalizeTeam(p.posteam)] ??= {})[String(num(p.week))] ??= [0, 0, 0]) : [0, 0, 0];
   const yl = num(p.yardline_100), epa = num(p.epa), td = p.touchdown === '1' && (!present(p.td_team) || p.td_team === p.posteam);
   const moved = p.first_down === '1' || td;
 
@@ -168,6 +168,7 @@ function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: NonNullabl
   if (p.rush_attempt === '1' && p.qb_kneel !== '1' && present(p.rusher_player_id)) {
     const scramble = p.qb_scramble === '1';
     if (!scramble && yl >= 1 && yl <= 10) t[1]++;
+    if (!scramble && yl >= 1 && yl <= 20) t[2]++;
     const qb = player(p.rusher_player_id, ['QB']);
     if (qb) {
       const g = (qb.grades ??= {});
@@ -183,6 +184,9 @@ function gradePlay(p: Row, f: Row | undefined, player: Credit, teams: NonNullabl
       if (yds >= 10) add(g, 'explosive');
       if (yds <= 0) add(g, 'stuffed');
       if (yl >= 1 && yl <= 10) add(g, 'in10');
+      if (yl >= 1 && yl <= 20) add(g, 'rzCar');
+      if (p.down === '3') { add(g, 't3Car'); if (moved) add(g, 't3CarConv'); }
+      if ((p.down === '3' || p.down === '4') && present(p.ydstogo) && num(p.ydstogo) <= 2) { add(g, 'shortAtt'); if (moved) add(g, 'shortConv'); }
       if (yl >= 1 && yl <= 5) { add(g, 'in5'); if (p.rush_touchdown === '1') add(g, 'in5Td'); }
       if ((p.run_location === 'left' || p.run_location === 'right') && p.run_gap === 'end') add(g, 'outside');
       if (f) {

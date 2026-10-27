@@ -299,7 +299,7 @@ describe('buildCharts: grades and target maps', () => {
     ], []);
     expect(db.players.W.grades).toMatchObject({ rzTgt: 2 });
     // team totals by team and week: the page sums the weeks he played, whether or not he was targeted
-    expect(db.teams).toEqual({ AAA: { '1': [3, 0] }, CCC: { '2': [2, 0], '3': [5, 0] } });
+    expect(db.teams).toEqual({ AAA: { '1': [3, 0, 0] }, CCC: { '2': [2, 0, 0], '3': [5, 0, 0] } });
   });
 
   it('grades: QB dropbacks, deep, situational, legs and FTN keys', () => {
@@ -336,7 +336,20 @@ describe('buildCharts: grades and target maps', () => {
       carry({ yardline_100: '4' }), carry({ yardline_100: '9', posteam: 'LA', game_id: '2025_01_LA_BBB' }),
       play({ qb_kneel: '1', rush_attempt: '1', rusher_player_id: 'Q', posteam: 'AAA', yardline_100: '3' }),
     ], []);
-    expect(db.teams).toEqual({ AAA: { '1': [0, 1] }, LAR: { '1': [0, 1] } });
+    expect(db.teams).toEqual({ AAA: { '1': [0, 1, 1] }, LAR: { '1': [0, 1, 1] } });
+  });
+
+  it('rusher money downs: short yardage, 3rd-down carries, red-zone carries and the team red-zone carries', () => {
+    const db = build([
+      carry({ down: '3', ydstogo: '2', first_down: '1', yardline_100: '40' }),
+      carry({ down: '4', ydstogo: '1', first_down: '0', yardline_100: '15' }),
+      carry({ down: '3', ydstogo: '6', first_down: '0', yardline_100: '50' }),
+      carry({ down: '1', ydstogo: '10', yardline_100: '12', rusher_player_id: 'Z' }),
+      play({ qb_kneel: '1', rush_attempt: '1', rusher_player_id: 'R', posteam: 'AAA', down: '3', ydstogo: '1', yardline_100: '5' }),
+    ], []);
+    expect(db.players.R.grades).toMatchObject({ shortAtt: 2, shortConv: 1, t3Car: 2, t3CarConv: 1, rzCar: 1 });
+    // red-zone targets, inside-10 carries, red-zone carries
+    expect(db.teams!.AAA['1']).toEqual([0, 0, 2]);
   });
 
   it('targets: zones by FTN filter; a target without an FTN row is only in all', () => {

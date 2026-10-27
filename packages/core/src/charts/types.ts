@@ -40,6 +40,7 @@ export const GRADE_KEYS = [
   'scr', 'scrYds', 'drun', 'drunEpa', 'rushFd',
   'ftnDb', 'ftnAtt', 'iw', 'readN', 'firstRead', 'throwaway', 'faultSack', 'catchableThrown', 'recDrops', 'paDb', 'paEpa', 'blitzDb', 'blitzEpa', 'noBlitzDb', 'noBlitzEpa',
   'car', 'carYds', 'carEpa', 'carSucc', 'carFd', 'explosive', 'stuffed', 'in10', 'in5', 'in5Td', 'outside',
+  'rzCar', 't3Car', 't3CarConv', 'shortAtt', 'shortConv',
   'ftnCar', 'boxN', 'boxSum', 'lightCar', 'lightYds', 'heavyCar', 'heavyYds', 'rpo',
 ] as const;
 export type GradeKey = (typeof GRADE_KEYS)[number];
@@ -83,8 +84,8 @@ export interface ChartDb {
   participation: boolean;
   /** whether FTN charting rows were joined (optional: files built before FTN lack it) */
   ftn?: boolean;
-  /** per team (player-database code) and week: [red-zone targets, inside-10 carries], the denominators of the share tiles */
-  teams?: Record<string, Record<string, [number, number]>>;
+  /** per team (player-database code) and week: [red-zone targets, inside-10 carries, red-zone carries] (older files lack the third), the denominators of the share tiles */
+  teams?: Record<string, Record<string, number[]>>;
   /** nflverse weekly injury report: gsis → week → [status (IR as Out; '' when listed without a game status), injury] */
   injuries: Record<string, Record<string, [string, string]>>;
   players: Record<string, ChartPlayer>;
