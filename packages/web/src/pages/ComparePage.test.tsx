@@ -46,10 +46,9 @@ describe('ComparePage', () => {
     expect(q.get('pos')).toBe('QB');
     expect(q.get('p')).toBeNull();
   });
-  it('shows the Database and Compare tabs', () => {
+  it('is titled Comparison tool, with no in-page tabs (the Players menu replaces them)', () => {
     mount('season=2026&pos=RB');
-    const tabs = screen.getByRole('navigation', { name: 'Players' });
-    expect(within(tabs).getByRole('link', { name: 'Compare' })).toHaveAttribute('aria-current', 'page');
-    expect(within(tabs).getByRole('link', { name: 'Database' })).toHaveAttribute('href', '/players/2026');
+    expect(screen.getByRole('heading', { level: 1, name: 'Comparison tool' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Players' })).toBeNull();
   });
 });

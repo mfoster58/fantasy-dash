@@ -36,6 +36,17 @@ describe('Nav', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('Players is a dropdown with Database and Comparison tool', async () => {
+    await renderNav(<MemoryRouter initialEntries={['/players/compare']}><Nav /></MemoryRouter>);
+    const bar = screen.getAllByRole('navigation')[0];
+    expect(within(bar).queryByRole('link', { name: 'Players' })).toBeNull();
+    const players = within(bar).getByRole('button', { name: 'Players' });
+    expect(players).toHaveAttribute('data-active', 'true');
+    fireEvent.click(players);
+    const panel = document.getElementById('nav-menu-players')!;
+    expect(within(panel).getByRole('link', { name: /Database/ })).toHaveAttribute('href', '/players');
+    expect(within(panel).getByRole('link', { name: /Comparison tool/ })).toHaveAttribute('href', '/players/compare');
+  });
   it('has Rosters and Managers dropdown tabs where the Teams link used to be', async () => {
     await renderNav(<MemoryRouter><Nav /></MemoryRouter>);
     expect(screen.queryByRole('link', { name: 'Teams' })).toBeNull();
@@ -103,6 +114,7 @@ describe('Nav', () => {
     expect(i).toBeGreaterThan(0);
     expect(labels[i - 1]).toBe('Managers');
     expect(labels[i + 1]).toBe('Head to Head');
-    expect(nav.querySelector('a[href="/players"]')).not.toBeNull();
+    // a dropdown now: Database and Comparison tool sit in its panel
+    expect(within(nav).getByRole('button', { name: 'Players' })).toBeInTheDocument();
   });
 });

@@ -2,21 +2,22 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { leagueConfig } from '../../../../league.config';
 import { currentSeason, history, loadSeason } from '../data/load';
-import { managerEntries, rosterEntries } from '../lib/navMenus';
+import { managerEntries, playerEntries, rosterEntries } from '../lib/navMenus';
 import NavMenu, { NavMenuGroup, type MenuEntries } from './NavMenu';
 import ThemeToggle from './ThemeToggle';
 
 type Item =
   | { kind: 'link'; to: string; label: string }
-  | { kind: 'menu'; id: 'rosters' | 'managers'; label: string; prefix: string };
+  | { kind: 'menu'; id: MenuId; label: string; prefix: string };
+type MenuId = 'rosters' | 'managers' | 'players';
 
-/** The top-bar tabs in order; the two menus drop a list of pages instead of leading anywhere themselves. */
+/** The top-bar tabs in order; the menus drop a list of pages instead of leading anywhere themselves. */
 export const items: Item[] = [
   { kind: 'link', to: '/scores', label: 'Scores' },
   { kind: 'link', to: '/standings', label: 'Standings' },
   { kind: 'menu', id: 'rosters', label: 'Rosters', prefix: '/teams' },
   { kind: 'menu', id: 'managers', label: 'Managers', prefix: '/managers' },
-  { kind: 'link', to: '/players', label: 'Players' },
+  { kind: 'menu', id: 'players', label: 'Players', prefix: '/players' },
   { kind: 'link', to: '/h2h', label: 'Head to Head' },
   { kind: 'link', to: '/records', label: 'Records' },
   { kind: 'link', to: '/stats', label: 'Stats' },
@@ -47,7 +48,7 @@ export default function Nav() {
     loadSeason(currentSeason.year).then((s) => { if (live) setRosters(rosterEntries(s)); }).catch(() => { if (live) setRosters('failed'); });
     return () => { live = false; };
   }, []);
-  const entriesOf = (id: 'rosters' | 'managers') => (id === 'rosters' ? rosters : managers);
+  const entriesOf = (id: MenuId): MenuEntries => (id === 'rosters' ? rosters : id === 'players' ? playerEntries : managers);
   const activeOf = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">

@@ -5,7 +5,6 @@ import AdvancedTable from '../components/compare/AdvancedTable';
 import CompareCard from '../components/compare/CompareCard';
 import CompareCharts from '../components/compare/CompareCharts';
 import PlayerSlot from '../components/compare/PlayerSlot';
-import PlayersTabs from '../components/compare/PlayersTabs';
 import { Seg } from '../components/charts/Field';
 import SeasonPicker from '../components/SeasonPicker';
 import { leaders } from '../lib/compare/leaders';
@@ -44,10 +43,7 @@ export default function ComparePage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Players</h1>
-        <PlayersTabs active="compare" season={state.season} />
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">Comparison tool</h1>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Seg label="Position" options={POS_GROUPS.map((g) => [g, GROUP_LABEL[g]] as [PosGroup, string])} value={state.pos} onChange={(pos) => go({ ...state, pos, ids: [] })} />
         <SeasonPicker years={years} value={state.season} onChange={(v) => { if (v !== 'all') go({ ...state, season: v }); }} />

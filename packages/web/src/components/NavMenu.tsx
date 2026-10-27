@@ -20,7 +20,7 @@ function Entries({ entries, onPick, className }: { entries: MenuEntries; onPick?
       {entries.map((e) => (
         <li key={e.userId}>
           <Link to={e.to} onClick={onPick} className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 hover:bg-surface-2">
-            <Avatar avatar={e.avatar} name={e.title} size={24} />
+            {!e.plain && <Avatar avatar={e.avatar} name={e.title} size={24} />}
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm text-ink">{e.title}</span>
               {e.subtitle && <span className="block truncate text-xs text-muted">{e.subtitle}</span>}
