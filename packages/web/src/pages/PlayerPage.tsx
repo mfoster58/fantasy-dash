@@ -72,7 +72,7 @@ export default function PlayerPage() {
       {tab && myDbs.length > 0 && <GradesSection id={id} dbs={myDbs} charts={charts} />}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
       {rostered && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] [&>*]:min-w-0">
           <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} id={id} />
           <div className="space-y-6"><LeagueRecords records={records} tab="players" /></div>
         </div>
