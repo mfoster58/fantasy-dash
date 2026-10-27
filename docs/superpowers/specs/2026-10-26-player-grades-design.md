@@ -151,3 +151,14 @@ Follow the repo's conventions: core tests in `packages/core/test`, web tests col
 ## Left to the builder
 
 File and module names; how grade tile definitions are expressed (a spec table like `lib/charts/specs.ts` is the natural fit); exact count-tuple layout; card grid breakpoints; how the season picker shares code with `useChartSeason`.
+
+## Nine cards (2026-10-27, Mathias)
+
+- No group headings on the player page: the cards sit in one grid, three columns on wide screens, so every position fills three rows of three. Card groups remain only as the Compare tab's bucket pills.
+- QB order: Efficiency · Accuracy & aggressiveness · Deep ball / Clutch & situational · Pocket & pressure · Legs / Decision making · Scheme · Fantasy.
+- RB order: Workload · Efficiency · Rushing vs expected / After contact · Receiving back · **Money downs** / Fronts faced · Running style · Fantasy.
+- WR/TE order: Opportunity · Usage · Efficiency / Beating expectation · Deep threat · **Big plays** / Money downs · Ball skills & separation · Fantasy.
+- **Fantasy** (all): points per game · expected points per game (xFP) · points over expected per game (FPOE) · QB share of points from rushing (style) / RB share of points from receiving (style) / WR-TE points per target. Shares use the season's league scoring settings.
+- **RB Money downs**: short-yardage conversions (3rd/4th down, ≤ 2 to go, carries; "c / t") · 3rd-down conversions on carries and targets · team red-zone carries (share of his teams' red-zone carries in weeks played) · TDs per touch.
+- **WR/TE Big plays**: 20+ yard catches · 40+ yard catches (both per game) · explosive catch rate (20+ catches per target) · YAC per catch.
+- The top-bar Players tab became a dropdown: Database and Comparison tool; the in-page tabs went.
