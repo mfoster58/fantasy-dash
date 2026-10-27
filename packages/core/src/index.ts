@@ -13,6 +13,7 @@ export * from './playerSeasons';
 export * from './history';
 export * from './playerdb';
 export * from './charts';
+export * from './schedule';
 
 export * from './schema';
 export * from './nflWeek';

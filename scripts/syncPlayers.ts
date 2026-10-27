@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, PlayerDbSchema, ChartDbSchema, buildCharts, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
+  SleeperClient, PlayerDbSchema, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
   type DbPos, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
@@ -14,6 +14,7 @@ import { leagueConfig } from '../league.config';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'data', 'playerdb');
 const CHART_DIR = path.join(ROOT, 'data', 'charts');
+const SCHEDULE_DIR = path.join(ROOT, 'data', 'schedule');
 const args = process.argv.slice(2);
 const full = args.includes('--full');
 const dryRun = args.includes('--dry-run');
@@ -36,6 +37,7 @@ const URLS = {
   participation: (y: number) => `${NFLVERSE}/pbp_participation/pbp_participation_${y}.csv`,
   pbp: (y: number) => `${NFLVERSE}/pbp/play_by_play_${y}.csv.gz`,
   injuries: (y: number) => `${NFLVERSE}/injuries/injuries_${y}.csv`,
+  schedule: 'https://github.com/nflverse/nfldata/raw/master/data/games.csv',
   ftn: (y: number) => `${NFLVERSE}/ftn_charting/ftn_charting_${y}.csv`,
 };
 
@@ -183,6 +185,25 @@ async function main() {
 
   if (!chartsOnly) await playerDbPhase(client, leagues);
   await chartsPhase(leagues);
+  await schedulePhase(leagues);
+}
+
+/** Phase 3: each season's NFL regular-season schedule, for upcoming matchups. A failed download keeps the old files. */
+async function schedulePhase(leagues: SleeperLeague[]) {
+  let csv: string | null;
+  try { csv = await fetchText(URLS.schedule); } catch (err) { log(`schedule download failed, keeping old files: ${String(err)}`); return; }
+  if (csv === null) { log('no schedule file; keeping old files'); return; }
+  const rows = rowsOf(csv);
+  const dir = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-schedule-')) : SCHEDULE_DIR;
+  await mkdir(dir, { recursive: true });
+  for (const league of leagues) {
+    const year = Number(league.season);
+    const schedule = ScheduleSchema.parse(parseSchedule(rows, year));
+    if (schedule.games.length === 0) { log(`${year}: no schedule games`); continue; }
+    await writeFile(path.join(dir, `${year}.json`), JSON.stringify(schedule));
+    log(`${year}: schedule, ${schedule.games.length} games`);
+  }
+  if (dryRun) log(`Dry run: schedules in ${dir}`);
 }
 
 /** Phase 1: the player database. */

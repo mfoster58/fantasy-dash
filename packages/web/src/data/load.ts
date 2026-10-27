@@ -1,4 +1,4 @@
-import type { ChartDb, History, HistorySeason, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
+import type { ChartDb, History, HistorySeason, PlayerDb, PlayerDirectory, Schedule, Season } from '@fantasy-dash/core';
 
 // import.meta.glob keeps tsc from type-inferring multi-megabyte JSON literals.
 const historyMod = import.meta.glob<{ default: History }>('../../../../data/history.json', { eager: true });
@@ -6,6 +6,7 @@ const playersMod = import.meta.glob<{ default: PlayerDirectory }>('../../../../d
 const seasonMods = import.meta.glob<{ default: Season }>('../../../../data/seasons/*.json');
 const playerDbMods = import.meta.glob<{ default: PlayerDb }>('../../../../data/playerdb/*.json');
 const chartMods = import.meta.glob<{ default: ChartDb }>('../../../../data/charts/*.json');
+const scheduleMods = import.meta.glob<{ default: Schedule }>('../../../../data/schedule/*.json');
 
 export const history: History = Object.values(historyMod)[0].default;
 export const players: PlayerDirectory = Object.values(playersMod)[0].default;
@@ -63,6 +64,23 @@ export function loadCharts(year: number): Promise<ChartDb> {
     if (!key) return Promise.reject(new Response(`No charts for ${year}`, { status: 404 }));
     pending = chartMods[key]().then((m) => m.default).catch((err) => { chartCache.delete(year); throw err; });
     chartCache.set(year, pending);
+  }
+  return pending;
+}
+
+const scheduleCache = new Map<number, Promise<Schedule>>();
+const scheduleKey = (year: number) => Object.keys(scheduleMods).find((k) => k.endsWith(`/${year}.json`));
+
+/** Whether the season's NFL schedule file exists. */
+export const hasSchedule = (year: number): boolean => scheduleKey(year) !== undefined;
+
+export function loadSchedule(year: number): Promise<Schedule> {
+  let pending = scheduleCache.get(year);
+  if (!pending) {
+    const key = scheduleKey(year);
+    if (!key) return Promise.reject(new Response(`No schedule for ${year}`, { status: 404 }));
+    pending = scheduleMods[key]().then((m) => m.default).catch((err) => { scheduleCache.delete(year); throw err; });
+    scheduleCache.set(year, pending);
   }
   return pending;
 }
