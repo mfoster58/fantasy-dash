@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import type { ChartDb } from '@fantasy-dash/core';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import PlayerPage from './PlayerPage';
 import { leagueSeasons, pick } from '../test/playerPageFixtures';
@@ -19,13 +20,18 @@ function mount(id: string, seasons = leagueSeasons(), charts = [miniCharts()]) {
   render(<MemoryRouter initialEntries={[`/player/${id}`]}><Routes><Route path="/player/:id" element={<PlayerPage />} /></Routes></MemoryRouter>);
 }
 const section = (name: RegExp) => screen.queryByRole('region', { name });
+/** 2026 grade sums for the miniDb receivers */
+const gradesChart = (): ChartDb => ({
+  year: 2026, builtAt: '', participation: false, ftn: true, injuries: {},
+  players: { '00-w1': { pos: 'WR', grades: { tgt: 26, ftnTgt: 26, catchable: 20, drops: 1 } }, '00-w2': { pos: 'WR', grades: { tgt: 10, ftnTgt: 10, catchable: 8, drops: 2 } } },
+});
 
 describe('PlayerPage', () => {
   it('shows every section for a rostered WR with database rows, a trophy for his title season', () => {
     mount('w1');
     expect(screen.getByRole('heading', { level: 1, name: /Wide One/ })).toBeInTheDocument();
     expect(screen.getAllByTestId('finish-champion').length).toBeGreaterThan(0);
-    for (const name of [/In this league/, /Among WRs/, /Advanced by season/, /Game log/, /Path through the league/, /League records/]) expect(section(name), String(name)).toBeInTheDocument();
+    for (const name of [/In this league/, /Advanced by season/, /Game log/, /Path through the league/, /League records/]) expect(section(name), String(name)).toBeInTheDocument();
     const gold = within(section(/In this league/)!).getAllByRole('row').find((r) => r.getAttribute('data-title') === 'true');
     expect(gold).toHaveTextContent('2025');
     expect(within(section(/Path through the league/)!).getByTestId('trade-card')).toBeInTheDocument();
@@ -59,12 +65,14 @@ describe('PlayerPage', () => {
     expect(within(sides[0]).getByText('Wally One').closest('[data-me]')!.getAttribute('data-me')).toBe('true');
     expect(within(section(/Path through the league/)!).queryByText(/who got/)).toBeNull();
   });
-  it('orders the page: advanced numbers on their own row, then charts and the game log, then the path beside Among WRs over the records', () => {
-    mount('w1');
-    const order = [/Advanced by season/, /Route tree/, /Game log/, /Path through the league/, /Among WRs/, /League records/].map((n) => section(n)!);
+  it('orders the page: advanced numbers, charts, grades, the game log, then the path beside the records', () => {
+    mount('w1', leagueSeasons(), [miniCharts(), gradesChart()]);
+    const order = [/Advanced by season/, /Route tree/, /^Grades/, /Game log/, /Path through the league/, /League records/].map((n) => section(n)!);
     for (let i = 1; i < order.length; i++) expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING, String(i)).toBeTruthy();
-    // its own row: not sharing a parent with Among WRs any more
-    expect(section(/Advanced by season/)!.parentElement).not.toBe(section(/Among WRs/)!.parentElement);
+  });
+  it('has no Percentiles card any more', () => {
+    mount('w1', leagueSeasons(), [miniCharts(), gradesChart()]);
+    expect(section(/Among/)).toBeNull();
   });
   it('keeps Season, G, PTS, PPG and RK fixed in Advanced by season, and Wk and Opp in the game log', () => {
     mount('w1');

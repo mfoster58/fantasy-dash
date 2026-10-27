@@ -1,16 +1,17 @@
 // @vitest-environment node
 import { readdirSync, readFileSync } from 'node:fs';
-import type { PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
+import type { ChartDb, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
 import { flattenLines } from '../playerLines';
 import { gameLog } from './gameLog';
 import { journeyOf } from './journey';
-import { percentileBars } from './percentiles';
+import { gradeCards } from '../grades/grade';
 import { seasonTable } from './seasons';
 
 const root = new URL('../../../../../data/', import.meta.url);
 const json = <T,>(rel: string) => JSON.parse(readFileSync(new URL(rel, root), 'utf8')) as T;
 const seasons = readdirSync(new URL('seasons/', root)).filter((f) => f.endsWith('.json')).map((f) => json<Season>(`seasons/${f}`));
 const dbs = readdirSync(new URL('playerdb/', root)).filter((f) => f.endsWith('.json')).map((f) => json<PlayerDb>(`playerdb/${f}`));
+const charts = readdirSync(new URL('charts/', root)).filter((f) => f.endsWith('.json')).map((f) => json<ChartDb>(`charts/${f}`));
 const players = json<PlayerDirectory>('players.json');
 const lines = flattenLines(seasons, players);
 /** no NaN or Infinity anywhere inside */
@@ -42,11 +43,13 @@ describe('player pages over the committed data', () => {
       expect(stints.filter((st) => st.to === null).length <= 1, `${l.playerId} one open stint`).toBe(true);
     }
   });
-  it("builds percentile bars and a game log for a sample of each season's players", () => {
+  it("builds grade cards and a game log for a sample of each season's players", () => {
     for (const db of dbs) {
       const season = seasons.find((s) => s.year === db.year);
+      const chart = charts.find((c) => c.year === db.year);
       for (const id of Object.keys(db.players).filter((_, i) => i % 25 === 0)) {
-        expect(finite(percentileBars(db, id)), `${db.year} ${id} bars`).toBe(true);
+        const cards = gradeCards(db, chart, id);
+        expect(finite(cards) && !/NaN|Infinity/.test(JSON.stringify(cards)), `${db.year} ${id} grades`).toBe(true);
         const log = gameLog(db, id, lines.filter((l) => l.playerId === id && l.year === db.year), season);
         expect(finite(log.map((r) => ({ ...r, agg: null }))), `${db.year} ${id} log`).toBe(true);
       }

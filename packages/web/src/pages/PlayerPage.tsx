@@ -8,7 +8,7 @@ import RunLanes from '../components/charts/RunLanes';
 import AdvancedBySeason from '../components/player/AdvancedBySeason';
 import GameLog from '../components/player/GameLog';
 import JourneyFeed from '../components/player/JourneyFeed';
-import PercentileBars from '../components/player/PercentileBars';
+import GradesSection from '../components/player/grades/GradesSection';
 import PlayerHeader from '../components/player/PlayerHeader';
 import SeasonTable from '../components/player/SeasonTable';
 import LeagueRecords from '../components/teams/LeagueRecords';
@@ -17,7 +17,6 @@ import { allTimeContext } from '../lib/managerRecords';
 import { bioOf } from '../lib/player/bio';
 import { dbYearsOf } from '../lib/player/coverage';
 import { journeyOf } from '../lib/player/journey';
-import { percentileBars } from '../lib/player/percentiles';
 import { playerRecords } from '../lib/player/records';
 import { seasonTable, summaryOf } from '../lib/player/seasons';
 import type { Tab } from '../lib/playerdb/columns';
@@ -43,11 +42,8 @@ export default function PlayerPage() {
   const tab = DB_TABS[bio.pos];
   const current = currentSeason?.year ?? 0;
   const newest = dbYears[dbYears.length - 1] ?? 0;
-  const [pctYear, setPctYear] = useState(newest);
   const [logYear, setLogYear] = useState(newest);
-  const pctDb = myDbs.find((d) => d.year === pctYear);
   const logDb = myDbs.find((d) => d.year === logYear);
-  const bars = useMemo(() => (pctDb ? percentileBars(pctDb, id) : null), [pctDb, id]);
   const logLines = useMemo(() => lines.filter((l) => l.year === logYear), [lines, logYear]);
   // a draft pick or an add counts, even before he plays a week
   const rostered = lines.length > 0 || stints.length > 0;
@@ -72,14 +68,12 @@ export default function PlayerPage() {
         </div>
       )}
       {gsis && bio.pos === 'QB' && <RouteTree charts={charts} gsis={gsis} pos="QB" current={current} />}
+      {tab && myDbs.length > 0 && <GradesSection id={id} dbs={myDbs} charts={charts} />}
       {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
-      {(rostered || bars) && (
+      {rostered && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          {rostered && <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} id={id} />}
-          <div className="space-y-6">
-            {bars && <PercentileBars pos={bio.pos} bars={bars} years={dbYears} year={pctYear} onYear={setPctYear} />}
-            {rostered && <LeagueRecords records={records} tab="players" />}
-          </div>
+          <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} id={id} />
+          <div className="space-y-6"><LeagueRecords records={records} tab="players" /></div>
         </div>
       )}
     </div>
