@@ -37,6 +37,12 @@ describe('ProfileHeader', () => {
     expect(body).not.toContainElement(screen.getByTestId('banner-photo'));
     expect(body.parentElement).toContainElement(screen.getByTestId('banner-photo'));
   });
+  it('the tiles run the full width only on a phone; on a computer they keep their own column beside the name', () => {
+    render(<ProfileHeader {...base} avatar="abc123" />);
+    const tiles = screen.getByText(base.tiles[0].label).closest('dl')!;
+    expect(tiles).toHaveClass('col-span-2');
+    expect(tiles).toHaveClass('sm:col-span-1');
+  });
   it('without an avatar the panel shows his initials', () => {
     render(<ProfileHeader {...base} />);
     expect(screen.getByTestId('banner-photo')).toHaveTextContent('AL');

@@ -61,7 +61,7 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
             </div>
           )}
           </div>
-          <dl className="col-span-2 grid shrink-0 grid-cols-3 gap-2 px-4 pb-4 sm:gap-2.5 sm:p-0 lg:w-[27rem]">
+          <dl className="col-span-2 grid shrink-0 grid-cols-3 gap-2 px-4 pb-4 sm:col-span-1 sm:gap-2.5 sm:p-0 lg:w-[27rem]">
             {tiles.map((t) => (
               <div key={t.label} className="min-w-0 rounded-lg border border-white/5 bg-bg/55 px-3 py-2">
                 <dt className="truncate text-[10px] uppercase tracking-wider text-muted">{t.label}</dt>
