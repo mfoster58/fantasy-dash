@@ -10,7 +10,7 @@ function Cell({ cell }: { cell: TrendRow['cells'][string] }) {
   const tone = cell.change == null ? '' : cell.change >= 0 ? 'var(--win)' : 'var(--loss)';
   return (
     <td className="border-t border-line px-1.5 py-1.5">
-      <div className="flex items-end justify-center gap-1">
+      <div className="mx-auto flex w-max items-end justify-center gap-1">
         <div className="flex h-9 items-end gap-1">
           {cell.weeks.map((w) => (
             <span key={w.week} data-week={w.week} data-state={w.state} title={w.state === 'short' ? `Week ${w.week}: injury-shortened (${w.value ?? '–'})` : `Week ${w.week}: ${w.value ?? w.state}`}
@@ -34,10 +34,11 @@ export default function TrendsTable({ data, pos, season }: { data: Trends; pos: 
   const row = (r: TrendRow, i: number) => (
     <tr key={r.id}>
       <td className="border-t border-line px-2 text-xs text-muted">{i + 1}</td>
-      <td className="border-t border-line px-2 py-1.5">
+      {/* the player stays put on a phone while his bars scroll under him */}
+      <td className="z-[1] border-t border-line bg-surface px-2 py-1.5 max-sm:sticky max-sm:left-0 max-sm:shadow-[inset_-1px_0_0_var(--line)]">
         <div className="flex items-center gap-2 whitespace-nowrap">
-          <img src={logoUrl(r.team)} alt="" className="h-6 w-6" />
-          <div><PlayerLink id={r.id} className="font-semibold">{r.name}</PlayerLink><div className="text-[10.5px] text-muted">{r.team}</div></div>
+          <img src={logoUrl(r.team)} alt="" className="h-6 w-6 shrink-0" />
+          <div className="min-w-0"><PlayerLink id={r.id} className="block truncate font-semibold max-sm:max-w-[6.5rem]">{r.name}</PlayerLink><div className="text-[10.5px] text-muted">{r.team}</div></div>
         </div>
       </td>
       {data.columns.map((c) => <Cell key={c.key} cell={r.cells[c.key]} />)}
@@ -50,7 +51,7 @@ export default function TrendsTable({ data, pos, season }: { data: Trends; pos: 
     </tr>
   );
   const band = (text: string, tone: string) => (
-    <tr><td colSpan={data.columns.length + 3} className="px-3 py-1.5 text-sm font-extrabold uppercase tracking-wide" style={{ color: tone, background: `color-mix(in srgb, ${tone} 16%, transparent)` }}>{text}</td></tr>
+    <tr><td colSpan={data.columns.length + 3} className="px-3 py-1.5 max-sm:[&>*]:sticky max-sm:[&>*]:left-3 text-sm font-extrabold uppercase tracking-wide" style={{ color: tone, background: `color-mix(in srgb, ${tone} 16%, transparent)` }}><span className="inline-block">{text}</span></td></tr>
   );
   return (
     <section aria-labelledby={id} className="card overflow-hidden">
@@ -62,7 +63,7 @@ export default function TrendsTable({ data, pos, season }: { data: Trends; pos: 
       <div className="overflow-x-auto px-2 pb-2">
         <table className="w-full border-separate border-spacing-0 text-xs">
           <thead><tr>
-            <th /><th className="px-2 text-left text-[10.5px] uppercase tracking-wide text-muted">Player</th>
+            <th /><th className="z-[1] bg-surface px-2 text-left text-[10.5px] uppercase tracking-wide text-muted max-sm:sticky max-sm:left-0">Player</th>
             {data.columns.map((c) => <th key={c.key} className="px-1.5 text-[10.5px] uppercase tracking-wide text-muted">{c.label}<div className="text-[9.5px] normal-case tracking-normal">Wk {data.weeks.join(' · ')}</div></th>)}
             <th className="px-2 text-right text-[10.5px] uppercase tracking-wide text-muted">Trend</th>
           </tr></thead>
