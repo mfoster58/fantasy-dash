@@ -24,11 +24,11 @@ export interface BannerStanding { rank: number; streak: string }
 const SIZES = {
   hero: {
     box: 'min-h-[196px]', panel: 'w-52 lg:w-64', cut: 40, gold: 'w-[5px] [--at:26px]', stripe: 'w-2 [--at:38px]',
-    name: 'text-xl sm:text-[27px]', manager: 'text-sm sm:text-base', center: 'w-40 sm:w-56', title: 'text-lg sm:text-2xl', score: 'text-4xl sm:text-[46px]',
+    name: 'text-[21px] sm:text-[27px]', manager: 'text-sm sm:text-base', center: 'w-40 sm:w-56', title: 'text-lg sm:text-2xl', score: 'text-[42px] sm:text-[46px]',
   },
   compact: {
     box: 'min-h-[150px]', panel: 'w-24 lg:w-28', cut: 30, gold: 'w-1 [--at:19px]', stripe: 'w-1.5 [--at:28px]',
-    name: 'text-lg sm:text-xl', manager: 'text-xs sm:text-sm', center: 'w-36 sm:w-44', title: 'text-sm', score: 'text-2xl sm:text-[30px]',
+    name: 'text-lg sm:text-xl', manager: 'text-sm', center: 'w-36 sm:w-44', title: 'text-sm', score: 'text-[32px] sm:text-[30px]',
   },
 };
 type Size = (typeof SIZES)['hero'];
@@ -94,35 +94,36 @@ export default function GameBanner({ game, season, view, title = 'Game of the we
       {href && <CoverLink to={href} label={linkLabel ?? `${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />}
       <Panel season={season} side={a} size={size} />
       {/* not positioned, so it paints under the cover link: clicks on names and scores open the box score; the team and manager links sit above with z-10 */}
-      <div data-testid="banner-body" className={`grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:gap-4 sm:px-4 ${compact ? 'py-4' : 'py-5'}`}>
-        {team(a)}
-        <div className={`text-center ${size.center}`}>
-          {title && <div className={`mb-2.5 font-display font-bold uppercase leading-none tracking-[0.08em] text-accent ${size.title}`}>{title}</div>}
-          <StateLabel status={view.status} />
-          <div className="mt-0.5 flex items-baseline justify-center gap-2.5 font-display leading-none">
+      {/* on a phone the middle column comes apart (display: contents): the title over both teams, each score under its own team */}
+      <div data-testid="banner-body" className={`grid flex-1 grid-cols-2 items-start gap-x-3 px-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4 ${compact ? 'py-4' : 'py-5'}`}>
+        <div className="order-3 min-w-0 sm:order-none">{team(a)}</div>
+        <div className={`contents text-center sm:block ${size.center}`}>
+          {title && <div className={`order-1 col-span-2 mb-2 font-display font-bold uppercase leading-none tracking-[0.08em] text-accent sm:mb-2.5 ${size.title}`}>{title}</div>}
+          <div className="order-2 col-span-2 mb-3 sm:mb-0"><StateLabel status={view.status} /></div>
+          <div className="order-4 col-span-2 mt-3 flex items-baseline justify-between gap-2.5 font-display leading-none sm:mt-0.5 sm:justify-center">
             <span className={`${size.score} ${scoreTone(view, 0)}`}>{view.scores[0].toFixed(decimals)}</span>
             <small className="text-xs font-semibold uppercase text-muted">vs</small>
             <span className={`${size.score} ${scoreTone(view, 1)}`}>{view.scores[1].toFixed(decimals)}</span>
           </div>
           {view.status === 'live' && (
-            <div className="mt-1 flex justify-between gap-2 text-[11px] text-muted">
+            <div className="order-5 col-span-2 mt-1 flex justify-between gap-2 text-[11px] text-muted">
               {([0, 1] as const).map((i) => <span key={i}>Proj {view.projected[i].toFixed(1)}{view.toPlay[i] !== null ? ` · ${view.toPlay[i]} to play` : ''}</span>)}
             </div>
           )}
           {odds && view.win && (
             <>
-              <div className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
+              <div className="order-6 col-span-2 mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
                 {([0, 1] as const).map((i) => <span key={i} data-testid={`banner-win-${i}`} style={{ width: `${view.win![i]}%`, background: winTone(view.win![i], view.win![1 - i]) }} />)}
               </div>
-              <div className="mt-1 flex justify-between text-xs font-semibold">
+              <div className="order-7 col-span-2 mt-1 flex justify-between text-xs font-semibold">
                 {([0, 1] as const).map((i) => <span key={i} style={{ color: winTone(view.win![i], view.win![1 - i]) }}>{view.win![i]}%</span>)}
               </div>
             </>
           )}
-          {view.status === 'final' && winnerName && <div className="mt-1 text-xs text-muted">{winnerName} by {Math.abs(view.scores[0] - view.scores[1]).toFixed(decimals)}</div>}
-          {tied && <div className="mt-1 text-xs text-muted">Tie</div>}
+          {view.status === 'final' && winnerName && <div className="order-8 col-span-2 mt-1 text-xs text-muted">{winnerName} by {Math.abs(view.scores[0] - view.scores[1]).toFixed(decimals)}</div>}
+          {tied && <div className="order-8 col-span-2 mt-1 text-xs text-muted">Tie</div>}
         </div>
-        {team(b, true)}
+        <div className="order-3 min-w-0 sm:order-none">{team(b, true)}</div>
       </div>
       <Panel season={season} side={b} right size={size} />
     </section>

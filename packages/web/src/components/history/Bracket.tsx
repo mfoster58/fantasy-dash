@@ -80,8 +80,8 @@ function Game({ g, kind, managers, year, seeds, tone = 'plain', title, icon, sid
       ? 'border-coral/55 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--coral)_18%,var(--surface))_0%,var(--surface)_70%)]'
       : 'blue-wash border-line';
   // a line from each card toward the round it feeds
-  const line = side === 'left' ? 'after:absolute after:left-full after:top-1/2 after:h-0.5 after:w-8 after:bg-accent/40'
-    : side === 'right' ? 'before:absolute before:right-full before:top-1/2 before:h-0.5 before:w-8 before:bg-accent/40' : '';
+  const line = side === 'left' ? 'sm:after:absolute sm:after:left-full sm:after:top-1/2 sm:after:h-0.5 sm:after:w-8 sm:after:bg-accent/40'
+    : side === 'right' ? 'sm:before:absolute sm:before:right-full sm:before:top-1/2 sm:before:h-0.5 sm:before:w-8 sm:before:bg-accent/40' : '';
   return (
     <div data-testid="bracket-game" data-match={g.matchNo} className={`relative ${line}`}>
       <div className={`relative isolate overflow-hidden rounded-xl border ${frame} ${g.gameId ? 'transition-colors hover:border-accent' : ''}`}>
@@ -97,8 +97,8 @@ function Game({ g, kind, managers, year, seeds, tone = 'plain', title, icon, sid
   );
 }
 
-const ColumnTitle = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-3 text-center font-display text-sm font-bold uppercase tracking-[0.16em] text-accent">{children}</div>
+const ColumnTitle = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`mb-3 text-center font-display text-sm font-bold uppercase tracking-[0.16em] text-accent ${className}`}>{children}</div>
 );
 
 /**
@@ -117,10 +117,11 @@ export default function Bracket({ games, kind, managers, year, seeds }: Props) {
     const cut = Math.ceil(inRound.length / 2);
     return { round, title: roundTitle(kind, inRound, round), left: inRound.slice(0, cut), right: inRound.slice(cut) };
   });
-  const column = (round: number, title: string, list: BracketGame[], side: 'left' | 'right') => (
-    // an empty half (a round with a single game) keeps its column, without a title
-    <div key={`${side}-${round}`} className="flex flex-col">
-      <ColumnTitle>{list.length ? title : ''}</ColumnTitle>
+  const column = (round: number, title: string, list: BracketGame[], side: 'left' | 'right', i: number, alone: boolean) => (
+    // an empty half (a round with a single game) keeps its column, without a title;
+    // on a phone the columns stack round by round, each round's right half straight under its left under one title
+    <div key={`${side}-${round}`} className={`flex flex-col max-sm:order-(--o) ${list.length ? '' : 'max-sm:hidden'}`} style={{ '--o': i * 2 + (side === 'right' ? 1 : 0) } as React.CSSProperties}>
+      <ColumnTitle className={side === 'right' && !alone ? 'max-sm:hidden' : ''}>{list.length ? title : ''}</ColumnTitle>
       <div className="flex flex-1 flex-col justify-around gap-4">
         {list.map((g) => <Game key={g.matchNo} g={g} kind={kind} managers={managers} year={year} seeds={seeds} side={side} />)}
       </div>
@@ -128,20 +129,23 @@ export default function Bracket({ games, kind, managers, year, seeds }: Props) {
   );
   const center = kind === 'winners' ? 'gold' : 'coral';
   return (
-    <div className="overflow-x-auto pb-2">
-      <div className={rounds.length ? 'min-w-[880px]' : ''}>
-        <div className="grid gap-x-8" style={{ gridTemplateColumns: `repeat(${rounds.length}, minmax(0, 1fr)) minmax(260px, 1.25fr) repeat(${rounds.length}, minmax(0, 1fr))` }}>
+    <div className="pb-2 sm:overflow-x-auto">
+      <div className={rounds.length ? 'sm:min-w-[880px]' : ''}>
+        <div
+          className="grid gap-x-8 gap-y-4 sm:grid-cols-(--cols) sm:gap-y-0"
+          style={{ '--cols': `repeat(${rounds.length}, minmax(0, 1fr)) minmax(260px, 1.25fr) repeat(${rounds.length}, minmax(0, 1fr))` } as React.CSSProperties}
+        >
           <div data-testid="bracket-left" className="contents">
-            {halves.map((h) => column(h.round, h.title, h.left, 'left'))}
+            {halves.map((h, i) => column(h.round, h.title, h.left, 'left', i, false))}
           </div>
-          <div data-testid="bracket-center" className="flex flex-col">
+          <div data-testid="bracket-center" className="flex flex-col max-sm:order-last">
             <ColumnTitle>{final ? (kind === 'winners' ? 'Final' : 'Final round') : ''}</ColumnTitle>
             <div className="flex flex-1 flex-col justify-center">
               {final && <Game g={final} kind={kind} managers={managers} year={year} seeds={seeds} tone={center} icon={<FinishIcon kind={kind === 'winners' ? 'champion' : 'toilet'} size="1em" />} title={fmtTag(final.tag)} />}
             </div>
           </div>
           <div data-testid="bracket-right" className="contents">
-            {[...halves].reverse().map((h) => column(h.round, h.title, h.right, 'right'))}
+            {[...halves].reverse().map((h) => column(h.round, h.title, h.right, 'right', halves.indexOf(h), !h.left.length))}
           </div>
         </div>
         {placements.length > 0 && (

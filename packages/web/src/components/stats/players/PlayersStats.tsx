@@ -55,7 +55,7 @@ export default function PlayersStats({ dbs, charts, currentYear, lastWeeks = {},
 
   return (
     <div className="space-y-4">
-      <div className="sticky top-12 z-[5] -mx-4 space-y-2 border-b border-line bg-bg/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+      <div className="z-[5] -mx-4 sm:sticky sm:top-12 space-y-2 border-b border-line bg-bg/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
         <div className="flex flex-wrap items-center gap-3">
           <SeasonPicker years={years} value={season} onChange={(v) => { if (v !== 'all') set({ season: String(v), from: null, to: null }); }} />
           <div role="group" aria-label="Position" className="inline-flex gap-0.5 rounded-md bg-surface-2 p-0.5">

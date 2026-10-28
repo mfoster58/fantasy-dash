@@ -56,7 +56,7 @@ function Card({ game, season, outlook, played }: { game: Game; season: Season; o
   );
 }
 
-const arrow = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line text-lg leading-none text-muted transition-colors hover:border-accent hover:text-ink disabled:opacity-30 disabled:hover:border-line disabled:hover:text-muted';
+const arrow = 'flex h-10 w-10 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full border border-line text-lg leading-none text-muted transition-colors hover:border-accent hover:text-ink disabled:opacity-30 disabled:hover:border-line disabled:hover:text-muted';
 
 export default function ScoreTicker() {
   const live = useLive();

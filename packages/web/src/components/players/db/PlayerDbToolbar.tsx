@@ -35,7 +35,7 @@ export default function PlayerDbToolbar({ state, onChange, years, year, onYear, 
   }, [q, state.q, onChange]);
 
   return (
-    <div className="sticky top-12 z-[5] -mx-4 space-y-2 border-b border-line bg-bg/90 px-4 py-2 text-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+    <div className="z-[5] -mx-4 sm:sticky sm:top-12 space-y-2 border-b border-line bg-bg/90 px-4 py-2 text-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div role="group" aria-label="Position" className="flex gap-1">
           {TABS.map((t) => (

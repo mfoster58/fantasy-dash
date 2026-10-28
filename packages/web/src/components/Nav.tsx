@@ -66,7 +66,7 @@ export default function Nav() {
               />
             ))}
         </nav>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
           <ThemeToggle />
           <button
             type="button"
@@ -74,21 +74,23 @@ export default function Nav() {
             aria-expanded={open}
             aria-controls="nav-menu"
             onClick={() => setOpen((o) => !o)}
-            className="rounded px-2 py-1 text-xs text-muted hover:text-ink md:hidden"
+            className="-mr-2 grid h-11 w-11 place-items-center rounded-lg text-muted hover:text-ink md:hidden"
           >
-            {open ? 'Close' : 'Menu'}
+            <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              {open ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3 6h14M3 10h14M3 14h14" />}
+            </svg>
           </button>
         </div>
       </div>
       {open && (
-        <div id="nav-menu" data-testid="nav-menu" className="border-t border-line bg-bg md:hidden">
-          <nav className="mx-auto flex max-w-[1400px] flex-col px-2 py-1 text-sm">
+        <div id="nav-menu" data-testid="nav-menu" className="max-h-[calc(100dvh-3rem)] overflow-y-auto border-t border-line bg-bg md:hidden">
+          <nav className="mx-auto flex max-w-[1400px] flex-col px-2 py-2 text-base">
             {items.map((i) => i.kind === 'link' ? (
               <NavLink
                 key={i.to}
                 to={i.to}
                 onClick={() => setOpen(false)}
-                className={({ isActive }) => `rounded px-3 py-2 ${isActive ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink'}`}
+                className={({ isActive }) => `flex min-h-11 items-center rounded-lg px-3 ${isActive ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink'}`}
               >
                 {i.label}
               </NavLink>

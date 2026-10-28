@@ -3,6 +3,13 @@ import type { PlayerDirectory, PlayerId } from '@fantasy-dash/core';
 export function playerName(players: PlayerDirectory, id: PlayerId): string {
   return players[id]?.name ?? id;
 }
+/** "P. Mahomes" for a narrow row; a defense keeps just its nickname ("Lions") */
+export function shortName(players: PlayerDirectory, id: PlayerId): string {
+  const p = players[id];
+  if (!p) return id;
+  if (p.position === 'DEF') return p.lastName || p.name;
+  return p.firstName && p.lastName ? `${p.firstName[0]}. ${p.lastName}` : p.name;
+}
 export function playerPos(players: PlayerDirectory, id: PlayerId): string {
   return players[id]?.position ?? '?';
 }

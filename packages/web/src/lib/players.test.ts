@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PlayerDirectory } from '@fantasy-dash/core';
-import { statLine, posColor, headshotUrl } from './players';
+import { statLine, posColor, headshotUrl, shortName } from './players';
 
 describe('statLine', () => {
   it('formats a quarterback line including rushing', () => {
@@ -38,5 +38,23 @@ describe('headshotUrl', () => {
   });
   it('uses the lowercase team logo for defenses', () => {
     expect(headshotUrl(dir, 'DET')).toBe('https://sleepercdn.com/images/team_logos/nfl/det.png');
+  });
+});
+
+describe('shortName', () => {
+  const dir: PlayerDirectory = {
+    '4046': { id: '4046', name: 'Patrick Mahomes', firstName: 'Patrick', lastName: 'Mahomes', position: 'QB', team: 'KC', yearsExp: 8, birthDate: null },
+    '9488': { id: '9488', name: 'Jaxon Smith-Njigba', firstName: 'Jaxon', lastName: 'Smith-Njigba', position: 'WR', team: 'SEA', yearsExp: 3, birthDate: null },
+    DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0, birthDate: null },
+  };
+  it('cuts the first name to its initial', () => {
+    expect(shortName(dir, '4046')).toBe('P. Mahomes');
+    expect(shortName(dir, '9488')).toBe('J. Smith-Njigba');
+  });
+  it('keeps just the nickname for a defense', () => {
+    expect(shortName(dir, 'DET')).toBe('Lions');
+  });
+  it('falls back to the id for an unknown player', () => {
+    expect(shortName(dir, '1')).toBe('1');
   });
 });

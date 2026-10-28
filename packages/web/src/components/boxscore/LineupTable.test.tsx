@@ -90,4 +90,19 @@ describe('LineupTable', () => {
       gameOf={(id) => (id === 'a1' ? { kind: 'final' } : { kind: 'live', period: 2, clock: '3:00', halftime: false })} /></MemoryRouter>);
     expect(screen.getAllByTestId('player-proj').map((e) => e.textContent)).toEqual(['10.0', '12.4']);
   });
+  it('keeps the two players in a slot on one row, the slot between them, on every screen size', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
+    const row = screen.getByTestId('slot-row');
+    expect(row).toHaveClass('grid-cols-[1fr_auto_1fr]');
+    expect(row.className).not.toMatch(/(^| )grid-cols-\[3rem/);
+    const [left, slot, right] = Array.from(row.children);
+    expect(left).toHaveTextContent('Alpha One');
+    expect(slot).toHaveTextContent('QB');
+    expect(right).toHaveTextContent('Bravo One');
+  });
+  it('gives each player a short name for phones while the link keeps his full name', () => {
+    render(<MemoryRouter><LineupTable sides={[side('a', 'a1', []), side('b', 'b1', [])]} slots={['QB']} players={players} seasonTeams={{}} /></MemoryRouter>);
+    expect(screen.getByText('A. One')).toHaveClass('sm:hidden');
+    expect(screen.getByRole('link', { name: 'Alpha One' })).toBeInTheDocument();
+  });
 });

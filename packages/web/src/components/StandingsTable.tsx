@@ -24,6 +24,8 @@ const headers: { key: string; label: string; title?: string; left?: boolean }[] 
 ];
 
 const cell = 'num whitespace-nowrap px-3 py-2.5 text-right';
+/** on a phone the rank and team stay put while the numbers scroll under them */
+const STICK = 'max-sm:sticky max-sm:z-10 max-sm:bg-surface';
 
 /** "W3" -> 3, "L2" -> -2, "-" -> 0: wins above losses, longer runs further out */
 const streakValue = (s: string) => (s.startsWith('W') ? 1 : s.startsWith('L') ? -1 : 0) * (Number(s.slice(1)) || 0);
@@ -52,7 +54,7 @@ export default function StandingsTable({ rows, managers, playoffTeams, year }: P
         <thead className="border-b border-line">
           <tr>
             {headers.map((h) => (
-              <th key={h.key} scope="col" aria-sort={sort.key === h.key ? (sort.asc ? 'ascending' : 'descending') : undefined} className={`section-label whitespace-nowrap px-3 py-2.5 ${h.key === 'rank' ? 'w-10 pl-4 pr-1' : ''} ${h.key === 'team' ? 'w-[32%] min-w-56' : ''} ${h.left ? 'text-left' : 'text-right'}`}>
+              <th key={h.key} scope="col" aria-sort={sort.key === h.key ? (sort.asc ? 'ascending' : 'descending') : undefined} className={`section-label whitespace-nowrap px-3 py-2.5 ${h.key === 'rank' ? `w-10 pl-4 pr-1 ${STICK} left-0` : ''} ${h.key === 'team' ? `w-[32%] min-w-44 sm:min-w-56 ${STICK} left-10` : ''} ${h.left ? 'text-left' : 'text-right'}`}>
                 <button type="button" title={h.title} onClick={() => pick(h.key)} className={`inline-flex items-center gap-0.5 uppercase hover:text-ink ${sort.key === h.key ? 'text-ink' : ''}`}>
                   {h.label}
                   {sort.key === h.key && <span aria-hidden="true" className="text-[9px]">{sort.asc ? '▲' : '▼'}</span>}
@@ -74,12 +76,12 @@ export default function StandingsTable({ rows, managers, playoffTeams, year }: P
                 data-playoff-cut={cut ? 'true' : undefined}
                 className={`border-t border-line transition-colors first:border-t-0 hover:bg-surface-2/70 ${cut ? 'border-b-2 border-b-accent/60' : ''}`}
               >
-                <td className="num py-2.5 pl-4 pr-1 text-muted">{r.rank}</td>
-                <td className="px-3 py-2.5">
+                <td className={`num w-10 py-2.5 pl-4 pr-1 text-muted ${STICK} left-0`}>{r.rank}</td>
+                <td className={`max-w-44 px-3 py-2.5 sm:max-w-none ${STICK} left-10`}>
                   <div className="flex items-center gap-2">
                     <Avatar avatar={m?.avatar ?? null} name={m?.displayName ?? '?'} size={28} />
                     <div className="min-w-0 leading-tight">
-                      <TeamLink userId={r.userId} year={year} className="block truncate font-medium">{m?.teamName ?? m?.displayName ?? r.userId}</TeamLink>
+                      <TeamLink userId={r.userId} year={year} className="line-clamp-2 font-medium sm:block sm:truncate">{m?.teamName ?? m?.displayName ?? r.userId}</TeamLink>
                       {m?.teamName && <ManagerLink userId={r.userId} className="block text-xs text-muted">{m.displayName}</ManagerLink>}
                     </div>
                   </div>

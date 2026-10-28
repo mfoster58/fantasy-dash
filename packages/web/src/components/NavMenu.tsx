@@ -19,7 +19,7 @@ function Entries({ entries, onPick, className }: { entries: MenuEntries; onPick?
     <ul className={className}>
       {entries.map((e) => (
         <li key={e.userId}>
-          <Link to={e.to} onClick={onPick} className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 hover:bg-surface-2">
+          <Link to={e.to} onClick={onPick} className="flex min-h-11 items-center gap-2.5 rounded-md px-2.5 py-1.5 hover:bg-surface-2 md:min-h-0">
             {!e.plain && <Avatar avatar={e.avatar} name={e.title} size={24} />}
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm text-ink">{e.title}</span>
@@ -91,7 +91,7 @@ export function NavMenuGroup({ label, active, entries, onNavigate }: { label: st
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={`flex w-full items-center rounded px-3 py-2 text-left ${active ? 'text-ink' : 'text-muted hover:text-ink'}`}
+        className={`flex min-h-11 w-full items-center rounded-lg px-3 text-left ${active ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >
         {label}<Chevron open={open} />
       </button>

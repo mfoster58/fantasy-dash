@@ -12,7 +12,7 @@ const tiles: { key: keyof Honors; label: string }[] = [
 export default function HonorsStrip({ honors, managers, status, lastScoredWeek, year }: Props) {
   if (status === 'in_season') return <div className="card p-4 text-sm text-muted">Season in progress · through week {lastScoredWeek}. Honors are decided after the playoffs.</div>;
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5 [&>:first-child]:col-span-2 lg:[&>:first-child]:col-span-1">
       {tiles.map((t) => {
         const id = honors[t.key];
         const m = id ? managers[id] : undefined;

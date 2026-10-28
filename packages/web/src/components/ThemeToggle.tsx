@@ -8,7 +8,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={() => { applyTheme(next); setTheme(next); }}
-      className="rounded px-2 py-1 text-xs text-muted transition-colors hover:text-ink"
+      className="h-11 rounded-lg px-2.5 text-sm text-muted transition-colors hover:text-ink md:h-auto md:px-2 md:py-1 md:text-xs"
       aria-label={`Switch to ${next} theme`}
     >
       {next === 'light' ? 'Light' : 'Dark'}
