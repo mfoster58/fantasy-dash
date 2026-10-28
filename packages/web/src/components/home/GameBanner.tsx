@@ -23,27 +23,32 @@ export interface BannerStanding { rank: number; streak: string }
 
 const SIZES = {
   hero: {
-    box: 'min-h-[196px]', panel: 'w-52 lg:w-64', cut: 40, gold: 'w-[5px] [--at:26px]', stripe: 'w-2 [--at:38px]',
+    box: 'min-h-[196px]', panel: 'w-52 lg:w-64', goldAt: 26, gold: 'w-[5px] [--at:26px]', stripe: 'w-2 [--at:38px]',
     name: 'text-[21px] sm:text-[27px]', manager: 'text-sm sm:text-base', center: 'w-40 sm:w-56', title: 'text-lg sm:text-2xl', score: 'text-[42px] sm:text-[46px]',
   },
   compact: {
-    box: 'min-h-[150px]', panel: 'w-24 lg:w-28', cut: 30, gold: 'w-1 [--at:19px]', stripe: 'w-1.5 [--at:28px]',
+    box: 'min-h-[150px]', panel: 'w-24 lg:w-28', goldAt: 19, gold: 'w-1 [--at:19px]', stripe: 'w-1.5 [--at:28px]',
     name: 'text-lg sm:text-xl', manager: 'text-sm', center: 'w-36 sm:w-44', title: 'text-sm', score: 'text-[32px] sm:text-[30px]',
   },
 };
 type Size = (typeof SIZES)['hero'];
 
-/** a photo cut on a diagonal with a team-coloured stripe and a thinner gold one just inside it, both over the photo so it runs past the gold to the cut (the cut's run over the banner's height matches the stripes' 11deg) */
+/**
+ * a photo cut on a diagonal with a team-coloured stripe and a thinner gold one outside it; the photo stops at the gold
+ * stripe's outer edge. Its frame is skewed by the stripes' own 11deg about the same middle, so the cut runs exactly along
+ * the gold whatever the banner's height, and the picture inside is skewed back upright.
+ */
 function Panel({ season, side, right, size }: { season: BannerSeason; side: GameSide; right?: boolean; size: Size }) {
   const m = season.managers[side.userId];
-  const cut = right ? `polygon(0 0, 100% 0, 100% 100%, ${size.cut}px 100%)` : `polygon(0 0, 100% 0, calc(100% - ${size.cut}px) 100%, 0 100%)`;
   const edge = right ? 'left-[var(--at)] skew-x-[11deg]' : 'right-[var(--at)] -skew-x-[11deg]';
+  const frame = right ? '-right-12 skew-x-[11deg]' : '-left-12 -skew-x-[11deg]';
+  const upright = right ? '-skew-x-[11deg]' : 'skew-x-[11deg]';
   return (
     <div data-testid="banner-photo" className={`pointer-events-none relative hidden shrink-0 sm:block ${size.panel}`} aria-hidden="true">
-      <div className="absolute inset-0" style={{ clipPath: cut }}>
+      <div data-testid="photo-frame" className={`absolute inset-y-0 overflow-hidden ${frame}`} style={right ? { left: size.goldAt } : { right: size.goldAt }}>
         {m?.avatar
-          ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
-          : <div className={`absolute inset-0 flex items-center bg-surface-2 px-6 font-display text-4xl font-bold text-muted ${right ? 'justify-end' : ''}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
+          ? <div className={`absolute inset-y-0 -inset-x-10 bg-cover bg-center ${upright}`} style={{ backgroundImage: `url(${avatarUrl(m.avatar)})` }} />
+          : <div className={`absolute inset-y-0 -inset-x-10 flex items-center justify-center bg-surface-2 font-display text-4xl font-bold text-muted ${upright}`}>{(m?.displayName ?? '?').slice(0, 2).toUpperCase()}</div>}
       </div>
       <div className={`absolute -inset-y-3 ${size.stripe} ${edge} ${right ? 'bg-coral' : 'bg-accent'}`} />
       <div className={`absolute -inset-y-3 ${size.gold} ${edge} bg-gold`} />

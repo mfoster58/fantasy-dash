@@ -105,6 +105,10 @@ describe('PlayerPage', () => {
     const heads = within(section(/Game log/)!).getAllByRole('columnheader').map((h) => h.textContent);
     expect(heads).not.toContain('Manager');
     expect(heads).not.toContain('Result');
+    // nor whether he started or sat
+    const log = section(/Game log/)!;
+    for (const t of ['Started', 'Bench', 'FA']) expect(within(log).queryByText(t), t).toBeNull();
+    for (const r of within(log).getAllByTestId('log-week')) expect(r.querySelectorAll('td')[2]).toHaveAttribute('data-testid', 'cell-pts');
     expect(heads).toEqual(expect.arrayContaining(['Wk', 'Opp']));
   });
   it('keeps only the season fixed in Advanced by season on a phone', () => {

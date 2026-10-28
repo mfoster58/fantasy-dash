@@ -87,6 +87,19 @@ describe('GameBanner links and ranks', () => {
     // the names and scores stay out of the stacking order so a click on them reaches the box score link
     expect(container.querySelector('[data-testid="banner-body"]')).not.toHaveClass('relative');
   });
+  it('ends each photo at the gold stripe: the frame is skewed like the stripes and stops at the gold one\'s outer edge', () => {
+    const s = league();
+    const { container } = wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
+    const [left, right] = Array.from(container.querySelectorAll('[data-testid="banner-photo"]'));
+    const frame = (p: Element) => p.querySelector('[data-testid="photo-frame"]') as HTMLElement;
+    const gold = (p: Element) => p.querySelector('.bg-gold') as HTMLElement;
+    expect(frame(left)).toHaveClass('-skew-x-[11deg]');
+    expect(frame(left)).toHaveClass('overflow-hidden');
+    expect(frame(left).style.right).toBe('26px');
+    expect(gold(left)).toHaveClass('[--at:26px]');
+    expect(frame(right)).toHaveClass('skew-x-[11deg]');
+    expect(frame(right).style.left).toBe('26px');
+  });
   it('puts the manager on their own line and record, rank and streak on the line below', () => {
     const s = league();
     wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} standing={(u) => (u === 'b' ? { rank: 1, streak: 'W2' } : undefined)} />);

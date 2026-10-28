@@ -109,10 +109,11 @@ export default function DraftBoard({ draft, managers, players, seasonTeams, mode
                   )}
                   <div className="truncate pr-5 font-medium"><PlayerLink id={p.playerId} onClick={(e) => e.stopPropagation()}>{playerName(players, p.playerId)}</PlayerLink></div>
                   <div className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] text-muted">
-                    <span className="font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
+                    <span className="shrink-0 font-semibold" style={mode === 'position' ? { color: posColor(pos) } : undefined}>{posLabel(pos, p.posDraftRank)}</span>
                     {p.tradedTo
-                      ? <span className="truncate font-medium text-warn" title={`Traded to ${managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId} in week ${p.tradedTo.week}`}>{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
-                      : <span>{playerTeam(players, p.playerId, seasonTeams)}</span>}
+                      ? <span className="min-w-0 truncate font-medium text-warn" title={`Traded to ${managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId} in week ${p.tradedTo.week}`}>{managers[p.tradedTo.userId]?.displayName ?? p.tradedTo.userId}</span>
+                      // the team gives way first, so the value at the end is never cut off
+                      : <span className="min-w-0 truncate">{playerTeam(players, p.playerId, seasonTeams)}</span>}
                     {mode === 'value' && p.value !== null && <span className="num ml-auto shrink-0 font-semibold text-ink">{fmtSigned(p.value, 0)}</span>}
                   </div>
                 </div>
