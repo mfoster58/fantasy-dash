@@ -24,7 +24,8 @@ const fullAvatar = (avatar: string) => (avatar.startsWith('https://') ? avatar :
 /**
  * The banner at the top of a team or manager page, built like the game of the week: the avatar cut on a diagonal with a
  * league-blue stripe and a thin gold one, the eyebrow as a kicker, the title in the banner's condensed type, the 3×2 tiles
- * on the right and the championship pennants hanging from the top edge. Chips and the footer strip sit underneath.
+ * on the right and the championship pennants hanging beside the name. Chips and the footer strip sit under the name and tiles,
+ * right of the photo, which runs the banner's full height.
  * On a phone the photo is a band across the top and the rest stacks below.
  */
 export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, badges, tiles, chips, strip, pennants = [] }: Props) {
@@ -42,6 +43,8 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
           <div data-testid="banner-stripe" className="absolute -inset-y-3 right-[38px] w-2 -skew-x-[11deg] bg-accent" />
           <div data-testid="banner-stripe" className="absolute -inset-y-3 right-[26px] w-[5px] -skew-x-[11deg] bg-gold" />
         </div>
+        {/* everything right of the photo, team history and the footer strip included, so the photo runs the banner's full height */}
+        <div data-testid="banner-body" className="flex min-w-0 flex-1 flex-col">
         <div className="relative grid min-w-0 flex-1 items-center gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div data-testid="banner-info" className="flex min-w-0 items-start gap-4 self-stretch sm:gap-5">
           <div className="min-w-0 self-center">
@@ -67,9 +70,10 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
             ))}
           </dl>
         </div>
+        {chips && <div className="flex flex-wrap items-center gap-2 border-t border-line/70 px-5 py-2.5 text-xs sm:px-6">{chips}</div>}
+        {strip && <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-line/70 bg-bg/30 px-5 py-2 text-xs text-muted sm:px-6">{strip}</div>}
+        </div>
       </div>
-      {chips && <div className="flex flex-wrap items-center gap-2 border-t border-line/70 px-5 py-2.5 text-xs sm:px-6">{chips}</div>}
-      {strip && <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-line/70 bg-bg/30 px-5 py-2 text-xs text-muted sm:px-6">{strip}</div>}
     </header>
   );
 }

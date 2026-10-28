@@ -29,6 +29,14 @@ describe('ProfileHeader', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveClass('font-display', 'uppercase');
   });
 
+  it('team history and the footer strip sit in the right-hand column, so the photo runs the banner’s full height', () => {
+    render(<ProfileHeader {...base} avatar="abc123" chips={<span>Team history</span>} strip={<span>note</span>} />);
+    const body = screen.getByTestId('banner-body');
+    expect(body).toContainElement(screen.getByText('Team history'));
+    expect(body).toContainElement(screen.getByText('note'));
+    expect(body).not.toContainElement(screen.getByTestId('banner-photo'));
+    expect(body.parentElement).toContainElement(screen.getByTestId('banner-photo'));
+  });
   it('without an avatar the panel shows his initials', () => {
     render(<ProfileHeader {...base} />);
     expect(screen.getByTestId('banner-photo')).toHaveTextContent('AL');
