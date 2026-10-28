@@ -16,9 +16,9 @@ function dbWith(pts: (number | null)[], throughWeek = pts.length): PlayerDb {
 const sched = (games: [number, string, string][]): Schedule => ({ year: 2026, games: games.map(([week, home, away]) => ({ week, home, away })) });
 
 describe('playerSummary', () => {
-  it('floor and ceiling are the 2nd lowest and 2nd highest with 5+ games', () => {
+  it('floor and ceiling are his worst and best games played', () => {
     const s = playerSummary(dbWith([3, 8, 12, 20, 31]), 'x', null);
-    expect(s).toMatchObject({ games: 5, total: 74, floor: 8, ceil: 20 });
+    expect(s).toMatchObject({ games: 5, total: 74, floor: 3, ceil: 31 });
     expect(s.avg).toBeCloseTo(14.8, 5);
   });
   it('min and max under 5 games', () => {

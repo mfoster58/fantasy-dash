@@ -32,6 +32,9 @@ describe('GradesSection', () => {
     expect(tileOf('adot')).toHaveTextContent(/\d+(st|nd|rd|th) pct · style/);
     expect(tileOf('dropRate')).toHaveTextContent('100th pct');
     expect(tileOf('dropRate').getAttribute('data-pct')).toBe('100');
+    // a progress bar filled to the percentile, not a dot on a track
+    expect((tileOf('adot').querySelector('[data-testid="pct-fill"]') as HTMLElement).style.width).toMatch(/^\d+%$/);
+    expect(tileOf('adot').querySelector('[data-testid="pct-dot"]')).toBeNull();
   });
 
   it('opens on the newest season and the picker switches seasons', () => {

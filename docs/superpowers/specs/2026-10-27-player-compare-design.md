@@ -43,7 +43,7 @@ Mathias wants a straight stats comparison between players: no start/sit advice a
 - **Header**: avatar, name, position and team, then `NG · X pts` (games played, season points).
 - **Floor · Average · Ceiling**, in three boxes.
   - Average is points per game played.
-  - With 5 or more games, floor and ceiling are his second-lowest and second-highest weekly scores. With fewer games, they are his lowest and highest.
+  - Floor and ceiling are his lowest and highest weekly scores (changed 2026-10-27 at Mathias's request; they first skipped one game at each end).
   - Only games played count (`gp ≥ 1`).
 - **Histogram** of weekly scores in 5-point bins from 0 to 45+, in the player's colour, with a dashed line at his average.
 - **Consistency**: coefficient of variation (SD ÷ average) as a percentage, labelled "CV".

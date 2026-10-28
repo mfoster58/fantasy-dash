@@ -18,8 +18,9 @@ function Tile({ t }: { t: GradedTile }) {
         {t.detail}
       </div>
       {ranked && (
-        <div className="relative mt-1.5 h-1 rounded-full bg-line" aria-hidden>
-          <span className="absolute -top-0.5 size-2 -translate-x-1/2 rounded-full" style={{ left: `${Math.max(2, t.pct!)}%`, background: t.style ? 'var(--muted)' : colour }} />
+        // a progress bar to his percentile, fading in from the left like the comparison table's cells
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+          <span data-testid="pct-fill" className="block h-full rounded-full" style={{ width: `${Math.max(2, t.pct!)}%`, background: `linear-gradient(90deg, color-mix(in srgb, ${t.style ? 'var(--muted)' : colour} 45%, transparent), ${t.style ? 'var(--muted)' : colour})` }} />
         </div>
       )}
     </div>

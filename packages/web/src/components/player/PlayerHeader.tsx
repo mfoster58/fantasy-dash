@@ -64,7 +64,6 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
   return (
     <header data-testid="player-banner" data-team={team ? bio.nflTeam : undefined} style={style}
       className={`relative isolate flex min-h-[230px] flex-col overflow-hidden rounded-xl border border-line sm:flex-row ${team ? '' : 'blue-wash'}`}>
-      {team && <img aria-hidden="true" alt="" src={teamLogo(bio.nflTeam)} className="pointer-events-none absolute -right-8 top-1/2 -z-10 w-72 -translate-y-1/2 opacity-[0.07]" />}
       {/* phones: the photo and stripes are a band across the top; wider: a panel down the left */}
       <div aria-hidden="true" className="relative h-44 w-[260px] shrink-0 sm:h-auto sm:w-[390px] sm:self-stretch">
         <Photo id={id} espnId={espnId} />
@@ -72,7 +71,9 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
         <div className="absolute -inset-y-3.5 right-2.5 w-[5px] -skew-x-[11deg] bg-gold" />
       </div>
       <div className="grid min-w-0 flex-1 items-center gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
+        <div data-testid="banner-info" className="relative min-w-0">
+          {/* the team logo, faint, behind the name and bio; -z-10 stays inside the banner's own stacking context */}
+          {team && <img data-testid="team-watermark" aria-hidden="true" alt="" src={teamLogo(bio.nflTeam)} className="pointer-events-none absolute -left-4 top-1/2 -z-10 w-64 -translate-y-1/2 opacity-[0.08]" />}
           {team && <div className="font-display text-xs font-bold uppercase tracking-[0.18em]" style={{ color: team.stripe }}>{team.name}</div>}
           <h1 className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-3xl font-bold uppercase leading-[0.95] tracking-wide sm:text-[46px]">
             {bio.name}
@@ -98,7 +99,7 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
             <Tile label="Points / start" value={f1(summary.perStart)} />
             <Tile label="Starts" value={String(summary.starts)} sub={`/ ${summary.rostered}`} />
             <Tile label="Best week" value={f1(summary.best)} />
-            <Tile label="Team W–L started" value={`${summary.w}–${summary.l}${summary.t ? `–${summary.t}` : ''}`} />
+            <Tile label="W–L started" value={`${summary.w}–${summary.l}${summary.t ? `–${summary.t}` : ''}`} />
             <Tile testId="tile-posrank" label={posRank ? `Pos rank · ${posRank.year}` : 'Pos rank'} value={posRank?.label ?? '–'} />
           </div>
         )}

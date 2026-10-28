@@ -24,7 +24,7 @@ const homeOf = (schedule: Schedule | null, week: number, team: string): boolean 
   return g ? g.home === team : null;
 };
 
-/** His season in league scoring: games played only. Floor and ceiling skip one game at each end once he has five. */
+/** His season in league scoring: games played only. Floor and ceiling are his worst and best games. */
 export function playerSummary(db: PlayerDb, id: string, schedule: Schedule | null): PlayerSummary {
   const rows = db.rows.filter((r) => r.id === id).sort((a, b) => a.week - b.week);
   const played = rows.filter((r) => r.gp >= 1 && r.pts !== undefined);
@@ -37,8 +37,8 @@ export function playerSummary(db: PlayerDb, id: string, schedule: Schedule | nul
   for (const p of pts) bins[Math.min(BIN_COUNT - 1, Math.max(0, Math.floor(p / 5)))]++;
   return {
     games, total, avg,
-    floor: games ? sorted[games >= 5 ? 1 : 0] : null,
-    ceil: games ? sorted[games >= 5 ? games - 2 : games - 1] : null,
+    floor: games ? sorted[0] : null,
+    ceil: games ? sorted[games - 1] : null,
     // a spread needs a few games, and a ratio over a zero or negative average means nothing
     cv: games >= MIN_CV_GAMES && avg !== null && avg > 0 && sd !== null ? sd / avg : null,
     bins,

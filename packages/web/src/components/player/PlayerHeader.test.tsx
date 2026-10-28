@@ -20,6 +20,12 @@ describe('PlayerHeader banner', () => {
     expect(b.getAttribute('style')).toContain('#69BE28');
     expect(screen.getByText('Seattle Seahawks')).toBeInTheDocument();
   });
+  it("the team logo sits behind the name section, not the tiles", () => {
+    mount();
+    const logo = screen.getByTestId('team-watermark');
+    expect(logo.closest('[data-testid="banner-info"]')).not.toBeNull();
+    expect(logo.closest('[data-testid="header-tiles"]')).toBeNull();
+  });
   it('a player without an NFL team gets the league blue wash', () => {
     const b = mount('');
     expect(b).toHaveClass('blue-wash');
@@ -39,6 +45,7 @@ describe('PlayerHeader banner', () => {
   it("the last tile is this season's position rank, not managers", () => {
     mount();
     expect(screen.queryByText('Managers')).toBeNull();
+    expect(screen.getByText('W–L started')).toBeInTheDocument();
     expect(screen.getByTestId('tile-posrank')).toHaveTextContent('Pos rank · 2026WR1');
   });
   it('no rank yet reads a dash', () => {
