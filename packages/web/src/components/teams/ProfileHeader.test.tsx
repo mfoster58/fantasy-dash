@@ -9,6 +9,10 @@ describe('ProfileHeader', () => {
     const imgs = screen.getAllByRole('img', { name: /Champion/ });
     expect(imgs.map((i) => i.getAttribute('aria-label'))).toEqual(['Champion 2025', 'Champion 2023']);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Team Alice');
+    // they hang right beside the name, not over by the tiles
+    const info = screen.getByTestId('banner-info');
+    expect(info).toContainElement(imgs[0]);
+    expect(info).toContainElement(screen.getByRole('heading', { level: 1 }));
   });
 
   it('shows no pennant without a title', () => {
