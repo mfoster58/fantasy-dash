@@ -13,7 +13,7 @@ const toneClass = { win: 'text-win', loss: 'text-loss', even: 'text-muted' };
 /** Every opponent, best record first; green when winning, red when losing. */
 export default function Rivals({ rivalries, managers, userId }: Props) {
   return (
-    <section className="card">
+    <section aria-label="Rivals" className="card">
       <CardHeader title="Rivals" aside={`${rivalries.length} opponents`} />
       <ul className="divide-y divide-line">
         {rivalries.map((r) => {

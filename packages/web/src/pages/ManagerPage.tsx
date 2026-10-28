@@ -7,8 +7,9 @@ import FranchisePlayers from '../components/teams/FranchisePlayers';
 import LeagueRecords from '../components/teams/LeagueRecords';
 import EfficiencyCard from '../components/teams/EfficiencyCard';
 import ProfileHeader from '../components/teams/ProfileHeader';
+import CareerTimeline from '../components/teams/CareerTimeline';
+import { careerTimeline } from '../lib/careerTimeline';
 import Rivals from '../components/teams/Rivals';
-import SeasonShape from '../components/teams/SeasonShape';
 import SeasonsTable from '../components/teams/SeasonsTable';
 import { history, players } from '../data/load';
 import { fmtPpg, fmtRecord, fmtWinPct } from '../lib/format';
@@ -21,6 +22,7 @@ export default function ManagerPage() {
   const { userId = '' } = useParams();
   const navigate = useNavigate();
   const c = useMemo(() => careerProfile(seasons, history, userId, players), [seasons, userId]);
+  const timeline = useMemo(() => careerTimeline(c.seasons, seasons, userId, players, history.managers[userId]?.displayName ?? userId), [c.seasons, seasons, userId]);
   const records = useMemo(() => managerRecords(allTimeContext(seasons, players, history.managers), userId), [seasons, userId]);
   if (!history.managers[userId]) return <section className="space-y-4"><p className="text-sm text-muted">No such manager.</p></section>;
   return (
@@ -48,15 +50,15 @@ export default function ManagerPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <div className="space-y-4">
           <SeasonsTable seasons={c.seasons} userId={userId} />
-          <SeasonShape wide title="PPG history" label="Season by season" points={[...c.seasons].reverse().map((s) => ({ label: String(s.year), mine: s.ppw, league: s.leagueAvgPpw, finish: s.finish === '—' ? undefined : { label: s.finish, icon: s.finishIcon } }))} mineCaption={`${fmtPpg(c.seasons.length ? c.seasons.reduce((t, s) => t + s.ppw, 0) / c.seasons.length : 0)} a week`} leagueCaption="league average" />
+          <CareerTimeline stops={timeline} players={players} />
           <EfficiencyCard desk={c.lineup} />
           {c.draft && <DraftDeskCard desk={c.draft} players={players} />}
           <FranchisePlayers players={players} franchise={c.franchise} />
           <AllTimeTeam team={c.allTimeTeam} players={players} userId={userId} />
-          <Rivals rivalries={c.rivalries} managers={history.managers} userId={userId} />
         </div>
         <div className="space-y-4">
           <LeagueRecords records={records} />
+          <Rivals rivalries={c.rivalries} managers={history.managers} userId={userId} />
         </div>
       </div>
     </section>

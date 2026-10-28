@@ -26,6 +26,15 @@ describe('ManagerPage', () => {
     expect(screen.getAllByRole('img', { name: /^Champion \d{4}$/ }).map((i) => i.getAttribute('aria-label'))).toEqual(titles);
   });
 
+  it('a career timeline replaces PPG history, and Rivals sits in the right column with the league records', () => {
+    mount(history.allTime[0].userId);
+    expect(screen.queryByText('PPG history')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Career timeline' })).toBeInTheDocument();
+    expect(screen.getAllByTestId('timeline-stop').length).toBe(history.managers[history.allTime[0].userId].seasons.length);
+    const rivals = screen.getByRole('region', { name: /Rivals/ });
+    const records = screen.getByRole('region', { name: /League records|Record book/ });
+    expect(rivals.parentElement).toBe(records.parentElement);
+  });
   it('hangs nothing for a manager without a title', () => {
     const nobody = Object.keys(history.managers).find((id) => !champions.has(id))!;
     mount(nobody);
