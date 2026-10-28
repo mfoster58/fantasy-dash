@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode, SVGProps } from 'react';
+import { useId, type ReactElement, type ReactNode, type SVGProps } from 'react';
 import type { MoveKind } from '../lib/player/journey';
 
 type IconProps = SVGProps<SVGSVGElement> & { title?: string };
@@ -48,6 +48,19 @@ const FINISH: Record<FinishKind, { shape: keyof typeof SHAPES; className: string
 export function FinishIcon({ kind, className = '', size = '1.3em' }: { kind: FinishKind; className?: string; size?: string }) {
   const { shape, className: tone, title } = FINISH[kind];
   return <Icon shape={shape} title={title} width={size} height={size} className={`${tone} ${className}`} data-testid={`finish-${kind}`} />;
+}
+
+/** A flame for the points title, filled with an orange-to-yellow gradient. */
+export function FlameIcon({ size = '1.3em', title = 'Points title' }: { size?: string; title?: string }) {
+  const id = `flame-${useId().replace(/:/g, '')}`;
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className="inline-block shrink-0 align-[-0.125em]" role="img" aria-label={title} data-testid="flame">
+      <defs>
+        <linearGradient id={id} x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#ff5a1f" /><stop offset=".6" stopColor="#ff9a3c" /><stop offset="1" stopColor="#ffd166" /></linearGradient>
+      </defs>
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill={`url(#${id})`} stroke="#ff7a2f" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 /** The same icon for use inside an existing `<svg>`: a `size`-wide group whose top-left corner sits at (x, y); `color` overrides the finish's own tone. */

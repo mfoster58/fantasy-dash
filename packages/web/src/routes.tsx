@@ -149,7 +149,7 @@ export const routes: RouteObject[] = [
       { path: 'stats', loader: () => loadAllSeasons(), element: <StatsPage /> },
       { path: 'stats/players', loader: statsPlayersLoader, element: <StatsPlayersPage /> },
       { path: 'stats/managers', loader: ({ request }: LoaderFunctionArgs) => redirect(`/stats${new URL(request.url).search}`) },
-      { path: 'history', element: <HistoryPage /> },
+      { path: 'history', loader: () => loadAllSeasons(), element: <HistoryPage /> },
       { path: 'history/:season', loader: seasonLoader, element: <SeasonReviewPage /> },
       { path: 'draft', loader: () => redirect(`/draft/${currentSeason.year}`) },
       { path: 'draft/grading', loader: () => loadAllSeasons().then((all) => all.filter((s) => s.status === 'complete' && s.draft).at(-1) ?? null), element: <GradingPage /> },
