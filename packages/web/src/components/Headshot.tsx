@@ -2,15 +2,29 @@ import { useState } from 'react';
 import type { PlayerDirectory, PlayerId } from '@fantasy-dash/core';
 import { headshotUrl, playerPos, posColor } from '../lib/players';
 
-interface Props { players: PlayerDirectory; id: PlayerId; size?: number }
+interface Props {
+  players: PlayerDirectory; id: PlayerId; size?: number;
+  /** load at once rather than when scrolled near, for a picture that moves into view by itself (the crawl) */
+  eager?: boolean;
+}
+
+/** where to look, in order: the thumbnail, the full-size picture, then the thumbnail once more past any cached failure */
+function sources(players: PlayerDirectory, id: PlayerId): string[] {
+  const thumb = headshotUrl(players, id);
+  if (playerPos(players, id) === 'DEF') return [thumb, `${thumb}?retry=1`];
+  return [thumb, `https://sleepercdn.com/content/nfl/players/${id}.jpg`, `${thumb}?retry=1`];
+}
 
 /**
- * Round player headshot (team logo for defenses). If the CDN has no image the
- * img is dropped and a position-tinted disc with the position letters remains.
+ * Round player headshot (team logo for defenses). A load that fails (the CDN drops some requests when a page asks
+ * for dozens at once) tries the next source; only when all fail is the img dropped for a position-tinted disc with
+ * the position letters.
  */
-export default function Headshot({ players, id, size = 28 }: Props) {
-  const [failedId, setFailedId] = useState<string | null>(null);
-  const failed = failedId === id;
+export default function Headshot({ players, id, size = 28, eager = false }: Props) {
+  // failures counted per player, so a reused component starts afresh for the next one
+  const [miss, setMiss] = useState<{ id: PlayerId; n: number }>({ id, n: 0 });
+  const tried = miss.id === id ? miss.n : 0;
+  const list = sources(players, id);
   const pos = playerPos(players, id);
   const color = posColor(pos);
   return (
@@ -26,14 +40,15 @@ export default function Headshot({ players, id, size = 28 }: Props) {
       }}
       aria-hidden="true"
     >
-      {failed ? pos : (
+      {tried >= list.length ? pos : (
         <img
-          src={headshotUrl(players, id)}
+          key={list[tried]}
+          src={list[tried]}
           alt=""
-          loading="lazy"
+          loading={eager ? 'eager' : 'lazy'}
           width={size}
           height={size}
-          onError={() => setFailedId(id)}
+          onError={() => setMiss({ id, n: tried + 1 })}
           className={`absolute inset-0 h-full w-full ${pos === 'DEF' ? 'object-contain p-[12%]' : 'object-cover object-top'}`}
         />
       )}

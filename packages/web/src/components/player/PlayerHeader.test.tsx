@@ -38,6 +38,17 @@ describe('PlayerHeader banner', () => {
     fireEvent.error(img);
     expect(screen.getByTestId('banner-headshot')).toHaveAttribute('src', 'https://sleepercdn.com/content/nfl/players/9488.jpg');
   });
+  it('after both full-size headshots fail, the Sleeper thumbnail; and the next player starts again from ESPN', () => {
+    const ui = (id: string) => <MemoryRouter><PlayerHeader id={id} bio={bio('SEA')} summary={summary} now={null} managerName="" rostered espnId="4430878" posRank={null} /></MemoryRouter>;
+    const { rerender } = render(ui('9488'));
+    fireEvent.error(screen.getByTestId('banner-headshot'));
+    fireEvent.error(screen.getByTestId('banner-headshot'));
+    expect(screen.getByTestId('banner-headshot')).toHaveAttribute('src', 'https://sleepercdn.com/content/nfl/players/thumb/9488.jpg');
+    fireEvent.error(screen.getByTestId('banner-headshot'));
+    expect(screen.queryByTestId('banner-headshot')).toBeNull();
+    rerender(ui('4046'));
+    expect(screen.getByTestId('banner-headshot')).toHaveAttribute('src', 'https://a.espncdn.com/i/headshots/nfl/players/full/4430878.png');
+  });
   it('no ESPN id: the Sleeper headshot straight away', () => {
     mount('SEA', null);
     expect(screen.getByTestId('banner-headshot')).toHaveAttribute('src', 'https://sleepercdn.com/content/nfl/players/9488.jpg');

@@ -1,38 +1,44 @@
-import type { CSSProperties } from 'react';
-import type { Manager, PlayerDirectory, UserId, Week } from '@fantasy-dash/core';
+import { Fragment, type CSSProperties } from 'react';
+import type { PlayerDirectory, Week } from '@fantasy-dash/core';
 import Headshot from './Headshot';
 import { PlayerLink } from './NameLink';
-import PosPill from './PosPill';
 import { players as directory } from '../data/load';
-import { crawlPerformers } from '../lib/home/results';
+import { crawlGroups } from '../lib/home/results';
 import { homeWeek } from '../lib/home/pick';
 import { useLive, useLiveStats } from '../lib/live/LiveProvider';
 import { weekStatus } from '../lib/live/weekStatus';
-import { playerName, playerPos, playerTeam } from '../lib/players';
+import { playerName, playerTeam, posColor } from '../lib/players';
 
 /** seconds each performer spends crossing, so a longer run doesn't race */
 const PER_ITEM = 4.5;
 
 /**
- * A slim crawl fixed to the bottom of a laptop screen: the week's best starters by fantasy points, kickers and
- * defenses left out, running right to left on a loop. Two copies of the run sit end to end and the track slides
+ * A slim crawl fixed to the bottom of a laptop screen: each position's ten best starters of the week by fantasy points,
+ * QB, RB, WR then TE, each under its position's name, running right to left on a loop. Two copies of the run sit end to end and the track slides
  * by one copy's width, so the loop has no seam; hovering holds it still, and with reduced motion it stays put and scrolls by hand.
  */
-export function PerformerCrawl({ week, managers, players, live }: { week: Week; managers: Record<UserId, Manager>; players: PlayerDirectory; live: boolean }) {
-  const top = crawlPerformers(week, players, 20).filter((p) => p.points > 0);
-  if (!top.length) return null;
+export function PerformerCrawl({ week, players, live }: { week: Week; players: PlayerDirectory; live: boolean }) {
+  const groups = crawlGroups(week, players, 10)
+    .map((g) => ({ ...g, list: g.list.filter((p) => p.points > 0) }))
+    .filter((g) => g.list.length > 0);
+  if (!groups.length) return null;
+  const count = groups.reduce((n, g) => n + g.list.length, 0);
   const run = (copy: boolean) => (
     <ul data-testid="crawl-run" aria-hidden={copy ? 'true' : undefined} className="flex shrink-0 items-stretch">
-      {top.map((p, i) => (
-        <li key={p.playerId} data-testid="crawl-item" className="flex items-center gap-2 whitespace-nowrap border-r border-line/70 px-4 text-[13px]">
-          <span className={`num text-xs ${i === 0 ? 'text-gold' : 'text-muted'}`}>{i + 1}</span>
-          <Headshot players={players} id={p.playerId} size={22} />
-          <PlayerLink id={p.playerId} tabIndex={copy ? -1 : undefined} className="font-semibold">{playerName(players, p.playerId)}</PlayerLink>
-          <PosPill pos={playerPos(players, p.playerId)} />
-          <span className="text-xs text-muted">{playerTeam(players, p.playerId)}</span>
-          <b className={`num ${i === 0 ? 'text-gold' : ''}`}>{p.points.toFixed(1)}</b>
-          <span className="text-xs text-muted">{managers[p.userId]?.displayName ?? p.userId}</span>
-        </li>
+      {groups.map((g) => (
+        <Fragment key={g.pos}>
+          {/* each position opens with its name in its own colour */}
+          <li data-testid="crawl-pos" className="flex items-center px-4 font-display text-sm font-bold uppercase tracking-[0.14em]" style={{ color: posColor(g.pos) }}>{g.pos}</li>
+          {g.list.map((p, i) => (
+            <li key={p.playerId} data-testid="crawl-item" className="flex items-center gap-2 whitespace-nowrap border-r border-line/70 pl-1 pr-4 text-[13px] last-of-type:border-r-0">
+              <span data-testid="crawl-rank" className={`num text-xs ${i === 0 ? 'text-gold' : 'text-muted'}`}>{i + 1}</span>
+              <Headshot players={players} id={p.playerId} size={22} eager />
+              <PlayerLink id={p.playerId} tabIndex={copy ? -1 : undefined} className="font-semibold">{playerName(players, p.playerId)}</PlayerLink>
+              <span className="text-xs text-muted">{playerTeam(players, p.playerId)}</span>
+              <b className={`num ${i === 0 ? 'text-gold' : ''}`}>{p.points.toFixed(1)}</b>
+            </li>
+          ))}
+        </Fragment>
       ))}
     </ul>
   );
@@ -46,7 +52,7 @@ export function PerformerCrawl({ week, managers, players, live }: { week: Week; 
       <div className="-ml-2 min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_24px,#000_calc(100%-24px),transparent)] motion-reduce:overflow-x-auto">
         <div
           className="flex h-full w-max animate-[crawl_var(--crawl)_linear_infinite] hover:[animation-play-state:paused] motion-reduce:animate-none"
-          style={{ '--crawl': `${top.length * PER_ITEM}s` } as CSSProperties}
+          style={{ '--crawl': `${count * PER_ITEM}s` } as CSSProperties}
         >
           {run(false)}
           {run(true)}
@@ -66,5 +72,5 @@ export default function BottomCrawl() {
   if (!season) return null;
   const week = st?.started ? st.week : season.lastScoredWeek > 0 ? season.weeks[season.lastScoredWeek - 1] : null;
   if (!week) return null;
-  return <PerformerCrawl week={week} managers={season.managers} players={directory} live={!!st?.started} />;
+  return <PerformerCrawl week={week} players={directory} live={!!st?.started} />;
 }

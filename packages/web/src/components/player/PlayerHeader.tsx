@@ -27,9 +27,12 @@ const espnHeadshot = (espnId: string) => `https://a.espncdn.com/i/headshots/nfl/
 const sleeperHeadshot = (id: PlayerId) => (players[id]?.position === 'DEF' ? headshotUrl(players, id) : `https://sleepercdn.com/content/nfl/players/${id}.jpg`);
 const teamLogo = (team: string) => `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png`;
 
-/** ESPN's transparent headshot, standing on the banner; Sleeper's when there is no ESPN id or it fails; nothing when both fail. */
+/**
+ * ESPN's transparent headshot, standing on the banner; Sleeper's full-size one when there is no ESPN id or it fails,
+ * then Sleeper's thumbnail; nothing when all fail. Keyed by player where it's used, so the next player starts from ESPN again.
+ */
 function Photo({ id, espnId }: { id: PlayerId; espnId: string | null }) {
-  const sources = [...(espnId ? [espnHeadshot(espnId)] : []), sleeperHeadshot(id)];
+  const sources = [...(espnId ? [espnHeadshot(espnId)] : []), sleeperHeadshot(id), ...(players[id]?.position === 'DEF' ? [] : [headshotUrl(players, id)])];
   const [at, setAt] = useState(0);
   if (at >= sources.length) return null;
   return (
@@ -66,7 +69,7 @@ export default function PlayerHeader({ id, bio, summary, now, managerName, roste
       className={`relative isolate flex min-h-[230px] flex-col overflow-hidden rounded-xl border border-line sm:flex-row ${team ? '' : 'blue-wash'}`}>
       {/* phones: the photo and stripes are a band across the top; wider: a panel down the left */}
       <div aria-hidden="true" className="relative h-44 w-[260px] shrink-0 sm:h-auto sm:w-[390px] sm:self-stretch">
-        <Photo id={id} espnId={espnId} />
+        <Photo key={`${id}-${espnId}`} id={id} espnId={espnId} />
         <div className="absolute -inset-y-3.5 right-[22px] w-2 -skew-x-[11deg]" style={{ background: team ? team.stripe : 'var(--accent)' }} />
         <div className="absolute -inset-y-3.5 right-2.5 w-[5px] -skew-x-[11deg] bg-gold" />
       </div>

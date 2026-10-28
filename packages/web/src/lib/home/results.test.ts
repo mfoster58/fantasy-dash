@@ -1,5 +1,5 @@
 import { game, line, players, side, week } from '../../test/playerFixtures';
-import { crawlPerformers, fullStatLine, scoredSoFar, topPerformers, weekHitters } from './results';
+import { crawlGroups, fullStatLine, scoredSoFar, topPerformers, weekHitters } from './results';
 
 describe('scoredSoFar', () => {
   it('a week in progress counts whoever leads as the winner, by the current margin; level games have none', () => {
@@ -53,15 +53,17 @@ describe('topPerformers', () => {
   });
 });
 
-describe('crawlPerformers', () => {
-  it('ranks every starter by points, kickers and defenses left out, up to n', () => {
+describe('crawlGroups', () => {
+  it('ranks each position\'s starters by points on its own, QB, RB, WR then TE, kickers and defenses left out, up to n each', () => {
     const a = side('a', 0, [line('q1', 30.7), line('w1', 20)]);
     const b = side('b', 0, [line('r1', 22), line('k1', 25)]);
     b.starters.push({ slot: 'DEF', player: { playerId: 'DET', points: 40, projected: null, stats: {} } });
     const w = week(6, [game(2026, 6, 1, a, b)]);
     const dir = { ...players, DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0, birthDate: null } };
-    expect(crawlPerformers(w, dir, 20).map((p) => p.playerId)).toEqual(['q1', 'r1', 'w1']);
-    expect(crawlPerformers(w, dir, 2).map((p) => p.playerId)).toEqual(['q1', 'r1']);
+    a.starters.push({ slot: 'FLEX', player: line('w2', 31) });
+    const dir2 = { ...dir, w2: { ...players.w1, id: 'w2', name: 'Wally Two' } };
+    expect(crawlGroups(w, dir2, 10).map((g) => [g.pos, g.list.map((p) => p.playerId)])).toEqual([['QB', ['q1']], ['RB', ['r1']], ['WR', ['w2', 'w1']]]);
+    expect(crawlGroups(w, dir2, 1).find((g) => g.pos === 'WR')!.list.map((p) => p.playerId)).toEqual(['w2']);
   });
 });
 

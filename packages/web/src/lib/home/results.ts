@@ -52,9 +52,9 @@ export function topPerformers(week: Week, players: PlayerDirectory, n = 5, pos =
     .slice(0, n);
 }
 
-/** the bottom crawl's run: the week's starters by points, kickers and defenses left out */
-export function crawlPerformers(week: Week, players: PlayerDirectory, n = 20): Performer[] {
-  return topPerformers(week, players, Infinity).filter((p) => !['K', 'DEF'].includes(players[p.playerId]?.position ?? '')).slice(0, n);
+/** the bottom crawl's run: each position's best n starters by points, QB, RB, WR then TE; positions nobody started left out */
+export function crawlGroups(week: Week, players: PlayerDirectory, n = 10): { pos: string; list: Performer[] }[] {
+  return ['QB', 'RB', 'WR', 'TE'].map((pos) => ({ pos, list: topPerformers(week, players, n, pos) })).filter((g) => g.list.length > 0);
 }
 
 const v = (s: Record<string, number>, k: string) => s[k] ?? 0;
