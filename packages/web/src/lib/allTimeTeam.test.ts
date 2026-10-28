@@ -17,7 +17,7 @@ describe('fillSlots', () => {
 describe('allTimeTeam', () => {
   const s = season(2025, [
     week(1, [game(2025, 1, 1, side('a', 50, [line('q1', 20), line('r1', 10)], [line('w1', 7)]), side('b', 12, [line('t1', 12)]))]),
-    week(2, [game(2025, 2, 1, side('a', 48, [line('q1', 30), line('r1', 12)], [line('w1', 25)]), side('b', 12, [line('t1', 12)]))]),
+    week(2, [game(2025, 2, 1, side('a', 48, [line('q1', 30, { pass_yd: 310, pass_td: 3 }), line('r1', 12)], [line('w1', 25)]), side('b', 12, [line('t1', 12)]))]),
   ]);
   s.playerSeasons = { q1: { points: 50, games: 2, posRank: 2 } };
   const team = allTimeTeam(flattenLines([s], players), 'a', [s]);
@@ -30,9 +30,10 @@ describe('allTimeTeam', () => {
     expect(team.season.filter((o) => o.pick === null).map((o) => o.slot)).toEqual(['RB', 'WR', 'TE', 'FLEX', 'DEF', 'K']);   // t1 belongs to bob
   });
 
-  it('takes each player\'s best single game, started or from the bench, and links it to the box score', () => {
+  it("takes each player's best single game he started, with that game's stats, and links it to the box score", () => {
     const picks = Object.fromEntries(team.game.filter((o) => o.pick).map((o) => [o.slot, o.pick]));
-    expect(picks.QB).toMatchObject({ playerId: 'q1', year: 2025, week: 2, matchupId: 1, points: 30, started: true });
-    expect(picks.WR).toMatchObject({ playerId: 'w1', week: 2, points: 25, started: false });
+    expect(picks.QB).toMatchObject({ playerId: 'q1', year: 2025, week: 2, matchupId: 1, points: 30, stats: { pass_yd: 310, pass_td: 3 } });
+    // w1 only ever sat on the bench: a bench game never makes the team
+    expect(picks.WR).toBeUndefined();
   });
 });

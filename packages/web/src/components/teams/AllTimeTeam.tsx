@@ -4,7 +4,7 @@ import type { PlayerDirectory, UserId } from '@fantasy-dash/core';
 import Headshot from '../Headshot';
 import { CardHeader } from '../draft/DraftAnalysis';
 import { fmtPpg, fmtPts, fmtTag } from '../../lib/format';
-import { playerName, posColor } from '../../lib/players';
+import { playerName, posColor, statLine } from '../../lib/players';
 import type { AllTimeTeam as Team, GamePick, SeasonPick, Slot } from '../../lib/allTimeTeam';
 
 type Mode = 'season' | 'game';
@@ -51,7 +51,8 @@ export default function AllTimeTeam({ team, players, userId }: { team: Team; pla
                     <Headshot players={players} id={pick.playerId} size={30} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{playerName(players, pick.playerId)}</span>
-                      <span className="num block text-xs text-muted">{pick.year} · Week {pick.week}{pick.tag ? ` · ${fmtTag(pick.tag)}` : ''}{pick.started ? '' : ' · on the bench'}</span>
+                      <span className="num block text-xs text-muted">{pick.year} · Week {pick.week}{pick.tag ? ` · ${fmtTag(pick.tag)}` : ''}</span>
+                      {statLine(pick.position, pick.stats) && <span className="num block truncate text-[11px] text-muted/80">{statLine(pick.position, pick.stats)}</span>}
                     </span>
                     <span className="num font-semibold">{fmtPts(pick.points)}</span>
                   </>
@@ -60,6 +61,12 @@ export default function AllTimeTeam({ team, players, userId }: { team: Team; pla
             </li>
           ))}
       </ul>
+      {mode === 'game' && (
+        <div className="flex items-center justify-between border-t border-line px-4 py-2.5 text-sm">
+          <span className="section-label text-[10px]">Lineup total</span>
+          <span data-testid="lineup-total" className="num text-lg font-semibold">{fmtPts(team.game.reduce((t, { pick }) => t + (pick?.points ?? 0), 0))}</span>
+        </div>
+      )}
     </section>
   );
 }
