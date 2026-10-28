@@ -7,8 +7,8 @@ export interface MenuEntry { userId: UserId; title: string; subtitle: string | n
 
 /** The Players tab: the player database and the comparison tool. */
 export const playerEntries: MenuEntry[] = [
-  { userId: 'players-db', title: 'Database', subtitle: 'Every player, sortable and filterable', avatar: null, to: '/players', plain: true },
-  { userId: 'players-compare', title: 'Comparison tool', subtitle: 'Up to four players side by side', avatar: null, to: '/players/compare', plain: true },
+  { userId: 'players-db', title: 'Database', subtitle: null, avatar: null, to: '/players', plain: true },
+  { userId: 'players-compare', title: 'Comparison tool', subtitle: null, avatar: null, to: '/players/compare', plain: true },
 ];
 
 /** This season's teams in standings order; the team name leads, the manager sits under it. */

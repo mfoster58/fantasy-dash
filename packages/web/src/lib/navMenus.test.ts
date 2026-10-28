@@ -1,5 +1,5 @@
 import type { History, Season } from '@fantasy-dash/core';
-import { managerEntries, rosterEntries } from './navMenus';
+import { managerEntries, playerEntries, rosterEntries } from './navMenus';
 import { season, standing } from '../test/playerFixtures';
 
 function build(): Season {
@@ -16,6 +16,12 @@ const history = {
   managers: { a: { displayName: 'alice', avatar: null, seasons: [2025] }, b: { displayName: 'bob', avatar: 'img-b', seasons: [2024, 2025] }, c: { displayName: 'carol', avatar: null, seasons: [2024] } },
   allTime: [{ userId: 'b', rank: 1 }, { userId: 'c', rank: 2 }, { userId: 'a', rank: 3 }],
 } as unknown as History;
+
+describe('playerEntries', () => {
+  it('names the two player pages and nothing more', () => {
+    expect(playerEntries.map((e) => [e.title, e.subtitle])).toEqual([['Database', null], ['Comparison tool', null]]);
+  });
+});
 
 describe('rosterEntries', () => {
   it('lists this season\'s teams in standings order, each linking to its team page', () => {

@@ -44,9 +44,18 @@ describe('PlayerDbTable', () => {
     expect(within(rows[0]).getAllByRole('link').every((a) => a.getAttribute('href')?.startsWith('/player/'))).toBe(true); // no manager link, only his page
     const pos = within(rows[0]).getByTestId('db-pos');
     expect(pos).toHaveTextContent('WR');
-    expect(pos).toHaveClass('sticky');
+    expect(pos).toHaveClass('sm:sticky');
     expect(pos.nextElementSibling).toBe(within(rows[0]).getByTestId('db-name').closest('td'));
     expect(within(rows[0]).getByTestId('db-name').closest('td')).toHaveClass('sticky');
+  });
+  it('on a phone keeps only the player fixed, the rank and position scrolling away', () => {
+    render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
+    const row = screen.getAllByTestId('db-row')[0];
+    const [rank, pos] = Array.from(row.querySelectorAll('td'));
+    for (const td of [rank, pos]) { expect(td).not.toHaveClass('sticky'); expect(td).toHaveClass('sm:sticky'); }
+    const name = within(row).getByTestId('db-name').closest('td')!;
+    expect(name).toHaveClass('sticky');
+    expect(name).toHaveClass('left-0');
   });
   it('tints rate cells and points by percentile', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);

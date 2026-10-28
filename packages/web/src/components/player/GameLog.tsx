@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import type { PlayerDb, PlayerId, Season } from '@fantasy-dash/core';
-import Avatar from '../Avatar';
-import { ManagerLink } from '../NameLink';
 import SeasonPicker from '../SeasonPicker';
-import { history } from '../../data/load';
 import { gameLog, weekTints } from '../../lib/player/gameLog';
 import { COLUMNS, columnValue, groupsFor, type Tab } from '../../lib/playerdb/columns';
 import type { PlayerLine } from '../../lib/playerLines';
@@ -13,7 +10,7 @@ import TintCell from '../players/db/TintCell';
 
 /** fantasy points and points against projection lead each week; games, PPG and rank mean nothing for one week */
 const LEAD = ['pts', 'projPlus'].map((k) => COLUMNS[k]);
-const FIXED = ['Wk', 'Opp', 'Manager', 'Status', 'Result'];
+const FIXED = ['Wk', 'Opp', 'Status'];
 /** Wk and Opp stay put while the rest scrolls sideways */
 const STICK_LEFT = ['0', '2.75rem'];
 const STICK_W = ['2.75rem', '3.5rem'];
@@ -46,19 +43,11 @@ export default function GameLog({ id, db, lines, season, tab, pos, years, onYear
         <tbody>
           {rows.map((r, i) => {
             const l = r.line;
-            const name = l ? history.managers[l.userId]?.displayName ?? l.userId : '';
             const fixed = (
               <>
                 <td className={`num sticky z-[1] bg-surface ${td}`} style={{ left: STICK_LEFT[0], width: STICK_W[0], minWidth: STICK_W[0], maxWidth: STICK_W[0] }}>{r.week}</td>
                 <td className={`sticky z-[1] whitespace-nowrap bg-surface text-muted shadow-[inset_-1px_0_0_var(--line)] ${td}`} style={{ left: STICK_LEFT[1], width: STICK_W[1], minWidth: STICK_W[1], maxWidth: STICK_W[1] }}>{r.opp}</td>
-                <td className={`whitespace-nowrap ${td}`}>
-                  {l ? <span className="flex items-center gap-1.5"><Avatar avatar={history.managers[l.userId]?.avatar ?? null} name={name} size={18} /><ManagerLink userId={l.userId}>{name}</ManagerLink></span> : <span className="text-xs text-muted">FA</span>}
-                </td>
-                <td className={`text-xs ${l?.started ? '' : 'text-muted'} ${td}`}>{l ? (l.started ? 'Started' : 'Bench') : ''}</td>
-                <td className={`num whitespace-nowrap text-xs ${td}`}>
-                  {l && r.score && <span className={l.result === 'W' ? 'text-win' : l.result === 'L' ? 'text-loss' : ''}>{l.result} {r.score.mine.toFixed(1)}–{r.score.theirs.toFixed(1)}</span>}
-                  {r.swing !== null && <span className="ml-1.5 text-muted">+{r.swing.toFixed(1)} left</span>}
-                </td>
+                <td className={`text-xs ${l?.started ? '' : 'text-muted'} ${td}`}>{l ? (l.started ? 'Started' : 'Bench') : 'FA'}</td>
               </>
             );
             if (!r.agg) return <tr key={r.week} data-testid="log-gap">{fixed}<td colSpan={statSpan} className={`text-xs text-muted ${td}`}>{r.bye ? 'Bye' : 'Did not play'}</td></tr>;

@@ -52,6 +52,16 @@ describe('ScoreCard', () => {
     expect(columns[1]).not.toHaveTextContent('Team B');
   });
 
+  it('keeps the two teams\' performers side by side on a phone, short names there, the right side mirrored', () => {
+    const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
+    wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);
+    const grid = screen.getByText('Top performers').nextElementSibling!;
+    expect(grid).toHaveClass('grid-cols-2');
+    expect(screen.getByText('Q. One')).toHaveClass('sm:hidden');
+    expect(screen.getByText('Quincy One')).toHaveClass('hidden');
+    expect(grid.children[1].querySelector('li')).toHaveAttribute('data-side', 'right');
+  });
+
   it('sets the scores side by side with vs and labeled efficiency bars', () => {
     const g = base(side('a', 120.5, [['q1', 30], ['r1', 12]]), side('b', 99.25, [['q2', 25], ['r2', 8]]), 'a');
     wrap(<ScoreCard seasonTeams={{}} game={g} played managers={managers} players={players} to="/x" year={2025} />);

@@ -66,6 +66,7 @@ export default function PlayerPage() {
     <div className="space-y-6">
       <PlayerHeader id={id} bio={bio} summary={summaryOf(table)} now={now} managerName={now ? history.managers[now.userId]?.displayName ?? now.userId : ''} rostered={rostered} compareHref={group && newest ? compareHref({ season: newest, pos: group, ids: [id] }) : undefined} espnId={espnId} posRank={posRank} />
       {table.rows.length > 0 && <SeasonTable table={table} pos={bio.pos} />}
+      {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
       {tab && myDbs.length > 0 && <AdvancedBySeason id={id} dbs={myDbs} tab={tab} />}
       {gsis && bio.pos === 'RB' && <RunLanes charts={charts} gsis={gsis} current={current} />}
       {gsis && (bio.pos === 'WR' || bio.pos === 'TE' || bio.pos === 'RB') && (
@@ -82,7 +83,6 @@ export default function PlayerPage() {
       )}
       {gsis && bio.pos === 'QB' && <RouteTree charts={charts} gsis={gsis} pos="QB" current={current} />}
       {tab && myDbs.length > 0 && <GradesSection id={id} dbs={myDbs} charts={charts} scoringFor={scoringFor} />}
-      {tab && logDb && <GameLog id={id} db={logDb} lines={logLines} season={seasons.find((s) => s.year === logYear)} tab={tab} pos={bio.pos} years={dbYears} onYear={setLogYear} />}
       {rostered && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] [&>*]:min-w-0">
           <JourneyFeed stints={stints} seasons={new Set(lines.map((l) => l.year)).size} id={id} />

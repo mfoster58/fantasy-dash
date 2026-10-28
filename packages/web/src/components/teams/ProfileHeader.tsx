@@ -38,7 +38,7 @@ export default function ProfileHeader({ avatar, name, eyebrow, title, subtitle, 
               inside, the square avatar is skewed back upright and shown whole, its height the banner's */}
           <div className="absolute inset-y-0 -left-12 right-[46px] -skew-x-[11deg] overflow-hidden bg-surface-2">
             {avatar
-              ? <div data-testid="banner-photo" className="absolute inset-y-0 left-12 right-0 skew-x-[11deg] bg-cover bg-center sm:left-auto sm:-right-6 sm:aspect-square" style={{ backgroundImage: `url(${fullAvatar(avatar)})` }} />
+              ? <div data-testid="banner-photo" className="absolute inset-y-0 left-10 -right-6 skew-x-[11deg] bg-cover bg-center sm:left-auto sm:aspect-square" style={{ backgroundImage: `url(${fullAvatar(avatar)})` }} />
               : <div data-testid="banner-photo" className="flex h-full skew-x-[11deg] items-center pl-16 font-display text-5xl font-bold text-muted">{name.slice(0, 2).toUpperCase()}</div>}
           </div>
           <div data-testid="banner-stripe" className="absolute -top-3 bottom-0 sm:-bottom-3 right-[38px] w-2 -skew-x-[11deg] bg-accent" />

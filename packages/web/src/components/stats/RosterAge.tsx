@@ -5,6 +5,8 @@ import { markAttrs, usePinHover, type Pin } from './pin';
 import { useWidth } from './useWidth';
 
 const PAD = 60, LEVEL = 34, GAP = 8, NAME_PX = 7.5;
+/** below this width the spectrum turns into one row per manager */
+const NARROW = 560;
 
 /**
  * Lane for each label, taken in order along the line: lane 0 is just above the line, 1 just below, 2 a level further
@@ -31,6 +33,37 @@ export default function RosterAge({ data, refs, pin }: { data: AgeData; refs: Ma
   const lo = Math.min(...ages) - 0.5, hi = Math.max(...ages) + 0.5;
   const x = (v: number) => PAD + ((v - lo) / (hi - lo || 1)) * (W - 2 * PAD);
   const xs = data.rows.map((r) => x(r.age));
+  // a phone has no room to spread the names along one line: a row each, youngest first, the dot on its own spectrum
+  if (W < NARROW) {
+    const rows = [...data.rows].sort((p, q) => p.age - q.age);
+    const pct = (v: number) => `${((v - lo) / (hi - lo || 1)) * 100}%`;
+    return (
+      <div ref={box} role="img" aria-label="Roster age">
+        <div className="mb-1 grid grid-cols-[6.5rem_minmax(0,1fr)_2.5rem] gap-2 text-[11px] font-bold">
+          <span />
+          <span className="flex justify-between"><span className="text-win">ROOK</span><span className="text-loss">UNC</span></span>
+        </div>
+        {rows.map((r) => {
+          const pinned = r.id === active, dim = active !== null && !pinned;
+          return (
+            <div key={r.id} data-testid="age-row" {...hoverProps(r.id)} className={`grid grid-cols-[6.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 py-1 ${dim ? 'opacity-40' : ''}`}>
+              <span className={`truncate text-sm ${pinned ? 'font-semibold text-gold' : ''}`}>{name(r.id)}</span>
+              <span className="relative h-3">
+                <span className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,var(--win),var(--gold),var(--loss))] opacity-70" />
+                <span
+                  data-manager={r.id} {...markAttrs(r.id, active)}
+                  title={`${name(r.id)}: average age ${r.age.toFixed(1)} · rookies ${Math.round(r.rookieShare * 100)}%, 30 and over ${Math.round(r.vetShare * 100)}%`}
+                  className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-surface ${pinned ? 'h-3 w-3 bg-gold' : 'h-2.5 w-2.5 bg-muted'}`}
+                  style={{ left: pct(r.age) }}
+                />
+              </span>
+              <span data-testid="age" className="num text-right text-xs text-muted">{r.age.toFixed(1)}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
   const lanes = labelLanes(xs, data.rows.map((r) => Math.max(name(r.id).length * NAME_PX, 36) + 4));
   const up = (k: number) => k % 2 === 0;
   const level = (k: number) => Math.floor(k / 2);

@@ -63,6 +63,8 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
 }
 
 const lead = 'sticky bg-surface';
+/** the rank and position stay put beside the player on a wide screen; on a phone only the player does */
+const leadWide = 'sm:sticky bg-surface';
 
 export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
   const [shown, setShown] = useState(PAGE);
@@ -92,14 +94,14 @@ export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, 
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead className="sticky top-0 z-[2] bg-surface">
           <tr>
-            <th colSpan={3} className="sticky left-0 z-[3] bg-surface border-b border-line" />
+            <th colSpan={3} className="sm:sticky left-0 z-[3] bg-surface border-b border-line" />
             <th colSpan={leadCols.length} className="border-b border-line" />
             <GroupHeaderCells groups={bodyGroups} collapsed={collapsed} onToggleGroup={onToggleGroup} />
           </tr>
           <tr>
-            <th className={`${lead} left-0 z-[3] w-8 min-w-8 border-b border-line px-1.5 py-2 sm:w-10 sm:min-w-10 sm:px-2 text-left section-label`}>#</th>
-            <th className={`${lead} left-8 z-[3] w-12 min-w-12 border-b border-line px-1 py-2 sm:left-10 sm:w-14 sm:min-w-14 sm:px-2 text-left section-label`}>Pos</th>
-            <th className={`${lead} left-20 z-[3] min-w-36 border-b sm:left-24 sm:min-w-48 border-line px-2 py-2 text-left section-label`}>Player</th>
+            <th className={`${leadWide} left-0 z-[3] w-8 min-w-8 border-b border-line px-1.5 py-2 sm:w-10 sm:min-w-10 sm:px-2 text-left section-label`}>#</th>
+            <th className={`${leadWide} left-8 z-[3] w-12 min-w-12 border-b border-line px-1 py-2 sm:left-10 sm:w-14 sm:min-w-14 sm:px-2 text-left section-label`}>Pos</th>
+            <th className={`${lead} left-0 z-[3] min-w-32 border-b shadow-[inset_-1px_0_0_var(--line)] sm:left-24 sm:min-w-48 sm:shadow-none border-line px-2 py-2 text-left section-label`}>Player</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
             <ColumnHeaderCells groups={bodyGroups} collapsed={collapsed} title={headerTitle} arrow={sortArrow} onSort={onSort} />
           </tr>
@@ -111,16 +113,16 @@ export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, 
             return (
               <Fragment key={a.id}>
                 <tr data-testid="db-row" className="border-t border-line transition-colors hover:bg-surface-2/60">
-                  <td className={`${lead} left-0 num w-8 min-w-8 border-b border-line px-1.5 py-1.5 text-muted sm:w-10 sm:min-w-10 sm:px-2`}>{i + 1}</td>
-                  <td data-testid="db-pos" className={`${lead} left-8 w-12 min-w-12 border-b border-line px-1 py-1.5 sm:left-10 sm:w-14 sm:min-w-14 sm:px-2`}><PosPill pos={p?.pos ?? '?'} /></td>
-                  <td className={`${lead} left-20 border-b border-line px-2 py-1.5 sm:left-24`}>
+                  <td className={`${leadWide} left-0 num w-8 min-w-8 border-b border-line px-1.5 py-1.5 text-muted sm:w-10 sm:min-w-10 sm:px-2`}>{i + 1}</td>
+                  <td data-testid="db-pos" className={`${leadWide} left-8 w-12 min-w-12 border-b border-line px-1 py-1.5 sm:left-10 sm:w-14 sm:min-w-14 sm:px-2`}><PosPill pos={p?.pos ?? '?'} /></td>
+                  <td className={`${lead} left-0 z-[1] border-b border-line px-2 py-1.5 shadow-[inset_-1px_0_0_var(--line)] sm:left-24 sm:shadow-none`}>
                     <span className="flex items-center gap-2 whitespace-nowrap">
                       {/* the chevron and headshot open his weeks; the name opens his page */}
                       <button type="button" aria-expanded={isOpen} aria-label={`Show weeks for ${p?.name ?? a.id}`} onClick={() => setOpen(isOpen ? null : a.id)} className="flex items-center gap-1.5 text-muted hover:text-accent">
                         <span aria-hidden="true" className="w-2 text-[10px]">{isOpen ? '▾' : '▸'}</span>
                         <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
                       </button>
-                      <PlayerLink id={a.id} className="min-w-0 truncate font-medium max-sm:max-w-[7.5rem]"><span data-testid="db-name">{p?.name ?? a.id}</span></PlayerLink>
+                      <PlayerLink id={a.id} className="min-w-0 truncate font-medium max-sm:max-w-[6.5rem]"><span data-testid="db-name">{p?.name ?? a.id}</span></PlayerLink>
                       <span className="text-xs text-muted">{a.team}</span>
                       {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
                     </span>

@@ -78,9 +78,9 @@ describe('PlayerPage', () => {
     expect(within(sides[0]).getByText('Wally One').closest('[data-me]')!.getAttribute('data-me')).toBe('true');
     expect(within(section(/Path through the league/)!).queryByText(/who got/)).toBeNull();
   });
-  it('orders the page: advanced numbers, charts, grades, the game log, then the path beside the records', () => {
+  it('orders the page: in this league, the game log, advanced numbers, charts, grades, then the path beside the records', () => {
     mount('w1', leagueSeasons(), [miniCharts(), gradesChart(), targetCharts()]);
-    const order = [/Advanced by season/, /Route tree/, /Target map/, /^Grades/, /Game log/, /Path through the league/, /League records/].map((n) => section(n)!);
+    const order = [/In this league/, /Game log/, /Advanced by season/, /Route tree/, /Target map/, /^Grades/, /Path through the league/, /League records/].map((n) => section(n)!);
     for (let i = 1; i < order.length; i++) expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING, String(i)).toBeTruthy();
   });
   it('has no Percentiles card any more', () => {
@@ -100,16 +100,32 @@ describe('PlayerPage', () => {
     expect(cells[1]).toHaveClass('sticky');
     expect(cells[2]).not.toHaveClass('sticky');
   });
+  it('leaves the manager and the result out of the game log', () => {
+    mount('w1');
+    const heads = within(section(/Game log/)!).getAllByRole('columnheader').map((h) => h.textContent);
+    expect(heads).not.toContain('Manager');
+    expect(heads).not.toContain('Result');
+    expect(heads).toEqual(expect.arrayContaining(['Wk', 'Opp']));
+  });
+  it('keeps only the season fixed in Advanced by season on a phone', () => {
+    const was = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: q.includes('max-width: 639px'), media: q, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia;
+    try {
+      mount('w1');
+      const first = within(section(/Advanced by season/)!).getAllByRole('row')[2];
+      expect(first.querySelector('td')).toHaveClass('sticky');
+      for (const k of ['g', 'pts', 'ppg', 'posRank']) expect(within(first).getByTestId(`cell-${k}`), k).not.toHaveClass('sticky');
+    } finally { window.matchMedia = was; }
+  });
   it('a WR gets the route tree and the target map side by side', () => {
     mount('w1', leagueSeasons(), [miniCharts(), targetCharts()]);
     expect(section(/Route tree/)!.parentElement).toBe(section(/Target map/)!.parentElement);
   });
-  it('a WR gets the route tree, between the advanced numbers and the game log', () => {
+  it('a WR gets the route tree, after the advanced numbers', () => {
     mount('w1');
     const tree = section(/Route tree/)!;
     expect(tree).toBeInTheDocument();
     expect(section(/Run lanes/)).toBeNull();
-    expect(tree.compareDocumentPosition(section(/Game log/)!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(section(/Advanced by season/)!.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
   it('an RB gets run lanes and a route tree; a QB gets passing zones and the pressure card', () => {

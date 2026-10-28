@@ -5,7 +5,7 @@ import PosPill from './PosPill';
 import { fmtPct, fmtPts, fmtTag } from '../lib/format';
 import { gameView } from '../lib/home/view';
 import { topPerformersBySide } from '../lib/metrics';
-import { playerName, playerPos, playerTeam } from '../lib/players';
+import { playerName, playerPos, playerTeam, shortName } from '../lib/players';
 import type { GameOutlook } from '../lib/live/outlook';
 
 interface Props {
@@ -59,9 +59,9 @@ export default function ScoreCard({ game, played, managers, players, seasonTeams
       {started && (
         <div className={`px-4 pb-4 pt-3 sm:px-5 ${played && !live ? '' : 'border-t border-line'}`}>
           <h3 className="section-label mb-2.5">Top performers</h3>
-          <div className="grid gap-y-3 sm:grid-cols-2 sm:gap-x-8 [&>*+*]:max-sm:border-t [&>*+*]:max-sm:border-line [&>*+*]:max-sm:pt-3">
-            {game.sides.map((s) => (
-              <Performers key={s.userId} side={s} players={players} seasonTeams={seasonTeams} />
+          <div className="grid grid-cols-2 gap-x-4 sm:gap-x-8">
+            {game.sides.map((s, i) => (
+              <Performers key={s.userId} side={s} players={players} seasonTeams={seasonTeams} align={i ? 'right' : 'left'} />
             ))}
           </div>
         </div>
@@ -86,17 +86,22 @@ function EffBar({ value, align }: { value: number; align: Align }) {
   );
 }
 
-function Performers({ side, players, seasonTeams }: { side: GameSide; players: PlayerDirectory; seasonTeams: Record<PlayerId, string> }) {
+/** a team's top three; on a phone just the face, a short name and the points, the right team mirrored so its points face the middle */
+function Performers({ side, players, seasonTeams, align }: { side: GameSide; players: PlayerDirectory; seasonTeams: Record<PlayerId, string>; align: Align }) {
   const top = topPerformersBySide(side);
+  const right = align === 'right';
   return (
     <ul className="min-w-0 space-y-2">
       {top.map((t) => (
-        <li key={t.playerId} className="grid grid-cols-[28px_minmax(0,1fr)_44px_32px_auto] items-center gap-x-2.5">
+        <li key={t.playerId} data-side={align} className={`flex items-center gap-2 sm:grid sm:grid-cols-[28px_minmax(0,1fr)_44px_32px_auto] sm:gap-x-2.5 ${right ? 'max-sm:flex-row-reverse max-sm:text-right' : ''}`}>
           <Headshot players={players} id={t.playerId} size={28} />
-          <span className="truncate text-[13px] font-medium">{playerName(players, t.playerId)}</span>
-          <span className="flex justify-center"><PosPill pos={playerPos(players, t.playerId)} /></span>
-          <span className="text-xs text-muted">{playerTeam(players, t.playerId, seasonTeams) || 'FA'}</span>
-          <span className="num pl-1 text-right text-sm">{fmtPts(t.points)}</span>
+          <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
+            <span className="sm:hidden">{shortName(players, t.playerId)}</span>
+            <span className="hidden sm:inline">{playerName(players, t.playerId)}</span>
+          </span>
+          <span className="hidden justify-center sm:flex"><PosPill pos={playerPos(players, t.playerId)} /></span>
+          <span className="hidden text-xs text-muted sm:inline">{playerTeam(players, t.playerId, seasonTeams) || 'FA'}</span>
+          <span className="num text-sm sm:pl-1 sm:text-right">{fmtPts(t.points)}</span>
         </li>
       ))}
     </ul>

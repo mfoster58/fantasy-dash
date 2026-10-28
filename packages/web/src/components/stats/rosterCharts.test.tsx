@@ -69,6 +69,18 @@ describe('RosterAge', () => {
     expect(labelLanes([0, 10, 20, 200], [50, 50, 50, 50])).toEqual([0, 1, 2, 0]);
     expect(labelLanes([0, 100], [50, 50])).toEqual([0, 0]);
   });
+  it('on a phone lists the managers youngest first, each on his own row with a dot on the spectrum', () => {
+    vi.stubGlobal('ResizeObserver', class { cb: ResizeObserverCallback; constructor(cb: ResizeObserverCallback) { this.cb = cb; } observe() { this.cb([{ contentRect: { width: 360 } } as ResizeObserverEntry], this as unknown as ResizeObserver); } disconnect() {} });
+    try {
+      render(<RosterAge data={rosterAge([s25], statsPlayers)} refs={refs} pin="b" />);
+      const rows = screen.getAllByTestId('age-row');
+      expect(rows).toHaveLength(4);
+      const ages = rows.map((r) => Number(within(r).getByTestId('age').textContent));
+      expect([...ages].sort((x, y) => x - y)).toEqual(ages);
+      expect(rows.find((r) => r.textContent?.includes('alice'))!.querySelector('[data-manager="a"]')).toBeInTheDocument();
+      expect(screen.getByText('ROOK')).toBeInTheDocument();
+    } finally { vi.unstubAllGlobals(); }
+  });
   it('says so with nothing to place', () => {
     render(<RosterAge data={{ rows: [], estimated: false }} refs={refs} pin={null} />);
     expect(screen.getByText('Nothing played yet.')).toBeInTheDocument();
