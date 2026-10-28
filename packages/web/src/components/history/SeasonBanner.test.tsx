@@ -20,6 +20,8 @@ describe('SeasonBanner', () => {
     expect(within(b).getByText('2025 Champion')).toBeInTheDocument();
     expect(within(b).getByRole('heading', { name: 'Chad McConkey' })).toBeInTheDocument();
     expect(within(b).getByTestId('champion-photo').getAttribute('style')).toContain('uploads/a.jpg');
+    // the avatar is square: shown whole at the banner's height, not stretched across a wide box and zoomed in
+    expect(within(b).getByTestId('champion-photo')).toHaveClass('aspect-square');
     expect(b).toHaveTextContent('8–6 · 2nd in the regular season');
     expect(within(b).getByTestId('final')).toHaveTextContent('Final115.48–112.10over Saquon these nuts');
   });

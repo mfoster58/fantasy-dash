@@ -51,11 +51,11 @@ export default function SeasonBanner({ h }: { h: SeasonHardware }) {
   const c = h.champion;
   return (
     <section aria-label={`${h.year} season`} className="card relative isolate flex flex-col overflow-hidden border-gold/30 bg-[radial-gradient(60%_140%_at_0%_0%,color-mix(in_srgb,var(--gold)_26%,transparent),transparent_65%),linear-gradient(160deg,color-mix(in_srgb,var(--gold)_10%,var(--surface))_0%,var(--surface)_100%)] sm:flex-row">
-      <div aria-hidden="true" className="relative h-44 w-full shrink-0 sm:h-auto sm:min-h-[240px] sm:w-[300px] lg:w-[340px]">
-        {/* the picture's edge is skewed by the stripes' 11deg; the picture runs well past it so no edge shows at the corners */}
+      <div aria-hidden="true" className="relative h-44 w-56 shrink-0 sm:h-auto sm:min-h-[240px] sm:w-[270px] lg:w-[290px]">
+        {/* the picture's edge is skewed by the stripes' 11deg; inside, the square avatar is skewed back upright and shown whole at the banner's height */}
         <div className="absolute inset-y-0 -left-12 right-[46px] -skew-x-[11deg] overflow-hidden bg-surface-2">
           {c.avatar
-            ? <div data-testid="champion-photo" className="absolute inset-y-0 -left-5 -right-24 skew-x-[11deg] bg-cover bg-[center_30%]" style={{ backgroundImage: `url(${c.avatar})` }} />
+            ? <div data-testid="champion-photo" className="absolute inset-y-0 -right-6 aspect-square skew-x-[11deg] bg-cover bg-center" style={{ backgroundImage: `url(${c.avatar})` }} />
             : <div data-testid="champion-photo" className="flex h-full skew-x-[11deg] items-center pl-16 font-display text-6xl font-bold text-muted">{c.team.slice(0, 2).toUpperCase()}</div>}
         </div>
         <div className="absolute -inset-y-3 right-[38px] w-2 -skew-x-[11deg] bg-gold" />
