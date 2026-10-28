@@ -11,6 +11,7 @@ import type { DbState } from '../../../lib/playerdb/url';
 import { ColumnHeaderCells, GroupHeaderCells, HeaderCell, StatCells, th } from './GridParts';
 import TintCell from './TintCell';
 import WeekRows from './WeekRows';
+import { useIsPhone } from '../../../lib/useIsPhone';
 
 export const PAGE = 25;
 
@@ -65,10 +66,16 @@ export function useCollapsedGroups(tab: Tab): [ReadonlySet<string>, (group: stri
 const lead = 'sticky bg-surface';
 /** the rank and position stay put beside the player on a wide screen; on a phone only the player does */
 const leadWide = 'sm:sticky bg-surface';
+/** "Smith-Njigba" from "Jaxon Smith-Njigba": everything after the first name */
+const surname = (name: string) => name.split(' ').slice(1).join(' ') || name;
 
 export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, collapsed, onToggleGroup, weekLabel }: Props) {
   const [shown, setShown] = useState(PAGE);
   const [open, setOpen] = useState<string | null>(null);
+  // on a phone, once the stats are scrolled in, the fixed name column shrinks to the surname to give them room
+  const phone = useIsPhone();
+  const [scrolled, setScrolled] = useState(false);
+  const tight = phone && scrolled;
   useEffect(() => { setShown(PAGE); setOpen(null); }, [state.tab, state.from, state.to, state.roster, state.q]);
 
   const groups = useMemo(() => groupsFor(state.tab), [state.tab]);
@@ -90,7 +97,7 @@ export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, 
   );
 
   return (
-    <div className="card overflow-auto lg:max-h-[calc(100vh-10rem)]">
+    <div data-testid="db-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 8)} className="card overflow-auto lg:max-h-[calc(100vh-10rem)]">
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead className="sticky top-0 z-[2] bg-surface">
           <tr>
@@ -101,7 +108,7 @@ export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, 
           <tr>
             <th className={`${leadWide} left-0 z-[3] w-8 min-w-8 border-b border-line px-1.5 py-2 sm:w-10 sm:min-w-10 sm:px-2 text-left section-label`}>#</th>
             <th className={`${leadWide} left-8 z-[3] w-12 min-w-12 border-b border-line px-1 py-2 sm:left-10 sm:w-14 sm:min-w-14 sm:px-2 text-left section-label`}>Pos</th>
-            <th className={`${lead} left-0 z-[3] min-w-32 border-b shadow-[inset_-1px_0_0_var(--line)] sm:left-24 sm:min-w-48 sm:shadow-none border-line px-2 py-2 text-left section-label`}>Player</th>
+            <th className={`${lead} left-0 z-[3] ${tight ? 'min-w-0' : 'min-w-32'} border-b shadow-[inset_-1px_0_0_var(--line)] sm:left-24 sm:min-w-48 sm:shadow-none border-line px-2 py-2 text-left section-label`}>Player</th>
             {leadCols.map((c) => <HeaderCell key={c.key} col={c} title={headerTitle(c)} arrow={sortArrow(c.key)} onSort={onSort} />)}
             <ColumnHeaderCells groups={bodyGroups} collapsed={collapsed} title={headerTitle} arrow={sortArrow} onSort={onSort} />
           </tr>
@@ -122,8 +129,8 @@ export default function PlayerDbTable({ db, aggs, pool, state, onSort, rosters, 
                         <span aria-hidden="true" className="w-2 text-[10px]">{isOpen ? '▾' : '▸'}</span>
                         <span className="hidden sm:inline"><Headshot players={dir} id={a.id} size={24} /></span>
                       </button>
-                      <PlayerLink id={a.id} className="min-w-0 truncate font-medium max-sm:max-w-[6.5rem]"><span data-testid="db-name">{p?.name ?? a.id}</span></PlayerLink>
-                      <span className="text-xs text-muted">{a.team}</span>
+                      <PlayerLink id={a.id} aria-label={p?.name ?? a.id} className={`min-w-0 truncate font-medium ${tight ? 'max-w-[5.5rem]' : 'max-sm:max-w-[6.5rem]'}`}><span data-testid="db-name">{tight ? surname(p?.name ?? a.id) : p?.name ?? a.id}</span></PlayerLink>
+                      {!tight && <span data-testid="db-team" className="text-xs text-muted">{a.team}</span>}
                       {!rosters[a.id] && <span data-testid="fa-tag" title="Free agent: on no roster in the league" className="rounded border border-win/50 px-1 text-[10px] font-semibold leading-4 tracking-wide text-win">FA</span>}
                     </span>
                   </td>

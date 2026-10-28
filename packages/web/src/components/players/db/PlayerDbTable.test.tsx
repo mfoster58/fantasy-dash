@@ -23,6 +23,25 @@ function Harness({ state: initial, collapsed = new Set<string>() }: { state: DbS
 const names = () => screen.getAllByTestId('db-row').map((r) => within(r).getByTestId('db-name').textContent);
 
 describe('PlayerDbTable', () => {
+  it('on a phone, once the table is scrolled sideways, cuts names to the surname and drops the team, and brings them back at the start', () => {
+    const was = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: q.includes('max-width: 639px'), media: q, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia;
+    try {
+      render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
+      const row = () => screen.getAllByTestId('db-row')[0];
+      expect(within(row()).getByTestId('db-name')).toHaveTextContent('Wide One');
+      expect(row()).toHaveTextContent('Wide One');
+      const box = screen.getByTestId('db-scroll');
+      fireEvent.scroll(box, { target: { scrollLeft: 60 } });
+      expect(within(row()).getByTestId('db-name')).toHaveTextContent(/^One$/);
+      expect(within(row()).queryByTestId('db-team')).toBeNull();
+      // the link keeps the full name for screen readers
+      expect(within(row()).getByRole('link', { name: 'Wide One' })).toBeInTheDocument();
+      fireEvent.scroll(box, { target: { scrollLeft: 0 } });
+      expect(within(row()).getByTestId('db-name')).toHaveTextContent('Wide One');
+      expect(within(row()).getByTestId('db-team')).toBeInTheDocument();
+    } finally { window.matchMedia = was; }
+  });
   it('sorts by points by default, flips on a second click, and ranks rows', () => {
     render(<MemoryRouter><Harness state={base} /></MemoryRouter>);
     expect(names()).toEqual(['Wide One', 'Tight One', 'Wide Two']);

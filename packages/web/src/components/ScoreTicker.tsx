@@ -83,7 +83,7 @@ export default function ScoreTicker() {
         <div className="flex shrink-0 items-center gap-4 sm:gap-1.5">
           <button type="button" aria-label="Previous week" disabled={i <= 0} onClick={() => step(-1)} className={arrow}>‹</button>
           <div className="flex items-baseline gap-2 leading-tight sm:w-16 sm:flex-col sm:items-center sm:gap-0">
-            <span className="num text-[11px] text-muted">{season.year}</span>
+            <span className="num text-[11px] text-muted max-sm:hidden">{season.year}</span>
             <span className="whitespace-nowrap text-sm font-bold uppercase tracking-wide">Week {week.week}</span>
             <LiveDot on={isLive && live.polling} />
           </div>
