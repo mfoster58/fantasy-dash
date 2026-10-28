@@ -1,5 +1,5 @@
 import { game, line, players, side, week } from '../../test/playerFixtures';
-import { fullStatLine, scoredSoFar, topPerformers, weekHitters } from './results';
+import { crawlPerformers, fullStatLine, scoredSoFar, topPerformers, weekHitters } from './results';
 
 describe('scoredSoFar', () => {
   it('a week in progress counts whoever leads as the winner, by the current margin; level games have none', () => {
@@ -50,6 +50,18 @@ describe('topPerformers', () => {
     const w = week(6, [game(2026, 6, 1, a, b)]);
     expect(topPerformers(w, players, 5, 'WR').map((p) => p.playerId)).toEqual(['w1']);
     expect(topPerformers(w, players, 5, 'All').map((p) => p.playerId)).toEqual(['q1', 'r1', 'w1', 'k1']);
+  });
+});
+
+describe('crawlPerformers', () => {
+  it('ranks every starter by points, kickers and defenses left out, up to n', () => {
+    const a = side('a', 0, [line('q1', 30.7), line('w1', 20)]);
+    const b = side('b', 0, [line('r1', 22), line('k1', 25)]);
+    b.starters.push({ slot: 'DEF', player: { playerId: 'DET', points: 40, projected: null, stats: {} } });
+    const w = week(6, [game(2026, 6, 1, a, b)]);
+    const dir = { ...players, DET: { id: 'DET', name: 'Detroit Lions', firstName: 'Detroit', lastName: 'Lions', position: 'DEF', team: 'DET', yearsExp: 0, birthDate: null } };
+    expect(crawlPerformers(w, dir, 20).map((p) => p.playerId)).toEqual(['q1', 'r1', 'w1']);
+    expect(crawlPerformers(w, dir, 2).map((p) => p.playerId)).toEqual(['q1', 'r1']);
   });
 });
 

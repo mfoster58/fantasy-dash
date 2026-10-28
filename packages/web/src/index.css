@@ -139,6 +139,12 @@ html, body {
   }
 }
 
+/* the laptop crawl slides by one copy of its run, then starts over seamlessly */
+@keyframes crawl {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 /* the More sheet rises from the bottom tab bar */
 @keyframes sheet-up {
   from { transform: translateY(16px); opacity: 0; }

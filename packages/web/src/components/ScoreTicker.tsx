@@ -80,7 +80,7 @@ export default function ScoreTicker() {
     <section aria-label="Scores" className="border-b border-line bg-surface-2/60">
       {/* on a phone the week picker is a thin row over the cards, so the cards get the full width */}
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-1.5 px-4 pb-2.5 pt-1 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-2.5 lg:px-10">
-        <div className="flex shrink-0 items-center justify-center gap-4 sm:gap-1.5">
+        <div className="flex shrink-0 items-center gap-4 sm:gap-1.5">
           <button type="button" aria-label="Previous week" disabled={i <= 0} onClick={() => step(-1)} className={arrow}>‹</button>
           <div className="flex items-baseline gap-2 leading-tight sm:w-16 sm:flex-col sm:items-center sm:gap-0">
             <span className="num text-[11px] text-muted">{season.year}</span>

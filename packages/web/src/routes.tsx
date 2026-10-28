@@ -1,5 +1,6 @@
 import { Outlet, redirect, type LoaderFunctionArgs, type RouteObject } from 'react-router';
 import Nav from './components/Nav';
+import BottomCrawl from './components/PerformerCrawl';
 import ScoreTicker from './components/ScoreTicker';
 import { LiveProvider } from './lib/live/LiveProvider';
 import ErrorPage from './pages/ErrorPage';
@@ -104,10 +105,11 @@ function Layout() {
       <div className="min-h-screen bg-bg text-ink">
         <ScoreTicker />
         <Nav />
-        {/* on a phone the page ends clear of the bottom tab bar */}
-        <main className="mx-auto w-full max-w-[1400px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-6 lg:px-10">
+        {/* the page ends clear of the bottom tab bar on a phone and of the performers crawl on a laptop */}
+        <main className="mx-auto w-full max-w-[1400px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-16 lg:px-10">
           <Outlet />
         </main>
+        <BottomCrawl />
       </div>
     </LiveProvider>
   );

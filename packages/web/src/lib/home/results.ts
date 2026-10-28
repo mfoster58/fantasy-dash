@@ -52,6 +52,11 @@ export function topPerformers(week: Week, players: PlayerDirectory, n = 5, pos =
     .slice(0, n);
 }
 
+/** the bottom crawl's run: the week's starters by points, kickers and defenses left out */
+export function crawlPerformers(week: Week, players: PlayerDirectory, n = 20): Performer[] {
+  return topPerformers(week, players, Infinity).filter((p) => !['K', 'DEF'].includes(players[p.playerId]?.position ?? '')).slice(0, n);
+}
+
 const v = (s: Record<string, number>, k: string) => s[k] ?? 0;
 
 /** "23/41, 313 yds, 2 TD · 16 car, 64 yds, 2 TD · 9/10 rec, 53 yds · 1 fum"; zero parts left out. */
