@@ -1,10 +1,19 @@
+import { useMemo, useState } from 'react';
 import { useLoaderData, useNavigate } from 'react-router';
 import type { Season } from '@fantasy-dash/core';
 import Bracket from '../components/history/Bracket';
 import StandingsTable from '../components/StandingsTable';
 import SeasonPicker from '../components/SeasonPicker';
+import StatTable from '../components/stats/StatTable';
 import { history } from '../data/load';
 import { standingsBrackets } from '../lib/standings/brackets';
+import { managerRefs } from '../lib/stats/scope';
+import { statTable } from '../lib/stats/table';
+
+type View = 'standard' | 'advanced';
+const VIEW_KEY = 'standings-view';
+/** the table you last chose, remembered in this browser; storage can be blocked, so it falls back to standard */
+const savedView = (): View => { try { return localStorage.getItem(VIEW_KEY) === 'advanced' ? 'advanced' : 'standard'; } catch { return 'standard'; } };
 
 /** the season, and the last finished one before it, whose bracket shows where each seed goes */
 export interface StandingsData { season: Season; template: Season | null }
@@ -25,6 +34,10 @@ export default function StandingsPage() {
   const note = season.status === 'in_season' ? `through week ${season.lastScoredWeek}` : 'final';
   const brackets = standingsBrackets(season, template);
   const caption = brackets.kind === 'projected' ? 'If the season ended today: seeded from the table above.' : null;
+  const [view, setView] = useState<View>(savedView);
+  const pick = (v: View) => { setView(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage blocked: the choice lasts this visit */ } };
+  // the Stats page's Season stats table, for this season alone
+  const advanced = useMemo(() => (view === 'advanced' ? { rows: statTable([season]), refs: managerRefs([season]) } : null), [view, season]);
   return (
     <section className="space-y-4">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
@@ -34,9 +47,19 @@ export default function StandingsPage() {
         </h1>
         <SeasonPicker years={years} value={season.year} onChange={(y) => navigate(`/standings/${y}`)} />
       </header>
-      <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} year={season.year} />
+      <div role="group" aria-label="Table" className="inline-flex rounded-lg border border-line bg-surface p-0.5 text-sm">
+        {([['standard', 'Standard'], ['advanced', 'Advanced']] as const).map(([v, label]) => (
+          <button key={v} type="button" aria-pressed={view === v} onClick={() => pick(v)}
+            className={`rounded-md px-3 py-1 transition-colors ${view === v ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink'}`}>{label}</button>
+        ))}
+      </div>
+      {advanced
+        ? <div className="card px-1 py-2"><StatTable rows={advanced.rows} refs={advanced.refs} pin={null} allTime={false} /></div>
+        : <StandingsTable rows={season.standings} managers={season.managers} playoffTeams={season.playoffTeams} year={season.year} />}
       <p className="text-xs text-muted">
-        Regular season only. Click a column to sort by it; hover for its definition. Top {season.playoffTeams} make the playoffs.
+        {advanced
+          ? 'Every advanced stat, regular season unless the column says otherwise. Click a column to rank by it; hover for its definition.'
+          : `Regular season only. Click a column to sort by it; hover for its definition. Top ${season.playoffTeams} make the playoffs.`}
       </p>
       {brackets.kind !== 'none' && (
         <div className="space-y-8 pt-4">

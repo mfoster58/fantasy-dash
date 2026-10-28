@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { BracketGame, Season } from '@fantasy-dash/core';
 import { season, standing, week } from '../test/playerFixtures';
@@ -24,6 +24,25 @@ function league(year: number, prefix: string, complete: boolean): Season {
 }
 
 describe('StandingsPage', () => {
+  beforeEach(() => { try { localStorage.clear(); } catch { /* storage blocked */ } });
+  it('switches between the standard table and every advanced stat for the season, and remembers the choice', () => {
+    loaded = { season: league(2026, 'n', false), template: null };
+    const { unmount } = render(<MemoryRouter><StandingsPage /></MemoryRouter>);
+    const standard = screen.getByRole('button', { name: 'Standard' });
+    const advanced = screen.getByRole('button', { name: 'Advanced' });
+    expect(standard).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByTestId('standings-row')).toHaveLength(6);
+    expect(screen.queryByRole('columnheader', { name: /xW/ })).toBeNull();
+    fireEvent.click(advanced);
+    expect(advanced).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryAllByTestId('standings-row')).toHaveLength(0);
+    for (const h of [/xW/, /Luck/, /vs med/, /SOS/, /Eff/]) expect(screen.getByRole('columnheader', { name: h }), String(h)).toBeInTheDocument();
+    // a single season: no seasons-played or playoff-history columns
+    expect(screen.queryByRole('columnheader', { name: /Yrs/ })).toBeNull();
+    unmount();
+    render(<MemoryRouter><StandingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: 'Advanced' })).toHaveAttribute('aria-pressed', 'true');
+  });
   it('under the table, projects the playoffs and the toilet bowl from today\'s table with seeds', () => {
     loaded = { season: league(2026, 'n', false), template: league(2025, 'p', true) };
     render(<MemoryRouter><StandingsPage /></MemoryRouter>);
