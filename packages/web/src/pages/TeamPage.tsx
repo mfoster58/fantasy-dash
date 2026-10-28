@@ -58,7 +58,7 @@ export default function TeamPage() {
           { label: 'All-play', value: ap ? `${ap.w}–${ap.l}${ap.t ? `–${ap.t}` : ''}` : '—', sub: ap ? `${fmtWinPct(ap.pct)} vs everyone` : null },
         ]}
       />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start [&>*]:min-w-0">
         <div className="space-y-4">
           <SeasonShape label="Week by week" points={p.schedule.flatMap((e): ShapePoint[] => e.kind === 'played' ? [{ label: `Week ${e.week}`, mine: e.points, league: e.leagueAvg, result: e.result, playoff: e.isPlayoff }] : e.kind === 'bye' ? [{ label: `Week ${e.week}`, mine: null, league: e.leagueAvg, playoff: true }] : [])} mineCaption={`${fmtPpg(p.ppw)} a week`} leagueCaption={`${fmtPpg(p.leagueAvgPpw)} league average`} />
           <Schedule entries={p.schedule} managers={season.managers} year={season.year} />

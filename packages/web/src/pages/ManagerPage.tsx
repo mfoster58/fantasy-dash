@@ -47,7 +47,7 @@ export default function ManagerPage() {
         ]}
         chips={<><span className="section-label text-[10px]">Team history</span>{c.fieldedAs.map((f) => <Link key={`${f.teamName}-${f.from}`} to={`/teams/${f.to}/${userId}`} className="rounded-full border border-line px-3 py-1 text-sm hover:border-accent hover:text-accent"><span className="font-semibold">{f.teamName}</span> <span className="num text-muted">{f.from === f.to ? f.from : `${f.from}–${f.to}`}</span></Link>)}</>}
       />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start [&>*]:min-w-0">
         <div className="space-y-4">
           <SeasonsTable seasons={c.seasons} userId={userId} />
           <CareerTimeline stops={timeline} players={players} />
