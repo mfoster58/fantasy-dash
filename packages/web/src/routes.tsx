@@ -104,7 +104,8 @@ function Layout() {
       <div className="min-h-screen bg-bg text-ink">
         <ScoreTicker />
         <Nav />
-        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-10">
+        {/* on a phone the page ends clear of the bottom tab bar */}
+        <main className="mx-auto w-full max-w-[1400px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-6 lg:px-10">
           <Outlet />
         </main>
       </div>

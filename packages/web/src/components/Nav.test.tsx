@@ -12,28 +12,59 @@ async function renderNav(ui: ReactElement) {
 }
 
 describe('Nav', () => {
-  it('toggles the narrow-screen menu and closes it on navigation', async () => {
+  it('puts Home, Scores, Standings, Players and More in a bar along the bottom of a phone', async () => {
     await renderNav(<MemoryRouter><Nav /></MemoryRouter>);
-    const button = screen.getByRole('button', { name: /^menu$/i });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    const menu = screen.getByTestId('nav-menu');
-    fireEvent.click(menu.querySelector('a[href="/standings"]')!);
-    expect(button).toHaveAttribute('aria-expanded', 'false');
+    const bar = screen.getByRole('navigation', { name: 'Sections' });
+    expect(bar).toHaveClass('md:hidden');
+    expect(bar).toHaveClass('fixed');
+    const tabs = [...bar.querySelectorAll('a, button')].map((el) => el.textContent);
+    expect(tabs).toEqual(['Home', 'Scores', 'Standings', 'Players', 'More']);
+    expect(within(bar).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(within(bar).getByRole('link', { name: 'Scores' })).toHaveAttribute('href', '/scores');
+    expect(within(bar).getByRole('link', { name: 'Standings' })).toHaveAttribute('href', '/standings');
+    expect(within(bar).getByRole('link', { name: 'Players' })).toHaveAttribute('href', '/players');
+    // no hamburger at the top any more
+    expect(screen.queryByRole('button', { name: /^menu$/i })).toBeNull();
   });
 
-  it('closes the menu on any route change and on Escape', async () => {
+  it('lights the tab for the page you are on, Players for a player page too, and More for the pages inside it', async () => {
+    const lit = async (path: string) => {
+      const r = await renderNav(<MemoryRouter initialEntries={[path]}><Nav /></MemoryRouter>);
+      const bar = screen.getByRole('navigation', { name: 'Sections' });
+      const on = [...bar.querySelectorAll('[aria-current="page"], [data-active="true"]')].map((el) => el.textContent);
+      r.unmount();
+      return on;
+    };
+    expect(await lit('/')).toEqual(['Home']);
+    expect(await lit('/scores/2026/7/1')).toEqual(['Scores']);
+    expect(await lit('/player/9488')).toEqual(['Players']);
+    expect(await lit('/players/compare')).toEqual(['More']);
+    expect(await lit('/records')).toEqual(['More']);
+  });
+
+  it('More slides up a sheet with every other page, and closes on a pick, a route change, Escape or the backdrop', async () => {
     await renderNav(<MemoryRouter><Nav /><Link to="/scores">elsewhere</Link></MemoryRouter>);
-    const button = screen.getByRole('button', { name: /^menu$/i });
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
+    const more = screen.getByRole('button', { name: 'More' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(more);
+    expect(more).toHaveAttribute('aria-expanded', 'true');
+    const sheet = screen.getByTestId('nav-menu');
+    expect(within(sheet).getByRole('button', { name: 'Rosters' })).toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: 'Managers' })).toBeInTheDocument();
+    for (const [name, href] of [['Comparison tool', '/players/compare'], ['Head to Head', '/h2h'], ['Records', '/records'], ['Stats', '/stats'], ['History', '/history'], ['Draft', '/draft']]) {
+      expect(within(sheet).getByRole('link', { name })).toHaveAttribute('href', href);
+    }
+    fireEvent.click(within(sheet).getByRole('link', { name: 'Records' }));
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(more);
     fireEvent.click(screen.getByText('elsewhere'));
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(more);
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(more);
+    fireEvent.click(screen.getByTestId('nav-backdrop'));
+    expect(more).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('Players is a dropdown with Database and Comparison tool', async () => {
@@ -90,9 +121,9 @@ describe('Nav', () => {
     expect(rosters).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('puts the same two groups in the narrow-screen menu', async () => {
+  it('puts the same two groups in the More sheet', async () => {
     await renderNav(<MemoryRouter><Nav /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /^menu$/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
     const menu = screen.getByTestId('nav-menu');
     fireEvent.click(within(menu).getByRole('button', { name: 'Managers' }));
     expect(within(menu).getAllByRole('link').some((l) => l.getAttribute('href')?.startsWith('/managers/'))).toBe(true);
@@ -109,7 +140,7 @@ describe('Nav', () => {
   it('has a Players tab between Managers and Head to Head', async () => {
     await renderNav(<MemoryRouter><Nav /></MemoryRouter>);
     const nav = screen.getAllByRole('navigation')[0];
-    const labels = [...nav.querySelectorAll('a, button')].map((el) => el.textContent).filter((t) => t && t !== 'Menu');
+    const labels = [...nav.querySelectorAll('a, button')].map((el) => el.textContent).filter(Boolean);
     const i = labels.indexOf('Players');
     expect(i).toBeGreaterThan(0);
     expect(labels[i - 1]).toBe('Managers');

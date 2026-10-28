@@ -3,7 +3,8 @@ import { NavLink, useLocation } from 'react-router';
 import { leagueConfig } from '../../../../league.config';
 import { currentSeason, history, loadSeason } from '../data/load';
 import { managerEntries, playerEntries, rosterEntries } from '../lib/navMenus';
-import NavMenu, { NavMenuGroup, type MenuEntries } from './NavMenu';
+import BottomNav from './BottomNav';
+import NavMenu, { type MenuEntries } from './NavMenu';
 import ThemeToggle from './ThemeToggle';
 
 type Item =
@@ -31,17 +32,9 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 const managers = managerEntries(history);
 
 export default function Nav() {
-  const [open, setOpen] = useState(false);
   const [rosters, setRosters] = useState<MenuEntries>('loading');
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const { pathname } = useLocation();
-  useEffect(() => { setOpen(false); }, [pathname]);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
   // team names live in the season file, so the Rosters list arrives once it has loaded
   useEffect(() => {
     let live = true;
@@ -51,9 +44,10 @@ export default function Nav() {
   const entriesOf = (id: MenuId): MenuEntries => (id === 'rosters' ? rosters : id === 'players' ? playerEntries : managers);
   const activeOf = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
   return (
+    <>
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex h-12 w-full max-w-[1400px] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-10">
-        <NavLink to="/" className="shrink-0 whitespace-nowrap font-semibold tracking-tight" onClick={() => setOpen(false)}>{leagueConfig.name}</NavLink>
+        <NavLink to="/" className="shrink-0 whitespace-nowrap font-semibold tracking-tight">{leagueConfig.name}</NavLink>
         <nav className="hidden h-full min-w-0 items-center gap-1 text-sm md:flex">
           {items.map((i) => i.kind === 'link'
             ? <NavLink key={i.to} to={i.to} className={linkClass}>{i.label}</NavLink>
@@ -68,38 +62,11 @@ export default function Nav() {
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
           <ThemeToggle />
-          <button
-            type="button"
-            aria-label="Menu"
-            aria-expanded={open}
-            aria-controls="nav-menu"
-            onClick={() => setOpen((o) => !o)}
-            className="-mr-2 grid h-11 w-11 place-items-center rounded-lg text-muted hover:text-ink md:hidden"
-          >
-            <svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              {open ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3 6h14M3 10h14M3 14h14" />}
-            </svg>
-          </button>
         </div>
       </div>
-      {open && (
-        <div id="nav-menu" data-testid="nav-menu" className="max-h-[calc(100dvh-3rem)] overflow-y-auto border-t border-line bg-bg md:hidden">
-          <nav className="mx-auto flex max-w-[1400px] flex-col px-2 py-2 text-base">
-            {items.map((i) => i.kind === 'link' ? (
-              <NavLink
-                key={i.to}
-                to={i.to}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) => `flex min-h-11 items-center rounded-lg px-3 ${isActive ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink'}`}
-              >
-                {i.label}
-              </NavLink>
-            ) : (
-              <NavMenuGroup key={i.id} label={i.label} active={activeOf(i.prefix)} entries={entriesOf(i.id)} onNavigate={() => setOpen(false)} />
-            ))}
-          </nav>
-        </div>
-      )}
     </header>
+    {/* outside the header: its backdrop blur would otherwise pin the fixed bar to the header instead of the screen */}
+    <BottomNav rosters={rosters} managers={managers} />
+    </>
   );
 }

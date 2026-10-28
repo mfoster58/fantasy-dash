@@ -139,6 +139,12 @@ html, body {
   }
 }
 
+/* the More sheet rises from the bottom tab bar */
+@keyframes sheet-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
