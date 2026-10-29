@@ -12,6 +12,3 @@ export const positionOverrides: Record<string, string> = {
 
 /** Where old single-league URLs (before leagues had their own address) redirect to. */
 export const defaultLeague = 'husky';
-
-/** @deprecated single-league shape kept until both sync scripts loop over `leagues` (removed with that change). */
-export const leagueConfig = { ...leagues[0], positionOverrides };

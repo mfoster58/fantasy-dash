@@ -5,11 +5,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, SharedPlayerDbSchema, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
+  SleeperClient, SharedPlayerDbSchema, LeaguePointsSchema, nflYears, runPerLeague, buildLeaguePoints, pointsUpToDate, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
-  type DbPos, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
+  type DbPos, type NflYear, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
-import { leagueConfig } from '../league.config';
+import { leagues as configured, positionOverrides } from '../league.config';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'data', 'playerdb');
@@ -103,26 +103,38 @@ async function walkLeagueChain(client: SleeperClient, startId: string): Promise<
 
 interface Shared { crosswalkIds: Record<string, string>[]; nflPlayers: Record<string, string>[]; ngsRec: Record<string, string>[]; ngsRush: Record<string, string>[]; ngsPass: Record<string, string>[] }
 
-const throughWeekOf = (league: SleeperLeague): number => (league.status === 'complete' ? 18 : Math.min(18, league.settings.last_scored_leg ?? 0));
+type SleeperYear = { sleeperWeeks: Map<number, SleeperWeekStat[]>; projections: Map<number, StatMap> };
+const sleeperCache = new Map<number, Promise<SleeperYear>>();
 
-async function buildSeason(client: SleeperClient, league: SleeperLeague, directory: PlayerDbInput['directory'], shared: Shared): Promise<ReturnType<typeof buildPlayerDb>> {
-  const year = Number(league.season);
-  const complete = league.status === 'complete';
-  const throughWeek = throughWeekOf(league);
+/** One season's Sleeper weekly stat rows and projections, fetched once per run. */
+function sleeperYear(client: SleeperClient, y: NflYear): Promise<SleeperYear> {
+  let p = sleeperCache.get(y.year);
+  if (!p) {
+    p = (async () => {
+      const sleeperWeeks = new Map<number, SleeperWeekStat[]>();
+      const projections = new Map<number, StatMap>();
+      for (let week = 1; week <= y.throughWeek; week++) {
+        const [rows, proj] = await Promise.all([client.getWeekStats(y.season, week), client.getProjections(y.season, week)]);
+        if (!rows || rows.length === 0) {
+          if (y.complete) throw new Error(`${y.year} week ${week}: Sleeper weekly rows ${rows ? 'empty' : 'missing'} for a finished season`);
+          log(`WARNING: ${y.year} week ${week}: Sleeper weekly rows missing`);
+          continue;
+        }
+        sleeperWeeks.set(week, rows);
+        if (proj) projections.set(week, proj);
+      }
+      return { sleeperWeeks, projections };
+    })();
+    sleeperCache.set(y.year, p);
+  }
+  return p;
+}
+
+async function buildSeason(client: SleeperClient, y: NflYear, directory: PlayerDbInput['directory'], shared: Shared): Promise<ReturnType<typeof buildPlayerDb>> {
+  const { year, complete, throughWeek } = y;
   log(`${year}: ${complete ? 'finished' : `in season, through week ${throughWeek}`}`);
 
-  const sleeperWeeks = new Map<number, SleeperWeekStat[]>();
-  const projections = new Map<number, StatMap>();
-  for (let week = 1; week <= throughWeek; week++) {
-    const [rows, proj] = await Promise.all([client.getWeekStats(league.season, week), client.getProjections(league.season, week)]);
-    if (!rows || rows.length === 0) {
-      if (complete) throw new Error(`${year} week ${week}: Sleeper weekly rows ${rows ? 'empty' : 'missing'} for a finished season`);
-      log(`WARNING: ${year} week ${week}: Sleeper weekly rows missing`);
-      continue;
-    }
-    sleeperWeeks.set(week, rows);
-    if (proj) projections.set(week, proj);
-  }
+  const { sleeperWeeks } = await sleeperYear(client, y);
 
   const snaps = rowsOf(await optionalText(URLS.snaps(year), year, 'snap counts'));
   const crosswalk = buildCrosswalk(shared.crosswalkIds, shared.nflPlayers, snaps);
@@ -155,7 +167,7 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
   }
 
   const db = buildPlayerDb({
-    year, throughWeek, builtAt: new Date().toISOString(), positionOverrides: leagueConfig.positionOverrides,
+    year, throughWeek, builtAt: new Date().toISOString(), positionOverrides,
     sleeperWeeks, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards, teamSnaps: snapCountTeamSnaps(snaps),
   });
   const unmapped = Object.values(db.players).filter((p) => !p.gsisId).length;
@@ -174,30 +186,60 @@ function finishedFileProblem(file: string): string | null {
   return null;
 }
 
+const LEAGUES_DIR = path.join(ROOT, 'data', 'leagues');
+
+/** Phase 4: each league's points, projections and xFP for every season it played that has a shared playerdb file. */
+async function pointsPhase(client: SleeperClient, chains: Map<string, SleeperLeague[]>, years: NflYear[]) {
+  const outRoot = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-points-')) : LEAGUES_DIR;
+  const { failed } = await runPerLeague(configured.filter((c) => chains.has(c.slug)), async (cfg) => {
+    for (const league of chains.get(cfg.slug)!) {
+      const y = years.find((x) => x.year === Number(league.season));
+      if (!y || (onlySeason !== null && y.year !== onlySeason)) continue;
+      const dbFile = path.join(OUT_DIR, `${y.year}.json`);
+      if (!existsSync(dbFile)) { log(`${cfg.slug} ${y.year}: no shared playerdb yet; no points`); continue; }
+      const shared = SharedPlayerDbSchema.parse(JSON.parse(readFileSync(dbFile, 'utf8')));
+      const file = path.join(LEAGUES_DIR, cfg.slug, 'points', `${y.year}.json`);
+      const existing = existsSync(file) ? (() => { try { return JSON.parse(readFileSync(file, 'utf8')) as unknown; } catch { return undefined; } })() : undefined;
+      if (y.complete && !full && pointsUpToDate(existing, { leagueId: league.league_id, dbBuiltAt: shared.builtAt })) { log(`${cfg.slug} ${y.year}: points up to date`); continue; }
+      const { sleeperWeeks, projections } = await sleeperYear(client, y);
+      const points = LeaguePointsSchema.parse(buildLeaguePoints({ shared, leagueId: league.league_id, builtAt: new Date().toISOString(), scoring: league.scoring_settings, sleeperWeeks, projections }));
+      const dir = path.join(outRoot, cfg.slug, 'points');
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, `${y.year}.json`), JSON.stringify(points));
+      log(`${cfg.slug} ${y.year}: points for ${Object.keys(points.players).length} players`);
+    }
+  }, log);
+  if (dryRun) log(`Dry run: points in ${outRoot}`);
+  if (failed.length) log(`points failed for: ${failed.join(', ')}`);
+}
+
 async function main() {
   const client = new SleeperClient();
-  const chain = await walkLeagueChain(client, leagueConfig.leagueId);
-  if (onlySeason !== null && !(Number.isInteger(onlySeason) && chain.some((l) => Number(l.season) === onlySeason))) {
-    throw new Error(`--season must name a league season (have: ${chain.map((l) => l.season).join(', ')})`);
+  const chains = new Map<string, SleeperLeague[]>();
+  const { failed } = await runPerLeague(configured, async (cfg) => { chains.set(cfg.slug, await walkLeagueChain(client, cfg.leagueId)); }, log);
+  if (chains.size === 0) throw new Error(`no league could be read: ${failed.join(', ')}`);
+  const all = nflYears([...chains.values()]);
+  if (onlySeason !== null && !(Number.isInteger(onlySeason) && all.some((y) => y.year === onlySeason))) {
+    throw new Error(`--season must name a league season (have: ${all.map((y) => y.year).join(', ')})`);
   }
-  const leagues = chain.filter((l) => onlySeason === null || Number(l.season) === onlySeason);
-  log(`Seasons: ${leagues.map((l) => l.season).join(', ')}`);
+  const years = all.filter((y) => onlySeason === null || y.year === onlySeason);
+  log(`Seasons: ${years.map((y) => y.year).join(', ')}`);
 
-  if (!chartsOnly) await playerDbPhase(client, leagues);
-  await chartsPhase(leagues);
-  await schedulePhase(leagues);
+  if (!chartsOnly) await playerDbPhase(client, years);
+  await chartsPhase(years);
+  await schedulePhase(years);
+  if (!chartsOnly) await pointsPhase(client, chains, years);
 }
 
 /** Phase 3: each season's NFL regular-season schedule, for upcoming matchups. A failed download keeps the old files. */
-async function schedulePhase(leagues: SleeperLeague[]) {
+async function schedulePhase(years: NflYear[]) {
   let csv: string | null;
   try { csv = await fetchText(URLS.schedule); } catch (err) { log(`schedule download failed, keeping old files: ${String(err)}`); return; }
   if (csv === null) { log('no schedule file; keeping old files'); return; }
   const rows = rowsOf(csv);
   const dir = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-schedule-')) : SCHEDULE_DIR;
   await mkdir(dir, { recursive: true });
-  for (const league of leagues) {
-    const year = Number(league.season);
+  for (const { year } of years) {
     const schedule = ScheduleSchema.parse(parseSchedule(rows, year));
     if (schedule.games.length === 0) { log(`${year}: no schedule games`); continue; }
     await writeFile(path.join(dir, `${year}.json`), JSON.stringify(schedule));
@@ -207,13 +249,13 @@ async function schedulePhase(leagues: SleeperLeague[]) {
 }
 
 /** Phase 1: the player database. */
-async function playerDbPhase(client: SleeperClient, leagues: SleeperLeague[]) {
-  const todo = leagues.filter((l) => {
-    if (l.status !== 'complete') return true;
+async function playerDbPhase(client: SleeperClient, years: NflYear[]) {
+  const todo = years.filter((y) => {
+    if (!y.complete) return true;
     if (full) return true;
-    const why = finishedFileProblem(path.join(OUT_DIR, `${l.season}.json`));
-    if (why === null) { log(`${l.season}: finished and already built, skipping (pass --full to rebuild)`); return false; }
-    log(`${l.season}: finished but ${why}; rebuilding`);
+    const why = finishedFileProblem(path.join(OUT_DIR, `${y.year}.json`));
+    if (why === null) { log(`${y.year}: finished and already built, skipping (pass --full to rebuild)`); return false; }
+    log(`${y.year}: finished but ${why}; rebuilding`);
     return true;
   });
   if (todo.length === 0) { log('Nothing to do'); return; }
@@ -236,9 +278,9 @@ async function playerDbPhase(client: SleeperClient, leagues: SleeperLeague[]) {
   await rm(staging, { recursive: true, force: true });
   await mkdir(staging, { recursive: true });
   const built: string[] = [];
-  for (const league of todo) {
-    if (throughWeekOf(league) < 1) { log(`${league.season}: skipping, no scored weeks yet`); continue; }
-    const db = await buildSeason(client, league, directory, shared);
+  for (const y of todo) {
+    if (y.throughWeek < 1) { log(`${y.year}: skipping, no scored weeks yet`); continue; }
+    const db = await buildSeason(client, y, directory, shared);
     const file = path.join(staging, `${db.year}.json`);
     await writeFile(file, JSON.stringify(db));
     built.push(file);
@@ -267,10 +309,10 @@ function positionsFor(year: number, nflPlayers: Record<string, string>[]): (gsis
 }
 
 /** Phase 2: play-by-play charts. A season without a participation or play-by-play file yet is skipped, not an error. */
-async function chartsPhase(leagues: SleeperLeague[]) {
-  const todo = leagues.filter((l) => {
-    if (full || l.status !== 'complete') return true;
-    if (chartFileFinal(path.join(CHART_DIR, `${l.season}.json`))) { log(`${l.season}: charts already built, skipping`); return false; }
+async function chartsPhase(years: NflYear[]) {
+  const todo = years.filter((y) => {
+    if (full || !y.complete) return true;
+    if (chartFileFinal(path.join(CHART_DIR, `${y.year}.json`))) { log(`${y.year}: charts already built, skipping`); return false; }
     return true;
   });
   if (todo.length === 0) return;
@@ -279,8 +321,7 @@ async function chartsPhase(leagues: SleeperLeague[]) {
   await mkdir(staging, { recursive: true });
   let nflPlayers: Record<string, string>[] | null = null;
   const built: string[] = [];
-  for (const league of todo) {
-    const year = Number(league.season);
+  for (const { year } of todo) {
     const pbp = await fetchText(URLS.pbp(year));
     if (pbp === null) { log(`${year}: no play-by-play file yet; no charts`); continue; }
     const part = await fetchText(URLS.participation(year));
