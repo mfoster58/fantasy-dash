@@ -3097,7 +3097,7 @@
     "length": 1
    },
    "totalPoints": {
-    "a": 884.2,
+    "a": 885.2,
     "b": 865.16
    },
    "biggestWin": {
@@ -3109,14 +3109,14 @@
     "gameId": "2023-9-1",
     "margin": 0.44
    },
-   "avgMargin": 34.53,
+   "avgMargin": 34.7,
    "games": [
     {
      "gameId": "2026-7-5",
      "year": 2026,
      "week": 7,
      "tag": null,
-     "aPoints": 155.62,
+     "aPoints": 156.62,
      "bPoints": 110.82
     },
     {
@@ -3859,7 +3859,7 @@
    "t": 0,
    "winPct": 0.6531,
    "pf": 7276.36,
-   "pa": 6605.9,
+   "pa": 6606.9,
    "ppg": 148.5,
    "maxPoints": 7921.38,
    "efficiency": 0.9186,
@@ -4054,10 +4054,10 @@
    "l": 29,
    "t": 0,
    "winPct": 0.4082,
-   "pf": 6558.88,
+   "pf": 6559.88,
    "pa": 6484.96,
-   "ppg": 133.85,
-   "maxPoints": 7349.7,
+   "ppg": 133.88,
+   "maxPoints": 7350.7,
    "efficiency": 0.8924,
    "streak": "W1",
    "allPlay": {
