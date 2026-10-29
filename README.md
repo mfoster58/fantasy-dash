@@ -2,6 +2,12 @@
 
 Dashboard for the Husky Fantasy Sleeper league. Static site, data refreshed weekly.
 
+## Leagues
+
+Every Sleeper league in `league.config.ts` gets its own address: `https://mfoster58.github.io/fantasy-dash/<slug>/`. Leagues never link to each other, and the site's root page lists none of them. To add one, add `{ slug, leagueId, name, managerNames: {} }` to `leagues` (the slug is lowercase letters, digits and hyphens) and run `pnpm sync && pnpm sync:players`, or wait for the next scheduled run. Its old seasons are scored from Sleeper on that first player sync.
+
+Data: `data/leagues/<slug>/` holds each league's history, seasons and points (its scoring, projections and xFP). `data/players.json`, `schedule/`, `playerdb/` and `charts/` are NFL data shared by every league.
+
 ## Layout
 
 - `packages/core` - Sleeper client, normalizer, stats engine, schemas (pure TypeScript)
@@ -25,7 +31,7 @@ pnpm build         # production build to packages/web/dist
 
 ## Deploy
 
-`.github/workflows/sync.yml` runs every Tuesday morning, on manual dispatch, and on every push to `main`. Scheduled and manual runs sync, test, commit `data/`, build, and deploy to GitHub Pages; push runs skip the sync and only test, build, and deploy. One-time setup in the GitHub repo: Settings, Pages, Source = GitHub Actions.
+`.github/workflows/sync.yml` runs daily and after each NFL game block, on manual dispatch, and on every push to `main`. Scheduled and manual runs sync, test, commit `data/`, build, and deploy to GitHub Pages; push runs skip the sync and only test, build, and deploy. One-time setup in the GitHub repo: Settings, Pages, Source = GitHub Actions.
 
 GitHub disables scheduled workflows after 60 days without repository activity. In the off-season, run the workflow manually once in a while or push a commit to keep the Tuesday sync alive.
 
