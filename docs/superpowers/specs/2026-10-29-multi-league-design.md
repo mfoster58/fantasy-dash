@@ -1,16 +1,16 @@
 # Multiple leagues on one site — design
 
-Date: 2026-10-29.
+Date: 2026-10-29. Revised the same day while planning; the revisions are listed at the end.
 
 ## Why
 
-Mathias plays in several Sleeper leagues, each with a different group of league mates, and wants to send each group a link to their own league on this site. Today the site is wired to one league (`league.config.ts`), and the player DB's fantasy points are computed with that league's scoring.
+Mathias plays in several Sleeper leagues, each with a different group of league mates, and wants to send each group a link to their own league on this site. Today the site is wired to one league (`league.config.ts`), and the player DB's fantasy points, and the xFP model fitted on them, use that league's scoring.
 
 ## Goals
 
 1. Any number of Sleeper leagues on one deployed site, each at its own address: `…/fantasy-dash/<slug>/…`.
-2. **Hidden leagues.** Nothing on a league's pages links to or lists another league. The root page lists no leagues.
-3. Fantasy points everywhere (Players page, grades, records, player pages, comparison) use the scoring of the league in the URL.
+2. **Hidden leagues.** Nothing on a league's pages, and nothing on the root page or in the HTML shell, names or links to another league.
+3. Fantasy points everywhere (Players page, grades, records, player pages, comparison) use the scoring of the league in the URL. So do projections, xFP and FPOE.
 4. Shared NFL data (player directory, schedule, player DB, charts) is synced and stored once, not per league.
 5. Existing links keep working.
 
@@ -44,72 +44,94 @@ export const positionOverrides: Record<string, string> = { '12530': 'WR' };
 export const defaultLeague = 'husky';
 ```
 
-A unit test checks that the slugs are unique and valid and that `defaultLeague` exists. Mathias adds the other leagues' ids and slugs when they're built.
+`validateLeagues` (core) checks that the slugs are unique and valid, that no slug collides with a top-level route name, and that `defaultLeague` exists. A test runs it on the real config. Mathias adds the other leagues' ids and slugs when they're built.
 
 ## Data layout
 
 ```
 data/
-  players.json            shared
+  players.json            shared: every player on any league's rosters
   schedule/*.json         shared
-  playerdb/*.json         shared; no longer has pts / proj
+  playerdb/*.json         shared; no pts, proj or xfp
   charts/*.json           shared
   leagues/<slug>/
     history.json
     seasons/*.json
-    points/*.json         this league's pts and proj per player-week
+    points/*.json         this league's pts, proj and xfp per player-week, plus its xFP coefficients
 ```
 
-**Points file** (`points/{year}.json`), new schema `LeaguePoints` in core:
+**Points file** (`points/{year}.json`), new schema `LeaguePointsSchema` in core:
 
 ```ts
-{ year: number; leagueId: string; builtAt: string; throughWeek: number;
-  /** player id → per-week [week, pts, proj | null] */
-  players: Record<PlayerId, [number, number, number | null][]> }
+interface LeaguePoints {
+  year: number; leagueId: string; builtAt: string;
+  /** builtAt of the shared playerdb file these points were built against */
+  dbBuiltAt: string;
+  /** this league's xFP model, fitted on its own points */
+  xfp: XfpCoefficients;
+  /** player id → per-week [week, pts, proj | null, xfp | null] */
+  players: Record<PlayerId, [number, number, number | null, number | null][]>;
+}
 ```
 
-- The shared player DB drops `pts` and `proj` from `PLAYER_WEEK_KEYS`. The schema keeps them optional for one release, so files that haven't been migrated still parse. `ppr` and `posRankPpr` stay, because they are league-neutral.
-- The web joins the two on load: `withPoints(db, points)` returns a `PlayerDb` whose rows have `pts` and `proj` filled in from the league's file. Everything downstream (`aggregate`, grades, `seasonStats`, records, gameLog) is unchanged, because it already reads `row.pts` and `row.proj`.
-- Rows the league file has no entry for keep `pts`/`proj` absent, and the existing absent-means-null rule applies.
-- A league whose history has no season for a playerdb year has no points file for that year. Its Players page lists only its own seasons, using `history.seasons` as it does now.
+- **Shared player DB.** `SharedPlayerDb` is `Omit<PlayerDb, 'xfp'>`, and its rows carry no `pts`, `proj` or `xfp`. `SharedPlayerDbSchema` is `PlayerDbSchema.omit({ xfp: true })`, so old files with those fields still parse. `ppr` and `posRankPpr` stay, because they are league-neutral.
+- **Core helpers:**
+  - `applyLeaguePoints(shared, points | null): PlayerDb` returns the familiar `PlayerDb`. Rows with an entry get `pts`, plus `proj`/`xfp` when not null, and `xfp` is set from the file (all null when there is no file).
+  - `splitLeaguePoints(db, leagueId, builtAt)` is the exact inverse, used by the migration.
+- **Web:** everything downstream (`aggregate`, grades, `seasonStats`, records, gameLog, FPOE) keeps reading `row.pts`, `row.proj`, `row.xfp` and `db.xfp` unchanged.
+- Rows with no points entry keep those fields absent, and the existing absent-means-null rule applies.
 
 ## Sync
 
-**`pnpm sync`** loops over `leagues` and runs the existing per-league sync for each one, writing to `data/leagues/<slug>/`. A league that throws is logged as `✗ <slug>: <error>`, and the loop continues. The script exits non-zero only when every league failed, so one bad league doesn't block the deploy.
+**`pnpm sync`**
+
+- Loops over `leagues`. For each one, it walks the chain, fetches the seasons and writes `data/leagues/<slug>/` (history and seasons) through a staging directory and a rename.
+- A league that throws is logged as `✗ <slug>: <error>`, and its existing folder is left untouched.
+- `players.json` is trimmed to the union of player ids across every league. For a league that failed, the ids come from its existing season files on disk.
+- The script no longer replaces all of `data/`. It writes only `players.json` and the league folders, so `playerdb/`, `charts/` and `schedule/` are never touched.
+- It exits non-zero only when every league failed.
 
 **`pnpm sync:players`**
 
-1. Builds the shared playerdb and charts once, as today, except that `buildPlayerDb` no longer scores anything. Position overrides come from the shared `positionOverrides`.
-2. For each league and each of that league's seasons, it writes `points/{year}.json` by scoring the Sleeper weekly stats and projections with that season's `scoring_settings` (the existing `scoreStats`). The Sleeper weekly stats and projections for a year are fetched once and shared across leagues.
-3. **Skip rule:** a finished season's points file is left alone when it exists, parses, reaches week 18 and has the same `leagueId`. This mirrors `finishedFileProblem` for the playerdb. Live seasons are rewritten every run.
+1. **NFL years:** the union of every league's chain. For each year, `complete` is true when any league that season is complete. `throughWeek` is 18 when complete, otherwise the maximum `last_scored_leg` (capped at 18). The playerdb, charts and schedule phases run over these years, unchanged except that `buildPlayerDb` no longer scores (no `scoring`/`projections` input, and no pts/proj/xfp), and position overrides come from the shared `positionOverrides`.
+2. **Points phase:** for each league, and each of its seasons that has a shared playerdb file, it builds `points/{year}.json` with `buildLeaguePoints`. That function scores each DB row from that week's Sleeper stats and projections with the season's `scoring_settings` (the existing `scoreStats`), then fits and predicts xFP. Sleeper weekly stats and projections are fetched once per year and shared across leagues, including with the playerdb phase.
+3. **Skip rule:** a points file is left alone when it parses, its `leagueId` matches, its `dbBuiltAt` equals the shared file's `builtAt`, and the season is complete. Live seasons are always rebuilt.
+4. A league that fails in the points phase is logged, and the others continue.
 
-Since a finished playerdb file is never rebuilt, adding a new league scores its old seasons from a fresh Sleeper fetch, about 18 weekly stat requests and 18 projection requests per year. The shared playerdb doesn't change.
+Adding a league scores its old seasons from a fresh Sleeper fetch: about 18 weekly stat requests and 18 projection requests per year. The shared files don't change.
 
 ## Web
 
-**Routes** (`packages/web/src/routes.tsx`):
+**The league is the router's basename.**
 
-- `/`: `RootPage`, a bare page that says "This site hosts private league pages. Use the link your commissioner sent you." It has no league names and no links.
-- `/:league/*`: a `LeagueRoute` loader resolves the slug against `leagues`. An unknown slug renders `LeagueNotFound`. Inside, the existing `Layout` and every existing child route are mounted unchanged, so `/:league/standings`, `/:league/player/:id`, `/:league/players/:season` and so on all work.
-- **Legacy redirects:** a path whose first segment is one of the existing top-level route names (`standings`, `player`, `players`, `stats`, `h2h`, `records`, `history`, `draft`, `managers`, `rosters`, `scores`, etc.; the exact list is taken from `routes.tsx`) redirects to `/<defaultLeague>/<same path and query>`.
-- **Links:** nav items and in-app links become league-relative. A small helper, `useLeaguePath()` or `leagueHref(slug, path)`, prefixes the current slug, and absolute `to="/…"` links are converted to use it. A test fails if any `to="/` literal remains outside the helper and the root page.
-
-**Current league:** a `LeagueContext` provides the `LeagueConfig` for the URL. The nav title and the document title use `league.name`. `Nav.tsx` stops importing `leagueConfig`.
+- `main.tsx` reads the first path segment after `BASE_URL` and calls `resolveLeague(...)`:
+  - **A configured slug:** await `initLeague(league)`, set `document.title = league.name`, and mount the existing router with `basename = BASE_URL + slug`. Every existing absolute link and redirect (`/player/123`, `redirect('/standings/2026')`) resolves inside that league with no edits.
+  - **Empty** (the root): render `RootPage`, which says "This site hosts private league pages. Use the link your commissioner sent you." It has no league names and no links.
+  - **A legacy head**, meaning the first segment of a top-level route (`standings`, `player`, `players`, `records`, `all-time`, etc.), derived from `routes.tsx`: `location.replace(BASE_URL + defaultLeague + the same path, query and hash)`.
+  - **Anything else:** render `LeagueNotFound`, which also names no leagues.
+- `index.html`'s `<title>` becomes the neutral "Fantasy", so the shell names no league.
+- `Nav.tsx` reads the league name from `data/load.ts` instead of importing `league.config`.
 
 **Loading** (`packages/web/src/data/load.ts`):
 
-- The per-league globs become `data/leagues/*/history.json`, `seasons/*.json` and `points/*.json`. They are lazy, not eager, so each league is its own chunk and a visitor downloads only the league in the URL.
-- **History stays synchronous for components.** About 20 components and pages read the global `history`/`currentSeason` directly: Nav, SeasonTable, JourneyFeed, LiveProvider, the Standings, H2H, Team, Players, BoxScore and SeasonReview pages, and others. The `:league` route's loader awaits `loadHistory(slug)` once, and `LeagueContext` provides `{ config, history, currentSeason }`. Components switch from the module globals to `useLeague()`. Loaders get the slug from `params.league` and call `loadHistory(slug)`, which is cached. The module-level `history` and `currentSeason` exports are removed, so a missed caller fails typecheck.
-- Every per-league function takes `slug`: `loadHistory(slug)`, `loadSeason(slug, year)`, `loadAllSeasons(slug)`, `loadPlayerDb(slug, year)`. The last one returns the playerdb with that league's points joined. Caches are keyed by `slug` (and year).
-- Shared loaders (`players`, `loadCharts`, schedule) keep their signatures.
+- Per-league globs: `data/leagues/*/history.json`, `seasons/*.json` and `points/*.json`. All are lazy, so each league is its own chunk and a visitor downloads only theirs.
+- `initLeague(league)` loads that league's history once and fills the module's live bindings `export let league`, `export let history` and `export let currentSeason`. Components and loaders that read `history`/`currentSeason` today (about 20 files) are unchanged, since one page load serves one league. Nothing reads them at module scope.
+- `loadSeason(year)` and `loadAllSeasons()` read the current league's files.
+- `loadPlayerDb(year)` loads the shared file and the league's points file together and returns `applyLeaguePoints(shared, points ?? null)`.
+- The test setup calls `initLeague` for `husky` once, so existing tests keep their real data.
 
-**Live:** `LiveProvider` already polls Sleeper with `season.leagueId`, so it works per league once it receives the league's season. Its cache must be keyed by league, so moving from one league to another never shows the other league's scores.
+**Live:** `LiveProvider` polls with `season.leagueId`, and one page load is one league, so it works unchanged.
 
 ## Migration (one time, for Husky)
 
-1. `git mv data/history.json data/seasons → data/leagues/husky/`.
-2. Run `scripts/migrate-points.ts`: for each `data/playerdb/{year}.json`, write `data/leagues/husky/points/{year}.json` from the rows' `pts`/`proj`, then strip those fields from the shared file. Run it once, commit, and delete the script in the same branch.
-3. **Check.** Before migrating, a script snapshots, for every season, the Players page aggregates, each player's season `pts` totals, the records tables and the standings. After migrating, it runs again through the new loaders with slug `husky`, and the two snapshots must be identical.
+1. Move `data/history.json` and `data/seasons/` into `data/leagues/husky/` with `git mv`.
+2. Run `scripts/migrate-points.ts` for each `data/playerdb/{year}.json`:
+   - Run `splitLeaguePoints` with the leagueId of Husky's season that year.
+   - **Check:** `applyLeaguePoints(shared, points)` must deep-equal the original file, or the script aborts without writing.
+   - Write `leagues/husky/points/{year}.json` and the stripped shared file.
+
+   Run it once, commit, and delete the script in the same branch.
+3. All existing web tests must pass unchanged on the migrated data, through the new loaders.
 
 ## Deploy
 
@@ -120,25 +142,32 @@ One workflow, one Pages artifact, the same crons. `VITE_BASE` is unchanged. `404
 The repo's conventions apply: Vitest, core tests in `packages/core/test`, web tests colocated.
 
 - **Core:**
-  - `buildLeaguePoints` with two different scoring settings over the same stats gives different points.
-  - The finished-file skip rule.
+  - `buildLeaguePoints`: two scoring settings over the same stats give different pts and xFP.
+  - Round trip: `split` then `apply` gives back the original, and a row with no points entry stays without points.
   - The `LeaguePoints` schema.
-  - `buildPlayerDb` no longer writes `pts`/`proj`.
-- **Sync:** the league loop continues past one failing league and exits non-zero only when all fail. The league fetch is injected as a function, so this is testable without the network.
+  - The points skip rule.
+  - `buildPlayerDb` writes no pts/proj/xfp.
+  - `validateLeagues`.
+  - `nflYears` (union, complete-if-any, max throughWeek).
+  - `runPerLeague`: continues past a failing league and reports which failed.
 - **Web:**
-  - `withPoints` join, including a player missing from the points file.
-  - Config validation.
-  - The `:league` route resolves, an unknown slug shows not-found, and the root page lists no leagues.
-  - Legacy redirects keep the path and query.
-  - `leagueHref`.
-  - Loaders are called with the slug, and caches don't leak between two slugs.
-  - The no-absolute-links check.
-- Existing tests that read `data/seasons` or `data/history.json` move to the new paths or fixtures.
+  - `resolveLeague`: league, root, legacy redirect keeping path, query and hash, and unknown.
+  - `legacyHeads(routes)`.
+  - Loader redirects under a basename stay inside the league (a `createMemoryRouter` with a basename).
+  - `RootPage` and `LeagueNotFound` render no league name.
+  - `loadPlayerDb` joins points.
+  - The real config passes `validateLeagues`.
 
 ## Order with other work
 
 This lands before the player comparison tool (spec `3bdb24f`), so the comparison reads per-league points from the start.
 
+## Revisions while planning (2026-10-29)
+
+- **Basename, not a `:league` route.** The web code has 94 absolute app paths in 44 files. Mounting the router under `BASE_URL + slug` keeps all of them working unchanged, and the league globals stay synchronous through live bindings filled at boot. Every visible behaviour in the first draft is kept: per-league URLs, hidden leagues, legacy redirects, and per-league chunks.
+- **xFP is per league.** `fitXfpCoefficients` is fitted on league `pts`, so the xFP coefficients and the per-row `xfp` move into the points file along with `pts`/`proj`.
+- **`pnpm sync` stops replacing all of `data/`**, and `players.json` covers every league's players.
+
 ## Left to the builder
 
-Module and file names. The exact compact encoding of the points rows, provided it round-trips. Whether the legacy-redirect list is generated from `routes.tsx` or kept by hand with a test. Whether `useLeague()` reads the route loader data or a React context fed by it.
+Module and file names, beyond the exported names above.
