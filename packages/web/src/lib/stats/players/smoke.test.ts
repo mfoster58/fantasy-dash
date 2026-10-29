@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
-import type { ChartDb, PlayerDb } from '@fantasy-dash/core';
+import { applyLeaguePoints, type ChartDb, type LeaguePoints, type PlayerDb, type SharedPlayerDb } from '@fantasy-dash/core';
 import { seasonStats } from './season';
 import { trends } from './trends';
 import { VIEWS, viewPool } from './views';
@@ -12,7 +12,7 @@ const finite = (o: unknown) => !JSON.stringify(o, (_k, v) => (typeof v === 'numb
 describe('players stats over the committed data', () => {
   for (const year of [2025, 2026]) {
     it(`${year}: every view's pool is finite and at most 40; trends exclude the injured`, () => {
-      const db = json<PlayerDb>(`playerdb/${year}.json`), ch = json<ChartDb>(`charts/${year}.json`);
+      const db = applyLeaguePoints(json<SharedPlayerDb>(`playerdb/${year}.json`), json<LeaguePoints>(`leagues/husky/points/${year}.json`)), ch = json<ChartDb>(`charts/${year}.json`);
       const stats = seasonStats(db, ch);
       expect(finite(stats)).toBe(true);
       for (const v of VIEWS) for (const p of v.pos) { const pool = viewPool(v, stats, p); expect(pool.length).toBeLessThanOrEqual(40); if (!v.participation || ch.participation) expect(pool.length, `${year} ${p} ${v.id}`).toBeGreaterThan(0); }

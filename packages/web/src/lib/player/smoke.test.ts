@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { readdirSync, readFileSync } from 'node:fs';
-import type { ChartDb, PlayerDb, PlayerDirectory, Season } from '@fantasy-dash/core';
+import { applyLeaguePoints, type ChartDb, type LeaguePoints, type PlayerDb, type PlayerDirectory, type Season, type SharedPlayerDb } from '@fantasy-dash/core';
 import { flattenLines } from '../playerLines';
 import { gameLog } from './gameLog';
 import { journeyOf } from './journey';
@@ -9,8 +9,8 @@ import { seasonTable } from './seasons';
 
 const root = new URL('../../../../../data/', import.meta.url);
 const json = <T,>(rel: string) => JSON.parse(readFileSync(new URL(rel, root), 'utf8')) as T;
-const seasons = readdirSync(new URL('seasons/', root)).filter((f) => f.endsWith('.json')).map((f) => json<Season>(`seasons/${f}`));
-const dbs = readdirSync(new URL('playerdb/', root)).filter((f) => f.endsWith('.json')).map((f) => json<PlayerDb>(`playerdb/${f}`));
+const seasons = readdirSync(new URL('leagues/husky/seasons/', root)).filter((f) => f.endsWith('.json')).map((f) => json<Season>(`leagues/husky/seasons/${f}`));
+const dbs = readdirSync(new URL('playerdb/', root)).filter((f) => f.endsWith('.json')).map((f) => applyLeaguePoints(json<SharedPlayerDb>(`playerdb/${f}`), json<LeaguePoints>(`leagues/husky/points/${f}`)));
 const charts = readdirSync(new URL('charts/', root)).filter((f) => f.endsWith('.json')).map((f) => json<ChartDb>(`charts/${f}`));
 const players = json<PlayerDirectory>('players.json');
 const lines = flattenLines(seasons, players);
