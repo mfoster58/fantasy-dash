@@ -9,8 +9,10 @@ export interface FieldStarter { id: string; name: string; short: string; pos: st
 const sign = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(1)}`;
 
 /** One lineup's offense going up its own field: every play drawn where it happened, and the drives on now. */
-export default function FieldSide({ name, color, plays, starters, live, drives, fresh, focus, onFocus, celebration }: {
+export default function FieldSide({ name, total, color, plays, starters, live, drives, fresh, focus, onFocus, celebration }: {
   name: string;
+  /** the team's points */
+  total: number;
   /** the side's colour: the field's end zone, the drive lines */
   color: string;
   plays: FieldPlay[];
@@ -29,7 +31,11 @@ export default function FieldSide({ name, color, plays, starters, live, drives, 
   const marks = plays.map((p) => ({ p, m: markOf(p), who: byId.get(p.pid) }));
   return (
     <div className="min-w-0 space-y-2">
-      <h3 className="truncate font-display text-lg font-bold uppercase leading-none" style={{ color }}>{name}</h3>
+      {/* the name and total sit over the field's own edges, not the column's */}
+      <div className="mx-auto flex w-full max-w-[306px] items-baseline justify-between gap-2" style={{ color }}>
+        <h3 className="truncate font-display text-lg font-bold uppercase leading-none">{name}</h3>
+        <span data-testid="mf-total" className="font-display text-xl font-bold leading-none tabular-nums">{total.toFixed(2)}</span>
+      </div>
       <div className="relative mx-auto w-full max-w-[306px]">
         <svg viewBox={`0 -4 ${FIELD_W} ${FIELD_H + 4}`} role="img" aria-label={`${name}'s plays on the field`} className="block w-full rounded-lg">
           <defs>

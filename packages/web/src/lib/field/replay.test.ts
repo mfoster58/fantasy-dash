@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import cleTen from '../../test/fixtures/espn/401873013.json';
 import { parseSummary } from './espnGame';
-import { feedAt, replaySpan } from './replay';
+import { liveDrives } from './drives';
+import { busiestMoments, feedAt, replaySpan } from './replay';
 
 const full = parseSummary(cleTen)!;
 const timed = full.plays.filter((p) => p.time !== null);
@@ -28,6 +29,16 @@ describe('feedAt', () => {
     const at = feedAt(full, last)!;
     expect(at.state).toBe('post');
     expect(at.drives).toEqual(full.drives);
+  });
+
+  it('finds the busiest moment of each window of games: the most drives on at once for these teams, red zone counting extra', () => {
+    const moments = busiestMoments([full], [new Set(['CLE']), new Set(['TEN'])]);
+    expect(moments).toHaveLength(1);
+    const t = moments[0];
+    expect(t).toBeGreaterThanOrEqual(first);
+    expect(t).toBeLessThanOrEqual(last);
+    expect(liveDrives([feedAt(full, t)!], new Set(['CLE', 'TEN']), t)).toHaveLength(1);
+    expect(busiestMoments([], [new Set(), new Set()])).toEqual([]);
   });
 
   it('spans the replay from just before the first snap of any game to the last', () => {

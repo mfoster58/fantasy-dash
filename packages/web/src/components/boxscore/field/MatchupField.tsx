@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameSide, PlayerDirectory, PlayerId } from '@fantasy-dash/core';
 import { liveDrives } from '../../../lib/field/drives';
-import { feedAt, replaySpan } from '../../../lib/field/replay';
+import { busiestMoments, feedAt, replaySpan } from '../../../lib/field/replay';
 import type { EspnPlay } from '../../../lib/field/espnGame';
 import { readPlays, type FieldPlay, type Starter } from '../../../lib/field/readPlays';
 import { useGameFeeds } from '../../../lib/field/useGameFeeds';
@@ -43,7 +43,7 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   games: NflGame[] | null;
   seasonTeams?: Record<PlayerId, string>;
   fetcher?: (url: string) => Promise<Response>;
-  /** play a finished week back as if it were live, to watch or check the live view any day */
+  /** open already replaying (the box score's ?replay) */
   replay?: boolean;
 }) {
   // each side's starters who can make a play: no kickers or defences
@@ -62,8 +62,12 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   const feeds = useGameFeeds(relevant.map((g) => ({ id: g.id!, state: g.state })), fetcher ? { fetcher } : undefined);
   const loaded = useMemo(() => relevant.flatMap((g) => (feeds[g.id!] ? [feeds[g.id!]] : [])), [relevant, feeds]);
 
-  // replay: a clock runs through the finished games and each is shown as it stood then
-  const span = useMemo(() => (replay ? replaySpan(loaded) : null), [replay, loaded]);
+  // replay: once the games are over, a clock can run back through them, each shown as it stood then
+  const canReplay = !!loaded.length && !relevant.some((g) => g.state === 'in') && loaded.every((f) => f.state === 'post');
+  const [replaying, setReplaying] = useState(replay);
+  const on = replaying && canReplay;
+  const span = useMemo(() => (on ? replaySpan(loaded) : null), [on, loaded]);
+  const moments = useMemo(() => (on ? busiestMoments(loaded, teams) : []), [on, loaded, teams]);
   const [clock, setClock] = useState<number | null>(null);
   const [running, setRunning] = useState(true);
   const [speed, setSpeed] = useState(30);
@@ -76,7 +80,7 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   const feedList = useMemo(() => (at === null ? loaded : loaded.flatMap((f) => feedAt(f, at) ?? [])), [loaded, at]);
   const plays = useMemo(() => starters.map((list) => feedList.flatMap((f) => readPlays(f, list, scoring)).sort((x, y) => (x.time ?? 0) - (y.time ?? 0))), [feedList, starters, scoring]);
 
-  const anyLive = replay ? feedList.some((f) => f.state === 'in') : relevant.some((g) => g.state === 'in');
+  const anyLive = on ? feedList.some((f) => f.state === 'in') : relevant.some((g) => g.state === 'in');
   const [picked, setPicked] = useState<'live' | 'week' | null>(null);
   const mode = picked ?? (anyLive ? 'live' : 'week');
   const [focus, setFocus] = useState<[string | null, string | null]>([null, null]);
@@ -93,6 +97,8 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   // plays already there at the first look are drawn as they are; anything after draws itself in, and a touchdown is celebrated
   // a replay starts before kickoff, so everything in it arrives
   const seen = useRef<Set<string> | null>(replay ? new Set() : null);
+  // a jump or a drag of the clock takes in what it passes without drawing it in or celebrating
+  const quiet = useRef(false);
   const [fresh, setFresh] = useState<Set<string>>(() => new Set());
   const [party, setParty] = useState<[FieldPlay | null, FieldPlay | null]>([null, null]);
   useEffect(() => {
@@ -100,8 +106,9 @@ export default function MatchupField({ sides, names, players, scoring, games, se
     const all = plays.flat();
     if (!seen.current) { seen.current = new Set(all.map(keyOf)); return; }
     const added = all.filter((p) => !seen.current!.has(keyOf(p)));
-    if (!added.length) return;
     added.forEach((p) => seen.current!.add(keyOf(p)));
+    if (quiet.current) { quiet.current = false; return; }
+    if (!added.length) return;
     setFresh((f) => new Set([...f, ...added.map(keyOf)]));
     ([0, 1] as const).forEach((side) => {
       const td = added.filter((p) => p.td && plays[side].includes(p)).pop();
@@ -114,6 +121,16 @@ export default function MatchupField({ sides, names, players, scoring, games, se
     return () => clearTimeout(t);
   }, [party]);
 
+  const startReplay = () => {
+    seen.current = new Set(); quiet.current = false;
+    setFresh(new Set()); setParty([null, null]); setClock(null); setRunning(true); setPicked(null); setReplaying(true);
+  };
+  const stopReplay = () => {
+    seen.current = null;
+    setFresh(new Set()); setParty([null, null]); setClock(null); setPicked(null); setReplaying(false);
+  };
+  const jump = (t: number) => { quiet.current = true; setClock(t); };
+
   if (!starters[0].length && !starters[1].length) return null;
   const shown = ([0, 1] as const).map((side) => {
     const keys = new Set(drives[side].map((d) => d.key));
@@ -125,6 +142,10 @@ export default function MatchupField({ sides, names, players, scoring, games, se
     <section className="card p-4 sm:p-5" aria-label="The field">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="section-label">On the field</h2>
+        <div className="flex flex-wrap items-center gap-2">
+        {canReplay && !on && (
+          <button type="button" onClick={startReplay} className="rounded-full border border-gold px-3 py-1 text-xs font-semibold text-gold"><span aria-hidden="true">▶ </span>Replay the week</button>
+        )}
         <div className="inline-flex rounded-full border border-line bg-surface p-0.5" role="group" aria-label="What the fields show">
           {(['week', 'live'] as const).map((m) => (
             <button key={m} type="button" aria-pressed={mode === m} onClick={() => setPicked(m)}
@@ -133,25 +154,39 @@ export default function MatchupField({ sides, names, players, scoring, games, se
             </button>
           ))}
         </div>
+        </div>
       </div>
-      {replay && span && (
+      {on && span && (
         <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-gold/40 px-3 py-2 text-xs">
           <span className="font-display text-sm font-bold uppercase tracking-wide text-gold">Replay</span>
           <button type="button" onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause replay' : 'Play replay'}
             className="grid h-8 w-8 place-items-center rounded-full bg-gold text-[#11161e]">{running ? '❚❚' : '▶'}</button>
           <input type="range" aria-label="Replay clock" min={span[0]} max={span[1]} step={1000} value={at ?? span[0]}
-            onChange={(e) => setClock(Number(e.target.value))} className="min-w-32 flex-1 accent-[var(--gold)]" />
+            onChange={(e) => jump(Number(e.target.value))} className="min-w-32 flex-1 accent-[var(--gold)]" />
           <span className="num text-muted">{new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(at ?? span[0])} ET</span>
           <select aria-label="Replay speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="rounded border border-line bg-surface px-1 py-0.5">
             {[10, 30, 120].map((x) => <option key={x} value={x}>{x}×</option>)}
           </select>
+          <button type="button" onClick={stopReplay} className="rounded-full border border-line px-3 py-1 font-semibold text-ink">Done</button>
+          {moments.length > 0 && (
+            <div role="group" aria-label="Jump to" className="flex w-full flex-wrap items-center gap-1.5">
+              <span className="text-muted">Jump to</span>
+              {moments.map((t) => (
+                <button key={t} type="button" onClick={() => jump(t)} className="rounded-full border border-line bg-surface-2 px-2.5 py-1 font-semibold text-muted hover:text-ink">
+                  {new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(t)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
-      {!feedList.length && !replay && <p className="mb-3 text-sm text-muted">{relevant.length ? 'Loading plays…' : 'Plays show up here once these players’ games kick off.'}</p>}
+      {!feedList.length && !on && <p className="mb-3 text-sm text-muted">{relevant.length ? 'Loading plays…' : 'Plays show up here once these players’ games kick off.'}</p>}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
           {([0, 1] as const).map((side) => (
-            <FieldSide key={side} name={names[side]} color={COLOR[side]} plays={shown[side]} starters={starters[side]} live={mode === 'live'}
+            <FieldSide key={side} name={names[side]} color={COLOR[side]}
+              // a replay counts up from its plays; otherwise the team's real score
+              total={on ? plays[side].reduce((n, p) => n + p.pts, 0) : sides[side].points} plays={shown[side]} starters={starters[side]} live={mode === 'live'}
               drives={drives[side]} fresh={fresh} focus={focus[side]} onFocus={(id) => setFocus((f) => (side ? [f[0], id] : [id, f[1]]))}
               celebration={party[side] ? { play: party[side]!, who: who(side, party[side]!.pid) } : null} />
           ))}

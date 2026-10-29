@@ -50,6 +50,12 @@ describe('MatchupField', () => {
       expect(marks(field('My boutte hurts'), '12711')).toHaveLength(0);
     });
 
+    it('heads each field with the team\'s name and its score', async () => {
+      mount('post', fetchOf(() => cleTen));
+      await flush();
+      expect(screen.getAllByTestId('mf-total').map((t) => t.textContent)).toEqual(['50.00', '60.00']);
+    });
+
     it('puts the player\'s face and points only on the big plays', async () => {
       mount('post', fetchOf(() => cleTen));
       await flush();
@@ -80,6 +86,42 @@ describe('MatchupField', () => {
   });
 
   describe('replay', () => {
+    it('offers a replay once the games are over, and leaves it for the whole week when done', async () => {
+      mount('post', fetchOf(() => cleTen));
+      await flush();
+      fireEvent.click(screen.getByRole('button', { name: 'Replay the week' }));
+      expect(screen.getByRole('slider', { name: 'Replay clock' })).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+      expect(screen.getByRole('button', { name: 'Live drives' })).toHaveAttribute('aria-pressed', 'true');
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+      expect(screen.queryByRole('slider', { name: 'Replay clock' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Whole week' })).toHaveAttribute('aria-pressed', 'true');
+      expect(marks(field('Bijon Mustard'), '13298')).toHaveLength(13);
+      expect(document.querySelectorAll('.mf-new')).toHaveLength(0);
+    });
+
+    it('offers no replay while a game is on', async () => {
+      mount('in', fetchOf(() => partway(4, 5)));
+      await flush();
+      expect(screen.queryByRole('button', { name: 'Replay the week' })).toBeNull();
+    });
+
+    it('jumps to the busiest moment of each window without replaying everything in between', async () => {
+      mount('post', fetchOf(() => cleTen));
+      await flush();
+      fireEvent.click(screen.getByRole('button', { name: 'Replay the week' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Pause replay' }));
+      const jumps = within(screen.getByRole('group', { name: 'Jump to' })).getAllByRole('button');
+      expect(jumps).toHaveLength(1);
+      const clock = screen.getByRole('slider', { name: 'Replay clock' }) as HTMLInputElement;
+      const before = Number(clock.value);
+      fireEvent.click(jumps[0]);
+      expect(Number(clock.value)).toBeGreaterThan(before);
+      expect(document.querySelectorAll('.mf-new')).toHaveLength(0);
+      expect(screen.queryByTestId('mf-celebration')).toBeNull();
+      expect(within(field('Bijon Mustard')).queryByTestId('mf-drive') ?? within(field('My boutte hurts')).queryByTestId('mf-drive')).not.toBeNull();
+    });
+
     it('plays a finished week back as if it were live: the clock runs, plays arrive and draw themselves in', async () => {
       render(<MatchupField sides={[SIDES[0], SIDES[1]]} names={['My boutte hurts', 'Bijon Mustard']} players={DIR} scoring={SCORING} games={[nfl('post')]} fetcher={fetchOf(() => cleTen)} replay />);
       await flush();
