@@ -79,6 +79,24 @@ describe('MatchupField', () => {
     });
   });
 
+  describe('replay', () => {
+    it('plays a finished week back as if it were live: the clock runs, plays arrive and draw themselves in', async () => {
+      render(<MatchupField sides={[SIDES[0], SIDES[1]]} names={['My boutte hurts', 'Bijon Mustard']} players={DIR} scoring={SCORING} games={[nfl('post')]} fetcher={fetchOf(() => cleTen)} replay />);
+      await flush();
+      const clock = screen.getByRole('slider', { name: 'Replay clock' });
+      const start = Number(clock.getAttribute('value') ?? (clock as HTMLInputElement).value);
+      expect(screen.getByRole('button', { name: 'Pause replay' })).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+      expect(Number((clock as HTMLInputElement).value)).toBeGreaterThan(start);
+      expect(screen.getByRole('button', { name: 'Live drives' })).toHaveAttribute('aria-pressed', 'true');
+      expect(within(screen.getByRole('list', { name: 'Live plays' })).getAllByRole('listitem').length).toBeGreaterThan(5);
+      fireEvent.click(screen.getByRole('button', { name: 'Pause replay' }));
+      const paused = (clock as HTMLInputElement).value;
+      await act(async () => { await vi.advanceTimersByTimeAsync(5_000); });
+      expect((clock as HTMLInputElement).value).toBe(paused);
+    });
+  });
+
   describe('live', () => {
     it('opens on the live drives while a game is on: the team\'s logo where the ball is, and only that drive\'s plays, each with its face and points', async () => {
       // Cleveland's touchdown drive (the 4th), five plays in

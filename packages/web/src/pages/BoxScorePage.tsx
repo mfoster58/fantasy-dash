@@ -1,4 +1,4 @@
-import { Link, useLoaderData, useParams } from 'react-router';
+import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
 import { computeStandings, h2hKey, type GameSide, type Manager, type Season } from '@fantasy-dash/core';
 import GameBanner, { teamName } from '../components/home/GameBanner';
 import MatchupField from '../components/boxscore/field/MatchupField';
@@ -21,6 +21,8 @@ import { playerTeam } from '../lib/players';
 export default function BoxScorePage() {
   const season = useLoaderData() as Season;
   const { week: weekParam, matchupId } = useParams();
+  // ?replay plays a finished week's field back as if it were live
+  const [params] = useSearchParams();
   const live = useLive();
   const synced = season.weeks[Number(weekParam) - 1];
   const isLiveWeek = !!synced && live.season?.year === season.year && live.week === synced.week;
@@ -63,7 +65,7 @@ export default function BoxScorePage() {
       <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} matchup={matchup ?? undefined} />
 
       <MatchupField sides={game.sides} names={[teamName(season, a.userId), teamName(season, b.userId)]} players={players} scoring={season.scoring}
-        games={status.isLive ? live.games : pastGames} seasonTeams={season.playerTeams} />
+        games={status.isLive ? live.games : pastGames} seasonTeams={season.playerTeams} replay={params.has('replay')} />
 
       {week.played && (
         <div className="grid gap-4 lg:grid-cols-2">
