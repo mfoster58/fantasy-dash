@@ -151,6 +151,28 @@ html, body {
   to { transform: none; opacity: 1; }
 }
 
+/* matchup field: a new play draws itself (the run), fades in (the ball in the air), then its face and points */
+.mf-new .mf-draw { stroke-dasharray: 1; animation: mf-draw .8s ease-out both; }
+.mf-new .mf-fade { animation: mf-fade .6s ease-out both; }
+.mf-new .mf-late { animation: mf-fade .4s ease-out .7s both; }
+@keyframes mf-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes mf-fade { from { opacity: 0; } to { opacity: 1; } }
+.mf-drive { transition: transform .6s ease-out; }
+
+/* a touchdown: the end zone flashes, the scorer's face and the word slam in, confetti, the points rise away */
+.mf-td::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 40% at 50% 42%, color-mix(in srgb, #0b0f15 70%, transparent), transparent); animation: mf-hold 2.9s ease-out forwards; }
+.mf-td-flash { position: absolute; inset: 1% 0 auto; height: 8.3%; background: var(--c); opacity: 0; animation: mf-flash 1.2s ease-out 2; }
+.mf-td-card { position: absolute; left: 50%; top: 28%; width: 100%; transform: translateX(-50%); animation: mf-card 2.9s ease-out forwards; }
+.mf-td-word { animation: mf-slam .5s cubic-bezier(.2, 1.6, .4, 1) .12s both; }
+.mf-td-pts { animation: mf-rise 1.1s ease-in 1.5s forwards; }
+.mf-td-conf i { position: absolute; left: 0; top: 0; opacity: 0; border-radius: 1px; animation: mf-conf 1.6s cubic-bezier(.15, .7, .3, 1) var(--d) forwards; }
+@keyframes mf-hold { 10%, 82% { opacity: 1; } 0%, 100% { opacity: 0; } }
+@keyframes mf-flash { from { opacity: .85; } to { opacity: 0; } }
+@keyframes mf-card { 0% { opacity: 0; transform: translateX(-50%) scale(.4); } 12% { opacity: 1; transform: translateX(-50%) scale(1.08); } 20% { transform: translateX(-50%) scale(1); } 82% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -14px); } }
+@keyframes mf-slam { from { transform: scale(2.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes mf-rise { to { transform: translateY(-260px) scale(.6); opacity: 0; } }
+@keyframes mf-conf { 0% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)); } }
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

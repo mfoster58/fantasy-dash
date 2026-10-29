@@ -16,6 +16,8 @@ export interface Field {
 }
 
 export interface NflGame {
+  /** ESPN's event id, for the game's play-by-play */
+  id?: string;
   /** Sleeper team codes */
   teams: [string, string];
   state: NflState;
@@ -42,6 +44,7 @@ export const scoreboardUrl = (season: number, week: number): string =>
   `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${season}&seasontype=2&week=${week}`;
 
 interface EspnEvent {
+  id?: string;
   date?: string;
   status?: { period?: number; displayClock?: string; type?: { state?: string; name?: string } };
   competitions?: {
@@ -87,6 +90,7 @@ export function parseScoreboard(json: unknown): NflGame[] {
     const state = e.status?.type?.state;
     if (codes.length !== 2 || (state !== 'pre' && state !== 'in' && state !== 'post') || !e.date) continue;
     games.push({
+      ...(e.id ? { id: e.id } : {}),
       teams: [normTeam(codes[0]), normTeam(codes[1])],
       state,
       period: e.status?.period ?? 0,
