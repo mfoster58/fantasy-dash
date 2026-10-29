@@ -64,3 +64,37 @@ describe('PlayerHeader banner', () => {
     expect(screen.getByTestId('tile-posrank')).toHaveTextContent('Pos rank–');
   });
 });
+
+describe('PlayerHeader on a phone', () => {
+  const was = window.matchMedia;
+  beforeEach(() => { window.matchMedia = ((q: string) => ({ matches: q.includes('max-width: 639px'), media: q, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia; });
+  afterEach(() => { window.matchMedia = was; });
+  const now = { userId: 'u1', teamName: 'The Js', firstYear: 2025, lastYear: 2026 } as unknown as Parameters<typeof PlayerHeader>[0]['now'];
+  const phone = () => {
+    render(<MemoryRouter><PlayerHeader id="9488" bio={bio('SEA')} summary={summary} now={now} managerName="azhangatang" rostered compareHref="/players/compare?p=9488" espnId="4430878" posRank={{ label: 'WR1', year: 2026 }} /></MemoryRouter>);
+    return screen.getByTestId('player-banner');
+  };
+  it('a compact header: the photo over the team logo with the team and position under it, the manager, the name on two lines and the bio beside it', () => {
+    const b = phone();
+    expect(b).toHaveAttribute('data-layout', 'phone');
+    const side = screen.getByTestId('photo-side');
+    expect(side).toContainElement(screen.getByTestId('banner-headshot'));
+    expect(side).toContainElement(screen.getByTestId('team-watermark'));
+    expect(side).toHaveTextContent('Seahawks');
+    expect(side).toHaveTextContent('WR • SEA');
+    expect(screen.getByRole('link', { name: 'azhangatang' })).toHaveAttribute('href', '/managers/u1');
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect([...h1.querySelectorAll('[data-name-part]')].map((e) => e.textContent)).toEqual(['Jaxon', 'Smith-Njigba']);
+    const bioRow = screen.getByTestId('bio');
+    for (const v of ['24', '6\'0"', '197 lb']) expect(bioRow).toHaveTextContent(v);
+    expect(b).toHaveTextContent('Ohio State · 2023 · R1 #20');
+    expect(screen.getByRole('link', { name: 'Compare' })).toBeInTheDocument();
+  });
+  it('the league numbers are an open strip of six, no boxes', () => {
+    phone();
+    const strip = screen.getByTestId('header-tiles');
+    expect(strip.children).toHaveLength(6);
+    expect(strip.querySelector('.rounded-lg')).toBeNull();
+    expect(screen.getByTestId('tile-posrank')).toHaveTextContent('WR1');
+  });
+});
