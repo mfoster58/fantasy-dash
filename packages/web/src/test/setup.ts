@@ -22,3 +22,8 @@ if (typeof window !== 'undefined' && typeof window.PointerEvent === 'undefined')
   }
   Object.defineProperty(window, 'PointerEvent', { value: PointerEventShim, configurable: true });
 }
+
+// One page load serves one league: tests run as Husky, the league whose data is in the repo.
+import { initLeague } from '../data/load';
+import { leagues } from '../../../../league.config';
+await initLeague(leagues.find((l) => l.slug === 'husky')!);

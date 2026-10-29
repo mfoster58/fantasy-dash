@@ -1,5 +1,4 @@
 import type { SleeperWeekStat } from '../../sleeper/types';
-import { scoreStats } from '../../scoring';
 import { isDbPos, type DbPos, type PlayerWeek, type PlayerWeekKey } from '../types';
 
 /**
@@ -20,7 +19,7 @@ export const SLEEPER_FIELDS: Readonly<Record<string, PlayerWeekKey>> = {
 const REC_20_BUCKETS = ['rec_20_29', 'rec_30_39', 'rec_40p'];
 
 /** One PlayerWeek from a Sleeper weekly row; null when he did not play or has no team. */
-export function sleeperRow(raw: SleeperWeekStat, week: number, scoring: Record<string, number>, projection: Record<string, number> | undefined): PlayerWeek | null {
+export function sleeperRow(raw: SleeperWeekStat, week: number): PlayerWeek | null {
   const stats = raw.stats;
   if (!stats || (stats.gp ?? 0) < 1 || !raw.team) return null;
   const row: PlayerWeek = { id: raw.player_id, week, team: raw.team, gp: stats.gp };
@@ -30,8 +29,6 @@ export function sleeperRow(raw: SleeperWeekStat, week: number, scoring: Record<s
     if (typeof v === 'number') row[key] = v;
   }
   if (REC_20_BUCKETS.some((k) => k in stats)) row.re_20 = REC_20_BUCKETS.reduce((s, k) => s + (stats[k] ?? 0), 0);
-  row.pts = scoreStats(stats, scoring);
-  if (projection) row.proj = scoreStats(projection, scoring);
   return row;
 }
 

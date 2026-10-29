@@ -34,3 +34,12 @@ export const PlayerDbSchema = z.object({
   xfp: z.object({ QB: Coef, RB: Coef, WR: Coef, TE: Coef }),
   rows: z.array(PlayerWeek),
 });
+
+/** The stored, league-neutral player database; old files that still carry xfp coefficients parse too (zod drops the key). */
+export const SharedPlayerDbSchema = PlayerDbSchema.omit({ xfp: true });
+
+export const LeaguePointsSchema = z.object({
+  year: z.number(), leagueId: z.string(), builtAt: z.string(), dbBuiltAt: z.string(),
+  xfp: z.object({ QB: Coef, RB: Coef, WR: Coef, TE: Coef }),
+  players: z.record(z.array(z.tuple([z.number(), z.number(), z.number().nullable(), z.number().nullable()]))),
+});

@@ -39,7 +39,7 @@ const ALT_K: Record<string, Record<string, number>> = {
 const GRID = Array.from({ length: 30 }, (_, i) => Math.round((0.05 + i * 0.05) * 100) / 100); // 0.05 .. 1.5
 
 const players = JSON.parse(readFileSync(path.join(ROOT, 'data', 'players.json'), 'utf8')) as PlayerDirectory;
-const seasons = YEARS.map((y) => JSON.parse(readFileSync(path.join(ROOT, 'data', 'seasons', `${y}.json`), 'utf8')) as Season);
+const seasons = YEARS.map((y) => JSON.parse(readFileSync(path.join(ROOT, 'data', 'leagues', 'husky', 'seasons', `${y}.json`), 'utf8')) as Season);
 
 interface Row { pick: number; pos: string; pts: number; pob: number; benchGap: number }
 const rowsBySeason = seasons.map((s) => {

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { leagueConfig } from '../../../../league.config';
-import { currentSeason, history, loadSeason } from '../data/load';
+import { currentSeason, history, league, loadSeason } from '../data/load';
 import { managerEntries, playerEntries, rosterEntries } from '../lib/navMenus';
 import BottomNav from './BottomNav';
 import NavMenu, { type MenuEntries } from './NavMenu';
@@ -29,9 +28,8 @@ export const items: Item[] = [
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `relative flex h-12 shrink-0 items-center whitespace-nowrap px-2.5 transition-colors after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:rounded-full ${isActive ? 'text-ink after:bg-accent' : 'text-muted after:bg-transparent hover:text-ink'}`;
 
-const managers = managerEntries(history);
-
 export default function Nav() {
+  const managers = managerEntries(history);
   const [rosters, setRosters] = useState<MenuEntries>('loading');
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const { pathname } = useLocation();
@@ -47,7 +45,7 @@ export default function Nav() {
     <>
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex h-12 w-full max-w-[1400px] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-10">
-        <NavLink to="/" className="shrink-0 whitespace-nowrap font-semibold tracking-tight">{leagueConfig.name}</NavLink>
+        <NavLink to="/" className="shrink-0 whitespace-nowrap font-semibold tracking-tight">{league.name}</NavLink>
         <nav className="hidden h-full min-w-0 items-center gap-1 text-sm md:flex">
           {items.map((i) => i.kind === 'link'
             ? <NavLink key={i.to} to={i.to} className={linkClass}>{i.label}</NavLink>

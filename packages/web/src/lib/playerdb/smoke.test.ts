@@ -1,12 +1,17 @@
 // @vitest-environment node
 import { readdirSync, readFileSync } from 'node:fs';
-import { PlayerDbSchema, type PlayerDb } from '@fantasy-dash/core';
+import { LeaguePointsSchema, SharedPlayerDbSchema, applyLeaguePoints, type PlayerDb } from '@fantasy-dash/core';
 import { aggregate } from './aggregate';
 import { COLUMNS, TABS, columnValue, columnsFor, tabPositions } from './columns';
 
 const dir = new URL('../../../../../data/playerdb/', import.meta.url);
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
-const load = (file: string) => PlayerDbSchema.parse(JSON.parse(readFileSync(new URL(file, dir), 'utf8'))) as PlayerDb;
+const pointsDir = new URL('../../../../../data/leagues/husky/points/', import.meta.url);
+// The shared files no longer carry points, so join Husky's back on: every check below sees the same full database as before the split.
+const load = (file: string) => applyLeaguePoints(
+  SharedPlayerDbSchema.parse(JSON.parse(readFileSync(new URL(file, dir), 'utf8'))),
+  LeaguePointsSchema.parse(JSON.parse(readFileSync(new URL(file, pointsDir), 'utf8'))),
+) as PlayerDb;
 
 const median = (xs: number[]): number => {
   const s = [...xs].sort((a, b) => a - b);

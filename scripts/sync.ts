@@ -1,14 +1,14 @@
-import { mkdir, mkdtemp, rename, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SleeperClient, buildSeason, buildHistory, toPlayerDirectory, trimPlayers, collectPlayerIds, trimPlayerSeasons, weekTeams,
-  SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2, espnScoreboardUrl, scoredThrough, weekFinished,
+  runPerLeague, SeasonSchema, HistorySchema, PlayerDirectorySchema, scoreStats, round2, espnScoreboardUrl, scoredThrough, weekFinished,
   type PlayerDirectory, type RawSeasonInput, type Season, type SleeperLeague, type SleeperMatchup, type SleeperTransaction, type StatMap,
 } from '@fantasy-dash/core';
-import { leagueConfig } from '../league.config';
+import { leagues as configured, positionOverrides } from '../league.config';
+import { moveKeep, idsFromSeasonFiles } from './lib/leagueFiles';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_DIR = path.join(ROOT, 'data');
@@ -55,7 +55,7 @@ async function withFinishedWeek(league: SleeperLeague): Promise<SleeperLeague> {
   return { ...league, settings: { ...league.settings, last_scored_leg: through } };
 }
 
-async function fetchSeason(client: SleeperClient, league: SleeperLeague, players: PlayerDirectory): Promise<Season> {
+async function fetchSeason(client: SleeperClient, league: SleeperLeague, players: PlayerDirectory, managerNames: Record<string, string>): Promise<Season> {
   const id = league.league_id;
   const [users, rosters, winnersBracket, losersBracket] = await Promise.all([
     client.getUsers(id), client.getRosters(id), client.getWinnersBracket(id), client.getLosersBracket(id),
@@ -148,7 +148,7 @@ async function fetchSeason(client: SleeperClient, league: SleeperLeague, players
     playerGames, teamGames, playerTeams, transactions,
   };
   log(`  ${season}: season points for ${Object.keys(playerSeasonPoints).length} players, teams for ${Object.keys(playerTeams).length}, ${transactions.length} transactions`);
-  const built = buildSeason(input, leagueConfig.managerNames);
+  const built = buildSeason(input, managerNames);
   assertSeasonComplete(built, league);
   return built;
 }
@@ -174,70 +174,58 @@ function assertSeasonComplete(season: Season, league: SleeperLeague): void {
   }
 }
 
-async function writeAll(dir: string, seasons: Season[], players: PlayerDirectory, history: ReturnType<typeof buildHistory>) {
-  await mkdir(path.join(dir, 'seasons'), { recursive: true });
-  await writeFile(path.join(dir, 'players.json'), JSON.stringify(players));
-  await writeFile(path.join(dir, 'history.json'), JSON.stringify(history, null, 1));
-  for (const s of seasons) await writeFile(path.join(dir, 'seasons', `${s.year}.json`), JSON.stringify(s));
-}
-
 async function main() {
   const client = new SleeperClient();
-  const leagues = await walkLeagueChain(client, leagueConfig.leagueId);
-  log(`Found ${leagues.length} seasons: ${leagues.map((l) => l.season).join(', ')}`);
 
   log('Fetching player directory');
   const rawPlayers = await client.getPlayers();
   if (!rawPlayers) throw new Error('Player directory unavailable');
   const fullPlayers = toPlayerDirectory(rawPlayers);
-  for (const [id, position] of Object.entries(leagueConfig.positionOverrides)) {
+  for (const [id, position] of Object.entries(positionOverrides)) {
     if (fullPlayers[id]) fullPlayers[id] = { ...fullPlayers[id], position };
     else log(`WARNING: position override for unknown player ${id}`);
   }
 
-  const seasons: Season[] = [];
-  for (const league of leagues) {
-    log(`Season ${league.season} (${league.league_id}, ${league.status})`);
-    seasons.push(await fetchSeason(client, await withFinishedWeek(league), fullPlayers));
-  }
-  seasons.sort((a, b) => a.year - b.year);
+  const out = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-')) : DATA_DIR;
+  const { results, failed } = await runPerLeague(configured, async (cfg) => {
+    const chain = await walkLeagueChain(client, cfg.leagueId);
+    log(`${cfg.slug}: ${chain.length} seasons: ${chain.map((l) => l.season).join(', ')}`);
+    const seasons: Season[] = [];
+    for (const league of chain) {
+      log(`${cfg.slug} ${league.season} (${league.league_id}, ${league.status})`);
+      seasons.push(await fetchSeason(client, await withFinishedWeek(league), fullPlayers, cfg.managerNames));
+    }
+    seasons.sort((a, b) => a.year - b.year);
+    for (const s of seasons) SeasonSchema.parse(s);
+    return seasons;
+  }, log);
+  if (results.size === 0) throw new Error(`every league failed: ${failed.join(', ')}`);
 
-  const players = trimPlayers(fullPlayers, collectPlayerIds(seasons));
+  // players.json covers every league; a league that failed keeps the ids from its existing files
+  const ids = new Set<string>();
+  for (const seasons of results.values()) for (const id of collectPlayerIds(seasons)) ids.add(id);
+  for (const slug of failed) for (const id of idsFromSeasonFiles(path.join(DATA_DIR, 'leagues', slug, 'seasons'))) ids.add(id);
+  const players = trimPlayers(fullPlayers, ids);
   const kept = new Set(Object.keys(players));
-  for (let i = 0; i < seasons.length; i++) seasons[i] = trimPlayerSeasons(seasons[i], kept);
-  const history = buildHistory(seasons);
-
-  for (const s of seasons) SeasonSchema.parse(s);
-  HistorySchema.parse(history);
   PlayerDirectorySchema.parse(players);
-  log(`Validated ${seasons.length} seasons and ${Object.keys(players).length} players`);
 
-  const missing = [...collectPlayerIds(seasons)].filter((id) => !players[id]);
-  if (missing.length) log(`WARNING: ${missing.length} player ids missing from directory: ${missing.slice(0, 10).join(', ')}`);
-
-  if (dryRun) {
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-'));
-    await writeAll(dir, seasons, players, history);
-    log(`Dry run complete. Output in ${dir}`);
-    return;
+  await mkdir(path.join(out, 'leagues'), { recursive: true });
+  for (const [slug, raw] of results) {
+    const seasons = raw.map((s) => trimPlayerSeasons(s, kept));
+    const history = buildHistory(seasons);
+    HistorySchema.parse(history);
+    const missing = [...collectPlayerIds(seasons)].filter((id) => !players[id]);
+    if (missing.length) log(`WARNING: ${slug}: ${missing.length} player ids missing from directory: ${missing.slice(0, 10).join(', ')}`);
+    const staging = path.join(ROOT, '.tmp', 'leagues', slug);
+    await rm(staging, { recursive: true, force: true });
+    await mkdir(path.join(staging, 'seasons'), { recursive: true });
+    await writeFile(path.join(staging, 'history.json'), JSON.stringify(history, null, 1));
+    for (const s of seasons) await writeFile(path.join(staging, 'seasons', `${s.year}.json`), JSON.stringify(s));
+    await moveKeep(staging, path.join(out, 'leagues', slug), ['points']);
+    log(`${slug}: wrote ${seasons.length} seasons`);
   }
-
-  const staging = path.join(ROOT, '.tmp', 'data');
-  await rm(staging, { recursive: true, force: true });
-  await writeAll(staging, seasons, players, history);
-
-  // data/ also holds what sync:players owns (the player database, the play-by-play charts): carry it into the new
-  // data dir, or every run deletes it and the next player sync has to rebuild every season from scratch
-  for (const keep of ['playerdb', 'charts']) {
-    const from = path.join(DATA_DIR, keep);
-    if (existsSync(from)) await rename(from, path.join(staging, keep));
-  }
-  const backup = `${DATA_DIR}.old`;
-  await rm(backup, { recursive: true, force: true });
-  if (existsSync(DATA_DIR)) await rename(DATA_DIR, backup);
-  await rename(staging, DATA_DIR);
-  await rm(backup, { recursive: true, force: true });
-  log(`Wrote ${DATA_DIR}`);
+  await writeFile(path.join(out, 'players.json'), JSON.stringify(players));
+  log(`${dryRun ? 'Dry run complete. Output in' : 'Wrote'} ${out}${failed.length ? ` (failed: ${failed.join(', ')})` : ''}`);
 }
 
 main().catch((err) => {

@@ -14,3 +14,4 @@ export * from './derive';
 export * from './ols';
 export * from './xfp';
 export * from './build';
+export * from './points';
