@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useParams } from 'react-router';
 import { computeStandings, h2hKey, type GameSide, type Manager, type Season } from '@fantasy-dash/core';
-import GameBanner from '../components/home/GameBanner';
+import GameBanner, { teamName } from '../components/home/GameBanner';
+import MatchupField from '../components/boxscore/field/MatchupField';
 import EfficiencyBlock from '../components/boxscore/EfficiencyBlock';
 import FormBlock from '../components/boxscore/FormBlock';
 import HeadToHead from '../components/boxscore/HeadToHead';
@@ -60,6 +61,9 @@ export default function BoxScorePage() {
       {outlook && outlook.status !== 'final' && <LiveOutlook outlook={outlook} />}
 
       <LineupTable sides={game.sides} slots={season.rosterSlots} players={players} seasonTeams={season.playerTeams} gameOf={gameOf} matchup={matchup ?? undefined} />
+
+      <MatchupField sides={game.sides} names={[teamName(season, a.userId), teamName(season, b.userId)]} players={players} scoring={season.scoring}
+        games={status.isLive ? live.games : pastGames} seasonTeams={season.playerTeams} />
 
       {week.played && (
         <div className="grid gap-4 lg:grid-cols-2">

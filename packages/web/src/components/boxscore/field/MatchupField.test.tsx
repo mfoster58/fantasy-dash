@@ -101,7 +101,7 @@ describe('MatchupField', () => {
       await flush();
       expect(document.querySelectorAll('.mf-new')).toHaveLength(0);
       const before = marks(field('Bijon Mustard')).length;
-      k = 9;
+      k = 6; // still short of the touchdown, so the drive stays up
       await act(async () => { await vi.advanceTimersByTimeAsync(FEED_POLL_MS); });
       expect(f.mock.calls.length).toBe(2);
       const after = marks(field('Bijon Mustard'));

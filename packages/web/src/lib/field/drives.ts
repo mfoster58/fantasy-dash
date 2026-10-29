@@ -3,6 +3,9 @@ import type { EspnGameFeed } from './espnGame';
 /** how long a drive that scored stays up after its last play, for the touchdown to be seen */
 export const SCORE_HOLD_MS = 45_000;
 
+/** play types after which the drive is over: the ball changed hands or points went up */
+const GAVE_UP = /punt|interception|fumble recovery \(opponent\)|field goal|touchdown|safety|turnover on downs|blocked/i;
+
 export interface LiveDrive {
   /** ESPN's drive id */
   key: string;
@@ -28,14 +31,17 @@ export function liveDrives(feeds: EspnGameFeed[], teams: Set<string>, now: numbe
     if (f.state !== 'in') continue;
     const d = f.drives[f.drives.length - 1];
     if (!d || !teams.has(d.team)) continue;
-    const plays = f.plays.filter((p) => p.driveId === d.id);
+    // timeouts, quarter ends and the two-minute warning aren't snaps
+    const plays = f.plays.filter((p) => p.driveId === d.id && !/timeout|end of|end period|two-minute/i.test(p.type));
     const last = plays[plays.length - 1];
-    if (d.complete && !(d.scored && last?.time != null && now - last.time <= SCORE_HOLD_MS)) continue;
-    const scoredTd = d.complete && /touchdown/i.test(d.result ?? '');
+    // ESPN can keep calling a drive current after a punt or turnover until the other side's first snap
+    const over = d.complete || (!!last && GAVE_UP.test(last.type));
+    const scored = d.scored || (!!last && last.scoring);
+    if (over && !(scored && last?.time != null && now - last.time <= SCORE_HOLD_MS)) continue;
+    const result = over ? d.result ?? (scored ? (/field goal/i.test(last!.type) ? 'Field Goal' : 'Touchdown') : null) : null;
     out.push({
       key: d.id, eventId: f.eventId, team: d.team, from: d.from,
-      spot: scoredTd ? 0 : last?.end ?? d.from, down: d.complete ? null : last?.down ?? null,
-      result: d.complete ? d.result : null,
+      spot: /touchdown/i.test(result ?? '') ? 0 : last?.end ?? d.from, down: over ? null : last?.down ?? null, result,
     });
   }
   return out;

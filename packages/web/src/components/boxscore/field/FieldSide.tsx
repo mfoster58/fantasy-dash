@@ -72,7 +72,7 @@ export default function FieldSide({ name, color, plays, starters, live, drives, 
         </svg>
         {celebration && <Celebration {...celebration} color={color} />}
       </div>
-      <ul className="grid gap-1" aria-label={`${name}'s players`}>
+      <ul className="mx-auto grid max-w-[306px] gap-1" aria-label={`${name}'s players`}>
         {starters.map((s) => (
           <li key={s.id}>
             <button type="button" aria-pressed={focus === s.id} onClick={() => onFocus(focus === s.id ? null : s.id)}
