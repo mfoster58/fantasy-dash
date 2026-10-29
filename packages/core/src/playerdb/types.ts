@@ -71,3 +71,21 @@ export interface PlayerDb {
   xfp: XfpCoefficients;
   rows: PlayerWeek[];
 }
+
+/** The player database as stored and shared by every league: no league points, projections or xFP. */
+export type SharedPlayerDb = Omit<PlayerDb, 'xfp'>;
+
+/** [week, league points, league projection, xFP] for one player-week. */
+export type PointsRow = [week: number, pts: number, proj: number | null, xfp: number | null];
+
+/** One league's fantasy numbers for one season, joined onto the shared player database at load time. */
+export interface LeaguePoints {
+  year: number;
+  leagueId: string;
+  builtAt: string;
+  /** builtAt of the shared playerdb file these points were built against */
+  dbBuiltAt: string;
+  /** this league's xFP model, fitted on its own points */
+  xfp: XfpCoefficients;
+  players: Record<PlayerId, PointsRow[]>;
+}
