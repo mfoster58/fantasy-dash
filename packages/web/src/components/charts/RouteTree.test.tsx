@@ -1,11 +1,25 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { miniCharts } from '../../test/chartFixtures';
 import RouteTree from './RouteTree';
+import { asPhone } from '../../test/phone';
 
 const card = () => screen.getByRole('region', { name: /Route tree/ });
 const chips = () => [...card().querySelectorAll('[data-chip]')].map((n) => n.getAttribute('data-chip'));
 
 describe('RouteTree', () => {
+  it('on a phone the field is cut to the routes so they draw near full size, each route keeping only its number', () => {
+    const restore = asPhone();
+    try {
+      render(<RouteTree charts={[miniCharts()]} gsis="00-w1" pos="WR" />);
+      const svg = card().querySelector('svg[role="img"]')!;
+      expect(Number(svg.getAttribute('viewBox')!.split(' ')[2])).toBeLessThanOrEqual(400);
+      expect(chips()).toEqual(['60%', '30%', '10%']);
+      const route = card().querySelector('[data-route="GO"]')!;
+      expect(route.textContent).toBe(route.querySelector('[data-chip]')!.getAttribute('data-chip'));
+      // the names stay in the list under the field
+      expect(within(card().querySelector('li[data-key="GO"]')!).getByText('Go')).toBeInTheDocument();
+    } finally { restore(); }
+  });
   it('opens on target share: chips show his share, routes he was never targeted on are not drawn', () => {
     render(<RouteTree charts={[miniCharts()]} gsis="00-w1" pos="WR" />);
     expect(chips()).toEqual(['60%', '30%', '10%']);

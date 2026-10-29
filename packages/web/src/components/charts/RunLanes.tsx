@@ -6,6 +6,7 @@ import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { LANE_LABEL, LANE_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
 import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
+import { useIsPhone } from '../../lib/useIsPhone';
 
 /** gap: where he crosses the line (px from centre); tip: where the arrow ends */
 const GEO: Record<Lane, { gap: number; tip: [number, number] }> = {
@@ -16,7 +17,10 @@ const GEO: Record<Lane, { gap: number; tip: [number, number] }> = {
 const LINE: [string, number, boolean][] = [['TE', -118, true], ['LT', -82, false], ['LG', -41, false], ['C', 0, false], ['RG', 41, false], ['RT', 82, false], ['TE', 118, true]];
 const METRICS = CHART_CONTROLS.lanes.metrics;
 const BOXES = CHART_CONTROLS.lanes.filters as [Box, string][];
-const W = 700, BAND = 30, CX = 350, LOS = 232, RB_Y = 330, H = 370;
+const LOS = 232, RB_Y = 330, H = 370;
+/** wide: room to write each lane's name over its tip; a phone pulls everything sideways in to this share, so the field
+ * is narrow enough to draw near full size, and only the number sits at each tip */
+const PHONE_FX = 0.62;
 
 export default function RunLanes({ charts, gsis, current = 0, control }: { charts: ChartDb[]; gsis: string; current?: number; control?: ChartControl }) {
   const { years, year, setYear, db, latest } = useChartSeason(charts, (c) => hasChart(LANE_SPEC, c, gsis), current, control?.year);
@@ -24,6 +28,9 @@ export default function RunLanes({ charts, gsis, current = 0, control }: { chart
   const [metricPicked, setMetric] = useState('share');
   const box = (control?.filter as Box | undefined) ?? boxPicked, metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
+  const phone = useIsPhone();
+  const fx = phone ? PHONE_FX : 1, W = phone ? 380 : 700, BAND = phone ? 24 : 30, CX = W / 2;
+  const boxW = phone ? 22 : 26;
   const items = useMemo(() => (db ? chartItems(LANE_SPEC, db, gsis, box, metric) ?? [] : []), [db, gsis, box, metric]);
   if (!years.length) return null;
   const empty = db ? null : { title: `No run data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his run lanes.` };
@@ -48,35 +55,35 @@ export default function RunLanes({ charts, gsis, current = 0, control }: { chart
           <Sidelines width={W} top={20} bottom={H} band={BAND} marks={[{ y: LOS, label: 'LOS' }]} />
           <line x1={BAND} x2={W - BAND} y1={LOS} y2={LOS} strokeWidth={2} style={{ stroke: 'var(--los)' }} />
           {!db && (Object.keys(GEO) as Lane[]).map((k) => {
-            const g = GEO[k], gap = CX + g.gap, ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * 0.55, LOS + 38] : [CX + g.gap * 0.6, LOS + 30];
-            return <path key={k} d={`M${CX},${RB_Y - 12} Q${ctrl[0]},${ctrl[1]} ${gap},${LOS} L${CX + g.tip[0]},${g.tip[1]}`} fill="none" strokeWidth={5} strokeLinecap="round" style={{ stroke: 'var(--dim)' }} />;
+            const g = GEO[k], gap = CX + g.gap * fx, ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * fx * 0.55, LOS + 38] : [CX + g.gap * fx * 0.6, LOS + 30];
+            return <path key={k} d={`M${CX},${RB_Y - 12} Q${ctrl[0]},${ctrl[1]} ${gap},${LOS} L${CX + g.tip[0] * fx},${g.tip[1]}`} fill="none" strokeWidth={5} strokeLinecap="round" style={{ stroke: 'var(--dim)' }} />;
           })}
           <g className={hot ? '[&>g]:opacity-15 [&>g[data-hot=true]]:opacity-100' : ''}>
             {items.map((i) => {
               const g = GEO[i.key], c = colour(i);
-              const gap: [number, number] = [CX + g.gap, LOS], tip: [number, number] = [CX + g.tip[0], g.tip[1]];
-              const ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * 0.55, LOS + 38] : [CX + g.gap * 0.6, LOS + 30];
+              const gap: [number, number] = [CX + g.gap * fx, LOS], tip: [number, number] = [CX + g.tip[0] * fx, g.tip[1]];
+              const ctrl = Math.abs(g.gap) > 100 ? [CX + g.gap * fx * 0.55, LOS + 38] : [CX + g.gap * fx * 0.6, LOS + 30];
               const d = `M${CX},${RB_Y - 12} Q${ctrl[0]},${ctrl[1]} ${gap[0]},${gap[1]} L${tip[0]},${tip[1]}`;
               const chipText = share ? `${Math.round(i.share * 100)}%` : i.value === null ? '–' : def!.fmt(i.value);
               const sm = share ? `${i.volume} car` : i.ranked ? `${ordinal(i.pct!)} · ${i.volume} car` : `${i.volume} car · too few to rank`;
-              const ly = tip[1] - 14, chipW = chipText.length * 7 + 10, rowW = chipW + 4 + sm.length * 5.4, x0 = tip[0] - rowW / 2;
+              const ly = tip[1] - 14, chipW = chipText.length * 7 + 10, rowW = phone ? chipW : chipW + 4 + sm.length * 5.4, x0 = tip[0] - rowW / 2;
               const chip = Chip({ x: x0, y: ly, text: chipText, fill: share || i.ranked ? c : 'var(--surface-2)', ink: share ? chipInk('heat', i.share) : i.ranked ? chipInk('pct') : 'var(--muted)' });
               return (
                 <g key={i.key} data-lane={i.key} data-pct={share ? '' : String(i.pct ?? '')} data-hot={hot === i.key} className="cursor-pointer transition-opacity" {...bind(i.key)}>
                   <path d={d} fill="none" stroke="transparent" strokeWidth={18} />
                   <path d={d} fill="none" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={!share && !i.ranked ? '2 6' : undefined} style={{ stroke: c }} />
                   <Arrowhead from={gap} to={tip} fill={c} size={10} />
-                  <text x={tip[0]} y={ly - 17} textAnchor="middle" fontSize={11.5} fontWeight={600} style={{ fill: 'var(--ink)' }}>{LANE_LABEL[i.key]}</text>
+                  {!phone && <text x={tip[0]} y={ly - 17} textAnchor="middle" fontSize={11.5} fontWeight={600} style={{ fill: 'var(--ink)' }}>{LANE_LABEL[i.key]}</text>}
                   {chip.el}
-                  <text x={x0 + chipW + 4} y={ly} fontSize={10} style={{ fill: 'var(--muted)' }}>{sm}</text>
+                  {!phone && <text x={x0 + chipW + 4} y={ly} fontSize={10} style={{ fill: 'var(--muted)' }}>{sm}</text>}
                 </g>
               );
             })}
           </g>
           {LINE.map(([t, x, ghost]) => (
             <g key={`${t}${x}`}>
-              <rect x={CX + x - 13} y={LOS + 4} width={26} height={22} rx={5} strokeDasharray={ghost ? '3 3' : undefined} style={{ fill: ghost ? 'var(--field)' : 'var(--line)', stroke: 'var(--field-line)' }} />
-              <text x={CX + x} y={LOS + 19} textAnchor="middle" fontSize={9} fontWeight={600} style={{ fill: 'var(--muted)' }}>{t}</text>
+              <rect x={CX + x * fx - boxW / 2} y={LOS + 4} width={boxW} height={22} rx={5} strokeDasharray={ghost ? '3 3' : undefined} style={{ fill: ghost ? 'var(--field)' : 'var(--line)', stroke: 'var(--field-line)' }} />
+              <text x={CX + x * fx} y={LOS + 19} textAnchor="middle" fontSize={phone ? 8 : 9} fontWeight={600} style={{ fill: 'var(--muted)' }}>{t}</text>
             </g>
           ))}
           <circle cx={CX} cy={RB_Y} r={10} style={{ fill: 'var(--ink)' }} />

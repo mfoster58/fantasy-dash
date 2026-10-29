@@ -1,11 +1,21 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { miniCharts } from '../../test/chartFixtures';
 import RunLanes from './RunLanes';
+import { asPhone } from '../../test/phone';
 
 const card = () => screen.getByRole('region', { name: /Run lanes/ });
 const lane = (k: string) => card().querySelector(`[data-lane="${k}"]`)!;
 
 describe('RunLanes', () => {
+  it('on a phone the lanes pull in so they draw near full size, each lane keeping only its number', () => {
+    const restore = asPhone();
+    try {
+      render(<RunLanes charts={[miniCharts()]} gsis="00-r1" />);
+      const svg = card().querySelector('svg[role="img"]')!;
+      expect(Number(svg.getAttribute('viewBox')!.split(' ')[2])).toBeLessThanOrEqual(400);
+      expect(lane('LT').textContent).toBe('55%');
+    } finally { restore(); }
+  });
   it('opens on carry share, with the bars in field order', () => {
     render(<RunLanes charts={[miniCharts()]} gsis="00-r1" />);
     expect(lane('LT').querySelector('[data-chip]')!.getAttribute('data-chip')).toBe('55%');

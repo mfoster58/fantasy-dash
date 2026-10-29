@@ -6,6 +6,7 @@ import { chipInk, heatColor, ordinal, pctColor } from '../../lib/charts/scale';
 import { ROUTE_LABEL, ROUTE_SPEC, THROW_SPEC } from '../../lib/charts/specs';
 import ChartBars from './ChartBars';
 import { Arrowhead, ChartCard, useChartSeason, Chip, Seg, Sidelines, useHot } from './Field';
+import { useIsPhone } from '../../lib/useIsPhone';
 
 /** Route paths in yards from the receiver (x < 0 is inside), the label anchor, and a fixed label spot where the tip would collide. */
 const SHAPES: Record<Route, { p: [number, number][]; a: 'start' | 'middle' | 'end'; l?: [number, number] }> = {
@@ -27,8 +28,10 @@ const METRICS = CHART_CONTROLS.routes.metrics;
 /** a QB's tree is his throws by the route his receiver ran */
 const QB_METRICS = CHART_CONTROLS.throws.metrics;
 const COVERAGES = CHART_CONTROLS.routes.filters as [Coverage, string][];
-const W = 660, BAND = 30, OX = 365, OY = 272, SX = 12.5, SY = 10.2, H = 330;
-const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
+/** the field in viewBox units: wide, with room to write each route's name beside its tip */
+const WIDE = { W: 660, BAND: 30, OX: 365, OY: 272, SX: 12.5, SY: 10.2, H: 330 };
+/** a phone's field is cut to the routes and deeper, so they draw near full size; only the number sits at each tip */
+const PHONE = { W: 380, BAND: 24, OX: 204, OY: 290, SX: 14, SY: 11.4, H: 340 };
 
 export default function RouteTree({ charts, gsis, pos, current = 0, control }: { charts: ChartDb[]; gsis: string; pos: string; current?: number; control?: ChartControl }) {
   const qb = pos === 'QB';
@@ -39,6 +42,9 @@ export default function RouteTree({ charts, gsis, pos, current = 0, control }: {
   const [metricPicked, setMetric] = useState('share');
   const cov = (control?.filter as Coverage | undefined) ?? covPicked, metric = control?.metric ?? metricPicked;
   const [hot, bind] = useHot();
+  const phone = useIsPhone();
+  const { W, BAND, OX, OY, SX, SY, H } = phone ? PHONE : WIDE;
+  const X = (x: number) => OX + x * SX, Y = (y: number) => OY - y * SY;
   const items = useMemo(() => (db ? chartItems(SPEC, db, gsis, cov, metric) ?? [] : []), [db, gsis, cov, metric]);
   if (!years.length) return null;
   const empty = db ? null : { title: `No route data for ${year} yet`, body: `It arrives when the season is complete. Pick ${latest} or earlier to see his route tree.` };
@@ -83,17 +89,17 @@ export default function RouteTree({ charts, gsis, pos, current = 0, control }: {
               const ly = s.l ? Y(s.l[1]) : b[1] + Math.sin(ang) * 14 + (s.a === 'middle' ? -4 : 4);
               const name = ROUTE_LABEL[i.key], sm = small(i);
               const nameW = name.length * 6.6, chipText = main(i), chipW = chipText.length * 7 + 10, smW = sm.length * 5.4;
-              const total = nameW + 5 + chipW + 4 + smW;
+              const total = phone ? chipW : nameW + 5 + chipW + 4 + smW;
               const x0 = s.a === 'end' ? lx - total : s.a === 'middle' ? lx - total / 2 : lx;
-              const chip = Chip({ x: x0 + nameW + 5, y: ly, text: chipText, fill: share || i.ranked ? c : 'var(--surface-2)', ink: share ? chipInk('heat', i.share) : i.ranked ? chipInk('pct') : 'var(--muted)' });
+              const chip = Chip({ x: phone ? x0 : x0 + nameW + 5, y: ly, text: chipText, fill: share || i.ranked ? c : 'var(--surface-2)', ink: share ? chipInk('heat', i.share) : i.ranked ? chipInk('pct') : 'var(--muted)' });
               return (
                 <g key={i.key} data-route={i.key} data-pct={share ? '' : String(i.pct ?? '')} data-hot={hot === i.key} className="cursor-pointer transition-opacity" {...bind(i.key)}>
                   <polyline points={pts.map((p) => p.join(',')).join(' ')} fill="none" stroke="transparent" strokeWidth={16} />
                   <polyline points={pts.map((p) => p.join(',')).join(' ')} fill="none" strokeWidth={4.5} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={!share && !i.ranked ? '2 6' : undefined} style={{ stroke: c }} />
                   <Arrowhead from={a} to={b} fill={c} />
-                  <text x={x0} y={ly} fontSize={11.5} fontWeight={600} style={{ fill: 'var(--ink)' }}>{name}</text>
+                  {!phone && <text x={x0} y={ly} fontSize={11.5} fontWeight={600} style={{ fill: 'var(--ink)' }}>{name}</text>}
                   {chip.el}
-                  <text x={x0 + nameW + 5 + chipW + 4} y={ly} fontSize={10} style={{ fill: 'var(--muted)' }}>{sm}</text>
+                  {!phone && <text x={x0 + nameW + 5 + chipW + 4} y={ly} fontSize={10} style={{ fill: 'var(--muted)' }}>{sm}</text>}
                 </g>
               );
             })}
