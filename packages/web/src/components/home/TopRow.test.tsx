@@ -73,7 +73,7 @@ describe('GameBanner states', () => {
   it('a team without a photo gets its initials on the panel', () => {
     const s = league();
     wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
-    expect(screen.getByText('CU')).toBeInTheDocument();
+    expect(screen.getAllByText('CU').length).toBeGreaterThan(0);
   });
 });
 
@@ -134,5 +134,28 @@ describe('SideGame', () => {
     const r = screen.getByRole('region', { name: 'Upset alert' });
     expect(r).toHaveTextContent('Live');
     expect(r).toHaveTextContent('64.2');
+  });
+});
+
+describe('GameBanner on a phone', () => {
+  it('puts each manager\'s face faint behind their own side, only on phones, under the names and links', () => {
+    const s = league();
+    const { container } = wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
+    const ghosts = Array.from(container.querySelectorAll<HTMLElement>('[data-testid="banner-ghost"]'));
+    expect(ghosts).toHaveLength(2);
+    ghosts.forEach((g) => expect(g).toHaveClass('sm:hidden', 'pointer-events-none', '-z-10'));
+    expect(ghosts[0]).toHaveAttribute('data-side', 'left');
+    expect(ghosts[1]).toHaveAttribute('data-side', 'right');
+    // the left team has a photo, the right one only initials
+    expect(ghosts[0].style.backgroundImage).toContain('https://x/a.jpg');
+    expect(ghosts[1]).toHaveTextContent('CU');
+  });
+  it('sets a gold VS between the two team names on phones and drops the small vs between the scores', () => {
+    const s = league();
+    const { container } = wrap(<GameBanner game={s.weeks[0].games[0]} season={s} view={view({})} />);
+    const vs = screen.getByTestId('banner-vs');
+    expect(vs).toHaveTextContent('VS');
+    expect(vs).toHaveClass('sm:hidden', 'text-gold');
+    expect(container.querySelector('small')).toHaveClass('max-sm:hidden');
   });
 });

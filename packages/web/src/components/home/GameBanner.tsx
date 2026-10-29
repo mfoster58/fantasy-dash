@@ -56,6 +56,21 @@ function Panel({ season, side, right, size }: { season: BannerSeason; side: Game
   );
 }
 
+/** on a phone, in place of the cut photos: the manager's face large and faint behind their own side, fading out round the edges */
+function Ghost({ season, side, right }: { season: BannerSeason; side: GameSide; right?: boolean }) {
+  const m = season.managers[side.userId];
+  const look = m?.avatar
+    ? 'bg-cover bg-[center_30%] opacity-[.22] grayscale-[.2]'
+    : 'flex items-center justify-center font-display text-[120px] font-bold text-muted opacity-10';
+  return (
+    <div data-testid="banner-ghost" data-side={right ? 'right' : 'left'} aria-hidden="true"
+      className={`pointer-events-none absolute -top-6 -z-10 size-[230px] [mask-image:radial-gradient(closest-side,#000_45%,transparent)] sm:hidden ${right ? '-right-16' : '-left-16'} ${look}`}
+      style={m?.avatar ? { backgroundImage: `url(${avatarUrl(m.avatar)})` } : undefined}>
+      {!m?.avatar && (m?.displayName ?? '?').slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
+
 export default function GameBanner({ game, season, view, title = 'Game of the week', compact = false, to, linkLabel, odds = true, decimals = 1, standing, bare = false }: {
   game: Game; season: BannerSeason; view: GameView;
   /** the line over the score; null for none */
@@ -98,35 +113,38 @@ export default function GameBanner({ game, season, view, title = 'Game of the we
     <section aria-label={title ?? `${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} className={`blue-wash relative isolate flex overflow-hidden ${size.box} ${bare ? '' : 'card'}`}>
       {href && <CoverLink to={href} label={linkLabel ?? `${teamName(season, a.userId)} vs ${teamName(season, b.userId)}`} />}
       <Panel season={season} side={a} size={size} />
+      <Ghost season={season} side={a} />
+      <Ghost season={season} side={b} right />
       {/* not positioned, so it paints under the cover link: clicks on names and scores open the box score; the team and manager links sit above with z-10 */}
-      {/* on a phone the middle column comes apart (display: contents): the title over both teams, each score under its own team */}
-      <div data-testid="banner-body" className={`grid flex-1 grid-cols-2 items-start gap-x-3 px-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4 ${compact ? 'py-4' : 'py-5'}`}>
+      {/* on a phone the middle column comes apart (display: contents): the title over both teams, a gold VS between them, each score under its own team */}
+      <div data-testid="banner-body" className={`grid flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 px-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4 ${compact ? 'py-4' : 'py-5'}`}>
         <div className="order-3 min-w-0 sm:order-none">{team(a)}</div>
         <div className={`contents text-center sm:block ${size.center}`}>
-          {title && <div className={`order-1 col-span-2 mb-2 font-display font-bold uppercase leading-none tracking-[0.08em] text-accent sm:mb-2.5 ${size.title}`}>{title}</div>}
-          <div className="order-2 col-span-2 mb-3 sm:mb-0"><StateLabel status={view.status} /></div>
-          <div className="order-4 col-span-2 mt-3 flex items-baseline justify-between gap-2.5 font-display leading-none sm:mt-0.5 sm:justify-center">
+          <span data-testid="banner-vs" aria-hidden="true" className="order-3 self-center font-display text-[40px] font-bold italic leading-none tracking-wide text-gold sm:hidden">VS</span>
+          {title && <div className={`order-1 col-span-3 mb-2 font-display font-bold uppercase leading-none tracking-[0.08em] text-accent sm:mb-2.5 ${size.title}`}>{title}</div>}
+          <div className="order-2 col-span-3 mb-3 sm:mb-0"><StateLabel status={view.status} /></div>
+          <div className="order-4 col-span-3 mt-3 flex items-baseline justify-between gap-2.5 font-display leading-none sm:mt-0.5 sm:justify-center">
             <span className={`${size.score} ${scoreTone(view, 0)}`}>{view.scores[0].toFixed(decimals)}</span>
-            <small className="text-xs font-semibold uppercase text-muted">vs</small>
+            <small className="text-xs max-sm:hidden font-semibold uppercase text-muted">vs</small>
             <span className={`${size.score} ${scoreTone(view, 1)}`}>{view.scores[1].toFixed(decimals)}</span>
           </div>
           {view.status === 'live' && (
-            <div className="order-5 col-span-2 mt-1 flex justify-between gap-2 text-[11px] text-muted">
+            <div className="order-5 col-span-3 mt-1 flex justify-between gap-2 text-[11px] text-muted">
               {([0, 1] as const).map((i) => <span key={i}>Proj {view.projected[i].toFixed(1)}{view.toPlay[i] !== null ? ` · ${view.toPlay[i]} to play` : ''}</span>)}
             </div>
           )}
           {odds && view.win && (
             <>
-              <div className="order-6 col-span-2 mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
+              <div className="order-6 col-span-3 mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden="true">
                 {([0, 1] as const).map((i) => <span key={i} data-testid={`banner-win-${i}`} style={{ width: `${view.win![i]}%`, background: winTone(view.win![i], view.win![1 - i]) }} />)}
               </div>
-              <div className="order-7 col-span-2 mt-1 flex justify-between text-xs font-semibold">
+              <div className="order-7 col-span-3 mt-1 flex justify-between text-xs font-semibold">
                 {([0, 1] as const).map((i) => <span key={i} style={{ color: winTone(view.win![i], view.win![1 - i]) }}>{view.win![i]}%</span>)}
               </div>
             </>
           )}
-          {view.status === 'final' && winnerName && <div className="order-8 col-span-2 mt-1 text-xs text-muted">{winnerName} by {Math.abs(view.scores[0] - view.scores[1]).toFixed(decimals)}</div>}
-          {tied && <div className="order-8 col-span-2 mt-1 text-xs text-muted">Tie</div>}
+          {view.status === 'final' && winnerName && <div className="order-8 col-span-3 mt-1 text-xs text-muted">{winnerName} by {Math.abs(view.scores[0] - view.scores[1]).toFixed(decimals)}</div>}
+          {tied && <div className="order-8 col-span-3 mt-1 text-xs text-muted">Tie</div>}
         </div>
         <div className="order-3 min-w-0 sm:order-none">{team(b, true)}</div>
       </div>
