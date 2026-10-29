@@ -51,6 +51,14 @@ describe('MatchupField', () => {
       expect(marks(field('My boutte hurts'), '12711')).toHaveLength(0);
     });
 
+    it('draws a target that fell incomplete in gray, so it can\'t be mistaken for a catch', async () => {
+      mount('post', fetchOf(() => cleTen));
+      await flush();
+      const flight = (kind: string) => field('Bijon Mustard').querySelector<SVGPathElement>(`[data-testid="mf-play"][data-pid="13298"][data-kind="${kind}"] path`)!;
+      expect(flight('inc').style.stroke).toBe('var(--muted)');
+      expect(flight('rec').style.stroke).toBe('var(--pos-WR)');
+    });
+
     it('heads each field with the team\'s name and its score', async () => {
       mount('post', fetchOf(() => cleTen));
       await flush();
