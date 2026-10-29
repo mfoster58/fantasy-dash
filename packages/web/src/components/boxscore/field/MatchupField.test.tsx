@@ -4,6 +4,7 @@ import cleTen from '../../../test/fixtures/espn/401873013.json';
 import { line, side } from '../../../test/playerFixtures';
 import type { NflGame } from '../../../lib/live/espn';
 import { clearFinishedFeeds, FEED_POLL_MS } from '../../../lib/field/useGameFeeds';
+import { asPhone } from '../../../test/phone';
 import MatchupField from './MatchupField';
 
 const DIR: PlayerDirectory = {
@@ -82,6 +83,26 @@ describe('MatchupField', () => {
       // Judkins's touchdown runs score the most; Concepcion's 32-yard catch makes the list too
       expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent(/Judkins \d-yd TD run/);
       expect(list).toHaveTextContent('Concepcion 32-yd catch+4.2');
+    });
+  });
+
+  describe('on a phone', () => {
+    it('shows one field at a time, with a switch between the two teams that carries each one\'s score', async () => {
+      const restore = asPhone();
+      try {
+        mount('post', fetchOf(() => cleTen));
+        await flush();
+        const pick = screen.getByRole('group', { name: 'Whose field' });
+        const [a, b] = within(pick).getAllByRole('button');
+        expect(a).toHaveTextContent('My boutte hurts50.00');
+        expect(a).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getAllByRole('img', { name: /plays on the field/ })).toHaveLength(1);
+        expect(marks(field('My boutte hurts'), '8126')).toHaveLength(6);
+        fireEvent.click(b);
+        expect(b).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.queryByRole('img', { name: "My boutte hurts's plays on the field" })).toBeNull();
+        expect(marks(field('Bijon Mustard'), '13298')).toHaveLength(13);
+      } finally { restore(); }
     });
   });
 

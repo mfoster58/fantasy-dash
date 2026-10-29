@@ -7,6 +7,7 @@ import { readPlays, type FieldPlay, type Starter } from '../../../lib/field/read
 import { useGameFeeds } from '../../../lib/field/useGameFeeds';
 import type { NflGame } from '../../../lib/live/espn';
 import { headshotUrl, playerTeam } from '../../../lib/players';
+import { useIsPhone } from '../../../lib/useIsPhone';
 import { logoUrl } from '../../stats/players/TeamLogo';
 import FieldSide, { type FieldStarter } from './FieldSide';
 
@@ -84,6 +85,8 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   const [picked, setPicked] = useState<'live' | 'week' | null>(null);
   const mode = picked ?? (anyLive ? 'live' : 'week');
   const [focus, setFocus] = useState<[string | null, string | null]>([null, null]);
+  const phone = useIsPhone();
+  const [view, setView] = useState<0 | 1>(0);
 
   // a drive that scored stays up a few seconds: look again every few seconds while games are on
   const [now, setNow] = useState(() => Date.now());
@@ -137,6 +140,8 @@ export default function MatchupField({ sides, names, players, scoring, games, se
     return plays[side].filter((p) => p.kind !== 'passinc' && (mode === 'live' ? keys.has(p.driveId) : true));
   });
   const who = (side: 0 | 1, pid: string) => starters[side].find((s) => s.id === pid)!;
+  // a replay counts up from its plays; otherwise each team's real score
+  const totals = ([0, 1] as const).map((side) => (on ? plays[side].reduce((n, p) => n + p.pts, 0) : sides[side].points));
 
   return (
     <section className="card p-4 sm:p-5" aria-label="The field">
@@ -182,11 +187,23 @@ export default function MatchupField({ sides, names, players, scoring, games, se
       )}
       {!feedList.length && !on && <p className="mb-3 text-sm text-muted">{relevant.length ? 'Loading plays…' : 'Plays show up here once these players’ games kick off.'}</p>}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
-          {([0, 1] as const).map((side) => (
-            <FieldSide key={side} name={names[side]} color={COLOR[side]}
-              // a replay counts up from its plays; otherwise the team's real score
-              total={on ? plays[side].reduce((n, p) => n + p.pts, 0) : sides[side].points} plays={shown[side]} starters={starters[side]} live={mode === 'live'}
+        {/* a phone shows one field at a time, picked by team; the switch carries both scores */}
+        {phone && (
+          <div role="group" aria-label="Whose field" className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface p-1">
+            {([0, 1] as const).map((side) => (
+              <button key={side} type="button" aria-pressed={view === side} onClick={() => setView(side)}
+                className="flex min-w-0 items-baseline justify-between gap-2 rounded-lg px-2.5 py-2 text-left"
+                style={{ color: COLOR[side], background: view === side ? `color-mix(in srgb, ${COLOR[side]} 16%, transparent)` : undefined }}>
+                <span className="truncate font-display text-[15px] font-bold uppercase leading-none">{names[side]}</span>
+                <span className="font-display text-base font-bold leading-none tabular-nums">{totals[side].toFixed(2)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className={phone ? '' : 'grid grid-cols-2 gap-2.5 sm:gap-4'}>
+          {([0, 1] as const).filter((side) => !phone || side === view).map((side) => (
+            <FieldSide key={side} name={names[side]} color={COLOR[side]} head={!phone}
+              total={totals[side]} plays={shown[side]} starters={starters[side]} live={mode === 'live'}
               drives={drives[side]} fresh={fresh} focus={focus[side]} onFocus={(id) => setFocus((f) => (side ? [f[0], id] : [id, f[1]]))}
               celebration={party[side] ? { play: party[side]!, who: who(side, party[side]!.pid) } : null} />
           ))}
