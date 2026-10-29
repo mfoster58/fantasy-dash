@@ -49,6 +49,10 @@ describe('ESPN scoreboard', () => {
     expect(game.home).toBe('CLE');
     expect(game.score).toEqual({ CLE: 27, BAL: 24 });
   });
+  it('keeps ESPN\'s id for each game, for its play-by-play', () => {
+    const [game] = parseScoreboard({ events: [{ id: '401873013', ...event('TEN', 'CLE', 'post', 4, '0:00', '2026-10-25T17:00Z', 'STATUS_FINAL') }] });
+    expect(game.id).toBe('401873013');
+  });
   it('gives no games for a body it cannot read', () => {
     expect(parseScoreboard(null)).toEqual([]);
     expect(parseScoreboard({ events: [{ nope: 1 }] })).toEqual([]);
