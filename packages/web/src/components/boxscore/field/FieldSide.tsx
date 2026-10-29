@@ -58,11 +58,12 @@ export default function FieldSide({ name, total, head = true, color, plays, star
             const dim = focus !== null && focus !== p.pid;
             const qb = p.kind === 'pass';
             return (
-              <g key={`${p.id}:${p.pid}`} data-testid="mf-play" data-pid={p.pid} data-drive={p.driveId} data-end={m.end && (big || live) ? '1' : '0'}
+              <g key={`${p.id}:${p.pid}`} data-testid="mf-play" data-pid={p.pid} data-kind={p.kind} data-drive={p.driveId} data-end={m.end && (big || live) ? '1' : '0'}
                 className={`transition-opacity ${dim ? 'opacity-10' : ''} ${fresh.has(`${p.id}:${p.pid}`) ? 'mf-new' : ''}`}>
                 {m.flight && (
                   <path d={m.flight} className="mf-fade" fill="none" strokeWidth={p.kind === 'int' ? 1.6 : 1} strokeDasharray="2 2.5"
-                    opacity={p.kind === 'inc' ? 0.45 : 0.8} style={{ stroke: p.kind === 'int' ? 'var(--loss)' : col }}
+                    // a target that fell incomplete is gray: only a catch carries the player's colour
+                    opacity={p.kind === 'inc' ? 0.55 : 0.8} style={{ stroke: p.kind === 'int' ? 'var(--loss)' : p.kind === 'inc' ? 'var(--muted)' : col }}
                     markerEnd={p.kind === 'inc' ? `url(#x${uid})` : undefined} />
                 )}
                 {m.path && (
