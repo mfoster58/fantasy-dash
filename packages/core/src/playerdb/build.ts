@@ -1,4 +1,4 @@
-import type { SleeperPlayer, SleeperWeekStat, StatMap } from '../sleeper/types';
+import type { SleeperPlayer, SleeperWeekStat } from '../sleeper/types';
 import type { Crosswalk } from './crosswalk';
 import { routesEstimate } from './derive';
 import { weekKey, type WeekFields } from './fields';
@@ -6,17 +6,13 @@ import type { Participation } from './sources/participation';
 import type { PlayerMeta } from './sources/players';
 import { positionOf, sleeperRow } from './sources/sleeper';
 import { teamWeekKey, teamWeeksOf } from './teamWeeks';
-import { fitXfpCoefficients, predictXfp } from './xfp';
-import type { DbPlayer, DbPos, PlayerDb, PlayerWeek, PlayerWeekKey, TeamWeek } from './types';
+import type { DbPlayer, PlayerWeek, PlayerWeekKey, TeamWeek, SharedPlayerDb } from './types';
 
 export interface PlayerDbInput {
   year: number; throughWeek: number; builtAt: string;
-  scoring: Record<string, number>;
   positionOverrides: Readonly<Record<string, string>>;
   /** week → every NFL player's Sleeper row */
   sleeperWeeks: Map<number, SleeperWeekStat[]>;
-  /** week → Sleeper projection stat map */
-  projections: Map<number, StatMap>;
   /** the Sleeper player directory, for names, positions, birth dates and experience */
   directory: Record<string, SleeperPlayer>;
   crosswalk: Crosswalk;
@@ -43,22 +39,20 @@ const nameOf = (p: SleeperPlayer | undefined, raw: SleeperWeekStat): string => {
   return p?.full_name ?? ((fromRow || `${p?.first_name ?? ''} ${p?.last_name ?? ''}`.trim()) || raw.player_id);
 };
 
-export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
+export function buildPlayerDb(input: PlayerDbInput): SharedPlayerDb {
   const { crosswalk, directory, participation } = input;
   const weeks = new Map([...input.sleeperWeeks].filter(([w]) => w >= 1 && w <= input.throughWeek));
   const teamWeeks = teamWeeksOf(weeks, participation?.passPlays ?? null, input.teamAirYards, input.teamSnaps);
   const teamWeekOf = new Map<string, TeamWeek>(teamWeeks.map((t) => [teamWeekKey(t.team, t.week), t]));
   const players: Record<string, DbPlayer> = {};
-  const posOf = new Map<string, DbPos>();
   const rows: PlayerWeek[] = [];
 
   for (const [week, raws] of [...weeks.entries()].sort((a, b) => a[0] - b[0])) {
-    const proj = input.projections.get(week) ?? {};
     for (const raw of [...raws].sort((a, b) => (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0))) {
       const dir = directory[raw.player_id];
       const pos = positionOf(raw, dir?.position ?? null, input.positionOverrides);
       if (!pos) continue;
-      const row = sleeperRow(raw, week, input.scoring, proj[raw.player_id]);
+      const row = sleeperRow(raw, week);
       if (!row) continue;
       const tw = teamWeekOf.get(teamWeekKey(row.team, week));
       if (tw && tw.offSnaps > 0) row.teamSnaps = tw.offSnaps;
@@ -74,7 +68,6 @@ export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
           draft: meta?.draft ?? null, college: meta?.college ?? null, height: meta?.height ?? null, weight: meta?.weight ?? null,
         };
         players[raw.player_id] = p;
-        posOf.set(raw.player_id, pos);
       }
       if (!p.teams.includes(row.team)) p.teams.push(row.team);
       if (p.gsisId) mergeInto(row, input.byGsis.get(weekKey(p.gsisId, week)));
@@ -89,12 +82,7 @@ export function buildPlayerDb(input: PlayerDbInput): PlayerDb {
     }
   }
 
-  const xfp = fitXfpCoefficients(rows, (id) => posOf.get(id) ?? null);
-  for (const r of rows) {
-    const v = predictXfp(xfp[posOf.get(r.id)!], posOf.get(r.id)!, r);
-    if (v !== null) r.xfp = v;
-  }
   rows.sort((a, b) => a.week - b.week || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  return { year: input.year, throughWeek: input.throughWeek, routesReal: participation !== null, builtAt: input.builtAt, players, teamWeeks, xfp, rows };
+  return { year: input.year, throughWeek: input.throughWeek, routesReal: participation !== null, builtAt: input.builtAt, players, teamWeeks, rows };
 }

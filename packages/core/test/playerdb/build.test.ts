@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { buildPlayerDb, mergeInto, type PlayerDbInput } from '../../src/playerdb/build';
-import { PlayerDbSchema } from '../../src/playerdb/schema';
+import { SharedPlayerDbSchema } from '../../src/playerdb/schema';
 import type { SleeperWeekStat } from '../../src/sleeper/types';
 
-const scoring = { rec: 1, rec_yd: 0.1, rush_yd: 0.1, pass_yd: 0.04 };
 const wr = (id: string, team: string, week: number, tgt: number, extra: Record<string, number> = {}): SleeperWeekStat =>
   ({ player_id: id, team, opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: tgt, rec: tgt - 1, rec_yd: tgt * 10, rec_air_yd: tgt * 8, rec_yar: 5, off_snp: 50, tm_off_snp: 60, ...extra } });
 const qb = (id: string, team: string): SleeperWeekStat => ({ player_id: id, team, opponent: 'OPP', player: { position: 'QB' }, stats: { gp: 1, pass_att: 30, pass_sack: 2, pass_air_yd: 240, pass_yd: 250 } });
@@ -16,9 +15,8 @@ function input(over: Partial<PlayerDbInput> = {}): PlayerDbInput {
     { player_id: 'inj', team: 'TB', player: { position: 'WR' }, stats: { gp: 0 } },
   ]);
   return {
-    year: 2026, throughWeek: 2, builtAt: '2026-10-17T00:00:00.000Z', scoring, positionOverrides: {},
+    year: 2026, throughWeek: 2, builtAt: '2026-10-17T00:00:00.000Z', positionOverrides: {},
     sleeperWeeks,
-    projections: new Map([[1, { w1: { rec: 5, rec_yd: 60 } }]]),
     directory: {
       w1: { player_id: 'w1', full_name: 'Wide One', position: 'WR', team: 'TB', years_exp: 1, birth_date: '2002-10-14' },
       w2: { player_id: 'w2', full_name: 'Wide Two', position: 'WR', team: 'TB' },
@@ -50,14 +48,14 @@ describe('mergeInto', () => {
 describe('buildPlayerDb', () => {
   const db = buildPlayerDb(input());
   it('keeps only played QB/RB/WR/TE rows, sorted by week then id, and validates', () => {
-    expect(PlayerDbSchema.parse(db)).toEqual(db);
+    expect(SharedPlayerDbSchema.parse(db)).toEqual(db);
     expect(db.rows.map((r) => `${r.week}:${r.id}`)).toEqual(['1:dup', '1:q1', '1:w1', '1:w2', '2:dup', '2:q1', '2:w1', '2:w2']);
     expect(db.throughWeek).toBe(2);
     expect(db.routesReal).toBe(false);
   });
   it('joins nflverse and PFR fields through the crosswalk, base winning', () => {
     const w1 = db.rows.find((r) => r.id === 'w1' && r.week === 1)!;
-    expect(w1).toMatchObject({ re_epa: 2.5, re_sep: 3.1, re_bt: 1, re_rtg: 100, re_yac: 5, proj: 11 });
+    expect(w1).toMatchObject({ re_epa: 2.5, re_sep: 3.1, re_bt: 1, re_rtg: 100, re_yac: 5 });
     const q1 = db.rows.find((r) => r.id === 'q1' && r.week === 1)!;
     expect(q1).toMatchObject({ pa_epa: 4, pa_sack: 2 });
     const dup = db.rows.find((r) => r.id === 'dup' && r.week === 1)!;
@@ -116,9 +114,11 @@ describe('buildPlayerDb', () => {
     expect(db.players).not.toHaveProperty('k1');
     expect(db.players).not.toHaveProperty('inj');
   });
-  it('leaves xfp off when a position has too few rows', () => {
-    expect(db.xfp).toEqual({ QB: null, RB: null, WR: null, TE: null });
-    expect(db.rows[0]).not.toHaveProperty('xfp');
+  it('stores no league points, projections or xFP: those live in each league\'s points file', () => {
+    const db = buildPlayerDb(input());
+    expect(db.rows.some((r) => 'pts' in r || 'proj' in r || 'xfp' in r)).toBe(false);
+    expect(db).not.toHaveProperty('xfp');
+    expect(SharedPlayerDbSchema.parse(db)).toBeTruthy();
   });
   it('applies position overrides', () => {
     const o = buildPlayerDb(input({ positionOverrides: { k1: 'TE' } }));
@@ -133,8 +133,7 @@ describe('buildPlayerDb', () => {
     const zero = buildPlayerDb(input({ throughWeek: 0 }));
     expect(zero.rows).toEqual([]);
     expect(zero.teamWeeks).toEqual([]);
-    expect(zero.xfp).toEqual({ QB: null, RB: null, WR: null, TE: null });
-    expect(PlayerDbSchema.parse(zero)).toEqual(zero);
+    expect(SharedPlayerDbSchema.parse(zero)).toEqual(zero);
   });
   it('builds the weeks that are present when one is missing', () => {
     const base = input();
@@ -173,23 +172,6 @@ describe('buildPlayerDb', () => {
     const real = buildPlayerDb(input({ participation: { routes: new Map([['00-q|1', 30]]), passPlays: new Map() } }));
     const q1 = real.rows.find((r) => r.id === 'q1' && r.week === 1)!;
     expect(q1).not.toHaveProperty('routes');
-  });
-  it('fits and applies xfp once a position has enough rows', () => {
-    const weeks = new Map<number, SleeperWeekStat[]>();
-    const dir: PlayerDbInput['directory'] = {};
-    for (let w = 1; w <= 2; w++) {
-      const list: SleeperWeekStat[] = [];
-      for (let i = 0; i < 30; i++) {
-        const id = `x${i}`;
-        list.push({ player_id: id, team: 'TB', opponent: 'OPP', player: { position: 'WR' }, stats: { gp: 1, rec_tgt: 1 + ((i + w) % 12), rec_air_yd: 0, rec_rz_tgt: 0 } });
-        dir[id] = { player_id: id, full_name: id, position: 'WR', team: 'TB' };
-      }
-      weeks.set(w, list);
-    }
-    const o = buildPlayerDb(input({ scoring: { gp: 1, rec_tgt: 1.5 }, sleeperWeeks: weeks, directory: dir, projections: new Map(), byGsis: new Map(), byPfr: new Map() }));
-    expect(o.rows.length).toBe(60);
-    expect(o.xfp.WR).not.toBeNull();
-    for (const r of o.rows) expect(Math.abs(r.xfp! - r.pts!)).toBeLessThan(0.01);
   });
   it('builds rows for an overridden position', () => {
     const o = buildPlayerDb(input({ positionOverrides: { k1: 'TE' } }));

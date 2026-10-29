@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, PlayerDbSchema, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
+  SleeperClient, SharedPlayerDbSchema, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
   type DbPos, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
@@ -155,20 +155,20 @@ async function buildSeason(client: SleeperClient, league: SleeperLeague, directo
   }
 
   const db = buildPlayerDb({
-    year, throughWeek, builtAt: new Date().toISOString(), scoring: league.scoring_settings, positionOverrides: leagueConfig.positionOverrides,
-    sleeperWeeks, projections, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards, teamSnaps: snapCountTeamSnaps(snaps),
+    year, throughWeek, builtAt: new Date().toISOString(), positionOverrides: leagueConfig.positionOverrides,
+    sleeperWeeks, directory, crosswalk, byGsis, byPfr, nflPlayers: nflPlayerMeta(shared.nflPlayers), participation, teamAirYards, teamSnaps: snapCountTeamSnaps(snaps),
   });
   const unmapped = Object.values(db.players).filter((p) => !p.gsisId).length;
-  log(`  ${db.rows.length} rows, ${Object.keys(db.players).length} players (${unmapped} without a gsis id), xfp fitted for ${Object.entries(db.xfp).filter(([, c]) => c).map(([p]) => p).join(' ') || 'nobody'}`);
-  PlayerDbSchema.parse(db);
+  log(`  ${db.rows.length} rows, ${Object.keys(db.players).length} players (${unmapped} without a gsis id)`);
+  SharedPlayerDbSchema.parse(db);
   return db;
 }
 
 /** Why a finished season's existing file is not final (null when it is): it must parse, have real routes and reach week 18. */
 function finishedFileProblem(file: string): string | null {
   if (!existsSync(file)) return 'no file yet';
-  let db: ReturnType<typeof PlayerDbSchema.parse>;
-  try { db = PlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); } catch { return 'the existing file does not parse'; }
+  let db: ReturnType<typeof SharedPlayerDbSchema.parse>;
+  try { db = SharedPlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))); } catch { return 'the existing file does not parse'; }
   if (db.routesReal !== true) return 'the existing file has estimated routes, not real ones';
   if (!db.rows.some((r) => r.week === 18)) return 'the existing file has no week 18 rows';
   return null;
@@ -262,7 +262,7 @@ function positionsFor(year: number, nflPlayers: Record<string, string>[]): (gsis
   const m = new Map<string, DbPos>();
   for (const r of nflPlayers) if (r.gsis_id && isDbPos(r.position)) m.set(r.gsis_id, r.position);
   const file = path.join(OUT_DIR, `${year}.json`);
-  if (existsSync(file)) for (const p of Object.values(PlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))).players)) if (p.gsisId) m.set(p.gsisId, p.pos);
+  if (existsSync(file)) for (const p of Object.values(SharedPlayerDbSchema.parse(JSON.parse(readFileSync(file, 'utf8'))).players)) if (p.gsisId) m.set(p.gsisId, p.pos);
   return (g) => m.get(g) ?? null;
 }
 
