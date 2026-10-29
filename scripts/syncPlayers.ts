@@ -189,28 +189,36 @@ function finishedFileProblem(file: string): string | null {
 const LEAGUES_DIR = path.join(ROOT, 'data', 'leagues');
 
 /** Phase 4: each league's points, projections and xFP for every season it played that has a shared playerdb file. */
-async function pointsPhase(client: SleeperClient, chains: Map<string, SleeperLeague[]>, years: NflYear[]) {
+async function pointsPhase(client: SleeperClient, chains: Map<string, SleeperLeague[]>, years: NflYear[]): Promise<string[]> {
   const outRoot = dryRun ? await mkdtemp(path.join(os.tmpdir(), 'fantasy-dash-points-')) : LEAGUES_DIR;
   const { failed } = await runPerLeague(configured.filter((c) => chains.has(c.slug)), async (cfg) => {
+    let seasonFailed = false;
     for (const league of chains.get(cfg.slug)!) {
       const y = years.find((x) => x.year === Number(league.season));
       if (!y || (onlySeason !== null && y.year !== onlySeason)) continue;
-      const dbFile = path.join(OUT_DIR, `${y.year}.json`);
-      if (!existsSync(dbFile)) { log(`${cfg.slug} ${y.year}: no shared playerdb yet; no points`); continue; }
-      const shared = SharedPlayerDbSchema.parse(JSON.parse(readFileSync(dbFile, 'utf8')));
-      const file = path.join(LEAGUES_DIR, cfg.slug, 'points', `${y.year}.json`);
-      const existing = existsSync(file) ? (() => { try { return JSON.parse(readFileSync(file, 'utf8')) as unknown; } catch { return undefined; } })() : undefined;
-      if (y.complete && !full && pointsUpToDate(existing, { leagueId: league.league_id, dbBuiltAt: shared.builtAt })) { log(`${cfg.slug} ${y.year}: points up to date`); continue; }
-      const { sleeperWeeks, projections } = await sleeperYear(client, y);
-      const points = LeaguePointsSchema.parse(buildLeaguePoints({ shared, leagueId: league.league_id, builtAt: new Date().toISOString(), scoring: league.scoring_settings, sleeperWeeks, projections }));
-      const dir = path.join(outRoot, cfg.slug, 'points');
-      await mkdir(dir, { recursive: true });
-      await writeFile(path.join(dir, `${y.year}.json`), JSON.stringify(points));
-      log(`${cfg.slug} ${y.year}: points for ${Object.keys(points.players).length} players`);
+      try {
+        const dbFile = path.join(OUT_DIR, `${y.year}.json`);
+        if (!existsSync(dbFile)) { log(`${cfg.slug} ${y.year}: no shared playerdb yet; no points`); continue; }
+        const shared = SharedPlayerDbSchema.parse(JSON.parse(readFileSync(dbFile, 'utf8')));
+        const file = path.join(LEAGUES_DIR, cfg.slug, 'points', `${y.year}.json`);
+        const existing = existsSync(file) ? (() => { try { return JSON.parse(readFileSync(file, 'utf8')) as unknown; } catch { return undefined; } })() : undefined;
+        if (y.complete && !full && pointsUpToDate(existing, { leagueId: league.league_id, dbBuiltAt: shared.builtAt })) { log(`${cfg.slug} ${y.year}: points up to date`); continue; }
+        const { sleeperWeeks, projections } = await sleeperYear(client, y);
+        const points = LeaguePointsSchema.parse(buildLeaguePoints({ shared, leagueId: league.league_id, builtAt: new Date().toISOString(), scoring: league.scoring_settings, sleeperWeeks, projections }));
+        const dir = path.join(outRoot, cfg.slug, 'points');
+        await mkdir(dir, { recursive: true });
+        await writeFile(path.join(dir, `${y.year}.json`), JSON.stringify(points));
+        log(`${cfg.slug} ${y.year}: points for ${Object.keys(points.players).length} players`);
+      } catch (err) {
+        seasonFailed = true;
+        log(`✗ ${cfg.slug} ${y.year}: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
+    if (seasonFailed) throw new Error('one or more seasons failed');
   }, log);
   if (dryRun) log(`Dry run: points in ${outRoot}`);
   if (failed.length) log(`points failed for: ${failed.join(', ')}`);
+  return failed;
 }
 
 async function main() {
@@ -225,10 +233,18 @@ async function main() {
   const years = all.filter((y) => onlySeason === null || y.year === onlySeason);
   log(`Seasons: ${years.map((y) => y.year).join(', ')}`);
 
-  if (!chartsOnly) await playerDbPhase(client, years);
+  const failedLeagues = new Set(failed);
+  if (!chartsOnly) {
+    await playerDbPhase(client, years);
+    // points right after the shared files, so a later phase failing cannot leave them stale beside new shared data
+    for (const slug of await pointsPhase(client, chains, years)) failedLeagues.add(slug);
+  }
   await chartsPhase(years);
   await schedulePhase(years);
-  if (!chartsOnly) await pointsPhase(client, chains, years);
+  if (failedLeagues.size) {
+    log(`leagues that failed: ${[...failedLeagues].join(', ')}`);
+    process.exitCode = 1;
+  }
 }
 
 /** Phase 3: each season's NFL regular-season schedule, for upcoming matchups. A failed download keeps the old files. */

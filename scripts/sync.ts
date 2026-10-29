@@ -196,6 +196,7 @@ async function main() {
       seasons.push(await fetchSeason(client, await withFinishedWeek(league), fullPlayers, cfg.managerNames));
     }
     seasons.sort((a, b) => a.year - b.year);
+    for (const s of seasons) SeasonSchema.parse(s);
     return seasons;
   }, log);
   if (results.size === 0) throw new Error(`every league failed: ${failed.join(', ')}`);
@@ -212,7 +213,6 @@ async function main() {
   for (const [slug, raw] of results) {
     const seasons = raw.map((s) => trimPlayerSeasons(s, kept));
     const history = buildHistory(seasons);
-    for (const s of seasons) SeasonSchema.parse(s);
     HistorySchema.parse(history);
     const missing = [...collectPlayerIds(seasons)].filter((id) => !players[id]);
     if (missing.length) log(`WARNING: ${slug}: ${missing.length} player ids missing from directory: ${missing.slice(0, 10).join(', ')}`);

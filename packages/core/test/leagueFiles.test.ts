@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -37,5 +37,16 @@ describe('idsFromSeasonFiles', () => {
     const year = readFileSync(path.join(src, '2025.json'), 'utf8');
     writeFileSync(path.join(dir, '2025.json'), year);
     expect(idsFromSeasonFiles(dir).size).toBeGreaterThan(50);
+  });
+  it('skips a malformed season file with a warning and keeps ids from good ones', () => {
+    const dir = tmp();
+    const src = path.resolve(here, '../../../data/leagues/husky/seasons');
+    writeFileSync(path.join(dir, '2025.json'), readFileSync(path.join(src, '2025.json'), 'utf8'));
+    writeFileSync(path.join(dir, '2024.json'), '{ not json');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(idsFromSeasonFiles(dir).size).toBeGreaterThan(50);
+    expect(warn).toHaveBeenCalledOnce();
+    expect(String(warn.mock.calls[0][0])).toContain('2024.json');
+    warn.mockRestore();
   });
 });
