@@ -43,7 +43,7 @@ const visible = () => document.visibilityState === 'visible';
 
 /**
  * Sleeper's CDN may hand back a copy of the scores minutes old while it fetches a new one; a stamp that changes every
- * poll gets a current copy, and is shared by everyone looking in the same 20 seconds.
+ * poll gets a current copy, and is shared by everyone looking in the same 10 seconds.
  */
 const fresh = (url: string, now: number) => `${url}?_=${Math.floor(now / BOX_POLL_MS)}`;
 

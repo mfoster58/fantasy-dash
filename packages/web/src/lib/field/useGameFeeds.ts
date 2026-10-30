@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { NflState } from '../live/espn';
 import { parseSummary, summaryUrl, type EspnGameFeed } from './espnGame';
 
-/** ESPN refreshes a game's play-by-play about every 9 seconds; a play comes about every 40 */
-export const FEED_POLL_MS = 20_000;
+/** ESPN refreshes a game's play-by-play about every 9 seconds */
+export const FEED_POLL_MS = 10_000;
 
 export interface FeedGame { id: string; state: NflState }
 type Fetcher = (url: string) => Promise<Response>;
@@ -15,7 +15,7 @@ export const clearFinishedFeeds = () => finished.clear();
 const visible = () => document.visibilityState === 'visible';
 
 /**
- * The play-by-play of each NFL game that is on or over, kept current: games in progress are read again every 20
+ * The play-by-play of each NFL game that is on or over, kept current: games in progress are read again every 10
  * seconds while the tab is visible, and the moment it comes back. A failed read keeps the last good one.
  */
 export function useGameFeeds(games: FeedGame[], { fetcher = (u) => fetch(u), poll = FEED_POLL_MS }: { fetcher?: Fetcher; poll?: number } = {}): Record<string, EspnGameFeed> {

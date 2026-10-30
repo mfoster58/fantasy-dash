@@ -35,7 +35,8 @@ describe('useGameFeeds', () => {
     expect(calls(f, '3')).toBe(0);
   });
 
-  it('checks the games on every 20 seconds, and never again for a finished one', async () => {
+  it('checks the games on every 10 seconds, and never again for a finished one', async () => {
+    expect(FEED_POLL_MS).toBe(10_000);
     const f = fakeFetch();
     mount([{ id: '1', state: 'in' }, { id: '2', state: 'post' }], f);
     await flush();

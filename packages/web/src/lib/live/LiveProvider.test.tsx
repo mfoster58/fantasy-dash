@@ -70,13 +70,13 @@ describe('LiveProvider', () => {
     expect(calls(f, '/matchups/')).toBe(3);
   });
 
-  it('polls every 20 seconds, like the field\'s plays, while a box score is open on a game that is on', async () => {
+  it('polls every 10 seconds, like the field\'s plays, while a box score is open on a game that is on', async () => {
     const f = fakeFetch({ state: 'in' });
     mount(f, undefined, true);
     await flush();
     await flush();
     const before = calls(f, '/matchups/');
-    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
     expect(calls(f, '/matchups/')).toBe(before + 1);
     expect(calls(f, '/stats/')).toBeGreaterThanOrEqual(2);
   });
