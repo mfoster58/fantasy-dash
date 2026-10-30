@@ -4,6 +4,7 @@ import sfAtl from '../../test/fixtures/espn/401873017.json';
 import nygHou from '../../test/fixtures/espn/401873016.json';
 import indMin from '../../test/fixtures/espn/401873014.json';
 import dalPhi from '../../test/fixtures/espn/401873009.json';
+import carGb from '../../test/fixtures/espn/live-car-gb.json';
 import { parseSummary } from './espnGame';
 import { readPlays, type Starter } from './readPlays';
 
@@ -76,6 +77,13 @@ describe('readPlays', () => {
     // "right end to TEN 49 for 10 yards ... Offensive Holding, enforced at CLV 44": from the CLE 41, 3 yards count
     expect(read(cleTen, CONCEPCION).find((p) => p.text.includes('Offensive Holding'))).toMatchObject({ kind: 'run', gain: 3, pts: 0.3 });
     expect(read(nygHou, MARKS).filter((p) => p.kind === 'run').reduce((n, p) => n + p.gain, 0)).toBe(66);
+  });
+
+  it('reads a play whose text ESPN starts with a space (Hubbard\'s goal-line runs, Panthers-Packers live)', () => {
+    const hubbard = read(carGb, starter('7594', 'Chuba', 'Hubbard', 'CAR', 'RB'));
+    const runs = hubbard.filter((p) => p.kind === 'run');
+    expect(runs.find((p) => p.los === 9)).toMatchObject({ gain: 2, gap: 'right tackle' });
+    expect(runs.find((p) => p.los === 7)).toMatchObject({ gain: 6, gap: 'left tackle' });
   });
 
   it('skips plays wiped out by a penalty', () => {

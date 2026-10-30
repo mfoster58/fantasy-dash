@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { PlayerDirectory } from '@fantasy-dash/core';
 import cleTen from '../../../test/fixtures/espn/401873013.json';
+import carGb from '../../../test/fixtures/espn/live-car-gb.json';
 import { line, side } from '../../../test/playerFixtures';
 import type { NflGame } from '../../../lib/live/espn';
 import { clearFinishedFeeds, FEED_POLL_MS } from '../../../lib/field/useGameFeeds';
@@ -181,6 +182,19 @@ describe('MatchupField', () => {
       expect(marks(right).every((m) => m.dataset.drive === driveId)).toBe(true);
       expect(within(right).queryAllByTestId('mf-tag')).toHaveLength(marks(right).filter((m) => m.dataset.end === '1').length);
       expect(within(field('My boutte hurts')).queryByTestId('mf-drive')).toBeNull();
+    });
+
+    it('draws every play of the drive on now, each with its face (Hubbard\'s goal-line drive, Panthers-Packers live)', async () => {
+      const dir: PlayerDirectory = { ...DIR, 7594: { id: '7594', name: 'Chuba Hubbard', firstName: 'Chuba', lastName: 'Hubbard', position: 'RB', team: 'CAR', yearsExp: 5, birthDate: null } };
+      const game: NflGame = { id: '401873023', teams: ['CAR', 'GB'], state: 'in', period: 2, clock: '5:00', kickoff: '2026-10-30T00:15Z', halftime: false };
+      render(<MatchupField sides={[SIDES[0], side('b', 60, [line('7594', 12)])]} names={['My boutte hurts', 'Bijon Mustard']} players={dir} scoring={SCORING} games={[game]} fetcher={fetchOf(() => carGb)} />);
+      await flush();
+      const right = field('Bijon Mustard');
+      expect(within(right).getByTestId('mf-drive')).toHaveAttribute('data-team', 'CAR');
+      const shown = marks(right, '7594');
+      // four runs, a catch and a target that fell incomplete
+      expect(shown.map((m) => m.dataset.kind).sort()).toEqual(['inc', 'rec', 'run', 'run', 'run', 'run']);
+      expect(within(right).getAllByTestId('mf-tag')).toHaveLength(5);
     });
 
     it('animates only the plays that arrive after the first look, and fetches again on its own', async () => {

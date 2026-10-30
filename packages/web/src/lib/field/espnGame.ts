@@ -85,7 +85,8 @@ export function parseSummary(json: unknown): EspnGameFeed | null {
       mine.push(p.id);
       const t = p.wallclock ? Date.parse(p.wallclock) : NaN;
       plays.push({
-        id: p.id, driveId: d.id, offense: normTeam(team), type: p.type?.text ?? '', text: p.text ?? '',
+        // live text sometimes starts with a stray space (" C.Hubbard right tackle...")
+        id: p.id, driveId: d.id, offense: normTeam(team), type: p.type?.text ?? '', text: (p.text ?? '').trim(),
         period: p.period?.number ?? 0, clock: p.clock?.displayValue ?? '', scoring: !!p.scoringPlay,
         time: Number.isFinite(t) ? t : null, start: yte(p.start), end: yte(p.end), down: p.end?.downDistanceText || null,
       });
