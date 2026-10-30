@@ -34,7 +34,7 @@ export function busiestMoments(feeds: EspnGameFeed[], teams: Set<string>[]): num
     let best = a, score = -1;
     for (let t = a; t <= b; t += STEP_MS) {
       const now = feeds.flatMap((f) => feedAt(f, t) ?? []);
-      const sc = teams.reduce((n, set) => n + liveDrives(now, set, t).reduce((m, d) => m + (d.result ? 0 : (d.spot ?? 100) <= 20 ? 3 : 1), 0), 0);
+      const sc = teams.reduce((n, set) => n + liveDrives(now, set).reduce((m, d) => m + (d.result ? 0 : (d.spot ?? 100) <= 20 ? 3 : 1), 0), 0);
       if (sc > score) { score = sc; best = t; }
     }
     return best;

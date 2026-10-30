@@ -122,6 +122,8 @@ function Turf({ color }: { color: string }) {
 /** a drive on now: a dashed line from where it began, the team's logo where the ball is, and the down beside it */
 function Drive({ d, x, color }: { d: LiveDrive; x: number; color: string }) {
   const spot = d.spot ?? d.from ?? 50;
+  // a score in gold; a drive that ended any other way in gray
+  const tone = d.result ? (/touchdown|field goal/i.test(d.result) ? 'var(--gold)' : 'var(--muted)') : 'var(--ink)';
   const label = d.result ? d.result.toUpperCase() : (d.down ?? '').split(' at ')[0];
   const lw = label.length * 4.3 + 8, right = x < 110, lx = right ? x - 12 - lw : x + 12;
   return (
@@ -130,11 +132,11 @@ function Drive({ d, x, color }: { d: LiveDrive; x: number; color: string }) {
       {d.from !== null && <line x1={x} x2={x} y1={Y(d.from)} y2={Y(spot)} strokeWidth={1.6} strokeDasharray="3 3" opacity={0.55} style={{ stroke: 'var(--ink)' }} />}
       {d.from !== null && <line x1={x - 5} x2={x + 5} y1={Y(d.from)} y2={Y(d.from)} strokeWidth={1.6} opacity={0.55} style={{ stroke: 'var(--ink)' }} />}
       <line x1={0} x2={FIELD_W} y1={Y(spot)} y2={Y(spot)} strokeWidth={1} opacity={0.7} style={{ stroke: color }} />
-      <circle cx={x} cy={Y(spot)} r={9} strokeWidth={1.4} style={{ fill: 'var(--surface)', stroke: d.result ? 'var(--gold)' : 'var(--ink)' }} />
+      <circle cx={x} cy={Y(spot)} r={9} strokeWidth={1.4} style={{ fill: 'var(--surface)', stroke: tone }} />
       <image href={logoUrl(d.team)} x={x - 7.5} y={Y(spot) - 7.5} width={15} height={15} />
       {label && (
         <g>
-          <rect x={lx} y={Y(spot) - 5} width={lw} height={10} rx={2} style={{ fill: d.result ? 'var(--gold)' : 'var(--ink)' }} />
+          <rect x={lx} y={Y(spot) - 5} width={lw} height={10} rx={2} style={{ fill: tone }} />
           <text x={lx + lw / 2} y={Y(spot) + 2.5} textAnchor="middle" fontSize={7.5} fontWeight={700} className="font-display" style={{ fill: 'var(--bg)' }}>{label}</text>
         </g>
       )}

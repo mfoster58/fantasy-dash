@@ -37,7 +37,7 @@ describe('feedAt', () => {
     const t = moments[0];
     expect(t).toBeGreaterThanOrEqual(first);
     expect(t).toBeLessThanOrEqual(last);
-    expect(liveDrives([feedAt(full, t)!], new Set(['CLE', 'TEN']), t)).toHaveLength(1);
+    expect(liveDrives([feedAt(full, t)!], new Set(['CLE', 'TEN']))).toHaveLength(1);
     expect(busiestMoments([], [new Set(), new Set()])).toEqual([]);
   });
 

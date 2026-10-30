@@ -88,14 +88,7 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   const phone = useIsPhone();
   const [view, setView] = useState<0 | 1>(0);
 
-  // a drive that scored stays up a few seconds: look again every few seconds while games are on
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!anyLive) return;
-    const t = setInterval(() => setNow(Date.now()), 5000);
-    return () => clearInterval(t);
-  }, [anyLive]);
-  const drives = useMemo(() => (mode === 'live' ? teams.map((t) => liveDrives(feedList, t, at ?? now)) : [[], []]), [mode, teams, feedList, now, at]);
+  const drives = useMemo(() => (mode === 'live' ? teams.map((t) => liveDrives(feedList, t)) : [[], []]), [mode, teams, feedList]);
 
   // plays already there at the first look are drawn as they are; anything after draws itself in, and a touchdown is celebrated
   // a replay starts before kickoff, so everything in it arrives
