@@ -1,4 +1,4 @@
-import { applyLeaguePoints, type ChartDb, type History, type HistorySeason, type LeagueConfig, type LeaguePoints, type PlayerDb, type PlayerDirectory, type Schedule, type Season, type SharedPlayerDb } from '@fantasy-dash/core';
+import { applyLeaguePoints, type CatchSpots, type ChartDb, type History, type HistorySeason, type LeagueConfig, type LeaguePoints, type PlayerDb, type PlayerDirectory, type Schedule, type Season, type SharedPlayerDb } from '@fantasy-dash/core';
 
 // import.meta.glob keeps tsc from type-inferring multi-megabyte JSON literals. League files are lazy: a visitor downloads only their league.
 const playersMod = import.meta.glob<{ default: PlayerDirectory }>('../../../../data/players.json', { eager: true });
@@ -8,6 +8,7 @@ const pointsMods = import.meta.glob<{ default: LeaguePoints }>('../../../../data
 const playerDbMods = import.meta.glob<{ default: SharedPlayerDb }>('../../../../data/playerdb/*.json');
 const chartMods = import.meta.glob<{ default: ChartDb }>('../../../../data/charts/*.json');
 const scheduleMods = import.meta.glob<{ default: Schedule }>('../../../../data/schedule/*.json');
+const catchMods = import.meta.glob<{ default: CatchSpots }>('../../../../data/catches/*.json');
 
 export const players: PlayerDirectory = Object.values(playersMod)[0].default;
 
@@ -87,6 +88,21 @@ export function loadCharts(year: number): Promise<ChartDb> {
     if (!key) return Promise.reject(new Response(`No charts for ${year}`, { status: 404 }));
     pending = chartMods[key]().then((m) => m.default).catch((err) => { chartCache.delete(year); throw err; });
     chartCache.set(year, pending);
+  }
+  return pending;
+}
+
+const catchCache = new Map<number, Promise<CatchSpots>>();
+const catchKey = (year: number) => Object.keys(catchMods).find((k) => k.endsWith(`/${year}.json`));
+
+/** Each catch's air yards for a season, by week; none until nflverse has published any of its play-by-play. */
+export function loadCatchSpots(year: number): Promise<CatchSpots | null> {
+  const key = catchKey(year);
+  if (!key) return Promise.resolve(null);
+  let pending = catchCache.get(year);
+  if (!pending) {
+    pending = catchMods[key]().then((m) => m.default).catch((err) => { catchCache.delete(year); throw err; });
+    catchCache.set(year, pending);
   }
   return pending;
 }

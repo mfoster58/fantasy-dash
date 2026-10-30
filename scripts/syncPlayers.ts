@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import {
-  SleeperClient, SharedPlayerDbSchema, LeaguePointsSchema, nflYears, runPerLeague, buildLeaguePoints, pointsUpToDate, ChartDbSchema, ScheduleSchema, buildCharts, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
+  SleeperClient, SharedPlayerDbSchema, LeaguePointsSchema, nflYears, runPerLeague, buildLeaguePoints, pointsUpToDate, ChartDbSchema, ScheduleSchema, buildCharts, buildCatchSpots, CatchSpotsSchema, parseSchedule, buildPlayerDb, isDbPos, buildCrosswalk, countRoutes, nflPlayerMeta, nflverseTeamAirYards, nflverseWeekly, ngsWeekly, parseCsv, pfrWeekly, snapCountTeamSnaps,
   NGS_PASSING_FIELDS, NGS_RECEIVING_FIELDS, NGS_RUSHING_FIELDS, PFR_PASS_FIELDS, PFR_REC_FIELDS, PFR_RUSH_FIELDS, SNAP_FIELDS,
   type DbPos, type NflYear, type PlayerDbInput, type SleeperLeague, type SleeperWeekStat, type StatMap, type WeekFields,
 } from '@fantasy-dash/core';
@@ -14,6 +14,8 @@ import { leagues as configured, positionOverrides } from '../league.config';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'data', 'playerdb');
 const CHART_DIR = path.join(ROOT, 'data', 'charts');
+/** each catch's air yards by week, for the box score field */
+const CATCH_DIR = path.join(ROOT, 'data', 'catches');
 const SCHEDULE_DIR = path.join(ROOT, 'data', 'schedule');
 const args = process.argv.slice(2);
 const full = args.includes('--full');
@@ -324,11 +326,14 @@ function positionsFor(year: number, nflPlayers: Record<string, string>[]): (gsis
   return (g) => m.get(g) ?? null;
 }
 
-/** Phase 2: play-by-play charts. A season without a participation or play-by-play file yet is skipped, not an error. */
+/**
+ * Phase 2: play-by-play charts, and each catch's air yards for the box score field. A season without a participation or
+ * play-by-play file yet is skipped, not an error.
+ */
 async function chartsPhase(years: NflYear[]) {
   const todo = years.filter((y) => {
     if (full || !y.complete) return true;
-    if (chartFileFinal(path.join(CHART_DIR, `${y.year}.json`))) { log(`${y.year}: charts already built, skipping`); return false; }
+    if (chartFileFinal(path.join(CHART_DIR, `${y.year}.json`)) && existsSync(path.join(CATCH_DIR, `${y.year}.json`))) { log(`${y.year}: charts already built, skipping`); return false; }
     return true;
   });
   if (todo.length === 0) return;
@@ -353,10 +358,17 @@ async function chartsPhase(years: NflYear[]) {
     const file = path.join(staging, `${year}.json`);
     await writeFile(file, JSON.stringify(db));
     built.push(file);
+    const catches = CatchSpotsSchema.parse(buildCatchSpots(parseCsv(pbp), year, new Date().toISOString()));
+    log(`${year}: air yards for ${Object.values(catches.weeks).reduce((n, w) => n + Object.keys(w).length, 0)} catches`);
+    await writeFile(path.join(staging, `catches-${year}.json`), JSON.stringify(catches));
   }
   if (dryRun) { log(`Dry run: charts in ${staging}`); return; }
   await mkdir(CHART_DIR, { recursive: true });
-  for (const file of built) await rename(file, path.join(CHART_DIR, path.basename(file)));
+  await mkdir(CATCH_DIR, { recursive: true });
+  for (const file of built) {
+    await rename(file, path.join(CHART_DIR, path.basename(file)));
+    await rename(path.join(staging, `catches-${path.basename(file)}`), path.join(CATCH_DIR, path.basename(file)));
+  }
   await rm(staging, { recursive: true, force: true });
   log(`Wrote ${built.length} chart file(s) to ${CHART_DIR}`);
 }

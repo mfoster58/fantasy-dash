@@ -6,6 +6,7 @@ import { line, side } from '../../../test/playerFixtures';
 import type { NflGame } from '../../../lib/live/espn';
 import { clearFinishedFeeds, FEED_POLL_MS } from '../../../lib/field/useGameFeeds';
 import { asPhone } from '../../../test/phone';
+import { Y } from '../../../lib/field/geometry';
 import MatchupField from './MatchupField';
 
 const DIR: PlayerDirectory = {
@@ -77,6 +78,16 @@ describe('MatchupField', () => {
       fireEvent.click(td);
       expect(td).toHaveAttribute('aria-pressed', 'false');
       expect(marks(right, '13298')).toHaveLength(13);
+    });
+
+    it('draws a catch at its real spot once nflverse has the week: Concepcion\'s 32-yarder was thrown 5 yards', async () => {
+      render(<MatchupField sides={[SIDES[0], SIDES[1]]} names={['My boutte hurts', 'Bijon Mustard']} players={DIR} scoring={SCORING}
+        games={[nfl('post')]} fetcher={fetchOf(() => cleTen)} catchSpots={{ 'CLE|2|5:08': 5 }} />);
+      await flush();
+      const g = Array.from(field('Bijon Mustard').querySelectorAll<SVGGElement>('[data-testid="mf-play"][data-pid="13298"][data-kind="rec"]'))
+        .find((m) => m.querySelector('[data-testid="mf-tag"]')?.textContent === '+4.2')!;
+      const flight = g.querySelector('path')!.getAttribute('d')!;
+      expect(Number(flight.trim().split(/[\s,]+/).pop())).toBe(Y(52 - 5));
     });
 
     it('heads each field with the team\'s name and its score', async () => {

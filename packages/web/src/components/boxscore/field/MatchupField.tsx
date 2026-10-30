@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { GameSide, PlayerDirectory, PlayerId } from '@fantasy-dash/core';
+import { catchKey, type GameSide, type PlayerDirectory, type PlayerId } from '@fantasy-dash/core';
 import { driveList } from '../../../lib/field/driveList';
 import { liveDrives } from '../../../lib/field/drives';
 import { busiestMoments, feedAt, replaySpan } from '../../../lib/field/replay';
@@ -36,7 +36,7 @@ export function describe(p: FieldPlay, short: string): string {
  * Both lineups' plays from ESPN's play-by-play, each offense going up its own field. While games are on it opens on
  * the drives happening now and keeps itself current; new plays draw themselves in and a touchdown gets its moment.
  */
-export default function MatchupField({ sides, names, players, scoring, games, seasonTeams, fetcher, replay = false }: {
+export default function MatchupField({ sides, names, players, scoring, games, seasonTeams, fetcher, replay = false, catchSpots = null }: {
   sides: [GameSide, GameSide];
   names: [string, string];
   players: PlayerDirectory;
@@ -47,6 +47,8 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   fetcher?: (url: string) => Promise<Response>;
   /** open already replaying (the box score's ?replay) */
   replay?: boolean;
+  /** the week's real air yards by "CLE|1|7:13", once nflverse has the week: catches are drawn at their real spots */
+  catchSpots?: Record<string, number> | null;
 }) {
   // each side's starters who can make a play: no kickers or defences
   const starters = useMemo(() => sides.map((s) => s.starters.flatMap(({ player }) => {
@@ -80,7 +82,9 @@ export default function MatchupField({ sides, names, players, scoring, games, se
     return () => clearInterval(t);
   }, [span, running, speed]);
   const feedList = useMemo(() => (at === null ? loaded : loaded.flatMap((f) => feedAt(f, at) ?? [])), [loaded, at]);
-  const plays = useMemo(() => starters.map((list) => feedList.flatMap((f) => readPlays(f, list, scoring)).sort((x, y) => (x.time ?? 0) - (y.time ?? 0))), [feedList, starters, scoring]);
+  const plays = useMemo(() => starters.map((list) => feedList.flatMap((f) => readPlays(f, list, scoring))
+    .map((p) => (p.kind === 'rec' && catchSpots ? { ...p, air: catchSpots[catchKey(p.offense, p.period, p.clock)] ?? null } : p))
+    .sort((x, y) => (x.time ?? 0) - (y.time ?? 0))), [feedList, starters, scoring, catchSpots]);
 
   const anyLive = on ? feedList.some((f) => f.state === 'in') : relevant.some((g) => g.state === 'in');
   const [picked, setPicked] = useState<'live' | 'week' | null>(null);
