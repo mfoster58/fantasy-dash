@@ -47,8 +47,11 @@ export function markOf(p: FieldPlay): Mark {
   const x0 = r1(80 + jx * 0.2), y0 = Y(p.los) + 5;
   const deep = p.depth === 'deep';
   const missed = p.kind === 'inc' || p.kind === 'passinc' || p.kind === 'int';
+  // the real air yards once nflverse has them; until then a deep catch is caught 1-5 yards short of where he went down
+  // (deep catches average about 3 yards after), a short one 2-9 yards past the line with the rest after the catch
   const air = missed ? (deep ? 22 + rand(p.id, 3) * 12 : 6 + rand(p.id, 3) * 6)
-    : Math.min(p.gain, deep ? 18 + rand(p.id, 3) * 14 : Math.max(0, 2 + rand(p.id, 3) * 7));
+    : p.air != null ? Math.min(p.air, p.gain)
+      : deep ? p.gain - Math.min(p.gain, 1 + rand(p.id, 3) * 4) : Math.min(p.gain, Math.max(0, 2 + rand(p.id, 3) * 7));
   const cx = r1(lane), cy = Y(p.los - air);
   const arc = (x: number, y: number, bend: number) => `M${x0} ${y0} Q${r1((x0 + x) / 2 + (x > x0 ? -bend : bend))} ${r1((y0 + y) / 2)} ${x} ${y}`;
   if (missed) return { flight: arc(cx, cy, 8), end: p.kind === 'int' ? [cx, cy] : null, miss: [cx, cy] };

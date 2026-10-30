@@ -29,6 +29,10 @@ export interface FieldPlay {
   depth: 'short' | 'deep';
   gap: string | null;
   pts: number;
+  /** a catch's real air yards, from nflverse once it has the game; null until then */
+  air?: number | null;
+  /** Sleeper code of the team with the ball */
+  offense: string;
   time: number | null;
   period: number;
   clock: string;
@@ -73,7 +77,7 @@ const sideOf =(text: string): { dir: Side; depth: 'short' | 'deep' } => {
   return { dir: (m?.[2] as Side | undefined) ?? 'middle', depth: m?.[1] === 'deep' ? 'deep' : 'short' };
 };
 
-function readOne(p: EspnPlay, s: Starter, scoring: Record<string, number>): Omit<FieldPlay, 'id' | 'eventId' | 'driveId' | 'pid' | 'time' | 'period' | 'clock' | 'text'> | null {
+function readOne(p: EspnPlay, s: Starter, scoring: Record<string, number>): Omit<FieldPlay, 'id' | 'eventId' | 'driveId' | 'offense' | 'pid' | 'time' | 'period' | 'clock' | 'text'> | null {
   const t = p.text;
   if (p.offense !== s.team || p.start === null || /no play/i.test(t) || /timeout|end of|two-minute/i.test(p.type)) return null;
   const name = `${esc(s.firstName[0] ?? '')}[a-z]{0,2}\\.${esc(s.lastName.replace(SUFFIX, ''))}(?![A-Za-z])`;
@@ -121,7 +125,7 @@ export function readPlays(feed: EspnGameFeed, starters: Starter[], scoring: Reco
   for (const p of feed.plays) {
     for (const s of who) {
       const r = readOne(p, s, scoring);
-      if (r) out.push({ ...r, id: p.id, eventId: feed.eventId, driveId: p.driveId, pid: s.id, time: p.time, period: p.period, clock: p.clock, text: p.text });
+      if (r) out.push({ ...r, id: p.id, eventId: feed.eventId, driveId: p.driveId, offense: p.offense, pid: s.id, time: p.time, period: p.period, clock: p.clock, text: p.text });
     }
   }
   return out;
