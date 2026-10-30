@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import type { DriveSummary } from '../../../lib/field/driveList';
 import type { LiveDrive } from '../../../lib/field/drives';
 import { FIELD_H, FIELD_W, isBig, markOf, Y } from '../../../lib/field/geometry';
 import type { FieldPlay } from '../../../lib/field/readPlays';
@@ -9,7 +10,7 @@ export interface FieldStarter { id: string; name: string; short: string; pos: st
 const sign = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(1)}`;
 
 /** One lineup's offense going up its own field: every play drawn where it happened, and the drives on now. */
-export default function FieldSide({ name, total, head = true, color, plays, starters, live, drives, fresh, focus, onFocus, celebration }: {
+export default function FieldSide({ name, total, head = true, color, plays, starters, live, drives, fresh, focus, onFocus, celebration, chips = [], picked = null, onPick }: {
   name: string;
   /** the team's points */
   total: number;
@@ -27,6 +28,10 @@ export default function FieldSide({ name, total, head = true, color, plays, star
   focus: string | null;
   onFocus: (id: string | null) => void;
   celebration: { play: FieldPlay; who: FieldStarter } | null;
+  /** the drives these players were in, newest first; one picked shows on its own */
+  chips?: DriveSummary[];
+  picked?: string | null;
+  onPick?: (key: string | null) => void;
 }) {
   const uid = useId().replace(/:/g, '');
   const byId = new Map(starters.map((s) => [s.id, s]));
@@ -81,6 +86,30 @@ export default function FieldSide({ name, total, head = true, color, plays, star
         </svg>
         {celebration && <Celebration {...celebration} color={color} />}
       </div>
+      {chips.length > 0 && (
+        <div role="group" aria-label={`${name}'s drives`} className="mx-auto flex w-full max-w-[306px] gap-1.5 overflow-x-auto pb-1">
+          {chips.map((c) => {
+            const scored = /touchdown|field goal/i.test(c.result ?? '');
+            return (
+              // with none picked, the drive going on is the one shown
+              <button key={c.key} type="button" aria-pressed={picked ? picked === c.key : c.live}
+                onClick={() => onPick?.(c.live || picked === c.key ? null : c.key)}
+                className="grid shrink-0 grid-cols-[18px_auto] items-center gap-1.5 rounded-[10px] border border-line bg-surface py-1.5 pl-1.5 pr-2.5 text-left text-xs leading-tight aria-pressed:border-gold aria-pressed:bg-[color-mix(in_srgb,var(--gold)_10%,var(--surface))]">
+                <img src={logoUrl(c.team)} alt={c.team} className="h-[18px] w-[18px]" />
+                <span>
+                  <span className="block whitespace-nowrap text-muted">Q{c.period} · {c.snaps} plays, {c.yards} yds</span>
+                  <span className="flex justify-between gap-2 whitespace-nowrap">
+                    <b className={`font-display font-bold uppercase tracking-wide ${c.live ? 'text-loss' : scored ? 'text-gold' : 'text-muted'}`}>
+                      {c.live && <i aria-hidden="true" className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-loss align-middle" />}{c.live ? 'Live' : c.result}
+                    </b>
+                    <span className="num text-[11.5px]">{sign(c.pts)}</span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
       <ul className="mx-auto grid max-w-[306px] gap-1" aria-label={`${name}'s players`}>
         {starters.map((s) => (
           <li key={s.id}>
@@ -127,7 +156,7 @@ function Drive({ d, x, color }: { d: LiveDrive; x: number; color: string }) {
   const label = d.result ? d.result.toUpperCase() : (d.down ?? '').split(' at ')[0];
   const lw = label.length * 4.3 + 8, right = x < 110, lx = right ? x - 12 - lw : x + 12;
   return (
-    <g data-testid="mf-drive" data-team={d.team} aria-label={`${d.team} ball${d.down ? `, ${d.down}` : ''}`}>
+    <g data-testid="mf-drive" data-team={d.team} aria-label={`${d.team} ball${d.result ? `, ${d.result}` : d.down ? `, ${d.down}` : ''}`}>
       {spot <= 20 && <rect x={0} y={Y(0)} width={FIELD_W} height={60} style={{ fill: 'color-mix(in srgb, var(--loss) 12%, transparent)' }} />}
       {d.from !== null && <line x1={x} x2={x} y1={Y(d.from)} y2={Y(spot)} strokeWidth={1.6} strokeDasharray="3 3" opacity={0.55} style={{ stroke: 'var(--ink)' }} />}
       {d.from !== null && <line x1={x - 5} x2={x + 5} y1={Y(d.from)} y2={Y(d.from)} strokeWidth={1.6} opacity={0.55} style={{ stroke: 'var(--ink)' }} />}

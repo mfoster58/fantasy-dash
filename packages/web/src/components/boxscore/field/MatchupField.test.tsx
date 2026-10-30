@@ -60,6 +60,25 @@ describe('MatchupField', () => {
       expect(flight('rec').style.stroke).toBe('var(--pos-WR)');
     });
 
+    it('lists the drives under each field; tapping one shows just that drive, every play with its face, and the result where it ended', async () => {
+      mount('post', fetchOf(() => cleTen));
+      await flush();
+      const chips = within(screen.getByRole('group', { name: "Bijon Mustard's drives" })).getAllByRole('button');
+      expect(chips.length).toBeGreaterThan(3);
+      const td = chips.find((c) => /Touchdown/i.test(c.textContent ?? ''))!;
+      fireEvent.click(td);
+      expect(td).toHaveAttribute('aria-pressed', 'true');
+      const right = field('Bijon Mustard');
+      const shown = marks(right);
+      const key = shown[0].dataset.drive;
+      expect(shown.every((m) => m.dataset.drive === key)).toBe(true);
+      expect(within(right).getAllByTestId('mf-tag')).toHaveLength(shown.filter((m) => m.dataset.end === '1').length);
+      expect(within(right).getByTestId('mf-drive')).toHaveAccessibleName(/Touchdown/);
+      fireEvent.click(td);
+      expect(td).toHaveAttribute('aria-pressed', 'false');
+      expect(marks(right, '13298')).toHaveLength(13);
+    });
+
     it('heads each field with the team\'s name and its score', async () => {
       mount('post', fetchOf(() => cleTen));
       await flush();

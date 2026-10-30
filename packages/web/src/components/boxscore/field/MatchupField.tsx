@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameSide, PlayerDirectory, PlayerId } from '@fantasy-dash/core';
+import { driveList } from '../../../lib/field/driveList';
 import { liveDrives } from '../../../lib/field/drives';
 import { busiestMoments, feedAt, replaySpan } from '../../../lib/field/replay';
 import type { EspnPlay } from '../../../lib/field/espnGame';
@@ -88,7 +89,15 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   const phone = useIsPhone();
   const [view, setView] = useState<0 | 1>(0);
 
-  const drives = useMemo(() => (mode === 'live' ? teams.map((t) => liveDrives(feedList, t)) : [[], []]), [mode, teams, feedList]);
+  const live = useMemo(() => (mode === 'live' ? teams.map((t) => liveDrives(feedList, t)) : [[], []]), [mode, teams, feedList]);
+  // the drives each lineup's players were in; one picked shows on its own, where it ended
+  const chips = useMemo(() => plays.map((p) => driveList(feedList, p)), [feedList, plays]);
+  const [pick, setPick] = useState<[string | null, string | null]>([null, null]);
+  const chosen = ([0, 1] as const).map((side) => chips[side].find((c) => c.key === pick[side]) ?? null);
+  const drives = ([0, 1] as const).map((side) => {
+    const c = chosen[side];
+    return c ? [{ key: c.key, eventId: c.eventId, team: c.team, from: c.from, spot: c.spot, down: null, result: c.result }] : live[side];
+  });
 
   // plays already there at the first look are drawn as they are; anything after draws itself in, and a touchdown is celebrated
   // a replay starts before kickoff, so everything in it arrives
@@ -130,7 +139,7 @@ export default function MatchupField({ sides, names, players, scoring, games, se
   if (!starters[0].length && !starters[1].length) return null;
   const shown = ([0, 1] as const).map((side) => {
     const keys = new Set(drives[side].map((d) => d.key));
-    return plays[side].filter((p) => p.kind !== 'passinc' && (mode === 'live' ? keys.has(p.driveId) : true));
+    return plays[side].filter((p) => p.kind !== 'passinc' && (chosen[side] ? p.driveId === chosen[side]!.key : mode === 'live' ? keys.has(p.driveId) : true));
   });
   const who = (side: 0 | 1, pid: string) => starters[side].find((s) => s.id === pid)!;
   // a replay counts up from its plays; otherwise each team's real score
@@ -196,7 +205,8 @@ export default function MatchupField({ sides, names, players, scoring, games, se
         <div className={phone ? '' : 'grid grid-cols-2 gap-2.5 sm:gap-4'}>
           {([0, 1] as const).filter((side) => !phone || side === view).map((side) => (
             <FieldSide key={side} name={names[side]} color={COLOR[side]} head={!phone}
-              total={totals[side]} plays={shown[side]} starters={starters[side]} live={mode === 'live'}
+              total={totals[side]} plays={shown[side]} starters={starters[side]} live={mode === 'live' || !!chosen[side]}
+              chips={chips[side]} picked={chosen[side]?.key ?? null} onPick={(k) => setPick((pp) => (side ? [pp[0], k] : [k, pp[1]]))}
               drives={drives[side]} fresh={fresh} focus={focus[side]} onFocus={(id) => setFocus((f) => (side ? [f[0], id] : [id, f[1]]))}
               celebration={party[side] ? { play: party[side]!, who: who(side, party[side]!.pid) } : null} />
           ))}

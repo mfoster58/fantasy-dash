@@ -1,9 +1,9 @@
 import type { EspnGameFeed, EspnPlay } from './espnGame';
 
 /** play types after which the drive is over: the ball changed hands or points went up */
-const GAVE_UP = /punt|interception|fumble recovery \(opponent\)|field goal|touchdown|safety|turnover on downs|blocked/i;
+export const GAVE_UP = /punt|interception|fumble recovery \(opponent\)|field goal|touchdown|safety|turnover on downs|blocked/i;
 /** a snap: not a kickoff (ESPN files it at the start of the receiving team's drive), a timeout, a quarter's end or the two-minute warning */
-const isSnap = (p: EspnPlay) => !/kickoff|timeout|end of|end period|two-minute/i.test(p.type);
+export const isSnap = (p: EspnPlay) => !/kickoff|timeout|end of|end period|two-minute/i.test(p.type);
 
 export interface LiveDrive {
   /** ESPN's drive id */
