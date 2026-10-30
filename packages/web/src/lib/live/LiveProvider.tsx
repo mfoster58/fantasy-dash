@@ -3,7 +3,7 @@ import type { Season, SleeperMatchup, StatMap } from '@fantasy-dash/core';
 import { currentSeason, loadSeason } from '../../data/load';
 import { parseScoreboard, scoreboardUrl, type NflGame } from './espn';
 import { liveWeekNumber, type NflStateJson } from './overlay';
-import { nextWake, POLL_MS, shouldPoll } from './schedule';
+import { BOX_POLL_MS, nextWake, POLL_MS, shouldPoll } from './schedule';
 
 const SLEEPER = 'https://api.sleeper.app/v1';
 
@@ -41,6 +41,12 @@ async function getJson<T>(fetcher: Fetcher, url: string): Promise<T> {
 
 const visible = () => document.visibilityState === 'visible';
 
+/**
+ * Sleeper's CDN may hand back a copy of the scores minutes old while it fetches a new one; a stamp that changes every
+ * poll gets a current copy, and is shared by everyone looking in the same 20 seconds.
+ */
+const fresh = (url: string, now: number) => `${url}?_=${Math.floor(now / BOX_POLL_MS)}`;
+
 export function LiveProvider({ children, load = () => loadSeason(currentSeason.year), fetcher = (u) => fetch(u), now = Date.now }: {
   children: ReactNode; load?: () => Promise<Season>; fetcher?: Fetcher; now?: () => number;
 }) {
@@ -58,7 +64,8 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
     const schedule = (): boolean => {
       if (s.stopped || !visible()) return false;
       if (shouldPoll(now(), s.games)) {
-        s.timer = setTimeout(() => void tickRef.current(), POLL_MS);
+        // a box score open on a game in progress refreshes with the field's plays
+        s.timer = setTimeout(() => void tickRef.current(), s.watchers > 0 ? BOX_POLL_MS : POLL_MS);
         return true;
       }
       const wake = nextWake(now(), s.games);
@@ -77,9 +84,9 @@ export function LiveProvider({ children, load = () => loadSeason(currentSeason.y
       const wantStats = s.watchers > 0;
       const wantProj = s.projWeek !== week || now() - s.projAt >= PROJECTIONS_MS;
       const [matchups, games, stats, proj] = await Promise.all([
-        getJson<SleeperMatchup[]>(fetcher, `${SLEEPER}/league/${season.leagueId}/matchups/${week}`),
+        getJson<SleeperMatchup[]>(fetcher, fresh(`${SLEEPER}/league/${season.leagueId}/matchups/${week}`, now())),
         getJson<unknown>(fetcher, scoreboardUrl(season.year, week)).then(parseScoreboard).catch(() => null),
-        wantStats ? getJson<StatMap>(fetcher, `${SLEEPER}/stats/nfl/regular/${season.year}/${week}`).catch(() => undefined) : Promise.resolve(undefined),
+        wantStats ? getJson<StatMap>(fetcher, fresh(`${SLEEPER}/stats/nfl/regular/${season.year}/${week}`, now())).catch(() => undefined) : Promise.resolve(undefined),
         // a failed refresh keeps the last projections and is retried next poll; it never counts toward stopping
         wantProj ? getJson<StatMap>(fetcher, `${SLEEPER}/projections/nfl/regular/${season.year}/${week}`).catch(() => undefined) : Promise.resolve(undefined),
       ]);

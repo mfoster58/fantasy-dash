@@ -70,6 +70,27 @@ describe('LiveProvider', () => {
     expect(calls(f, '/matchups/')).toBe(3);
   });
 
+  it('polls every 20 seconds, like the field\'s plays, while a box score is open on a game that is on', async () => {
+    const f = fakeFetch({ state: 'in' });
+    mount(f, undefined, true);
+    await flush();
+    await flush();
+    const before = calls(f, '/matchups/');
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+    expect(calls(f, '/matchups/')).toBe(before + 1);
+    expect(calls(f, '/stats/')).toBeGreaterThanOrEqual(2);
+  });
+
+  it('asks Sleeper past its cache for live scores, which would otherwise hand back copies minutes old', async () => {
+    const f = fakeFetch({ state: 'in' });
+    mount(f, undefined, true);
+    await flush();
+    await flush();
+    const url = (part: string) => String(f.mock.calls.find(([u]) => String(u).includes(part))![0]);
+    expect(url('/matchups/')).toMatch(/\/matchups\/1\?_=\d+$/);
+    expect(url('/stats/')).toMatch(/\/stats\/nfl\/regular\/2026\/1\?_=\d+$/);
+  });
+
   it('polls from 15 minutes before a kickoff', async () => {
     const f = fakeFetch({ state: 'pre' });
     mount(f, Date.parse('2026-10-25T16:50Z'));

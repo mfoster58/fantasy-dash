@@ -1,6 +1,8 @@
 import type { NflGame } from './espn';
 
 export const POLL_MS = 60_000;
+/** while a box score is open on a game in progress: as often as its field reads the plays */
+export const BOX_POLL_MS = 20_000;
 const LEAD_MS = 15 * 60_000;
 
 const eastern = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', hourCycle: 'h23', month: 'numeric' });
