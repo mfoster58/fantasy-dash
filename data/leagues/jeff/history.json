@@ -32,7 +32,7 @@
    "year": 2026,
    "leagueId": "1389749319829053440",
    "status": "in_season",
-   "lastScoredWeek": 9,
+   "lastScoredWeek": 10,
    "playoffWeekStart": 15,
    "honors": {
     "champion": null,
@@ -264,27 +264,35 @@
    "a": "1000921164178370560",
    "b": "1128559984796680192",
    "aWins": 3,
-   "bWins": 2,
+   "bWins": 3,
    "ties": 0,
    "streak": {
-    "holder": "1000921164178370560",
+    "holder": "1128559984796680192",
     "length": 1
    },
    "totalPoints": {
-    "a": 729.23,
-    "b": 700.67
+    "a": 895.68,
+    "b": 941.45
    },
    "biggestWin": {
-    "gameId": "2025-4-3",
-    "winner": "1000921164178370560",
-    "margin": 50.77
+    "gameId": "2026-10-1",
+    "winner": "1128559984796680192",
+    "margin": 74.33
    },
    "closest": {
     "gameId": "2024-8-3",
     "margin": 6.08
    },
-   "avgMargin": 22.42,
+   "avgMargin": 31.08,
    "games": [
+    {
+     "gameId": "2026-10-1",
+     "year": 2026,
+     "week": 10,
+     "tag": null,
+     "aPoints": 166.45,
+     "bPoints": 240.78
+    },
     {
      "gameId": "2026-3-1",
      "year": 2026,
@@ -397,28 +405,36 @@
   "1001395905909657600|1001986687221882880": {
    "a": "1001395905909657600",
    "b": "1001986687221882880",
-   "aWins": 3,
+   "aWins": 4,
    "bWins": 2,
    "ties": 0,
    "streak": {
     "holder": "1001395905909657600",
-    "length": 2
+    "length": 3
    },
    "totalPoints": {
-    "a": 829.44,
-    "b": 811.3
+    "a": 1017.62,
+    "b": 897.19
    },
    "biggestWin": {
-    "gameId": "2026-3-3",
+    "gameId": "2026-10-3",
     "winner": "1001395905909657600",
-    "margin": 57.24
+    "margin": 102.29
    },
    "closest": {
     "gameId": "2024-9-1",
     "margin": 10.53
    },
-   "avgMargin": 40.52,
+   "avgMargin": 50.81,
    "games": [
+    {
+     "gameId": "2026-10-3",
+     "year": 2026,
+     "week": 10,
+     "tag": null,
+     "aPoints": 188.18,
+     "bPoints": 85.89
+    },
     {
      "gameId": "2026-3-3",
      "year": 2026,
@@ -1506,28 +1522,36 @@
   "1134238039653416960|865652039827439616": {
    "a": "1134238039653416960",
    "b": "865652039827439616",
-   "aWins": 2,
+   "aWins": 3,
    "bWins": 3,
    "ties": 0,
    "streak": {
     "holder": "1134238039653416960",
-    "length": 1
+    "length": 2
    },
    "totalPoints": {
-    "a": 767.85,
-    "b": 820.37
+    "a": 950.79,
+    "b": 932.71
    },
    "biggestWin": {
-    "gameId": "2025-10-3",
-    "winner": "865652039827439616",
-    "margin": 35.89
+    "gameId": "2026-10-2",
+    "winner": "1134238039653416960",
+    "margin": 70.6
    },
    "closest": {
     "gameId": "2025-3-3",
     "margin": 11.5
    },
-   "avgMargin": 25.26,
+   "avgMargin": 32.82,
    "games": [
+    {
+     "gameId": "2026-10-2",
+     "year": 2026,
+     "week": 10,
+     "tag": null,
+     "aPoints": 182.94,
+     "bPoints": 112.34
+    },
     {
      "gameId": "2026-3-2",
      "year": 2026,
@@ -1649,15 +1673,15 @@
    "a": "1131185226589364224",
    "b": "1136426235439054848",
    "aWins": 0,
-   "bWins": 7,
+   "bWins": 8,
    "ties": 0,
    "streak": {
     "holder": "1136426235439054848",
-    "length": 7
+    "length": 8
    },
    "totalPoints": {
-    "a": 924.04,
-    "b": 1226.8
+    "a": 1076.28,
+    "b": 1402.03
    },
    "biggestWin": {
     "gameId": "2024-15-4",
@@ -1668,8 +1692,16 @@
     "gameId": "2025-3-1",
     "margin": 17.1
    },
-   "avgMargin": 43.25,
+   "avgMargin": 40.72,
    "games": [
+    {
+     "gameId": "2026-10-4",
+     "year": 2026,
+     "week": 10,
+     "tag": null,
+     "aPoints": 152.24,
+     "bPoints": 175.23
+    },
     {
      "gameId": "2026-3-4",
      "year": 2026,
@@ -2192,23 +2224,23 @@
    "userId": "1128559984796680192",
    "rank": 1,
    "seasons": 3,
-   "w": 24,
+   "w": 25,
    "l": 13,
    "t": 0,
-   "winPct": 0.6486,
-   "pf": 5666.76,
-   "pa": 5524.33,
-   "ppg": 153.16,
-   "maxPoints": 6484.98,
-   "efficiency": 0.8738,
-   "streak": "W3",
+   "winPct": 0.6579,
+   "pf": 5907.54,
+   "pa": 5690.78,
+   "ppg": 155.46,
+   "maxPoints": 6751.16,
+   "efficiency": 0.875,
+   "streak": "W4",
    "allPlay": {
-    "w": 153,
+    "w": 160,
     "l": 106,
     "t": 0,
-    "pct": 0.5907
+    "pct": 0.6015
    },
-   "weeklyHighs": 6,
+   "weeklyHighs": 7,
    "titles": 1,
    "runnerUps": 0,
    "thirds": 0,
@@ -2220,21 +2252,21 @@
    "userId": "1001395905909657600",
    "rank": 2,
    "seasons": 3,
-   "w": 23,
+   "w": 24,
    "l": 14,
    "t": 0,
-   "winPct": 0.6216,
-   "pf": 5607.21,
-   "pa": 5448.32,
-   "ppg": 151.55,
-   "maxPoints": 6278.99,
-   "efficiency": 0.893,
-   "streak": "L1",
+   "winPct": 0.6316,
+   "pf": 5795.39,
+   "pa": 5534.21,
+   "ppg": 152.51,
+   "maxPoints": 6483.5,
+   "efficiency": 0.8939,
+   "streak": "W1",
    "allPlay": {
-    "w": 138,
-    "l": 121,
+    "w": 144,
+    "l": 122,
     "t": 0,
-    "pct": 0.5328
+    "pct": 0.5414
    },
    "weeklyHighs": 3,
    "titles": 0,
@@ -2249,20 +2281,20 @@
    "rank": 3,
    "seasons": 3,
    "w": 22,
-   "l": 15,
+   "l": 16,
    "t": 0,
-   "winPct": 0.5946,
-   "pf": 5693.27,
-   "pa": 5416.62,
-   "ppg": 153.87,
-   "maxPoints": 6501.1,
-   "efficiency": 0.8757,
-   "streak": "W6",
+   "winPct": 0.5789,
+   "pf": 5805.61,
+   "pa": 5599.56,
+   "ppg": 152.78,
+   "maxPoints": 6624.92,
+   "efficiency": 0.8763,
+   "streak": "L1",
    "allPlay": {
-    "w": 139,
-    "l": 120,
+    "w": 140,
+    "l": 126,
     "t": 0,
-    "pct": 0.5367
+    "pct": 0.5263
    },
    "weeklyHighs": 9,
    "titles": 0,
@@ -2277,20 +2309,20 @@
    "rank": 4,
    "seasons": 3,
    "w": 19,
-   "l": 18,
+   "l": 19,
    "t": 0,
-   "winPct": 0.5135,
-   "pf": 5435.75,
-   "pa": 5373.34,
-   "ppg": 146.91,
-   "maxPoints": 6187.46,
-   "efficiency": 0.8785,
-   "streak": "L1",
+   "winPct": 0.5,
+   "pf": 5602.2,
+   "pa": 5614.12,
+   "ppg": 147.43,
+   "maxPoints": 6370.58,
+   "efficiency": 0.8794,
+   "streak": "L2",
    "allPlay": {
-    "w": 123,
-    "l": 136,
+    "w": 126,
+    "l": 140,
     "t": 0,
-    "pct": 0.4749
+    "pct": 0.4737
    },
    "weeklyHighs": 4,
    "titles": 0,
@@ -2304,21 +2336,21 @@
    "userId": "1136426235439054848",
    "rank": 5,
    "seasons": 3,
-   "w": 17,
+   "w": 18,
    "l": 20,
    "t": 0,
-   "winPct": 0.4595,
-   "pf": 5664.85,
-   "pa": 5548.22,
-   "ppg": 153.1,
-   "maxPoints": 6326.33,
-   "efficiency": 0.8954,
-   "streak": "W1",
+   "winPct": 0.4737,
+   "pf": 5840.08,
+   "pa": 5700.46,
+   "ppg": 153.69,
+   "maxPoints": 6521.76,
+   "efficiency": 0.8955,
+   "streak": "W2",
    "allPlay": {
-    "w": 138,
-    "l": 121,
+    "w": 142,
+    "l": 124,
     "t": 0,
-    "pct": 0.5328
+    "pct": 0.5338
    },
    "weeklyHighs": 4,
    "titles": 1,
@@ -2333,20 +2365,20 @@
    "rank": 6,
    "seasons": 3,
    "w": 16,
-   "l": 21,
+   "l": 22,
    "t": 0,
-   "winPct": 0.4324,
-   "pf": 5438.72,
-   "pa": 5568.54,
-   "ppg": 146.99,
-   "maxPoints": 6170.6,
-   "efficiency": 0.8814,
-   "streak": "L5",
+   "winPct": 0.4211,
+   "pf": 5590.96,
+   "pa": 5743.77,
+   "ppg": 147.13,
+   "maxPoints": 6330.54,
+   "efficiency": 0.8832,
+   "streak": "L6",
    "allPlay": {
-    "w": 112,
-    "l": 147,
+    "w": 114,
+    "l": 152,
     "t": 0,
-    "pct": 0.4324
+    "pct": 0.4286
    },
    "weeklyHighs": 5,
    "titles": 0,
@@ -2360,21 +2392,21 @@
    "userId": "1134238039653416960",
    "rank": 7,
    "seasons": 3,
-   "w": 14,
+   "w": 15,
    "l": 23,
    "t": 0,
-   "winPct": 0.3784,
-   "pf": 5513.88,
-   "pa": 5834.85,
-   "ppg": 149.02,
-   "maxPoints": 6179.33,
-   "efficiency": 0.8923,
-   "streak": "W1",
+   "winPct": 0.3947,
+   "pf": 5696.82,
+   "pa": 5947.19,
+   "ppg": 149.92,
+   "maxPoints": 6387.57,
+   "efficiency": 0.8919,
+   "streak": "W2",
    "allPlay": {
-    "w": 126,
-    "l": 133,
+    "w": 131,
+    "l": 135,
     "t": 0,
-    "pct": 0.4865
+    "pct": 0.4925
    },
    "weeklyHighs": 4,
    "titles": 0,
@@ -2389,20 +2421,20 @@
    "rank": 8,
    "seasons": 3,
    "w": 13,
-   "l": 24,
+   "l": 25,
    "t": 0,
-   "winPct": 0.3514,
-   "pf": 5351.76,
-   "pa": 5657.98,
-   "ppg": 144.64,
-   "maxPoints": 6100.11,
-   "efficiency": 0.8773,
-   "streak": "L2",
+   "winPct": 0.3421,
+   "pf": 5437.65,
+   "pa": 5846.16,
+   "ppg": 143.1,
+   "maxPoints": 6227.82,
+   "efficiency": 0.8731,
+   "streak": "L3",
    "allPlay": {
     "w": 107,
-    "l": 152,
+    "l": 159,
     "t": 0,
-    "pct": 0.4131
+    "pct": 0.4023
    },
    "weeklyHighs": 2,
    "titles": 0,
